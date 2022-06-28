@@ -1,0 +1,59 @@
+{
+  "name": "data-observability",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "lint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
+    "tsc": "tsc",
+    "clean": "rimraf dist",
+    "build": "npm run clean && npm run tsc && npm run lint",
+    "start": "npm run build && nodemon ./src/index.ts",
+    "deploy": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./deploy.ps1 -serviceName selector",
+    "debug": "npm run build && nodemon --inspect ./src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cito-data/data-observability.git"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/cito-data/data-observability/issues"
+  },
+  "homepage": "https://github.com/cito-data/data-observability#readme",
+  "devDependencies": {
+    "@tsconfig/node14": "^1.0.1",
+    "@types/cors": "^2.8.12",
+    "@types/dotenv": "^8.2.0",
+    "@types/express": "^4.17.13",
+    "@types/jest": "^27.4.1",
+    "@types/jsonwebtoken": "^8.5.8",
+    "@types/mongo-sanitize": "^1.0.1",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.2.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^16.1.0",
+    "eslint-config-prettier": "^8.4.0",
+    "eslint-plugin-import": "^2.25.2",
+    "jest": "^27.0.0",
+    "nodemon": "^2.0.15",
+    "prettier": "2.5.1",
+    "ts-jest": "^27.1.4",
+    "ts-node": "^10.5.0",
+    "typescript": "^4.6.2"
+  },
+  "dependencies": {
+    "awilix": "^6.1.0",
+    "axios": "^0.26.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.3",
+    "helmet": "^5.1.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongo-sanitize": "^1.1.0",
+    "mongodb": "^4.4.1"
+  }
+}

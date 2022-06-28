@@ -1,0 +1,101 @@
+// todo - clean architecture violation
+import { ObjectId } from 'mongodb';
+import Result from '../value-types/transient-types/result';
+import IUseCase from '../services/use-case';
+import { TestSuite } from '../entities/test-suite';
+import { ITestSuiteRepo } from './i-test-suite-repo';
+import { DbConnection } from '../services/i-db';
+import { CreateExpectation } from './create-expectation';
+import { CreateJob } from './create-job';
+
+export interface CreateTestSuiteRequestDto {
+  expecationType: string;
+  expectationThreshold: number;
+  jobFrequency: number;
+}
+
+export interface CreateTestSuiteAuthDto {
+  organizationId: string;
+}
+
+export type CreateTestSuiteResponseDto = Result<TestSuite>;
+
+export class CreateTestSuite
+  implements
+    IUseCase<
+      CreateTestSuiteRequestDto,
+      CreateTestSuiteResponseDto,
+      CreateTestSuiteAuthDto,
+      DbConnection
+    >
+{
+  readonly #testSuiteRepo: ITestSuiteRepo;
+
+  #dbConnection: DbConnection;
+
+  #createExpectation: CreateExpectation;
+
+  #createJob: CreateJob;
+
+  constructor(
+    createExpectation: CreateExpectation,
+    createJob: CreateJob,
+    testSuiteRepo: ITestSuiteRepo
+  ) {
+    this.#testSuiteRepo = testSuiteRepo;
+    this.#createExpectation = createExpectation;
+    this.#createJob = createJob;
+  }
+
+  async execute(
+    request: CreateTestSuiteRequestDto,
+    auth: CreateTestSuiteAuthDto,
+    dbConnection: DbConnection
+  ): Promise<CreateTestSuiteResponseDto> {
+    try {
+      this.#dbConnection = dbConnection;
+
+      const createExpectationResult = await this.#createExpectation.execute(
+        {
+          threshold: request.expectationThreshold,
+          type: request.expecationType,
+        },
+        { organizationId: 'todo' },
+      );
+
+      if (!createExpectationResult.success)
+        throw new Error(createExpectationResult.error);
+      if (!createExpectationResult.value)
+        throw new Error('Creating expectation failed');
+
+        const createJobResult = await this.#createJob.execute(
+          {
+            frequency: request.jobFrequency
+          },
+          { organizationId: 'todo' },
+        );
+  
+        if (!createJobResult.success)
+          throw new Error(createJobResult.error);
+        if (!createJobResult.value)
+          throw new Error('Creating job failed');
+
+      const testSuite = TestSuite.create({
+        id: new ObjectId().toHexString(),
+        expectation: createExpectationResult.value,
+        job: createJobResult.value
+      });
+
+      await this.#testSuiteRepo.insertOne(testSuite, this.#dbConnection);
+
+      // if (auth.organizationId !== 'TODO')
+      //   throw new Error('Not authorized to perform action');
+
+      return Result.ok(testSuite);
+    } catch (error: unknown) {
+      if (typeof error === 'string') return Result.fail(error);
+      if (error instanceof Error) return Result.fail(error.message);
+      return Result.fail('Unknown error occured');
+    }
+  }
+}
