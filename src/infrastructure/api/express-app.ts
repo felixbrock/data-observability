@@ -1,4 +1,5 @@
 import express, { Application } from 'express';
+import {CronJob, CronJobParameters} from 'cron';
 import cors from 'cors';
 import helmet from 'helmet';
 import v1Router from './routes/v1';
@@ -28,6 +29,56 @@ export default class ExpressApp {
         } mode`
       );
     });
+
+    const oneHourCronJobOption: CronJobParameters = {
+      cronTime: '0 * * * *',
+      onTick: () => {
+            console.log('You will see this message every second');
+          },
+    };
+
+    const oneHourCronJob = new CronJob(oneHourCronJobOption);
+    oneHourCronJob.start();
+
+    const threeHourCronJobOption: CronJobParameters = {
+      cronTime: '0 */3 * * *',
+      onTick: () => {
+            console.log('You will see this message every second');
+          },
+    };
+
+    const threeHourJobOption = new CronJob(threeHourCronJobOption);
+    threeHourJobOption.start();
+
+    const sixHourCronJobOption: CronJobParameters = {
+      cronTime: '0 */6 * * *',
+      onTick: () => {
+            console.log('You will see this message every second');
+          },
+    };
+
+    const sixHourJobOption = new CronJob(sixHourCronJobOption);
+    sixHourJobOption.start();
+
+    const twelveHourCronJobOption: CronJobParameters = {
+      cronTime: '0 */12 * * *',
+      onTick: () => {
+            console.log('You will see this message every second');
+          },
+    };
+
+    const twelveHourJobOption = new CronJob(twelveHourCronJobOption);
+    twelveHourJobOption.start();
+
+    const oneDayCronJobOption: CronJobParameters = {
+      cronTime: '0 * */1 * *',
+      onTick: () => {
+            console.log('You will see this message every second');
+          },
+    };
+
+    const oneDayJobOption = new CronJob(oneDayCronJobOption);
+    oneDayJobOption.start();
 
     return this.#expressApp;
   }

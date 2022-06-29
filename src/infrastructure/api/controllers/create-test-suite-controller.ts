@@ -32,8 +32,9 @@ export default class CreateTestSuiteController extends BaseController {
 
   #buildRequestDto = (httpRequest: Request): CreateTestSuiteRequestDto => ({
     expecationType: httpRequest.body.expecationType,
-    expectationThreshold: httpRequest.body.expectationThreshold,
+    expectationConfiguration: httpRequest.body.expectationConfiguration,
     jobFrequency: httpRequest.body.jobFrequency,
+    targetId: httpRequest.body.targetId
   });
 
   #buildAuthDto = (userAccountInfo: UserAccountInfo): CreateTestSuiteAuthDto => ({

@@ -8,7 +8,7 @@ import {
 
 export interface CreateExpectationRequestDto {
   type: string;
-  threshold: number;
+  configuration: {[key: string]: string | number};
 }
 
 export interface CreateExpectationAuthDto {
@@ -34,9 +34,8 @@ export class CreateExpectation
     try {
       const expectation = Expectation.create({
         localId: new ObjectId().toHexString(),
-        threshold: request.threshold,
-        type: request.type
-
+        configuration: request.configuration,
+        type: request.type,
       });
 
       // if (auth.organizationId !== 'TODO')

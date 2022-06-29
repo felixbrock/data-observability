@@ -6,12 +6,14 @@ import { TestSuite } from '../entities/test-suite';
 import { ITestSuiteRepo } from './i-test-suite-repo';
 import { DbConnection } from '../services/i-db';
 import { CreateExpectation } from './create-expectation';
-import { CreateJob } from './create-job';
+import { CreateJob } from '../job/create-job';
+import { Frequency } from '../entities/job';
 
 export interface CreateTestSuiteRequestDto {
+  targetId: string;
   expecationType: string;
-  expectationThreshold: number;
-  jobFrequency: number;
+  expectationConfiguration: { [key: string]: string | number };
+  jobFrequency: Frequency;
 }
 
 export interface CreateTestSuiteAuthDto {
@@ -57,10 +59,10 @@ export class CreateTestSuite
 
       const createExpectationResult = await this.#createExpectation.execute(
         {
-          threshold: request.expectationThreshold,
+          configuration: request.expectationConfiguration,
           type: request.expecationType,
         },
-        { organizationId: 'todo' },
+        { organizationId: 'todo' }
       );
 
       if (!createExpectationResult.success)
@@ -68,25 +70,25 @@ export class CreateTestSuite
       if (!createExpectationResult.value)
         throw new Error('Creating expectation failed');
 
-        const createJobResult = await this.#createJob.execute(
-          {
-            frequency: request.jobFrequency
-          },
-          { organizationId: 'todo' },
-        );
-  
-        if (!createJobResult.success)
-          throw new Error(createJobResult.error);
-        if (!createJobResult.value)
-          throw new Error('Creating job failed');
-
       const testSuite = TestSuite.create({
         id: new ObjectId().toHexString(),
         expectation: createExpectationResult.value,
-        job: createJobResult.value
+        targetId: request.targetId
       });
 
       await this.#testSuiteRepo.insertOne(testSuite, this.#dbConnection);
+
+      const createJobResult = await this.#createJob.execute(
+        {
+          frequency: request.jobFrequency,
+          testSuiteId: testSuite.id,
+        },
+        { organizationId: 'todo' },
+        this.#dbConnection
+      );
+
+      if (!createJobResult.success) throw new Error(createJobResult.error);
+      if (!createJobResult.value) throw new Error('Creating job failed');
 
       // if (auth.organizationId !== 'TODO')
       //   throw new Error('Not authorized to perform action');
