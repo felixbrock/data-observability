@@ -1,36 +1,56 @@
-import { CronJob, CronJobParameters } from 'cron';
+import { CronJob, CronJobParameters} from 'cron';
+import { citoDataOrganizationId } from '../../config';
+import { Frequency } from '../../domain/entities/job';
+import { ReadJobs } from '../../domain/job/read-jobs';
+import { DbConnection} from '../../domain/services/i-db';
+import { cronJobDbConnection } from '../persistence/db/mongo-db';
 
 export default class Scheduler {
+
+  readonly #readJobs: ReadJobs;
+  
+  #dbConnection: DbConnection;
+
+  #onTick = async (frequency: Frequency): Promise<void> => {
+    const result = this.#readJobs.execute(
+      { frequency },
+      { organizationId: citoDataOrganizationId },
+      this.#dbConnection
+    );
+
+    console.log(result);
+  };
+
   #cronJobOption: { [key: string]: CronJobParameters } = {
     oneHourCronJobOption: {
       cronTime: '0 * * * *',
       onTick: () => {
-        console.log('You will see this message every hour');
+        this.#onTick('1h');
       },
     },
     threeHourCronJobOption: {
       cronTime: '0 */3 * * *',
       onTick: () => {
-        console.log('You will see this message every second');
+        this.#onTick('3h');
       },
     },
     sixHourCronJobOption: {
       cronTime: '0 */6 * * *',
       onTick: () => {
-        console.log('You will see this message every second');
+        this.#onTick('6h');
       },
     },
     twelveHourCronJobOption: {
       cronTime: '0 */12 * * *',
       onTick: () => {
-        console.log('You will see this message every second');
+        this.#onTick('12h');
       },
     },
 
     oneDayCronJobOption: {
       cronTime: '0 * */1 * *',
       onTick: () => {
-        console.log('You will see this message every second');
+        this.#onTick('1d');
       },
     },
   };
@@ -43,13 +63,13 @@ export default class Scheduler {
     new CronJob(this.#cronJobOption.oneDayCronJobOption),
   ];
 
-  get cronJobOption(): { [key: string]: CronJobParameters } {
-    return this.#cronJobOption;
+  constructor(readJobs: ReadJobs) {
+    this.#readJobs = readJobs;
   }
 
-  get jobs(): CronJob[] {
-    return this.#jobs;
-  }
+  run = async (): Promise<void> => {
+    this.#dbConnection = await cronJobDbConnection();
 
-  run = (): void => this.#jobs.forEach((job) => job.start());
+    this.#jobs.forEach((job) => job.start());
+  };
 }

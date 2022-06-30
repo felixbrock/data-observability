@@ -7,10 +7,9 @@ const testSuiteRoutes = Router();
 const createTestSuiteController = new CreateTestSuiteController(
   app.resolve('createTestSuite'),
   app.resolve('getAccounts'),
-  app.resolve('db')
 );
 
-testSuiteRoutes.post('/', (req, res) => {
+testSuiteRoutes.post('/', (req, res) => {   
   createTestSuiteController.execute(req, res);
 });
 

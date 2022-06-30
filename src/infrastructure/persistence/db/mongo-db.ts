@@ -1,17 +1,28 @@
+import { NextFunction, Request, Response } from 'express';
 import { Db, MongoClient, ServerApiVersion } from 'mongodb';
 import { appConfig } from '../../../config';
-import { IDb } from '../../../domain/services/i-db';
 
-export default class MongoDb implements IDb {
-  createClient = (): MongoClient =>
-    new MongoClient(appConfig.mongodb.url, { serverApi: ServerApiVersion.v1 });
+const getClient = (): MongoClient =>
+  new MongoClient(appConfig.mongodb.url, {
+    serverApi: ServerApiVersion.v1,
+  });
 
-  connect = async (client: MongoClient): Promise<Db> => {
-    await client.connect();
-    return client.db(appConfig.mongodb.dbName);
-  };
+export const routerDbConnection = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  getClient()
+    .connect()
+    .then((connectedClient) => {
+      // req.db = connectedClient.db(appConfig.mongodb.dbName);
+      req.db = connectedClient;
+      next();
+    })
+    .catch((err) => next(err));
+};
 
-  close = async (client: MongoClient): Promise<void> => {
-    await client.close();
-  };
-}
+export const cronJobDbConnection = async (): Promise<Db> => {
+  const connectedClient = await getClient().connect();
+  return connectedClient.db(appConfig.mongodb.dbName);
+};

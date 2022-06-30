@@ -10,7 +10,7 @@ interface JobProperties {
   testSuiteId: string;
 }
 
-export const frequencies = ['1h' , '3h' , '6h' , '12h' , '24h'] as const;
+export const frequencies = ['1h', '3h', '6h', '12h', '1d'] as const;
 export type Frequency = typeof frequencies[number];
 
 export class Job {
@@ -49,13 +49,13 @@ export class Job {
   static create = (prototype: JobPrototype): Job => {
     if (!prototype.id) throw new TypeError('Job must have id');
     if (!prototype.frequency) throw new TypeError('Job must have frequency');
-    if (!prototype.testSuiteId) throw new TypeError('Job must have test suite id');
+    if (!prototype.testSuiteId)
+      throw new TypeError('Job must have test suite id');
 
     const frequency: Frequency = this.#parseFrequency(prototype.frequency);
 
-    const job = new Job({...prototype, frequency});
+    const job = new Job({ ...prototype, frequency });
 
     return job;
   };
-
 }

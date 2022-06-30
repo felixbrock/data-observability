@@ -4,6 +4,7 @@ export const port = process.env.PORT
   ? parseInt(process.env.PORT, 10)
   : defaultPort;
 export const apiRoot = process.env.API_ROOT || 'api';
+export const citoDataOrganizationId = process.env.CITO_ORGANIZATION_ID || '';
 
 const getServiceDiscoveryNamespace = (): string => {
   let namespace = '';

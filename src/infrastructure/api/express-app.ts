@@ -1,7 +1,8 @@
-import express, { Application } from 'express';
+import express, { Application} from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import v1Router from './routes/v1';
+import iocRegister from '../ioc-register';
 import Scheduler from '../scheduler/scheduler';
 
 interface AppConfig {
@@ -19,7 +20,11 @@ export default class ExpressApp {
     this.#config = config;
   }
 
-  start(): Application {
+  start = async (): Promise<Application> => {
+
+    const scheduler = new Scheduler(iocRegister.resolve('readJobs'));
+    scheduler.run();
+
     this.configApp();
 
     this.#expressApp.listen(this.#config.port, () => {
@@ -30,11 +35,8 @@ export default class ExpressApp {
       );
     });
 
-    const scheduler = new Scheduler();
-    scheduler.run();
-
     return this.#expressApp;
-  }
+  };
 
   private configApp(): void {
     this.#expressApp.use(express.json());

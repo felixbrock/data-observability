@@ -8,7 +8,6 @@ import {
   CreateTestSuiteResponseDto,
 } from '../../../domain/test-suite/create-test-suite';
 import { buildTestSuiteDto } from '../../../domain/test-suite/test-suite-dto';
-import { IDb } from '../../../domain/services/i-db';
 
 import {
   BaseController,
@@ -21,23 +20,25 @@ export default class CreateTestSuiteController extends BaseController {
 
   readonly #getAccounts: GetAccounts;
 
-  readonly #db: IDb;
-
-  constructor(createTestSuite: CreateTestSuite, getAccounts: GetAccounts, db: IDb) {
+  constructor(
+    createTestSuite: CreateTestSuite,
+    getAccounts: GetAccounts,
+  ) {
     super();
     this.#createTestSuite = createTestSuite;
     this.#getAccounts = getAccounts;
-    this.#db = db;
   }
 
   #buildRequestDto = (httpRequest: Request): CreateTestSuiteRequestDto => ({
     expecationType: httpRequest.body.expecationType,
     expectationConfiguration: httpRequest.body.expectationConfiguration,
     jobFrequency: httpRequest.body.jobFrequency,
-    targetId: httpRequest.body.targetId
+    targetId: httpRequest.body.targetId,
   });
 
-  #buildAuthDto = (userAccountInfo: UserAccountInfo): CreateTestSuiteAuthDto => ({
+  #buildAuthDto = (
+    userAccountInfo: UserAccountInfo
+  ): CreateTestSuiteAuthDto => ({
     organizationId: userAccountInfo.organizationId,
   });
 
@@ -69,8 +70,8 @@ export default class CreateTestSuiteController extends BaseController {
       //   getUserAccountResult.value
       // );
 
-      const client = this.#db.createClient();
-      const dbConnection = await this.#db.connect(client);
+      console.log(req.db);
+      
 
       const useCaseResult: CreateTestSuiteResponseDto =
         await this.#createTestSuite.execute(
@@ -78,11 +79,8 @@ export default class CreateTestSuiteController extends BaseController {
           {
             organizationId: 'todo',
           },
-          dbConnection
+          req.db
         );
-
-      await this.#db.close(client);
-
       if (!useCaseResult.success) {
         return CreateTestSuiteController.badRequest(res, useCaseResult.error);
       }

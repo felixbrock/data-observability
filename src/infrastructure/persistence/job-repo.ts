@@ -10,10 +10,7 @@ import {
 import sanitize from 'mongo-sanitize';
 
 import { IJobRepo, JobQueryDto } from '../../domain/job/i-job-repo';
-import {
-  Job,
-  JobPrototype,
-} from '../../domain/entities/job';
+import { Job, JobPrototype } from '../../domain/entities/job';
 
 interface JobPersistence {
   _id: ObjectId;
