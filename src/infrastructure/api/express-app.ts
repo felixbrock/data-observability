@@ -1,9 +1,10 @@
-import express, { Application} from 'express';
+import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import v1Router from './routes/v1';
 import iocRegister from '../ioc-register';
 import Scheduler from '../scheduler/scheduler';
+import Dbo from '../persistence/db/mongo-db';
 
 interface AppConfig {
   port: number;
@@ -15,25 +16,36 @@ export default class ExpressApp {
 
   #config: AppConfig;
 
+
   constructor(config: AppConfig) {
     this.#expressApp = express();
     this.#config = config;
   }
 
-  start = async (): Promise<Application> => {
+  start = (): Application => {
+    const dbo: Dbo = iocRegister.resolve('dbo');
 
-    const scheduler = new Scheduler(iocRegister.resolve('readJobs'));
-    scheduler.run();
+    dbo.connectToServer((err) => {
+      if (err) {
+        console.error(err);
+        process.exit();
+      }
 
-    this.configApp();
+      const scheduler = new Scheduler(iocRegister.resolve('readJobs'));
+      console.log(scheduler);
+      
+      scheduler.run();
 
-    this.#expressApp.listen(this.#config.port, () => {
-      console.log(
-        `App listening on port: ${this.#config.port} in ${
-          this.#config.mode
-        } mode`
-      );
+      this.#expressApp.listen(this.#config.port, () => {
+        console.log(
+          `App listening on port: ${this.#config.port} in ${
+            this.#config.mode
+          } mode`
+        );
+      });
+
     });
+    this.configApp();
 
     return this.#expressApp;
   };

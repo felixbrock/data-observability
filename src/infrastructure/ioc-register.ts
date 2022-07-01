@@ -8,6 +8,7 @@ import { CreateTestSuite } from '../domain/test-suite/create-test-suite';
 import TestSuiteRepo from './persistence/test-suite-repo';
 import JobRepo from './persistence/job-repo';
 import { ReadJobs } from '../domain/job/read-jobs';
+import Dbo from './persistence/db/mongo-db';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
@@ -23,6 +24,8 @@ iocRegister.register({
   testSuiteRepo: asClass(TestSuiteRepo),
 
   accountApiRepo: asClass(AccountApiRepo),
+
+  dbo: asClass(Dbo).singleton()
 });
 
 export default iocRegister;

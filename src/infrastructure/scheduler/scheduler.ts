@@ -2,26 +2,31 @@ import { CronJob, CronJobParameters} from 'cron';
 import { citoDataOrganizationId } from '../../config';
 import { Frequency } from '../../domain/entities/job';
 import { ReadJobs } from '../../domain/job/read-jobs';
-import { DbConnection} from '../../domain/services/i-db';
-import { cronJobDbConnection } from '../persistence/db/mongo-db';
+import iocRegister from '../ioc-register';
 
 export default class Scheduler {
 
   readonly #readJobs: ReadJobs;
   
-  #dbConnection: DbConnection;
-
   #onTick = async (frequency: Frequency): Promise<void> => {
-    const result = this.#readJobs.execute(
+    const result = await this.#readJobs.execute(
       { frequency },
       { organizationId: citoDataOrganizationId },
-      this.#dbConnection
+      iocRegister.resolve('dbo').dbConnection
     );
 
-    console.log(result);
+    console.log('--------results----------');
+    
+    console.log(result.value);
   };
 
   #cronJobOption: { [key: string]: CronJobParameters } = {
+    oneSecondCronJobOption: {
+      cronTime: '* * * * * *',
+      onTick: () => {
+        this.#onTick('1h');
+      },
+    },
     oneHourCronJobOption: {
       cronTime: '0 * * * *',
       onTick: () => {
@@ -56,6 +61,7 @@ export default class Scheduler {
   };
 
   #jobs: CronJob[] = [
+    new CronJob(this.#cronJobOption.oneSecondCronJobOption),
     new CronJob(this.#cronJobOption.oneHourCronJobOption),
     new CronJob(this.#cronJobOption.threeHourCronJobOption),
     new CronJob(this.#cronJobOption.sixHourCronJobOption),
@@ -68,7 +74,6 @@ export default class Scheduler {
   }
 
   run = async (): Promise<void> => {
-    this.#dbConnection = await cronJobDbConnection();
 
     this.#jobs.forEach((job) => job.start());
   };
