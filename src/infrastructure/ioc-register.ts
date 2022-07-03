@@ -3,27 +3,30 @@ import { InjectionMode, asClass, createContainer } from 'awilix';
 import AccountApiRepo from './persistence/account-api-repo';
 import { GetAccounts } from '../domain/account-api/get-accounts';
 import { CreateExpectation } from '../domain/test-suite/create-expectation';
-import { CreateJob } from '../domain/job/create-job';
+import { CreateJob } from '../domain/test-suite/create-job';
 import { CreateTestSuite } from '../domain/test-suite/create-test-suite';
 import TestSuiteRepo from './persistence/test-suite-repo';
-import JobRepo from './persistence/job-repo';
-import { ReadJobs } from '../domain/job/read-jobs';
 import Dbo from './persistence/db/mongo-db';
+import { ValidateData } from '../domain/data-validation-api/validate-data';
+import { ReadTestSuites } from '../domain/test-suite/read-test-suites';
+import DataValidationApiRepo from './persistence/data-validation-api-repo';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
 iocRegister.register({
   createExpectation: asClass(CreateExpectation),
   createJob: asClass(CreateJob),
-  readJobs: asClass(ReadJobs),
   createTestSuite: asClass(CreateTestSuite),
 
-  getAccounts: asClass(GetAccounts),
+  readTestSuites: asClass(ReadTestSuites),
 
-  jobRepo: asClass(JobRepo),
+  getAccounts: asClass(GetAccounts),
+  validateData: asClass (ValidateData),
+
   testSuiteRepo: asClass(TestSuiteRepo),
 
   accountApiRepo: asClass(AccountApiRepo),
+  dataValidationApiRepo: asClass(DataValidationApiRepo),
 
   dbo: asClass(Dbo).singleton()
 });

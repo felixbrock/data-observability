@@ -16,7 +16,6 @@ export default class ExpressApp {
 
   #config: AppConfig;
 
-
   constructor(config: AppConfig) {
     this.#expressApp = express();
     this.#config = config;
@@ -31,9 +30,11 @@ export default class ExpressApp {
         process.exit();
       }
 
-      const scheduler = new Scheduler(iocRegister.resolve('readJobs'));
-      console.log(scheduler);
-      
+      const scheduler = new Scheduler(
+        iocRegister.resolve('readTestSuites'),
+        iocRegister.resolve('validateData')
+      );
+
       scheduler.run();
 
       this.#expressApp.listen(this.#config.port, () => {
@@ -43,7 +44,6 @@ export default class ExpressApp {
           } mode`
         );
       });
-
     });
     this.configApp();
 

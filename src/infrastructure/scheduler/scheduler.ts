@@ -1,23 +1,43 @@
-import { CronJob, CronJobParameters} from 'cron';
-import { citoDataOrganizationId } from '../../config';
+import { CronJob, CronJobParameters } from 'cron';
 import { Frequency } from '../../domain/entities/job';
-import { ReadJobs } from '../../domain/job/read-jobs';
+import { ValidateData } from '../../domain/data-validation-api/validate-data';
 import iocRegister from '../ioc-register';
+import { ReadTestSuites } from '../../domain/test-suite/read-test-suites';
 
 export default class Scheduler {
+  readonly #readTestSuites: ReadTestSuites;
 
-  readonly #readJobs: ReadJobs;
-  
+  readonly #validateData: ValidateData;
+
   #onTick = async (frequency: Frequency): Promise<void> => {
-    const result = await this.#readJobs.execute(
-      { frequency },
-      { organizationId: citoDataOrganizationId },
+    console.log('onTick');
+    
+    const readTestSuitesResult = await this.#readTestSuites.execute(
+      { job: {frequency} },
+      { isCronJobRequest: true },
       iocRegister.resolve('dbo').dbConnection
     );
 
+    if (!readTestSuitesResult.success) throw new Error(readTestSuitesResult.error);
+    if (!readTestSuitesResult.value) throw new Error('Reading jobs failed');
+    if (!readTestSuitesResult.value.length) return;
+
+    const testData = { b: [1, 2, 3, 104, 3, 3, 3] };
+    const testSuites = readTestSuitesResult.value;
+
+    console.log(testSuites);
+
+    const results = await Promise.all(testSuites.map(async (testSuite) => {
+      const validateDataResult = await this.#validateData.execute({data: testData, expectationType: testSuite.expectation.type, expectationConfiguration: testSuite.expectation.configuration });
+
+      if (!validateDataResult.success) throw new Error(readTestSuitesResult.error);
+      if (!validateDataResult.value) throw new Error('Reading jobs failed');
+    }));
+
     console.log('--------results----------');
-    
-    console.log(result.value);
+
+    console.log(results.length);
+    console.log(results[0]);
   };
 
   #cronJobOption: { [key: string]: CronJobParameters } = {
@@ -69,12 +89,21 @@ export default class Scheduler {
     new CronJob(this.#cronJobOption.oneDayCronJobOption),
   ];
 
-  constructor(readJobs: ReadJobs) {
-    this.#readJobs = readJobs;
+  constructor(readTestSuites: ReadTestSuites, validateData: ValidateData) {
+    this.#readTestSuites = readTestSuites;
+    this.#validateData = validateData;
   }
 
   run = async (): Promise<void> => {
+    try {
+      this.#jobs.forEach((job) => job.start());
 
-    this.#jobs.forEach((job) => job.start());
+      // if (auth.organizationId !== 'TODO')
+      //   throw new Error('Not authorized to perform action');
+    } catch (error: unknown) {
+      if (typeof error === 'string') console.log(error);
+      if (error instanceof Error) console.log(error.message);
+      console.log('Unknown error occured');
+    }
   };
 }

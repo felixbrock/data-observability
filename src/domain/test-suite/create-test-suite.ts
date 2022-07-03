@@ -6,7 +6,7 @@ import { TestSuite } from '../entities/test-suite';
 import { ITestSuiteRepo } from './i-test-suite-repo';
 import { DbConnection } from '../services/i-db';
 import { CreateExpectation } from './create-expectation';
-import { CreateJob } from '../job/create-job';
+import { CreateJob } from './create-job';
 import { Frequency } from '../entities/job';
 
 export interface CreateTestSuiteRequestDto {
@@ -70,25 +70,24 @@ export class CreateTestSuite
       if (!createExpectationResult.value)
         throw new Error('Creating expectation failed');
 
+        const createJobResult = await this.#createJob.execute(
+          {
+            frequency: request.jobFrequency,
+          },
+          { organizationId: 'todo' },
+        );
+  
+        if (!createJobResult.success) throw new Error(createJobResult.error);
+        if (!createJobResult.value) throw new Error('Creating job failed');
+
       const testSuite = TestSuite.create({
         id: new ObjectId().toHexString(),
         expectation: createExpectationResult.value,
+        job: createJobResult.value,
         targetId: request.targetId
       });
 
       await this.#testSuiteRepo.insertOne(testSuite, this.#dbConnection);
-
-      const createJobResult = await this.#createJob.execute(
-        {
-          frequency: request.jobFrequency,
-          testSuiteId: testSuite.id,
-        },
-        { organizationId: 'todo' },
-        this.#dbConnection
-      );
-
-      if (!createJobResult.success) throw new Error(createJobResult.error);
-      if (!createJobResult.value) throw new Error('Creating job failed');
 
       // if (auth.organizationId !== 'TODO')
       //   throw new Error('Not authorized to perform action');
