@@ -25,6 +25,7 @@ import { Job } from '../../domain/entities/job';
 interface ExpectationPersistence {
   localId: string;
   type: string;
+  testType: string;
   configuration: { [key: string]: string | number };
 }
 
@@ -88,13 +89,13 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
   ): Promise<TestSuite[]> => {
     try {
       if (!Object.keys(queryDto).length) return await this.all(dbConnection);
-     
+         
       const result: FindCursor = await dbConnection
         .collection(collectionName)
         .find(this.#buildFilter(sanitize(queryDto)));
       const results = await result.toArray();
 
-      if (!results || !results.length) return [];
+      if (!results || !results.length) return [];   
 
       return results.map((element: any) =>
         this.#toEntity(this.#buildProperties(element))
@@ -242,6 +243,7 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
         localId: testSuite.expectation.localId,
         configuration: testSuite.expectation.configuration,
         type: testSuite.expectation.type,
+        testType: testSuite.expectation.testType
       },
       job: {
         localId: testSuite.job.localId,

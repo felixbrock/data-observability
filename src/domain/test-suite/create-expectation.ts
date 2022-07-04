@@ -7,7 +7,7 @@ import {
 } from '../entities/expectation';
 
 export interface CreateExpectationRequestDto {
-  type: string;
+  testType: string;
   configuration: {[key: string]: string | number};
 }
 
@@ -35,7 +35,7 @@ export class CreateExpectation
       const expectation = Expectation.create({
         localId: new ObjectId().toHexString(),
         configuration: request.configuration,
-        type: request.type,
+        testType: request.testType
       });
 
       // if (auth.organizationId !== 'TODO')

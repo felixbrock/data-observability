@@ -4,12 +4,14 @@ import { TestSuite } from '../entities/test-suite';
 interface ExpectationDto {
   localId: string;
   type: string;
+  testType: string;
   configuration: {[key: string]: string | number};
 }
 
 const buildExpectationDto = (expectation: Expectation): ExpectationDto => ({
   localId: expectation.localId,
   type: expectation.type,
+  testType: expectation.testType,
   configuration: expectation.configuration,
 });
 

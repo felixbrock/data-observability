@@ -47,7 +47,7 @@ export class ReadTestSuites
         this.#dbConnection
       );
       if (!testSuites) throw new Error(`Queried testSuites do not exist`);
-
+    
       return Result.ok(testSuites);
     } catch (error: unknown) {
       if (typeof error === 'string') return Result.fail(error);

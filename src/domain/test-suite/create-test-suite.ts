@@ -11,7 +11,7 @@ import { Frequency } from '../entities/job';
 
 export interface CreateTestSuiteRequestDto {
   targetId: string;
-  expecationType: string;
+  expecationTestType: string;
   expectationConfiguration: { [key: string]: string | number };
   jobFrequency: Frequency;
 }
@@ -60,7 +60,7 @@ export class CreateTestSuite
       const createExpectationResult = await this.#createExpectation.execute(
         {
           configuration: request.expectationConfiguration,
-          type: request.expecationType,
+          testType: request.expecationTestType,
         },
         { organizationId: 'todo' }
       );

@@ -1,12 +1,13 @@
 export interface ExpectationPrototype {
   localId: string;
-  type: string;
+  testType: string;
   configuration: { [key: string]: string | number };
 }
 
 export interface ExpectationProperties {
   localId: string;
   type: string;
+  testType: string;
   configuration: { [key: string]: string | number };
 }
 
@@ -25,6 +26,8 @@ export class Expectation {
 
   #type: string;
 
+  #testType: string;
+
   #configuration: { [key: string]: string | number };
 
   get localId(): string {
@@ -35,6 +38,10 @@ export class Expectation {
     return this.#type;
   }
 
+  get testType(): string {
+    return this.#testType;
+  }
+
   get configuration(): { [key: string]: string | number } {
     return this.#configuration;
   }
@@ -42,12 +49,13 @@ export class Expectation {
   private constructor(properties: ExpectationProperties) {
     this.#localId = properties.localId;
     this.#type = properties.type;
+    this.#testType = properties.testType;
     this.#configuration = properties.configuration;
   }
 
   static create = (prototype: ExpectationPrototype): Expectation => {
     if (!prototype.localId) throw new TypeError('Expectation must have id');
-    if (!prototype.type) throw new TypeError('Expectation must have type');
+    if (!prototype.testType) throw new TypeError('Expectation must have test type');
     if (!prototype.configuration)
       throw new TypeError('Expectation must have configuration');
 
@@ -55,14 +63,15 @@ export class Expectation {
   };
 
   static #build = (prototype: ExpectationPrototype): Expectation => {
-    if (!(prototype.type in expecationType))
+    if (!(prototype.testType in expecationType))
       throw new TypeError('Invalid test type provided');
 
     // todo - type test configuration object
 
     const properties: ExpectationProperties = {
       localId: prototype.localId,
-      type: expecationType[prototype.type],
+      type: expecationType[prototype.testType],
+      testType: prototype.testType,
       configuration: prototype.configuration,
     };
 
