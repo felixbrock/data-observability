@@ -14,7 +14,7 @@ export default class Scheduler {
     
     const readTestSuitesResult = await this.#readTestSuites.execute(
       { job: {frequency} },
-      { isCronJobRequest: true },
+      { },
       iocRegister.resolve('dbo').dbConnection
     );
 

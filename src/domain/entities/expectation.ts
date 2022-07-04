@@ -1,8 +1,24 @@
+export interface ExpectationPrototype {
+  localId: string;
+  type: string;
+  configuration: { [key: string]: string | number };
+}
+
 export interface ExpectationProperties {
   localId: string;
   type: string;
   configuration: { [key: string]: string | number };
 }
+
+const expecationType: { [key: string]: string } = {
+  Freshness: 'expect_column_max_to_be_between',
+  Cardinality: 'expect_column_unique_value_count_to_be_between',
+  Uniqueness: 'expect_column_proportion_of_unique_values_to_be_between',
+  Nullness: 'expect_column_values_to_not_be_null',
+  SortednessIncreasing: 'expect_column_values_to_be_increasing',
+  SortednessDecreasing: 'expect_column_values_to_be_decreasing',
+  Distribution: 'expect_column_value_z_scores_to_be_less_than',
+};
 
 export class Expectation {
   #localId: string;
@@ -29,15 +45,27 @@ export class Expectation {
     this.#configuration = properties.configuration;
   }
 
-  static create = (properties: ExpectationProperties): Expectation => {
-    if (!properties.localId) throw new TypeError('Expectation must have id');
-    if (!properties.type) throw new TypeError('Expectation must have type');
-    if (!properties.configuration)
+  static create = (prototype: ExpectationPrototype): Expectation => {
+    if (!prototype.localId) throw new TypeError('Expectation must have id');
+    if (!prototype.type) throw new TypeError('Expectation must have type');
+    if (!prototype.configuration)
       throw new TypeError('Expectation must have configuration');
 
+    return this.#build(prototype);
+  };
 
-    const expectation = new Expectation(properties);
+  static #build = (prototype: ExpectationPrototype): Expectation => {
+    if (!(prototype.type in expecationType))
+      throw new TypeError('Invalid test type provided');
 
-    return expectation;
+    // todo - type test configuration object
+
+    const properties: ExpectationProperties = {
+      localId: prototype.localId,
+      type: expecationType[prototype.type],
+      configuration: prototype.configuration,
+    };
+
+    return new Expectation(properties);
   };
 }

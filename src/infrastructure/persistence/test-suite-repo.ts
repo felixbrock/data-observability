@@ -6,12 +6,14 @@ import {
   InsertManyResult,
   InsertOneResult,
   ObjectId,
+  UpdateResult,
 } from 'mongodb';
 import sanitize from 'mongo-sanitize';
 
 import {
   ITestSuiteRepo,
   TestSuiteQueryDto,
+  TestSuiteUpdateDto,
 } from '../../domain/test-suite/i-test-suite-repo';
 import {
   TestSuite,
@@ -39,10 +41,17 @@ interface TestSuitePersistence {
 }
 
 interface JobQueryFilter {
-  'job.frequency': string;
+  'job.frequency'?: string;
 }
 
-type TestSuiteQueryFilter = JobQueryFilter;
+interface TestSuiteQueryFilter extends JobQueryFilter{
+  targetId?: string;
+};
+
+interface TestSuiteUpdateFilter {
+  $set: { [key: string]: any };
+  $push: { [key: string]: any };
+}
 
 const collectionName = 'testSuite';
 
@@ -65,8 +74,11 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
 
   #buildFilter = (queryDto: TestSuiteQueryDto): TestSuiteQueryFilter => {
     const filter: TestSuiteQueryFilter = 
-      { 'job.frequency': queryDto.job.frequency };
+      { };
 
+    if(queryDto.job) filter['job.frequency'] = queryDto.job.frequency;
+    if(queryDto.targetId) filter.targetId = queryDto.targetId;
+    
     return filter;
   };
 
@@ -155,6 +167,42 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
       if (error instanceof Error) return Promise.reject(error.message);
       return Promise.reject(new Error('Unknown error occured'));
     }
+  };
+
+  updateOne = async (
+    id: string,
+    updateDto: TestSuiteUpdateDto,
+    dbConnection: Db
+  ): Promise<string> => {
+    try {
+      const result: Document | UpdateResult = await dbConnection
+        .collection(collectionName)
+        .updateOne(
+          { _id: new ObjectId(sanitize(id)) },
+          this.#buildUpdateFilter(sanitize(updateDto))
+        );
+
+      if (!result.acknowledged)
+        throw new Error('Test suite update failed. Update not acknowledged');
+
+      return result.upsertedId;
+    } catch (error: unknown) {
+      if (typeof error === 'string') return Promise.reject(error);
+      if (error instanceof Error) return Promise.reject(error.message);
+      return Promise.reject(new Error('Unknown error occured'));
+    }
+  };
+
+  #buildUpdateFilter = (
+    updateDto: TestSuiteUpdateDto
+  ): TestSuiteUpdateFilter => {
+    const setFilter: { [key: string]: any } = {};
+    const pushFilter: { [key: string]: any } = {};
+
+    if (updateDto.activated)
+      setFilter.content = updateDto.activated;
+
+    return { $set: setFilter, $push: pushFilter };
   };
 
   deleteOne = async (id: string, dbConnection: Db): Promise<string> => {

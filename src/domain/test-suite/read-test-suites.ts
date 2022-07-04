@@ -5,11 +5,13 @@ import Result from '../value-types/transient-types/result';
 import { ITestSuiteRepo, TestSuiteQueryDto } from './i-test-suite-repo';
 
 export interface ReadTestSuitesRequestDto {
-  job: { frequency: string };
+  targetId?: string;
+  job?: { frequency: string };
 }
 
 export interface ReadTestSuitesAuthDto {
-  isCronJobRequest: boolean;
+  // todo - secure? optional due to organization agnostic cron job requests
+  organizationId?: string;
 }
 
 export type ReadTestSuitesResponseDto = Result<TestSuite[]>;
@@ -37,12 +39,11 @@ export class ReadTestSuites
     dbConnection: DbConnection
   ): Promise<ReadTestSuitesResponseDto> {
     try {
-      if(!auth.isCronJobRequest) throw new Error('Unauthorized call'); 
 
       this.#dbConnection = dbConnection;
 
       const testSuites: TestSuite[] = await this.#testSuiteRepo.findBy(
-        this.#buildTestSuiteQueryDto(request),
+        this.#buildTestSuiteQueryDto(request, auth.organizationId),
         this.#dbConnection
       );
       if (!testSuites) throw new Error(`Queried testSuites do not exist`);
@@ -57,11 +58,15 @@ export class ReadTestSuites
 
   #buildTestSuiteQueryDto = (
     request: ReadTestSuitesRequestDto,
+    organizationId :string | undefined
   ): TestSuiteQueryDto => {
+    console.log(organizationId);
+    
 
-    const queryDto: TestSuiteQueryDto = {
-      job: { frequency: request.job.frequency },
-    };
+    const queryDto: TestSuiteQueryDto = {};
+
+    if (request.job) queryDto.job = {frequency: request.job.frequency};
+    if (request.targetId) queryDto.targetId = request.targetId;
 
     // todo - add organizationId
     // queryDto.organizationId = organizationId;
