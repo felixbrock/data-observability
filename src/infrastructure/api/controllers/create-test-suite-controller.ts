@@ -8,7 +8,7 @@ import {
   CreateTestSuiteResponseDto,
 } from '../../../domain/test-suite/create-test-suite';
 import { buildTestSuiteDto } from '../../../domain/test-suite/test-suite-dto';
-import iocRegister from '../../ioc-register';
+import Dbo from '../../persistence/db/mongo-db';
 
 import {
   BaseController,
@@ -21,10 +21,13 @@ export default class CreateTestSuiteController extends BaseController {
 
   readonly #getAccounts: GetAccounts;
 
-  constructor(createTestSuite: CreateTestSuite, getAccounts: GetAccounts) {
+  readonly #dbo: Dbo;
+
+  constructor(createTestSuite: CreateTestSuite, getAccounts: GetAccounts, dbo: Dbo) {
     super();
     this.#createTestSuite = createTestSuite;
     this.#getAccounts = getAccounts;
+    this.#dbo = dbo;
   }
 
   #buildRequestDto = (httpRequest: Request): CreateTestSuiteRequestDto => ({
@@ -72,7 +75,7 @@ export default class CreateTestSuiteController extends BaseController {
           {
             organizationId: 'todo',
           },
-          iocRegister.resolve('dbo').dbConnection
+          this.#dbo.dbConnection
         );
 
 

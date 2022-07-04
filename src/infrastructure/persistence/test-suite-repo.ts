@@ -39,12 +39,10 @@ interface TestSuitePersistence {
 }
 
 interface JobQueryFilter {
-  frequency: string;
+  'job.frequency': string;
 }
 
-interface TestSuiteQueryFilter {
-  job: JobQueryFilter;
-}
+type TestSuiteQueryFilter = JobQueryFilter;
 
 const collectionName = 'testSuite';
 
@@ -66,9 +64,8 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
   };
 
   #buildFilter = (queryDto: TestSuiteQueryDto): TestSuiteQueryFilter => {
-    const filter: TestSuiteQueryFilter = {
-      job: { frequency: queryDto.job.frequency },
-    };
+    const filter: TestSuiteQueryFilter = 
+      { 'job.frequency': queryDto.job.frequency };
 
     return filter;
   };
@@ -79,7 +76,7 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
   ): Promise<TestSuite[]> => {
     try {
       if (!Object.keys(queryDto).length) return await this.all(dbConnection);
-
+     
       const result: FindCursor = await dbConnection
         .collection(collectionName)
         .find(this.#buildFilter(sanitize(queryDto)));

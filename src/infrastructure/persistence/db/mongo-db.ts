@@ -27,27 +27,3 @@ export default class Dbo {
   };
 
 };
-
-
-// const getClient = (): MongoClient =>
-
-
-// export const routerDbConnection = (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): void => {
-//   getClient()
-//     .connect()
-//     .then((connectedClient) => {
-//       // req.db = connectedClient.db(appConfig.mongodb.dbName);
-//       req.db = connectedClient;
-//       next();
-//     })
-//     .catch((err) => next(err));
-// };
-
-// export const cronJobDbConnection = async (): Promise<Db> => {
-//   const connectedClient = await getClient().connect();
-//   return connectedClient.db(appConfig.mongodb.dbName);
-// };

@@ -10,13 +10,16 @@ export default class Scheduler {
   readonly #validateData: ValidateData;
 
   #onTick = async (frequency: Frequency): Promise<void> => {
-    console.log('onTick');
+    console.log(frequency);   
     
     const readTestSuitesResult = await this.#readTestSuites.execute(
       { job: {frequency} },
       { isCronJobRequest: true },
       iocRegister.resolve('dbo').dbConnection
     );
+
+    console.log(readTestSuitesResult.value);
+    
 
     if (!readTestSuitesResult.success) throw new Error(readTestSuitesResult.error);
     if (!readTestSuitesResult.value) throw new Error('Reading jobs failed');
@@ -30,6 +33,8 @@ export default class Scheduler {
     const results = await Promise.all(testSuites.map(async (testSuite) => {
       const validateDataResult = await this.#validateData.execute({data: testData, expectationType: testSuite.expectation.type, expectationConfiguration: testSuite.expectation.configuration });
 
+      console.log(validateDataResult.success, validateDataResult.error);
+      
       if (!validateDataResult.success) throw new Error(readTestSuitesResult.error);
       if (!validateDataResult.value) throw new Error('Reading jobs failed');
     }));
