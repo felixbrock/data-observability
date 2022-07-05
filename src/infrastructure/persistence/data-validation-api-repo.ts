@@ -22,8 +22,6 @@ export default class DataValidationApiRepo implements IDataValidationApiRepo {
         validationDto
       );
       
-      console.log(response);
-
       const jsonResponse = response.data;
       if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);

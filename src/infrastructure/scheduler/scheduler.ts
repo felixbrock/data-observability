@@ -3,14 +3,43 @@ import { Frequency } from '../../domain/entities/job';
 import { ValidateData } from '../../domain/data-validation-api/validate-data';
 import { ReadTestSuites } from '../../domain/test-suite/read-test-suites';
 import Dbo from '../persistence/db/mongo-db';
-import { CreateDataValidationResult } from '../../domain/data-validation-result/create-data-validation-result';
+import { CreateTestExecution } from '../../domain/test-execution/create-test-execution';
+import { SlackMessage } from '../../domain/slack-api/slack-message-dto';
+import { TestSuite } from '../../domain/entities/test-suite';
+import { DataValidationResult } from '../../domain/value-types/test-execution';
+
+const createAlertMessage = async (
+  testSuite: TestSuite,
+  dataValidationResult: DataValidationResult
+): Promise<SlackMessage> => {
+  const columnName = testSuite.expectation.configuration.column;
+  const tableName = 'todo';
+  const executionTime = dataValidationResult.meta.run_id.run_time;
+  const { testType } = testSuite.expectation;
+
+  const deviation = -999999999999;
+  const testedValueCount =
+    dataValidationResult.results[0].result.element_count;
+  const unexpectedValues =
+    dataValidationResult.results[0].result.partial_unexpected_list;
+
+  return {
+    columnName: typeof columnName === 'string' ? columnName : 'todo',
+    tableName,
+    executionTime: typeof executionTime === 'string' ? executionTime : 'todo',
+    testType,
+    deviation,
+    testedValueCount,
+    unexpectedValues,
+  };
+};
 
 export default class Scheduler {
   readonly #readTestSuites: ReadTestSuites;
 
   readonly #validateData: ValidateData;
 
-  readonly #createDataValidationResult: CreateDataValidationResult;
+  readonly #createTestExecution: CreateTestExecution;
 
   readonly #dbo: Dbo;
 
@@ -43,20 +72,29 @@ export default class Scheduler {
           throw new Error(readTestSuitesResult.error);
         if (!validateDataResult.value) throw new Error('Reading jobs failed');
 
-        const createDataValidationResultResult =
-          await this.#createDataValidationResult.execute(
+        const dataValidationResult = validateDataResult.value;
+
+        const createTestExecutionResult =
+          await this.#createTestExecution.execute(
             {
               testSuiteId: testSuite.id,
-              testEngineResult: validateDataResult.value,
+              dataValidationResult,
             },
             { organizationId: 'todo' },
             this.#dbo.dbConnection
           );
 
-        if (!createDataValidationResultResult.success)
-          throw new Error(createDataValidationResultResult.error);
-        if (!createDataValidationResultResult.value)
+        if (!createTestExecutionResult.success)
+          throw new Error(createTestExecutionResult.error);
+        if (!createTestExecutionResult.value)
           throw new Error('Creating data validation result failed');
+
+        const alertMessage = createAlertMessage(
+          testSuite,
+          validateDataResult.value
+        );
+
+        console.log(alertMessage);
       })
     );
 
@@ -115,12 +153,12 @@ export default class Scheduler {
   constructor(
     readTestSuites: ReadTestSuites,
     validateData: ValidateData,
-    createDataValidationResult: CreateDataValidationResult,
+    createTestExecution: CreateTestExecution,
     dbo: Dbo
   ) {
     this.#readTestSuites = readTestSuites;
     this.#validateData = validateData;
-    this.#createDataValidationResult = createDataValidationResult;
+    this.#createTestExecution = createTestExecution;
     this.#dbo = dbo;
   }
 

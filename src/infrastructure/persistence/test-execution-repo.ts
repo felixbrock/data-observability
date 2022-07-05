@@ -1,26 +1,27 @@
 import { Db, Document, InsertOneResult, ObjectId } from 'mongodb';
 import sanitize from 'mongo-sanitize';
 
-import { IDataValidationResultRepo } from '../../domain/data-validation-result/i-data-validation-result-repo';
+import { ITestExecutionRepo } from '../../domain/test-execution/i-test-execution-repo';
 import {
   DataValidationResult,
-  DataValidationResultProperties,
-} from '../../domain/value-types/data-validation-result';
+  TestExecution,
+  TestExecutionProperties,
+} from '../../domain/value-types/test-execution';
 
-interface DataValidationResultPersistence {
+interface TestExecutionPersistence {
   testSuiteId: string;
-  testEngineResult: { [key: string | number | symbol]: unknown };
+  dataValidationResult: DataValidationResult;
 }
 
-const collectionName = 'dataValidationResult';
+const collectionName = 'testExecution';
 
-export default class DataValidationResultRepo
-  implements IDataValidationResultRepo
+export default class TestExecutionRepo
+  implements ITestExecutionRepo
 {
   findOne = async (
     id: string,
     dbConnection: Db
-  ): Promise<DataValidationResult | null> => {
+  ): Promise<TestExecution | null> => {
     try {
       const result: any = await dbConnection
         .collection(collectionName)
@@ -37,17 +38,17 @@ export default class DataValidationResultRepo
   };
 
   insertOne = async (
-    dataValidationResult: DataValidationResult,
+    testExecution: TestExecution,
     dbConnection: Db
   ): Promise<string> => {
     try {
       const result: InsertOneResult<Document> = await dbConnection
         .collection(collectionName)
-        .insertOne(this.#toPersistence(sanitize(dataValidationResult)));
+        .insertOne(this.#toPersistence(sanitize(testExecution)));
 
       if (!result.acknowledged)
         throw new Error(
-          'DataValidationResult creation failed. Insert not acknowledged'
+          'TestExecution creation failed. Insert not acknowledged'
         );
 
       return result.insertedId.toHexString();
@@ -59,20 +60,20 @@ export default class DataValidationResultRepo
   };
 
   #toEntity = (
-    properties: DataValidationResultProperties
-  ): DataValidationResult => DataValidationResult.create(properties);
+    properties: TestExecutionProperties
+  ): TestExecution => TestExecution.create(properties);
 
   #buildProperties = (
-    dataValidationResult: DataValidationResultPersistence
-  ): DataValidationResultProperties => ({
-    testSuiteId: dataValidationResult.testSuiteId,
-    testEngineResult: dataValidationResult.testEngineResult,
+    testExecution: TestExecutionPersistence
+  ): TestExecutionProperties => ({
+    testSuiteId: testExecution.testSuiteId,
+    dataValidationResult: testExecution.dataValidationResult,
   });
 
-  #toPersistence = (dataValidationResult: DataValidationResult): Document => {
-    const persistenceObject: DataValidationResultPersistence = {
-      testSuiteId: dataValidationResult.testSuiteId,
-      testEngineResult: dataValidationResult.testEngineResult,
+  #toPersistence = (testExecution: TestExecution): Document => {
+    const persistenceObject: TestExecutionPersistence = {
+      testSuiteId: testExecution.testSuiteId,
+      dataValidationResult: testExecution.dataValidationResult,
     };
 
     return persistenceObject;
