@@ -11,6 +11,7 @@ import { Frequency } from '../entities/job';
 
 export interface CreateTestSuiteRequestDto {
   targetId: string;
+  activated: boolean;
   expecationTestType: string;
   expectationConfiguration: { [key: string]: string | number };
   jobFrequency: Frequency;
@@ -82,6 +83,7 @@ export class CreateTestSuite
 
       const testSuite = TestSuite.create({
         id: new ObjectId().toHexString(),
+        activated: request.activated,
         expectation: createExpectationResult.value,
         job: createJobResult.value,
         targetId: request.targetId

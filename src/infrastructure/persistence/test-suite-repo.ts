@@ -36,6 +36,7 @@ interface JobPersistence {
 
 interface TestSuitePersistence {
   _id: ObjectId;
+  activated: boolean;
   expectation: ExpectationPersistence;
   job: JobPersistence;
   targetId: string;
@@ -47,6 +48,7 @@ interface JobQueryFilter {
 
 interface TestSuiteQueryFilter extends JobQueryFilter{
   targetId?: string;
+  activated?: boolean;
 };
 
 interface TestSuiteUpdateFilter {
@@ -77,6 +79,7 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
     const filter: TestSuiteQueryFilter = 
       { };
 
+    if(queryDto.activated) filter.activated = queryDto.activated;
     if(queryDto.job) filter['job.frequency'] = queryDto.job.frequency;
     if(queryDto.targetId) filter.targetId = queryDto.targetId;
     
@@ -89,7 +92,7 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
   ): Promise<TestSuite[]> => {
     try {
       if (!Object.keys(queryDto).length) return await this.all(dbConnection);
-         
+      
       const result: FindCursor = await dbConnection
         .collection(collectionName)
         .find(this.#buildFilter(sanitize(queryDto)));
@@ -170,6 +173,18 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
     }
   };
 
+  #buildUpdateFilter = (
+    updateDto: TestSuiteUpdateDto
+  ): TestSuiteUpdateFilter => {
+    const setFilter: { [key: string]: any } = {};
+    const pushFilter: { [key: string]: any } = {};
+
+    if (updateDto.activated)
+      setFilter.activated = updateDto.activated;
+
+    return { $set: setFilter, $push: pushFilter };
+  };
+
   updateOne = async (
     id: string,
     updateDto: TestSuiteUpdateDto,
@@ -194,17 +209,6 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
     }
   };
 
-  #buildUpdateFilter = (
-    updateDto: TestSuiteUpdateDto
-  ): TestSuiteUpdateFilter => {
-    const setFilter: { [key: string]: any } = {};
-    const pushFilter: { [key: string]: any } = {};
-
-    if (updateDto.activated)
-      setFilter.content = updateDto.activated;
-
-    return { $set: setFilter, $push: pushFilter };
-  };
 
   deleteOne = async (id: string, dbConnection: Db): Promise<string> => {
     try {
@@ -231,6 +235,7 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
   ): TestSuiteProperties => ({
     // eslint-disable-next-line no-underscore-dangle
     id: testSuite._id.toHexString(),
+    activated: testSuite.activated,
     expectation: Expectation.create({ ...testSuite.expectation }),
     job: Job.create({ ...testSuite.job }),
     targetId: testSuite.targetId,
@@ -239,6 +244,7 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
   #toPersistence = (testSuite: TestSuite): Document => {
     const persistenceObject: TestSuitePersistence = {
       _id: ObjectId.createFromHexString(testSuite.id),
+      activated: testSuite.activated,
       expectation: {
         localId: testSuite.expectation.localId,
         configuration: testSuite.expectation.configuration,

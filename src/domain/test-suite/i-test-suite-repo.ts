@@ -8,6 +8,7 @@ interface JobQueryDto {
 export interface TestSuiteQueryDto {
   job?: JobQueryDto;
   targetId?: string;
+  activated?: boolean;
 }
 
 export interface TestSuiteUpdateDto {

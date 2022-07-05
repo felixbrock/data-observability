@@ -5,6 +5,7 @@ import Result from '../value-types/transient-types/result';
 import { ITestSuiteRepo, TestSuiteQueryDto } from './i-test-suite-repo';
 
 export interface ReadTestSuitesRequestDto {
+  activated?: boolean;  
   targetId?: string;
   job?: { frequency: string };
 }
@@ -47,7 +48,7 @@ export class ReadTestSuites
         this.#dbConnection
       );
       if (!testSuites) throw new Error(`Queried testSuites do not exist`);
-    
+       
       return Result.ok(testSuites);
     } catch (error: unknown) {
       if (typeof error === 'string') return Result.fail(error);
@@ -67,6 +68,7 @@ export class ReadTestSuites
 
     if (request.job) queryDto.job = {frequency: request.job.frequency};
     if (request.targetId) queryDto.targetId = request.targetId;
+    if (request.activated) queryDto.activated = request.activated;
 
     // todo - add organizationId
     // queryDto.organizationId = organizationId;

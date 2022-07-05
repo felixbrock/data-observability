@@ -1,6 +1,17 @@
 import { Expectation } from '../entities/expectation';
+import { Job } from '../entities/job';
 import { TestSuite } from '../entities/test-suite';
 
+
+interface JobDto {
+  localId: string;
+  frequency: string;
+}
+
+const buildJobDto = (job: Job): JobDto => ({
+  localId: job.localId,
+  frequency: job.frequency
+});
 interface ExpectationDto {
   localId: string;
   type: string;
@@ -17,10 +28,16 @@ const buildExpectationDto = (expectation: Expectation): ExpectationDto => ({
 
 export interface TestSuiteDto {
   id: string;
+  activated: boolean;
   expectation: ExpectationDto;
+  job: JobDto;
+  targetId: string;
 }
 
 export const buildTestSuiteDto = (testSuite: TestSuite): TestSuiteDto => ({
   id: testSuite.id,
+  activated: testSuite.activated,
   expectation: buildExpectationDto(testSuite.expectation),
+  job: buildJobDto(testSuite.job),
+  targetId: testSuite.targetId
 });

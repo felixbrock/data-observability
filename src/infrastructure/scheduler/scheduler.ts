@@ -10,17 +10,14 @@ export default class Scheduler {
   readonly #validateData: ValidateData;
 
   #onTick = async (frequency: Frequency): Promise<void> => {
-    console.log(frequency);   
+    console.log('Running job');   
     
     const readTestSuitesResult = await this.#readTestSuites.execute(
-      { job: {frequency} },
+      { job: {frequency}, activated:true },
       { },
       iocRegister.resolve('dbo').dbConnection
     );
-
-    console.log(readTestSuitesResult.value);
-    
-
+   
     if (!readTestSuitesResult.success) throw new Error(readTestSuitesResult.error);
     if (!readTestSuitesResult.value) throw new Error('Reading jobs failed');
     if (!readTestSuitesResult.value.length) return;
@@ -28,21 +25,16 @@ export default class Scheduler {
     const testData = { b: [1, 2, 3, 104, 3, 3, 3] };
     const testSuites = readTestSuitesResult.value;
 
-    console.log(testSuites);
-
     const results = await Promise.all(testSuites.map(async (testSuite) => {
       const validateDataResult = await this.#validateData.execute({data: testData, expectationType: testSuite.expectation.type, expectationConfiguration: testSuite.expectation.configuration });
-
-      console.log(validateDataResult.success, validateDataResult.error);
       
       if (!validateDataResult.success) throw new Error(readTestSuitesResult.error);
       if (!validateDataResult.value) throw new Error('Reading jobs failed');
+      return validateDataResult.value;
     }));
 
     console.log('--------results----------');
-
-    console.log(results.length);
-    console.log(results[0]);
+    console.log(results);
   };
 
   #cronJobOption: { [key: string]: CronJobParameters } = {

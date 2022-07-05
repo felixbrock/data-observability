@@ -23,7 +23,11 @@ export default class ReadTestSuitesController extends BaseController {
 
   readonly #dbo: Dbo;
 
-  constructor(readTestSuites: ReadTestSuites, getAccounts: GetAccounts, dbo: Dbo) {
+  constructor(
+    readTestSuites: ReadTestSuites,
+    getAccounts: GetAccounts,
+    dbo: Dbo
+  ) {
     super();
     this.#readTestSuites = readTestSuites;
     this.#getAccounts = getAccounts;
@@ -31,24 +35,26 @@ export default class ReadTestSuitesController extends BaseController {
   }
 
   #buildRequestDto = (httpRequest: Request): ReadTestSuitesRequestDto => {
-    const { targetId } =
-      httpRequest.query;
+    const { targetId, activated } = httpRequest.query;
 
-    if (!targetId)
+    if (
+      activated &&
+      typeof activated === 'string' &&
+      !['true', 'false'].includes(activated)
+    )
       throw new TypeError(
-        'Target Id must be provided'
-      );
-    if (typeof targetId !== 'string')
-      throw new TypeError(
-        'Target id must be of type string'
+        "activated query parameter must either be 'true' or 'false'"
       );
 
     return {
-      targetId
+      targetId: typeof targetId === 'string' ? targetId : undefined,
+      activated: activated === 'true',
     };
   };
 
-  #buildAuthDto = (userAccountInfo: UserAccountInfo): ReadTestSuitesAuthDto => ({
+  #buildAuthDto = (
+    userAccountInfo: UserAccountInfo
+  ): ReadTestSuitesAuthDto => ({
     organizationId: userAccountInfo.organizationId,
   });
 
@@ -101,7 +107,8 @@ export default class ReadTestSuitesController extends BaseController {
     } catch (error: unknown) {
       if (typeof error === 'string')
         return ReadTestSuitesController.fail(res, error);
-      if (error instanceof Error) return ReadTestSuitesController.fail(res, error);
+      if (error instanceof Error)
+        return ReadTestSuitesController.fail(res, error);
       return ReadTestSuitesController.fail(res, 'Unknown error occured');
     }
   }

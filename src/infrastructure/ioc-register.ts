@@ -10,6 +10,8 @@ import Dbo from './persistence/db/mongo-db';
 import { ValidateData } from '../domain/data-validation-api/validate-data';
 import { ReadTestSuites } from '../domain/test-suite/read-test-suites';
 import DataValidationApiRepo from './persistence/data-validation-api-repo';
+import { ReadTestSuite } from '../domain/test-suite/read-test-suite';
+import { UpdateTestSuite } from '../domain/test-suite/update-test-suite';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
@@ -18,7 +20,10 @@ iocRegister.register({
   createJob: asClass(CreateJob),
   createTestSuite: asClass(CreateTestSuite),
 
+  readTestSuite: asClass(ReadTestSuite),
   readTestSuites: asClass(ReadTestSuites),
+
+  updateTestSuite: asClass(UpdateTestSuite),
 
   getAccounts: asClass(GetAccounts),
   validateData: asClass (ValidateData),
