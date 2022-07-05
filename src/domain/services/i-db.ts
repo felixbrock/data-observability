@@ -1,1 +1,1 @@
-export type DbConnection = any;
+export type DbConnection = unknown;

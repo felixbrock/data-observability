@@ -52,8 +52,8 @@ interface TestSuiteQueryFilter extends JobQueryFilter{
 };
 
 interface TestSuiteUpdateFilter {
-  $set: { [key: string]: any };
-  $push: { [key: string]: any };
+  $set: { [key: string]: unknown };
+  $push: { [key: string]: unknown };
 }
 
 const collectionName = 'testSuite';
@@ -176,8 +176,8 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
   #buildUpdateFilter = (
     updateDto: TestSuiteUpdateDto
   ): TestSuiteUpdateFilter => {
-    const setFilter: { [key: string]: any } = {};
-    const pushFilter: { [key: string]: any } = {};
+    const setFilter: { [key: string]: unknown } = {};
+    const pushFilter: { [key: string]: unknown } = {};
 
     if (updateDto.activated)
       setFilter.activated = updateDto.activated;

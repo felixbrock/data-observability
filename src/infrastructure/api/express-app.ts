@@ -32,7 +32,9 @@ export default class ExpressApp {
 
       const scheduler = new Scheduler(
         iocRegister.resolve('readTestSuites'),
-        iocRegister.resolve('validateData')
+        iocRegister.resolve('validateData'),
+        iocRegister.resolve('createDataValidationResult'),
+        iocRegister.resolve('dbo'),
       );
 
       scheduler.run();

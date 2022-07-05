@@ -3,7 +3,6 @@ import { ObjectId } from 'mongodb';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { Frequency, Job } from '../entities/job';
-import { DbConnection } from '../services/i-db';
 
 export interface CreateJobRequestDto {
   frequency: Frequency;
@@ -17,7 +16,7 @@ export type CreateJobResponseDto = Result<Job>;
 
 export class CreateJob
   implements
-    IUseCase<CreateJobRequestDto, CreateJobResponseDto, CreateJobAuthDto, DbConnection>
+    IUseCase<CreateJobRequestDto, CreateJobResponseDto, CreateJobAuthDto>
 {
   async execute(
     request: CreateJobRequestDto,

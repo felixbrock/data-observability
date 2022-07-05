@@ -13,7 +13,7 @@ export default class Dbo {
 		return this.#dbConnection;
 	}
 
-	connectToServer = (callback: (err?: any) => any): any => {
+	connectToServer = (callback: (err?: unknown) => unknown): any => {
     this.#client.connect((err, db) =>  {
       if (err || !db) {
         return callback(err);

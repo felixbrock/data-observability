@@ -1,27 +1,39 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { IDataValidationApiRepo, DataValidationResultDto } from './i-data-validation-api-repo';
-import { Data, ExpectationConfiguration} from './data-validation-dto';
+import {
+  IDataValidationApiRepo,
+  DataValidationResultDto,
+} from './i-data-validation-api-repo';
+import { Data, ExpectationConfiguration } from './data-validation-dto';
 
 export interface ValidateDataRequestDto {
   expectationType: string;
   expectationConfiguration: ExpectationConfiguration;
-  data: Data
+  data: Data;
 }
 
 export interface ValidateDataAuthDto {
-  isCronJobRequest: boolean;
+  // todo - secure? optional due to organization agnostic cron job requests
+  organizationId?: string;
 }
 
 export type ValidateDataResponseDto = Result<DataValidationResultDto>;
 
 export class ValidateData
   implements
-    IUseCase<ValidateDataRequestDto, ValidateDataResponseDto, ValidateDataAuthDto>
+    IUseCase<
+      ValidateDataRequestDto,
+      ValidateDataResponseDto,
+      ValidateDataAuthDto
+    >
 {
   readonly #dataValidationApiRepo: IDataValidationApiRepo;
 
-  constructor(dataValidationApiRepo: IDataValidationApiRepo) {
+
+
+  constructor(
+    dataValidationApiRepo: IDataValidationApiRepo,
+  ) {
     this.#dataValidationApiRepo = dataValidationApiRepo;
   }
 
@@ -30,9 +42,11 @@ export class ValidateData
   ): Promise<ValidateDataResponseDto> {
     try {
       const validationResult: DataValidationResultDto =
-        await this.#dataValidationApiRepo.validate(
-          {...request}
-        );
+        await this.#dataValidationApiRepo.validate({
+          expectationType: request.expectationType,
+          expectationConfiguration: request.expectationConfiguration,
+          data: request.data,
+        });
 
       return Result.ok(validationResult);
     } catch (error: unknown) {

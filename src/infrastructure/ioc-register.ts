@@ -12,11 +12,14 @@ import { ReadTestSuites } from '../domain/test-suite/read-test-suites';
 import DataValidationApiRepo from './persistence/data-validation-api-repo';
 import { ReadTestSuite } from '../domain/test-suite/read-test-suite';
 import { UpdateTestSuite } from '../domain/test-suite/update-test-suite';
+import DataValidationResultRepo from './persistence/data-validation-result-repo';
+import { CreateDataValidationResult } from '../domain/data-validation-result/create-data-validation-result';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
 iocRegister.register({
   createExpectation: asClass(CreateExpectation),
+  createDataValidationResult: asClass(CreateDataValidationResult),
   createJob: asClass(CreateJob),
   createTestSuite: asClass(CreateTestSuite),
 
@@ -29,6 +32,7 @@ iocRegister.register({
   validateData: asClass (ValidateData),
 
   testSuiteRepo: asClass(TestSuiteRepo),
+  dataValidationResultRepo: asClass(DataValidationResultRepo),
 
   accountApiRepo: asClass(AccountApiRepo),
   dataValidationApiRepo: asClass(DataValidationApiRepo),
