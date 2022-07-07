@@ -1,5 +1,5 @@
-import { Expectation } from "./expectation";
-import { Job } from "./job";
+import { Expectation } from "../value-types/expectation";
+import { Job } from "../value-types/job";
 
 export interface TestSuiteProperties {
   id: string;

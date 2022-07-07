@@ -1,10 +1,8 @@
-// todo - clean architecture violation
-import { ObjectId } from 'mongodb';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import {
   Expectation,
-} from '../entities/expectation';
+} from '../value-types/expectation';
 
 export interface CreateExpectationRequestDto {
   testType: string;
@@ -33,7 +31,6 @@ export class CreateExpectation
     console.log(auth);
     try {
       const expectation = Expectation.create({
-        localId: new ObjectId().toHexString(),
         configuration: request.configuration,
         testType: request.testType
       });

@@ -7,7 +7,7 @@ import { ITestSuiteRepo } from './i-test-suite-repo';
 import { DbConnection } from '../services/i-db';
 import { CreateExpectation } from './create-expectation';
 import { CreateJob } from './create-job';
-import { Frequency } from '../entities/job';
+import { Frequency } from '../value-types/job';
 
 export interface CreateTestSuiteRequestDto {
   targetId: string;

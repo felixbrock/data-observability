@@ -1,26 +1,22 @@
-import { Expectation } from '../entities/expectation';
-import { Job } from '../entities/job';
+import { Expectation } from '../value-types/expectation';
+import { Job } from '../value-types/job';
 import { TestSuite } from '../entities/test-suite';
 
 
 interface JobDto {
-  localId: string;
   frequency: string;
 }
 
 const buildJobDto = (job: Job): JobDto => ({
-  localId: job.localId,
   frequency: job.frequency
 });
 interface ExpectationDto {
-  localId: string;
   type: string;
   testType: string;
   configuration: {[key: string]: string | number};
 }
 
 const buildExpectationDto = (expectation: Expectation): ExpectationDto => ({
-  localId: expectation.localId,
   type: expectation.type,
   testType: expectation.testType,
   configuration: expectation.configuration,

@@ -1,8 +1,6 @@
-// todo - clean architecture violation
-import { ObjectId } from 'mongodb';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { Frequency, Job } from '../entities/job';
+import { Frequency, Job } from '../value-types/job';
 
 export interface CreateJobRequestDto {
   frequency: Frequency;
@@ -26,7 +24,6 @@ export class CreateJob
 
     try {
       const job = Job.create({
-        localId: new ObjectId().toHexString(),
         frequency: request.frequency,
       });
 

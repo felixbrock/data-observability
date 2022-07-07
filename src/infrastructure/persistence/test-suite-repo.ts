@@ -19,18 +19,16 @@ import {
   TestSuite,
   TestSuiteProperties,
 } from '../../domain/entities/test-suite';
-import { Expectation } from '../../domain/entities/expectation';
-import { Job } from '../../domain/entities/job';
+import { Expectation } from '../../domain/value-types/expectation';
+import { Job } from '../../domain/value-types/job';
 
 interface ExpectationPersistence {
-  localId: string;
   type: string;
   testType: string;
   configuration: { [key: string]: string | number };
 }
 
 interface JobPersistence {
-  localId: string;
   frequency: string;
 }
 
@@ -246,13 +244,11 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
       _id: ObjectId.createFromHexString(testSuite.id),
       activated: testSuite.activated,
       expectation: {
-        localId: testSuite.expectation.localId,
         configuration: testSuite.expectation.configuration,
         type: testSuite.expectation.type,
         testType: testSuite.expectation.testType
       },
       job: {
-        localId: testSuite.job.localId,
         frequency: testSuite.job.frequency,
       },
       targetId: testSuite.targetId,

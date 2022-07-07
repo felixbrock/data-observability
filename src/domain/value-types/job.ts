@@ -1,10 +1,8 @@
 export interface JobPrototype {
-  localId: string;
   frequency: string;
 }
 
 interface JobProperties {
-  localId: string;
   frequency: Frequency;
 }
 
@@ -20,25 +18,18 @@ const parseFrequency = (frequency: unknown): Frequency => {
 };
 
 export class Job {
-  #localId: string;
 
   #frequency: Frequency;
-
-  get localId(): string {
-    return this.#localId;
-  }
 
   get frequency(): Frequency {
     return this.#frequency;
   }
 
   private constructor(props: JobProperties) {
-    this.#localId = props.localId;
     this.#frequency = props.frequency;
   }
 
   static create = (prototype: JobPrototype): Job => {
-    if (!prototype.localId) throw new TypeError('Job must have localId');
     if (!prototype.frequency) throw new TypeError('Job must have frequency');
 
     const frequency: Frequency = parseFrequency(prototype.frequency);

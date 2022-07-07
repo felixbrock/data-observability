@@ -1,11 +1,9 @@
 export interface ExpectationPrototype {
-  localId: string;
   testType: string;
   configuration: { [key: string]: string | number };
 }
 
 export interface ExpectationProperties {
-  localId: string;
   type: string;
   testType: string;
   configuration: { [key: string]: string | number };
@@ -22,7 +20,6 @@ const expecationType: { [key: string]: string } = {
 };
 
 export class Expectation {
-  #localId: string;
 
   #type: string;
 
@@ -30,9 +27,6 @@ export class Expectation {
 
   #configuration: { [key: string]: string | number };
 
-  get localId(): string {
-    return this.#localId;
-  }
 
   get type(): string {
     return this.#type;
@@ -47,14 +41,12 @@ export class Expectation {
   }
 
   private constructor(properties: ExpectationProperties) {
-    this.#localId = properties.localId;
     this.#type = properties.type;
     this.#testType = properties.testType;
     this.#configuration = properties.configuration;
   }
 
   static create = (prototype: ExpectationPrototype): Expectation => {
-    if (!prototype.localId) throw new TypeError('Expectation must have id');
     if (!prototype.testType) throw new TypeError('Expectation must have test type');
     if (!prototype.configuration)
       throw new TypeError('Expectation must have configuration');
@@ -69,7 +61,6 @@ export class Expectation {
     // todo - type test configuration object
 
     const properties: ExpectationProperties = {
-      localId: prototype.localId,
       type: expecationType[prototype.testType],
       testType: prototype.testType,
       configuration: prototype.configuration,

@@ -1,5 +1,5 @@
 import { CronJob, CronJobParameters } from 'cron';
-import { Frequency } from '../../domain/entities/job';
+import { Frequency } from '../../domain/value-types/job';
 import { ValidateData } from '../../domain/data-validation-api/validate-data';
 import { ReadTestSuites } from '../../domain/test-suite/read-test-suites';
 import Dbo from '../persistence/db/mongo-db';
