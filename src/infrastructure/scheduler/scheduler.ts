@@ -12,10 +12,10 @@ const createAlertMessage = async (
   testSuite: TestSuite,
   dataValidationResult: DataValidationResult
 ): Promise<SlackMessage> => {
-  const columnName = testSuite.expectation.configuration.column;
+  const columnName = testSuite.statisticalModel.expectation.configuration.column;
   const tableName = 'todo';
   const executionTime = dataValidationResult.meta.run_id.run_time;
-  const { testType } = testSuite.expectation;
+  const { type } = testSuite;
 
   const deviation = -999999999999;
   const testedValueCount =
@@ -27,7 +27,7 @@ const createAlertMessage = async (
     columnName: typeof columnName === 'string' ? columnName : 'todo',
     tableName,
     executionTime: typeof executionTime === 'string' ? executionTime : 'todo',
-    testType,
+    testType: type,
     deviation,
     testedValueCount,
     unexpectedValues,
@@ -64,8 +64,8 @@ export default class Scheduler {
       testSuites.map(async (testSuite) => {
         const validateDataResult = await this.#validateData.execute({
           data: testData,
-          expectationType: testSuite.expectation.type,
-          expectationConfiguration: testSuite.expectation.configuration,
+          expectationType: testSuite.statisticalModel.expectation.type,
+          expectationConfiguration: testSuite.statisticalModel.expectation.configuration,
         });
 
         if (!validateDataResult.success)

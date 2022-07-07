@@ -36,7 +36,7 @@ export default class ExpressApp {
         iocRegister.resolve('createTestExecution'),
         iocRegister.resolve('dbo'),
       );
-
+      
       scheduler.run();
 
       this.#expressApp.listen(this.#config.port, () => {

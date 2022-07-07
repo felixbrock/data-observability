@@ -9,7 +9,7 @@ interface JobProperties {
 export const frequencies = ['1h', '3h', '6h', '12h', '1d'] as const;
 export type Frequency = typeof frequencies[number];
 
-const parseFrequency = (frequency: unknown): Frequency => {
+export const parseFrequency = (frequency: unknown): Frequency => {
   const identifiedFrequency = frequencies.find(
     (validFrequency) => validFrequency === frequency
   );

@@ -2,17 +2,15 @@
 import { ObjectId } from 'mongodb';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { TestSuite } from '../entities/test-suite';
+import { TestSuite, TestType } from '../entities/test-suite';
 import { ITestSuiteRepo } from './i-test-suite-repo';
 import { DbConnection } from '../services/i-db';
-import { CreateExpectation } from './create-expectation';
-import { CreateJob } from './create-job';
 import { Frequency } from '../value-types/job';
 
 export interface CreateTestSuiteRequestDto {
   targetId: string;
   activated: boolean;
-  expecationTestType: string;
+  type: TestType;
   expectationConfiguration: { [key: string]: string | number };
   jobFrequency: Frequency;
 }
@@ -36,18 +34,10 @@ export class CreateTestSuite
 
   #dbConnection: DbConnection;
 
-  #createExpectation: CreateExpectation;
-
-  #createJob: CreateJob;
-
   constructor(
-    createExpectation: CreateExpectation,
-    createJob: CreateJob,
     testSuiteRepo: ITestSuiteRepo
   ) {
     this.#testSuiteRepo = testSuiteRepo;
-    this.#createExpectation = createExpectation;
-    this.#createJob = createJob;
   }
 
   async execute(
@@ -58,34 +48,12 @@ export class CreateTestSuite
     try {
       this.#dbConnection = dbConnection;
 
-      const createExpectationResult = await this.#createExpectation.execute(
-        {
-          configuration: request.expectationConfiguration,
-          testType: request.expecationTestType,
-        },
-        { organizationId: 'todo' }
-      );
-
-      if (!createExpectationResult.success)
-        throw new Error(createExpectationResult.error);
-      if (!createExpectationResult.value)
-        throw new Error('Creating expectation failed');
-
-        const createJobResult = await this.#createJob.execute(
-          {
-            frequency: request.jobFrequency,
-          },
-          { organizationId: 'todo' },
-        );
-  
-        if (!createJobResult.success) throw new Error(createJobResult.error);
-        if (!createJobResult.value) throw new Error('Creating job failed');
-
       const testSuite = TestSuite.create({
         id: new ObjectId().toHexString(),
         activated: request.activated,
-        expectation: createExpectationResult.value,
-        job: createJobResult.value,
+        expectationConfiguration: request.expectationConfiguration,
+        jobFrequency: request.jobFrequency,
+        type: request.type,
         targetId: request.targetId
       });
 

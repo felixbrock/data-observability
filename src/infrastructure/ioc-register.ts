@@ -2,8 +2,6 @@ import { InjectionMode, asClass, createContainer } from 'awilix';
 
 import AccountApiRepo from './persistence/account-api-repo';
 import { GetAccounts } from '../domain/account-api/get-accounts';
-import { CreateExpectation } from '../domain/test-suite/create-expectation';
-import { CreateJob } from '../domain/test-suite/create-job';
 import { CreateTestSuite } from '../domain/test-suite/create-test-suite';
 import TestSuiteRepo from './persistence/test-suite-repo';
 import Dbo from './persistence/db/mongo-db';
@@ -18,9 +16,7 @@ import { CreateTestExecution } from '../domain/test-execution/create-test-execut
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
 iocRegister.register({
-  createExpectation: asClass(CreateExpectation),
   createTestExecution: asClass(CreateTestExecution),
-  createJob: asClass(CreateJob),
   createTestSuite: asClass(CreateTestSuite),
 
   readTestSuite: asClass(ReadTestSuite),

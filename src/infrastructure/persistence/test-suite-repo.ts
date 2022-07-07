@@ -16,16 +16,25 @@ import {
   TestSuiteUpdateDto,
 } from '../../domain/test-suite/i-test-suite-repo';
 import {
+  createStatisticalModel,
+  parseTestType,
   TestSuite,
   TestSuiteProperties,
 } from '../../domain/entities/test-suite';
 import { Expectation } from '../../domain/value-types/expectation';
 import { Job } from '../../domain/value-types/job';
+import {
+  DataType,
+  IStatisticalModel,
+} from '../../domain/statistical-model/i-statistical-model';
 
 interface ExpectationPersistence {
   type: string;
-  testType: string;
   configuration: { [key: string]: string | number };
+}
+
+interface StatisticalModelPersistence {
+  expectation: ExpectationPersistence;
 }
 
 interface JobPersistence {
@@ -35,7 +44,8 @@ interface JobPersistence {
 interface TestSuitePersistence {
   _id: ObjectId;
   activated: boolean;
-  expectation: ExpectationPersistence;
+  type: string;
+  statisticalModel: StatisticalModelPersistence;
   job: JobPersistence;
   targetId: string;
 }
@@ -44,10 +54,10 @@ interface JobQueryFilter {
   'job.frequency'?: string;
 }
 
-interface TestSuiteQueryFilter extends JobQueryFilter{
+interface TestSuiteQueryFilter extends JobQueryFilter {
   targetId?: string;
   activated?: boolean;
-};
+}
 
 interface TestSuiteUpdateFilter {
   $set: { [key: string]: unknown };
@@ -74,13 +84,12 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
   };
 
   #buildFilter = (queryDto: TestSuiteQueryDto): TestSuiteQueryFilter => {
-    const filter: TestSuiteQueryFilter = 
-      { };
+    const filter: TestSuiteQueryFilter = {};
 
-    if(queryDto.activated) filter.activated = queryDto.activated;
-    if(queryDto.job) filter['job.frequency'] = queryDto.job.frequency;
-    if(queryDto.targetId) filter.targetId = queryDto.targetId;
-    
+    if (queryDto.activated) filter.activated = queryDto.activated;
+    if (queryDto.job) filter['job.frequency'] = queryDto.job.frequency;
+    if (queryDto.targetId) filter.targetId = queryDto.targetId;
+
     return filter;
   };
 
@@ -90,13 +99,13 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
   ): Promise<TestSuite[]> => {
     try {
       if (!Object.keys(queryDto).length) return await this.all(dbConnection);
-      
+
       const result: FindCursor = await dbConnection
         .collection(collectionName)
         .find(this.#buildFilter(sanitize(queryDto)));
       const results = await result.toArray();
 
-      if (!results || !results.length) return [];   
+      if (!results || !results.length) return [];
 
       return results.map((element: any) =>
         this.#toEntity(this.#buildProperties(element))
@@ -177,8 +186,7 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
     const setFilter: { [key: string]: unknown } = {};
     const pushFilter: { [key: string]: unknown } = {};
 
-    if (updateDto.activated)
-      setFilter.activated = updateDto.activated;
+    if (updateDto.activated) setFilter.activated = updateDto.activated;
 
     return { $set: setFilter, $push: pushFilter };
   };
@@ -207,7 +215,6 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
     }
   };
 
-
   deleteOne = async (id: string, dbConnection: Db): Promise<string> => {
     try {
       const result: DeleteResult = await dbConnection
@@ -225,32 +232,52 @@ export default class TestSuiteRepo implements ITestSuiteRepo {
     }
   };
 
-  #toEntity = (properties: TestSuiteProperties): TestSuite =>
-    TestSuite.create(properties);
+  #toEntity = (props: TestSuiteProperties): TestSuite => TestSuite.build(props);
 
-  #buildProperties = (
-    testSuite: TestSuitePersistence
-  ): TestSuiteProperties => ({
-    // eslint-disable-next-line no-underscore-dangle
-    id: testSuite._id.toHexString(),
-    activated: testSuite.activated,
-    expectation: Expectation.create({ ...testSuite.expectation }),
-    job: Job.create({ ...testSuite.job }),
-    targetId: testSuite.targetId,
+  #buildProperties = (testSuite: TestSuitePersistence): TestSuiteProperties => {
+    const type = parseTestType(testSuite.type);
+
+    return {
+      // eslint-disable-next-line no-underscore-dangle
+      id: testSuite._id.toHexString(),
+      activated: testSuite.activated,
+      statisticalModel: createStatisticalModel(
+        type,
+        testSuite.statisticalModel.expectation.configuration,
+        testSuite.statisticalModel.expectation.type
+      ),
+      type,
+      job: Job.create({ ...testSuite.job }),
+      targetId: testSuite.targetId,
+    };
+  };
+
+  #expectationToPersistence = (
+    expectation: Expectation
+  ): ExpectationPersistence => ({
+    configuration: expectation.configuration,
+    type: expectation.type,
+  });
+
+  #statisticalModelToPersistence = (
+    statisticalModel: IStatisticalModel<DataType>
+  ): StatisticalModelPersistence => ({
+    expectation: this.#expectationToPersistence(statisticalModel.expectation),
+  });
+
+  #jobToPersistence = (job: Job): JobPersistence => ({
+    frequency: job.frequency,
   });
 
   #toPersistence = (testSuite: TestSuite): Document => {
     const persistenceObject: TestSuitePersistence = {
       _id: ObjectId.createFromHexString(testSuite.id),
       activated: testSuite.activated,
-      expectation: {
-        configuration: testSuite.expectation.configuration,
-        type: testSuite.expectation.type,
-        testType: testSuite.expectation.testType
-      },
-      job: {
-        frequency: testSuite.job.frequency,
-      },
+      type: testSuite.type,
+      statisticalModel: this.#statisticalModelToPersistence(
+        testSuite.statisticalModel
+      ),
+      job: this.#jobToPersistence(testSuite.job),
       targetId: testSuite.targetId,
     };
 
