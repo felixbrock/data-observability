@@ -11,7 +11,7 @@ import DataValidationApiRepo from './persistence/data-validation-api-repo';
 import { ReadTestSuite } from '../domain/test-suite/read-test-suite';
 import { UpdateTestSuite } from '../domain/test-suite/update-test-suite';
 import TestExecutionRepo from './persistence/test-execution-repo';
-import { CreateTestExecution } from '../domain/test-execution/create-test-execution';
+import { CreateTestExecution } from '../domain/test/create-test-result';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 

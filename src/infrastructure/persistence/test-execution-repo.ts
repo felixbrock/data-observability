@@ -1,7 +1,7 @@
 import { Db, Document, InsertOneResult, ObjectId } from 'mongodb';
 import sanitize from 'mongo-sanitize';
 
-import { ITestExecutionRepo } from '../../domain/test-execution/i-test-execution-repo';
+import { ITestExecutionRepo } from '../../domain/test/i-test-result-repo';
 import {
   DataValidationResult,
   TestExecution,

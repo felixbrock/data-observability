@@ -3,7 +3,7 @@ import { Frequency } from '../../domain/value-types/job';
 import { ValidateData } from '../../domain/data-validation-api/validate-data';
 import { ReadTestSuites } from '../../domain/test-suite/read-test-suites';
 import Dbo from '../persistence/db/mongo-db';
-import { CreateTestExecution } from '../../domain/test-execution/create-test-execution';
+import { CreateTestExecution } from '../../domain/test/create-test-result';
 import { SlackMessage } from '../../domain/slack-api/slack-message-dto';
 import { TestSuite } from '../../domain/entities/test-suite';
 import { DataValidationResult } from '../../domain/value-types/test-execution';

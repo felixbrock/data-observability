@@ -6,7 +6,7 @@ import {
   DataValidationResult,
 } from '../value-types/test-execution';
 import { DbConnection } from '../services/i-db';
-import { ITestExecutionRepo } from './i-test-execution-repo';
+import { ITestExecutionRepo } from './i-test-result-repo';
 
 export interface CreateTestExecutionRequestDto {
   testSuiteId: string;

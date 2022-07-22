@@ -68,6 +68,36 @@ export class UpdateTestSuite
       
       const testSuiteId = await this.#testSuiteRepo.updateOne(request.id, updateDto, this.#dbConnection);
 
+/* Trigger: Test is activated
+
+index():
+>if(History data is available)
+>> latestHistoryPoint = latest history data point
+>> dataPoints = Query SF Business Column between t and t-latest history point
+>> BuildHistory(dataPoint)
+>Else
+>> dataPoints = Query SF Business Column
+>> BuildHistory(dataPoints)
+
+BuildHistory(dataPoints)
+>> if (t – t-lhp > 1 day)
+>>> foreach day:
+>>>> dayDataPoints = dataPoints[by day]
+>>>> Test(dayDataPoints)
+>> else
+>>> Test(dataPoints)
+
+Test(dayDataPoints):
+>>>>> zScoreResult = run z_score (Test Engine)
+>>>>> outliers = zScoreResult[Outliers] (To be ignored for now; Later use-case for pattern recognition, e.g. regarding seasonality)
+>>>>> dataPointsToCheck = dayDataPoints – outliers
+>>>>> avg = avg(dataPointsToCheck)
+>>>>> add to SF Avg History
+>>>>> stdev = stdev(dataPointsToCheck)
+>>>>> add to SF StDev History
+ */
+
+
       return Result.ok(testSuiteId);
     } catch (error: unknown) {
       if (typeof error === 'string') return Result.fail(error);
