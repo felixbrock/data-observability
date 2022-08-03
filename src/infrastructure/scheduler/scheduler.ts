@@ -1,17 +1,21 @@
 import { CronJob, CronJobParameters } from 'cron';
-import { Auth } from '@aws-amplify/auth';
+import CryptoJS  from 'crypto-js';
+import {
+  AdminInitiateAuthCommand,
+  CognitoIdentityProviderClient,
+} from '@aws-sdk/client-cognito-identity-provider';
 import { ReadTestSuites } from '../../domain/test-suite/read-test-suites';
 import Dbo from '../persistence/db/mongo-db';
-import { authEnvConfig, authPassword, authUsername } from '../../config';
+import { authClientRegion, authPassword, authEnvConfig, authUsername } from '../../config';
 import { ExecuteTest } from '../../domain/test-execution-api/execute-test';
 
-Auth.configure({
-  Auth: {
-    region: 'eu-central-1',
-    mandatorySignIn: true,
-    ...authEnvConfig,
-  },
-});
+// Auth.configure({
+//   Auth: {
+//     region: 'eu-central-1',
+//     mandatorySignIn: true,
+//     ...authEnvConfig,
+//   },
+// });
 
 export default class Scheduler {
   readonly #readTestSuites: ReadTestSuites;
@@ -29,7 +33,7 @@ export default class Scheduler {
 
     const readTestSuitesResult = await this.#readTestSuites.execute(
       { executionFrequency: frequency, activated: true },
-      {jwt},
+      { jwt }
     );
 
     if (!readTestSuitesResult.success)
@@ -41,9 +45,13 @@ export default class Scheduler {
 
     await Promise.all(
       testSuites.map(async (testSuite) => {
-        const executeTestResult = await this.#executeTest.execute({testSuiteId: testSuite.id}, {jwt}, this.#dbo.dbConnection);
+        const executeTestResult = await this.#executeTest.execute(
+          { testSuiteId: testSuite.id },
+          { jwt },
+          this.#dbo.dbConnection
+        );
 
-        if(!executeTestResult.success)
+        if (!executeTestResult.success)
           throw new Error(executeTestResult.error);
       })
     );
@@ -112,17 +120,60 @@ export default class Scheduler {
     this.#dbo = dbo;
   }
 
+  #getAccessToken = async (): Promise<void> => {
+    const client = new CognitoIdentityProviderClient({ region: authClientRegion });
+
+    const sha256 = CryptoJS.algo.SHA256.create();
+    sha256.update("1cod73rromr7s4scsltlfbtuo42bnsa5dfhk4mbs2omd094bjnp");
+    sha256.update(`${authUsername}${authEnvConfig.userPoolWebClientId}`);
+
+    const hash = sha256.finalize();
+    
+    const command = new AdminInitiateAuthCommand({
+      ClientId: authEnvConfig.userPoolWebClientId,
+      UserPoolId: authEnvConfig.userPoolId,
+      AuthFlow: 'ADMIN_USER_PASSWORD_AUTH',
+      AuthParameters: {
+        USERNAME: authUsername,
+        PASSWORD: authPassword,
+        SECRET_HASH: hash.toString(CryptoJS.enc.Base64)
+      }
+        // clientId:"2lssvcgnbg486t9ha18oh7pj0s", 
+        // AuthFlow:"USER_PASSWORD_AUTH" , 
+        // AuthParameters:{
+        //     username: 'testUserEmail@test.com', //placeholder email address
+        //     password: 'Test1!Test'
+        // }
+    });
+    const response =  await client.send(command);
+    console.log(response);
+    // when I run this, the access token is stored and I can take it and put it where needed in the code.
+
+    // return response.AuthenticationResults.AccessToken
+};
+
   #signIn = async (): Promise<void> => {
-    await Auth.signIn(authUsername, authPassword);
+    await this.#getAccessToken();
+    // const config: CognitoIdentityProviderClientConfig = {region: 'eu-central-1', };
+    // const client = new CognitoIdentityProviderClient(config);
+
+    // const input: InitiateAuthCommandInput = {};
+    // const command = new InitiateAuthCommand(input);
+    // const response = await client.send(command);
   };
 
   #signOut = async (): Promise<void> => {
-    await Auth.signOut();
+    console.log('signout');
+
+    // await Auth.signOut();
   };
 
   #getJwt = async (): Promise<string> => {
-    const session = await Auth.currentSession();
-    return session.getAccessToken().getJwtToken();
+    // const session = await Auth.currentSession();
+    // return session.getAccessToken().getJwtToken();
+    console.log('getJWT');
+    
+    return Promise.resolve('todo');
   };
 
   run = async (): Promise<void> => {

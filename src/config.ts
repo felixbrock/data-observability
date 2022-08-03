@@ -27,6 +27,7 @@ export const serviceDiscoveryNamespace = getServiceDiscoveryNamespace();
 
 export const authUsername = process.env.AUTH_PASSWORD || '';
 export const authPassword = process.env.AUTH_USERNAME || '';
+export const authClientRegion = 'eu-central-1';
 
 const getAuthEnvConfig = (): any => {
   const authEnvConfig: any = {};
@@ -34,7 +35,7 @@ const getAuthEnvConfig = (): any => {
   switch (nodeEnv) {
     case 'development':
       authEnvConfig.userPoolId = 'eu-central-1_NVHpLpAIc';
-      authEnvConfig.userPoolWebClientId = '7r8dtcts83hpk6evns2gaj82r0';
+      authEnvConfig.userPoolWebClientId = '5d9k6h40kqj13kk2kqhkitfsbn';
       break;
     case 'test':
       authEnvConfig.userPoolId = '';
