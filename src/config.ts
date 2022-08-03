@@ -25,25 +25,26 @@ const getServiceDiscoveryNamespace = (): string => {
 
 export const serviceDiscoveryNamespace = getServiceDiscoveryNamespace();
 
-export const authUsername = process.env.AUTH_PASSWORD || '';
-export const authPassword = process.env.AUTH_USERNAME || '';
-export const authClientRegion = 'eu-central-1';
-
 const getAuthEnvConfig = (): any => {
   const authEnvConfig: any = {};
+
+  authEnvConfig.authClientSecret = process.env.AUTH_CLIENT_SECRET || '';
 
   switch (nodeEnv) {
     case 'development':
       authEnvConfig.userPoolId = 'eu-central-1_NVHpLpAIc';
-      authEnvConfig.userPoolWebClientId = '5d9k6h40kqj13kk2kqhkitfsbn';
+      authEnvConfig.userPoolWebClientId = '13s39d3csd2t31stlu54p6q5a4';
+      authEnvConfig.tokenUrl = 'https://citodata.auth.eu-central-1.amazoncognito.com/oauth2/token';
       break;
     case 'test':
       authEnvConfig.userPoolId = '';
       authEnvConfig.userPoolWebClientId = '';
+      authEnvConfig.tokenUrl = '';
       break;
     case 'production':
       authEnvConfig.userPoolId = '';
       authEnvConfig.userPoolWebClientId = '';
+      authEnvConfig.tokenUrl = '';
       break;
     default:
       break;
@@ -59,7 +60,7 @@ export interface MongoDbConfig {
   dbName: string;
 }
 
-const getMongodbConfig = (): MongoDbConfig => {  
+const getMongodbConfig = (): MongoDbConfig => {
   switch (nodeEnv) {
     case 'development':
       return {
