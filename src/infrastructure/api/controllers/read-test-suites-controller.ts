@@ -4,7 +4,6 @@ import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { buildTestSuiteDto } from '../../../domain/test-suite/test-suite-dto';
 import {
   ReadTestSuites,
-  ReadTestSuitesAuthDto,
   ReadTestSuitesRequestDto,
   ReadTestSuitesResponseDto,
 } from '../../../domain/test-suite/read-test-suites';
@@ -13,7 +12,6 @@ import Dbo from '../../persistence/db/mongo-db';
 import {
   BaseController,
   CodeHttp,
-  UserAccountInfo,
 } from '../../shared/base-controller';
 
 export default class ReadTestSuitesController extends BaseController {
@@ -35,7 +33,7 @@ export default class ReadTestSuitesController extends BaseController {
   }
 
   #buildRequestDto = (httpRequest: Request): ReadTestSuitesRequestDto => {
-    const { targetId, activated } = httpRequest.query;
+    const { executionFrequency, activated } = httpRequest.query;
 
     if (
       activated &&
@@ -47,16 +45,15 @@ export default class ReadTestSuitesController extends BaseController {
       );
 
     return {
-      targetId: typeof targetId === 'string' ? targetId : undefined,
       activated: activated === 'true',
+      executionFrequency: Number(executionFrequency),
     };
   };
 
-  #buildAuthDto = (
-    userAccountInfo: UserAccountInfo
-  ): ReadTestSuitesAuthDto => ({
-    organizationId: userAccountInfo.organizationId,
-  });
+  // #buildAuthDto = (
+  //   userAccountInfo: UserAccountInfo
+  // ): ReadTestSuitesAuthDto => ({
+  // });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -90,9 +87,8 @@ export default class ReadTestSuitesController extends BaseController {
         await this.#readTestSuites.execute(
           requestDto,
           {
-            organizationId: 'todo',
+            jwt: 'todo',
           },
-          this.#dbo.dbConnection
         );
 
       if (!useCaseResult.success) {

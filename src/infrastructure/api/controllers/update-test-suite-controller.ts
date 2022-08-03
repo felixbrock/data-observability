@@ -3,7 +3,6 @@ import { Request, Response } from 'express';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateTestSuite,
-  UpdateTestSuiteAuthDto,
   UpdateTestSuiteRequestDto,
   UpdateTestSuiteResponseDto,
 } from '../../../domain/test-suite/update-test-suite';
@@ -12,7 +11,6 @@ import Dbo from '../../persistence/db/mongo-db';
 import {
   BaseController,
   CodeHttp,
-  UserAccountInfo,
 } from '../../shared/base-controller';
 
 export default class UpdateTestSuiteController extends BaseController {
@@ -34,9 +32,9 @@ export default class UpdateTestSuiteController extends BaseController {
     activated: httpRequest.body.activated,
   });
 
-  #buildAuthDto = (userAccountInfo: UserAccountInfo): UpdateTestSuiteAuthDto => ({
-    organizationId: userAccountInfo.organizationId,
-  });
+  // #buildAuthDto = (userAccountInfo: UserAccountInfo): UpdateTestSuiteAuthDto => ({
+  //   organizationId: userAccountInfo.organizationId,
+  // });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -70,9 +68,8 @@ export default class UpdateTestSuiteController extends BaseController {
         await this.#updateTestSuite.execute(
           requestDto,
           {
-            organizationId: 'todo',
+            jwt: 'todo',
           },
-          this.#dbo.dbConnection
         );
 
 

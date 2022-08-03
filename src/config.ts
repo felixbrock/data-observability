@@ -25,6 +25,34 @@ const getServiceDiscoveryNamespace = (): string => {
 
 export const serviceDiscoveryNamespace = getServiceDiscoveryNamespace();
 
+export const authUsername = process.env.AUTH_PASSWORD || '';
+export const authPassword = process.env.AUTH_USERNAME || '';
+
+const getAuthEnvConfig = (): any => {
+  const authEnvConfig: any = {};
+
+  switch (nodeEnv) {
+    case 'development':
+      authEnvConfig.userPoolId = 'eu-central-1_NVHpLpAIc';
+      authEnvConfig.userPoolWebClientId = '7r8dtcts83hpk6evns2gaj82r0';
+      break;
+    case 'test':
+      authEnvConfig.userPoolId = '';
+      authEnvConfig.userPoolWebClientId = '';
+      break;
+    case 'production':
+      authEnvConfig.userPoolId = '';
+      authEnvConfig.userPoolWebClientId = '';
+      break;
+    default:
+      break;
+  }
+
+  return authEnvConfig;
+};
+
+export const authEnvConfig = getAuthEnvConfig();
+
 export interface MongoDbConfig {
   url: string;
   dbName: string;

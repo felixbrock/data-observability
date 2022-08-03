@@ -8,6 +8,7 @@ import {
   CreateTestSuiteResponseDto,
 } from '../../../domain/test-suite/create-test-suite';
 import { buildTestSuiteDto } from '../../../domain/test-suite/test-suite-dto';
+import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
 
 import {
@@ -33,50 +34,48 @@ export default class CreateTestSuiteController extends BaseController {
   #buildRequestDto = (httpRequest: Request): CreateTestSuiteRequestDto => ({
     activated: httpRequest.body.activated,
     type: httpRequest.body.type,
-    expectationConfiguration: httpRequest.body.expectationConfiguration,
-    jobFrequency: httpRequest.body.jobFrequency,
-    targetId: httpRequest.body.targetId
+    threshold: httpRequest.body.threshold,
+    executionFrequency: httpRequest.body.executionFrequency,
+    materializationAddress: httpRequest.body.materializationAddress,
+    columnName: httpRequest.body.columnName
   });
 
-  #buildAuthDto = (userAccountInfo: UserAccountInfo): CreateTestSuiteAuthDto => ({
+  #buildAuthDto = (userAccountInfo: UserAccountInfo, jwt: string): CreateTestSuiteAuthDto => ({
     organizationId: userAccountInfo.organizationId,
+    jwt,
   });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
-      // const authHeader = req.headers.authorization;
+      const authHeader = req.headers.authorization;
 
-      // if (!authHeader)
-      //   return CreateTestSuiteController.unauthorized(res, 'Unauthorized');
+      if (!authHeader)
+        return CreateTestSuiteController.unauthorized(res, 'Unauthorized');
 
-      // const jwt = authHeader.split(' ')[1];
+      const jwt = authHeader.split(' ')[1];
 
-      // const getUserAccountInfoResult: Result<UserAccountInfo> =
-      //   await CreateTestSuiteInfoController.getUserAccountInfo(
-      //     jwt,
-      //     this.#getAccounts
-      //   );
+      const getUserAccountInfoResult: Result<UserAccountInfo> =
+        await CreateTestSuiteController.getUserAccountInfo(
+          jwt,
+          this.#getAccounts
+        );
 
-      // if (!getUserAccountInfoResult.success)
-      //   return CreateTestSuiteInfoController.unauthorized(
-      //     res,
-      //     getUserAccountInfoResult.error
-      //   );
-      // if (!getUserAccountInfoResult.value)
-      //   throw new ReferenceError('Authorization failed');
+      if (!getUserAccountInfoResult.success)
+        return CreateTestSuiteController.unauthorized(
+          res,
+          getUserAccountInfoResult.error
+        );
+      if (!getUserAccountInfoResult.value)
+        throw new ReferenceError('Authorization failed');
 
       const requestDto: CreateTestSuiteRequestDto = this.#buildRequestDto(req);
-      // const authDto: CreateTestSuiteAuthDto = this.#buildAuthDto(
-      //   getUserAccountResult.value
-      // );
+
+      const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
       const useCaseResult: CreateTestSuiteResponseDto =
         await this.#createTestSuite.execute(
           requestDto,
-          {
-            organizationId: 'todo',
-          },
-          this.#dbo.dbConnection
+          authDto,
         );
 
 

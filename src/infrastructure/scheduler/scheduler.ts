@@ -1,55 +1,35 @@
 import { CronJob, CronJobParameters } from 'cron';
-import { Frequency } from '../../domain/value-types/job';
-import { ValidateData } from '../../domain/data-validation-api/validate-data';
+import { Auth } from '@aws-amplify/auth';
 import { ReadTestSuites } from '../../domain/test-suite/read-test-suites';
 import Dbo from '../persistence/db/mongo-db';
-import { CreateTestExecution } from '../../domain/test/create-test-result';
-import { SlackMessage } from '../../domain/slack-api/slack-message-dto';
-import { TestSuite } from '../../domain/entities/test-suite';
-import { DataValidationResult } from '../../domain/value-types/test-execution';
+import { authEnvConfig, authPassword, authUsername } from '../../config';
+import { ExecuteTest } from '../../domain/test-execution-api/execute-test';
 
-const createAlertMessage = async (
-  testSuite: TestSuite,
-  dataValidationResult: DataValidationResult
-): Promise<SlackMessage> => {
-  const columnName = testSuite.statisticalModel.expectation.configuration.column;
-  const tableName = 'todo';
-  const executionTime = dataValidationResult.meta.run_id.run_time;
-  const { type } = testSuite;
-
-  const deviation = -999999999999;
-  const testedValueCount =
-    dataValidationResult.results[0].result.element_count;
-  const unexpectedValues =
-    dataValidationResult.results[0].result.partial_unexpected_list;
-
-  return {
-    columnName: typeof columnName === 'string' ? columnName : 'todo',
-    tableName,
-    executionTime: typeof executionTime === 'string' ? executionTime : 'todo',
-    testType: type,
-    deviation,
-    testedValueCount,
-    unexpectedValues,
-  };
-};
+Auth.configure({
+  Auth: {
+    region: 'eu-central-1',
+    mandatorySignIn: true,
+    ...authEnvConfig,
+  },
+});
 
 export default class Scheduler {
   readonly #readTestSuites: ReadTestSuites;
 
-  readonly #validateData: ValidateData;
-
-  readonly #createTestExecution: CreateTestExecution;
+  readonly #executeTest: ExecuteTest;
 
   readonly #dbo: Dbo;
 
-  #onTick = async (frequency: Frequency): Promise<void> => {
-    console.log('Running job');
+  #onTick = async (frequency: number): Promise<void> => {
+    console.log(`Executing jobs with frequency ${frequency} h`);
+
+    await this.#signIn();
+
+    const jwt = await this.#getJwt();
 
     const readTestSuitesResult = await this.#readTestSuites.execute(
-      { job: { frequency }, activated: true },
-      {},
-      this.#dbo.dbConnection
+      { executionFrequency: frequency, activated: true },
+      {jwt},
     );
 
     if (!readTestSuitesResult.success)
@@ -57,86 +37,58 @@ export default class Scheduler {
     if (!readTestSuitesResult.value) throw new Error('Reading jobs failed');
     if (!readTestSuitesResult.value.length) return;
 
-    const testData = { b: [1, 2, 3, 104, 3, 3, 3] };
     const testSuites = readTestSuitesResult.value;
 
     await Promise.all(
       testSuites.map(async (testSuite) => {
-        const validateDataResult = await this.#validateData.execute({
-          data: testData,
-          expectationType: testSuite.statisticalModel.expectation.type,
-          expectationConfiguration: testSuite.statisticalModel.expectation.configuration,
-        });
+        const executeTestResult = await this.#executeTest.execute({testSuiteId: testSuite.id}, {jwt}, this.#dbo.dbConnection);
 
-        if (!validateDataResult.success)
-          throw new Error(readTestSuitesResult.error);
-        if (!validateDataResult.value) throw new Error('Reading jobs failed');
-
-        const dataValidationResult = validateDataResult.value;
-
-        const createTestExecutionResult =
-          await this.#createTestExecution.execute(
-            {
-              testSuiteId: testSuite.id,
-              dataValidationResult,
-            },
-            { organizationId: 'todo' },
-            this.#dbo.dbConnection
-          );
-
-        if (!createTestExecutionResult.success)
-          throw new Error(createTestExecutionResult.error);
-        if (!createTestExecutionResult.value)
-          throw new Error('Creating data validation result failed');
-
-        const alertMessage = createAlertMessage(
-          testSuite,
-          validateDataResult.value
-        );
-
-        console.log(alertMessage);
+        if(!executeTestResult.success)
+          throw new Error(executeTestResult.error);
       })
     );
 
     console.log('--------results----------');
+
+    await this.#signOut();
   };
 
   #cronJobOption: { [key: string]: CronJobParameters } = {
     oneSecondCronJobOption: {
       cronTime: '* * * * * *',
       onTick: () => {
-        this.#onTick('1h');
+        this.#onTick(1);
       },
     },
     oneHourCronJobOption: {
       cronTime: '0 * * * *',
       onTick: () => {
-        this.#onTick('1h');
+        this.#onTick(1);
       },
     },
     threeHourCronJobOption: {
       cronTime: '0 */3 * * *',
       onTick: () => {
-        this.#onTick('3h');
+        this.#onTick(3);
       },
     },
     sixHourCronJobOption: {
       cronTime: '0 */6 * * *',
       onTick: () => {
-        this.#onTick('6h');
+        this.#onTick(6);
       },
     },
     twelveHourCronJobOption: {
       cronTime: '0 */12 * * *',
       onTick: () => {
-        this.#onTick('12h');
+        this.#onTick(12);
       },
     },
 
     oneDayCronJobOption: {
       cronTime: '0 * */1 * *',
       onTick: () => {
-        this.#onTick('1d');
+        this.#onTick(24);
       },
     },
   };
@@ -152,15 +104,26 @@ export default class Scheduler {
 
   constructor(
     readTestSuites: ReadTestSuites,
-    validateData: ValidateData,
-    createTestExecution: CreateTestExecution,
+    executeTest: ExecuteTest,
     dbo: Dbo
   ) {
     this.#readTestSuites = readTestSuites;
-    this.#validateData = validateData;
-    this.#createTestExecution = createTestExecution;
+    this.#executeTest = executeTest;
     this.#dbo = dbo;
   }
+
+  #signIn = async (): Promise<void> => {
+    await Auth.signIn(authUsername, authPassword);
+  };
+
+  #signOut = async (): Promise<void> => {
+    await Auth.signOut();
+  };
+
+  #getJwt = async (): Promise<string> => {
+    const session = await Auth.currentSession();
+    return session.getAccessToken().getJwtToken();
+  };
 
   run = async (): Promise<void> => {
     try {

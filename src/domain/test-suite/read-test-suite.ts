@@ -1,15 +1,15 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { ITestSuiteRepo } from './i-test-suite-repo';
 import { TestSuite } from '../entities/test-suite';
-import { DbConnection } from '../services/i-db';
+import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
+import CitoDataQuery from '../services/cito-data-query';
 
 export interface ReadTestSuiteRequestDto {
   id: string;
 }
 
 export interface ReadTestSuiteAuthDto {
-  organizationId: string;
+  jwt: string;
 }
 
 export type ReadTestSuiteResponseDto = Result<TestSuite>;
@@ -19,39 +19,51 @@ export class ReadTestSuite
     IUseCase<
       ReadTestSuiteRequestDto,
       ReadTestSuiteResponseDto,
-      ReadTestSuiteAuthDto,
-      DbConnection
+      ReadTestSuiteAuthDto
     >
 {
-  readonly #testSuiteRepo: ITestSuiteRepo;
+  readonly #querySnowflake: QuerySnowflake;
 
-  #dbConnection: DbConnection;
-
-  constructor(testSuiteRepo: ITestSuiteRepo) {
-    this.#testSuiteRepo = testSuiteRepo;
+  constructor(querySnowflake: QuerySnowflake) {
+    this.#querySnowflake = querySnowflake;
   }
 
   async execute(
     request: ReadTestSuiteRequestDto,
-    auth: ReadTestSuiteAuthDto,
-    dbConnection: DbConnection
+    auth: ReadTestSuiteAuthDto
   ): Promise<ReadTestSuiteResponseDto> {
     try {
       // todo -replace
-      console.log(auth);
 
-      this.#dbConnection = dbConnection;
+      const query = CitoDataQuery.getReadTestSuiteQuery(request.id);
 
-      const testSuite = await this.#testSuiteRepo.findOne(
-        request.id,
-        this.#dbConnection
+      const querySnowflakeResult = await this.#querySnowflake.execute(
+        { query },
+        { jwt: auth.jwt }
       );
-      if (!testSuite) throw new Error(`TestSuite with id ${request.id} does not exist`);
+
+      if (!querySnowflakeResult.success)
+        throw new Error(querySnowflakeResult.error);
+
+      if (!querySnowflakeResult.value)
+        throw new Error(`TestSuite with id ${request.id} does not exist`);
+
+      console.log(querySnowflakeResult.value.content);
 
       // if (testSuite.organizationId !== auth.organizationId)
       //   throw new Error('Not authorized to perform action');
 
-      return Result.ok(testSuite);
+      return Result.ok(
+        TestSuite.create({
+          activated: true,
+          executionFrequency: 1,
+          id: 'dd',
+          materializationAddress: 'aaas',
+          threshold: 2,
+          type: 'ColumnFreshness',
+          organizationId: 'todo'
+        })
+      );
     } catch (error: unknown) {
       if (typeof error === 'string') return Result.fail(error);
       if (error instanceof Error) return Result.fail(error.message);

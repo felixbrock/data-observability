@@ -3,20 +3,21 @@ import { InjectionMode, asClass, createContainer } from 'awilix';
 import AccountApiRepo from './persistence/account-api-repo';
 import { GetAccounts } from '../domain/account-api/get-accounts';
 import { CreateTestSuite } from '../domain/test-suite/create-test-suite';
-import TestSuiteRepo from './persistence/test-suite-repo';
 import Dbo from './persistence/db/mongo-db';
-import { ValidateData } from '../domain/data-validation-api/validate-data';
 import { ReadTestSuites } from '../domain/test-suite/read-test-suites';
-import DataValidationApiRepo from './persistence/data-validation-api-repo';
 import { ReadTestSuite } from '../domain/test-suite/read-test-suite';
 import { UpdateTestSuite } from '../domain/test-suite/update-test-suite';
-import TestExecutionRepo from './persistence/test-execution-repo';
-import { CreateTestExecution } from '../domain/test/create-test-result';
+import TestExecutionRepo from './persistence/test-execution-api-repo';
+import { QuerySnowflake} from '../domain/integration-api/snowflake/query-snowflake';
+import IntegrationApiRepo from './persistence/integration-api-repo';
+import { CreateTestResult } from '../domain/test-result/create-test-result';
+import { ExecuteTest } from '../domain/test-execution-api/execute-test';
+import TestResultRepo from './persistence/test-result-repo';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
 iocRegister.register({
-  createTestExecution: asClass(CreateTestExecution),
+  createTestResult: asClass(CreateTestResult),
   createTestSuite: asClass(CreateTestSuite),
 
   readTestSuite: asClass(ReadTestSuite),
@@ -24,14 +25,16 @@ iocRegister.register({
 
   updateTestSuite: asClass(UpdateTestSuite),
 
-  getAccounts: asClass(GetAccounts),
-  validateData: asClass (ValidateData),
+  executeTest: asClass(ExecuteTest),
 
-  testSuiteRepo: asClass(TestSuiteRepo),
-  testExecutionRepo: asClass(TestExecutionRepo),
+  getAccounts: asClass(GetAccounts),
+  querySnowflake: asClass(QuerySnowflake),
+
+  testResultRepo: asClass(TestResultRepo),  
 
   accountApiRepo: asClass(AccountApiRepo),
-  dataValidationApiRepo: asClass(DataValidationApiRepo),
+  integrationApiRepo: asClass(IntegrationApiRepo),
+  testExecutionApiRepo: asClass(TestExecutionRepo),
 
   dbo: asClass(Dbo).singleton()
 });

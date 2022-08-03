@@ -1,26 +1,21 @@
-import { Job } from '../value-types/job';
-import { Target, TestSuite, TestType } from '../entities/test-suite';
-
-interface JobDto {
-  frequency: string;
-}
-
-const buildJobDto = (job: Job): JobDto => ({
-  frequency: job.frequency,
-});
+import { TestSuite, TestType } from '../entities/test-suite';
 
 export interface TestSuiteDto {
   id: string;
   activated: boolean;
-  job: JobDto;
-  target: Target;
   type: TestType;
+  threshold: number;
+  executionFrequency: number;
+  materializationAddress: string;
+  columnName?: string;
 }
 
 export const buildTestSuiteDto = (testSuite: TestSuite): TestSuiteDto => ({
   id: testSuite.id,
   activated: testSuite.activated,
-  job: buildJobDto(testSuite.job),
-  target: testSuite.target,
-  type: testSuite.type
+  type: testSuite.type,
+  threshold: testSuite.threshold,
+  executionFrequency: testSuite.executionFrequency,
+  materializationAddress: testSuite.materializationAddress,
+  columnName: testSuite.columnName,
 });
