@@ -6,7 +6,9 @@ export default class CitoDataQuery {
     values
     ('${testSuite.id}', '${testSuite.type}', ${testSuite.activated}, ${
     testSuite.threshold
-  }, ${testSuite.executionFrequency}, '${testSuite.materializationAddress}', ${
+  }, ${testSuite.executionFrequency}, '${testSuite.databaseName}','${
+    testSuite.schemaName
+  }', '${testSuite.materializationName}', '${testSuite.materializationType}', ${
     testSuite.columnName ? `'${testSuite.columnName}'` : null
   }, '${testSuite.organizationId}');
     `;
@@ -27,10 +29,13 @@ export default class CitoDataQuery {
       return selectClause.concat(';');
 
     let whereClause = 'where ';
-    if (activated) whereClause = whereClause.concat(`activated = ${activated} `);
+    if (activated)
+      whereClause = whereClause.concat(`activated = ${activated} `);
     if (executionFrequency)
       whereClause = whereClause.concat(
-        `${activated ? 'and ' : ''} execution_frequency = ${executionFrequency} `
+        `${
+          activated ? 'and ' : ''
+        } execution_frequency = ${executionFrequency} `
       );
     if (organizationId)
       whereClause = whereClause.concat(

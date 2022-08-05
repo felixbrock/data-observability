@@ -24,7 +24,11 @@ export default class CreateTestSuiteController extends BaseController {
 
   readonly #dbo: Dbo;
 
-  constructor(createTestSuite: CreateTestSuite, getAccounts: GetAccounts, dbo: Dbo) {
+  constructor(
+    createTestSuite: CreateTestSuite,
+    getAccounts: GetAccounts,
+    dbo: Dbo
+  ) {
     super();
     this.#createTestSuite = createTestSuite;
     this.#getAccounts = getAccounts;
@@ -36,11 +40,17 @@ export default class CreateTestSuiteController extends BaseController {
     type: httpRequest.body.type,
     threshold: httpRequest.body.threshold,
     executionFrequency: httpRequest.body.executionFrequency,
-    materializationAddress: httpRequest.body.materializationAddress,
-    columnName: httpRequest.body.columnName
+    databaseName: httpRequest.body.databaseName,
+    schemaName: httpRequest.body.schemaName,
+    materializationName: httpRequest.body.materializationName,
+    materializationType: httpRequest.body.materializationType,
+    columnName: httpRequest.body.columnName,
   });
 
-  #buildAuthDto = (userAccountInfo: UserAccountInfo, jwt: string): CreateTestSuiteAuthDto => ({
+  #buildAuthDto = (
+    userAccountInfo: UserAccountInfo,
+    jwt: string
+  ): CreateTestSuiteAuthDto => ({
     organizationId: userAccountInfo.organizationId,
     jwt,
   });
@@ -71,14 +81,9 @@ export default class CreateTestSuiteController extends BaseController {
       const requestDto: CreateTestSuiteRequestDto = this.#buildRequestDto(req);
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
-      
 
       const useCaseResult: CreateTestSuiteResponseDto =
-        await this.#createTestSuite.execute(
-          requestDto,
-          authDto,
-        );
-
+        await this.#createTestSuite.execute(requestDto, authDto);
 
       if (!useCaseResult.success) {
         return CreateTestSuiteController.badRequest(res, useCaseResult.error);

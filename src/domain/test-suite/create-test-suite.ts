@@ -2,7 +2,7 @@
 import { ObjectId } from 'mongodb';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { TestSuite, TestType } from '../entities/test-suite';
+import { MaterializationType, TestSuite, TestType } from '../entities/test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
 
@@ -11,7 +11,10 @@ export interface CreateTestSuiteRequestDto {
   type: TestType;
   threshold: number;
   executionFrequency: number;
-  materializationAddress: string;
+  databaseName: string;
+  schemaName: string;
+  materializationName: string;
+  materializationType: MaterializationType;
   columnName?: string;
 }
 
@@ -47,7 +50,10 @@ export class CreateTestSuite
         type: request.type,
         threshold: request.threshold,
         executionFrequency: request.executionFrequency,
-        materializationAddress: request.materializationAddress,
+        databaseName: request.databaseName,
+        schemaName: request.schemaName,
+        materializationName: request.materializationName,
+        materializationType: request.materializationType,
         columnName: request.columnName,
         organizationId: auth.organizationId
       });

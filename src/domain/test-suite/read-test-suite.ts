@@ -66,7 +66,10 @@ export class ReadTestSuite
           activated: organizationResults[0].ACTIVATED,
           executionFrequency: organizationResults[0].EXECUTION_FREQUENCY,
           threshold: organizationResults[0].THRESHOLD,
-          materializationAddress: organizationResults[0].MATERIALIZATION_ADDRESS,
+          databaseName: organizationResults[0].DATABASE_NAME,
+          schemaName: organizationResults[0].SCHEMA_NAME,
+          materializationName: organizationResults[0].MATERIALIZATION_NAME,
+          materializationType: organizationResults[0].MATERIALIZATION_TYPE,
           organizationId: organizationResults[0].ORGANIZATION_ID,
           columnName: organizationResults[0].COLUMN_NAME
         })

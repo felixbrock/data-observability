@@ -1,4 +1,8 @@
-import { TestSuite, TestType } from '../entities/test-suite';
+import {
+  MaterializationType,
+  TestSuite,
+  TestType,
+} from '../entities/test-suite';
 
 export interface TestSuiteDto {
   id: string;
@@ -6,8 +10,12 @@ export interface TestSuiteDto {
   type: TestType;
   threshold: number;
   executionFrequency: number;
-  materializationAddress: string;
+  databaseName: string;
+  schemaName: string;
+  materializationName: string;
+  materializationType: MaterializationType;
   columnName?: string;
+  organizationId: string;
 }
 
 export const buildTestSuiteDto = (testSuite: TestSuite): TestSuiteDto => ({
@@ -16,6 +24,10 @@ export const buildTestSuiteDto = (testSuite: TestSuite): TestSuiteDto => ({
   type: testSuite.type,
   threshold: testSuite.threshold,
   executionFrequency: testSuite.executionFrequency,
-  materializationAddress: testSuite.materializationAddress,
+  databaseName: testSuite.databaseName,
+  schemaName: testSuite.schemaName,
+  materializationName: testSuite.materializationName,
+  materializationType: testSuite.materializationType,
   columnName: testSuite.columnName,
+  organizationId: testSuite.organizationId,
 });

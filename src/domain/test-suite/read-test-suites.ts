@@ -63,7 +63,10 @@ export class ReadTestSuites
           activated: element.ACTIVATED,
           executionFrequency: element.EXECUTION_FREQUENCY,
           threshold: element.THRESHOLD,
-          materializationAddress: element.MATERIALIZATION_ADDRESS,
+          databaseName: element.DATABASE_NAME,
+          schemaName: element.SCHEMA_NAME,
+          materializationName: element.MATERIALIZATION_NAME,
+          materializationType: element.MATERIALIZATION_TYPE,
           organizationId: element.ORGANIZATION_ID,
           columnName: element.COLUMN_NAME
         }));

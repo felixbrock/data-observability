@@ -94,14 +94,17 @@ export class ExecuteTest
 
       const sendSlackAlertResult = await this.#integrationApiRepo.sendSlackAlert(
         {
+          testType: testExecutionResult.testType,
           detectedOn: testExecutionResult.executedOn,
           deviation: testExecutionResult.deviation,
           expectedLowerBound:
             testExecutionResult.alertSpecificData.expectedLowerBound,
           expectedUpperBound:
             testExecutionResult.alertSpecificData.expectedUpperBound,
-          materializationAddress:
-            testExecutionResult.alertSpecificData.materializationAddress,
+          databaseName: testExecutionResult.alertSpecificData.databaseName,
+          schemaName: testExecutionResult.alertSpecificData.schemaName,
+          materializationName: testExecutionResult.alertSpecificData.materializationName,
+          materializationType: testExecutionResult.alertSpecificData.materializationType,
           columnName: testExecutionResult.alertSpecificData.columnName,
           message: testExecutionResult.alertSpecificData.message,
           value: testExecutionResult.alertSpecificData.value,
