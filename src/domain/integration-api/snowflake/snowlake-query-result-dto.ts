@@ -1,3 +1,1 @@
-export interface SnowflakeQueryResultDto {
-  content: unknown;
-};
+export type SnowflakeQueryResultDto = {[key: string]: {[key:string]: any}[]}

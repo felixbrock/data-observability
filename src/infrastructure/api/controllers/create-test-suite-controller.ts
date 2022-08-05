@@ -71,6 +71,7 @@ export default class CreateTestSuiteController extends BaseController {
       const requestDto: CreateTestSuiteRequestDto = this.#buildRequestDto(req);
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
+      
 
       const useCaseResult: CreateTestSuiteResponseDto =
         await this.#createTestSuite.execute(

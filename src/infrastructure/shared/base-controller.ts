@@ -21,14 +21,11 @@ export interface UserAccountInfo {
   userId: string;
   accountId: string;
   organizationId: string;
+  isSystemInternal: boolean;
 }
 
 export abstract class BaseController {
-  static jsonResponse(
-    res: Response,
-    code: number,
-    message: string
-  ): Response {
+  static jsonResponse(res: Response, code: number, message: string): Response {
     return res.status(code).json({ message });
   }
 
@@ -60,14 +57,21 @@ export abstract class BaseController {
         );
 
       if (!getAccountsResult.value)
-        throw new ReferenceError(`No account found for ${authPayload.username}`);
+        throw new ReferenceError(
+          `No account found for ${authPayload.username}`
+        );
       if (!getAccountsResult.value.length)
-        throw new ReferenceError(`No account found for ${authPayload.username}`);
+        throw new ReferenceError(
+          `No account found for ${authPayload.username}`
+        );
 
       return Result.ok({
         userId: authPayload.username,
         accountId: getAccountsResult.value[0].id,
         organizationId: getAccountsResult.value[0].organizationId,
+        isSystemInternal: authPayload['cognito:groups']
+          ? authPayload['cognito:groups'].includes('system-internal')
+          : false,
       });
     } catch (error: unknown) {
       if (typeof error === 'string') return Result.fail(error);

@@ -93,9 +93,9 @@ export class TestSuite {
     if (!props.id) throw new TypeError('TestSuite must have id');
     if (!props.organizationId)
       throw new TypeError('TestSuite must have organization id');
-    if (!props.type) throw new TypeError('Expectation must have type');
+    if (!props.type) throw new TypeError('TestSuite must have type');
     if (!props.materializationAddress)
-      throw new TypeError('Expectation must have materializationAddress');
+      throw new TypeError('TestSuite must have materializationAddress');
 
     return new TestSuite(props);
   };

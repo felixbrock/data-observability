@@ -45,9 +45,11 @@ export class UpdateTestSuite
       if (!readResult.success) throw new Error(readResult.error);
 
       if (!readResult.value)
-        throw new Error(`TestSuite with id ${request.id} does not exist`);
+        throw new Error(`Error when running snowflake query`);
+      if(!readResult.value[Object.keys(readResult.value)[0]].length)
+        throw new Error('Test suite id not found');
 
-      console.log(readResult.value.content);
+      console.trace(readResult.value);
 
       const updateQuery = CitoDataQuery.getUpdateTestSuiteQuery(
         request.id,

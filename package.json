@@ -11,7 +11,7 @@
     "build": "npm run clean && npm run tsc && npm run lint",
     "start": "npm run build && nodemon ./src/index.ts",
     "deploy": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./deploy.ps1 -serviceName selector",
-    "debug": "npm run build && nodemon --inspect ./src/index.ts"
+    "debug": "npm run build && nodemon --inspect=3013 ./src/index.ts"
   },
   "repository": {
     "type": "git",

@@ -7,7 +7,7 @@ import Result from '../value-types/transient-types/result';
 
 export interface ReadTestSuitesRequestDto {
   activated?: boolean;
-  executionFrequency: number;
+  executionFrequency?: number;
 }
 
 export interface ReadTestSuitesAuthDto {
@@ -38,7 +38,7 @@ export class ReadTestSuites
     try {
       const query = CitoDataQuery.getReadTestSuitesQuery(
         request.executionFrequency,
-        request.activated
+        request.activated,
       );
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
@@ -49,25 +49,33 @@ export class ReadTestSuites
       if (!querySnowflakeResult.success)
         throw new Error(querySnowflakeResult.error);
 
-      if (!querySnowflakeResult.value)
+      const result = querySnowflakeResult.value;
+
+      if (!result)
         throw new Error(`No test suites found that match condition`);
 
-      console.log(querySnowflakeResult.value.content);
+      const testSuites = Object.keys(result).map(key => {
+        const organizationResult = result[key];
+
+        const organizationTestSuites = organizationResult.map(element => TestSuite.create({
+          id: element.ID,
+          type: element.TEST_TYPE,
+          activated: element.ACTIVATED,
+          executionFrequency: element.EXECUTION_FREQUENCY,
+          threshold: element.THRESHOLD,
+          materializationAddress: element.MATERIALIZATION_ADDRESS,
+          organizationId: element.ORGANIZATION_ID,
+          columnName: element.COLUMN_NAME
+        }));
+
+        return organizationTestSuites;
+        
+      });
 
       // if (testSuite.organizationId !== auth.organizationId)
       //   throw new Error('Not authorized to perform action');
 
-      return Result.ok([
-        TestSuite.create({
-          activated: true,
-          executionFrequency: 1,
-          id: 'dd',
-          materializationAddress: 'aaas',
-          threshold: 2,
-          type: 'ColumnFreshness',
-          organizationId: 'todo'
-        }),
-      ]);
+      return Result.ok(testSuites.flat());
 
     } catch (error: unknown) {
       if (typeof error === 'string') return Result.fail(error);

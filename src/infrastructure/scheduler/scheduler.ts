@@ -20,7 +20,7 @@ export default class Scheduler {
 
       const readTestSuitesResult = await this.#readTestSuites.execute(
         { executionFrequency: frequency, activated: true },
-        { jwt }
+        { jwt}
       );
 
       if (!readTestSuitesResult.success)
@@ -45,19 +45,19 @@ export default class Scheduler {
 
       console.log('--------results----------');
     } catch (error: unknown) {
-      if (typeof error === 'string') console.log(error);
-      if (error instanceof Error) console.log(error.message);
-      console.log('Unknown error occured');
+      if (typeof error === 'string') {console.trace(error); return;};
+      if (error instanceof Error) {console.trace(error.message); return;};
+      console.trace('Unknown error occured');
     }
   };
 
   #cronJobOption: { [key: string]: CronJobParameters } = {
-    oneSecondCronJobOption: {
-      cronTime: '* * * * * *',
-      onTick: () => {
-        this.#onTick(1);
-      },
-    },
+    // oneSecondCronJobOption: {
+    //   cronTime: '* * * * * *',
+    //   onTick: () => {
+    //     this.#onTick(1);
+    //   },
+    // },
     oneHourCronJobOption: {
       cronTime: '0 * * * *',
       onTick: () => {
@@ -92,7 +92,7 @@ export default class Scheduler {
   };
 
   #jobs: CronJob[] = [
-    new CronJob(this.#cronJobOption.oneSecondCronJobOption),
+    // new CronJob(this.#cronJobOption.oneSecondCronJobOption),
     new CronJob(this.#cronJobOption.oneHourCronJobOption),
     new CronJob(this.#cronJobOption.threeHourCronJobOption),
     new CronJob(this.#cronJobOption.sixHourCronJobOption),
@@ -149,9 +149,9 @@ export default class Scheduler {
       // if (auth.organizationId !== 'TODO')
       //   throw new Error('Not authorized to perform action');
     } catch (error: unknown) {
-      if (typeof error === 'string') console.log(error);
-      if (error instanceof Error) console.log(error.message);
-      console.log('Unknown error occured');
+      if (typeof error === 'string') console.trace(error);
+      if (error instanceof Error) console.trace(error.message);
+      console.trace('Unknown error occured');
     }
   };
 }

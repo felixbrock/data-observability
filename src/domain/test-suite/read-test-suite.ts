@@ -10,6 +10,7 @@ export interface ReadTestSuiteRequestDto {
 
 export interface ReadTestSuiteAuthDto {
   jwt: string;
+  organizationId: string;
 }
 
 export type ReadTestSuiteResponseDto = Result<TestSuite>;
@@ -45,23 +46,29 @@ export class ReadTestSuite
       if (!querySnowflakeResult.success)
         throw new Error(querySnowflakeResult.error);
 
-      if (!querySnowflakeResult.value)
+      const result = querySnowflakeResult.value;
+
+      if (!result)
         throw new Error(`TestSuite with id ${request.id} does not exist`);
 
-      console.log(querySnowflakeResult.value.content);
+      const organizationResults = result[auth.organizationId];
+
+      if(organizationResults.length !== 1)
+        throw new Error('No or multiple test suites found');
 
       // if (testSuite.organizationId !== auth.organizationId)
       //   throw new Error('Not authorized to perform action');
 
       return Result.ok(
         TestSuite.create({
-          activated: true,
-          executionFrequency: 1,
-          id: 'dd',
-          materializationAddress: 'aaas',
-          threshold: 2,
-          type: 'ColumnFreshness',
-          organizationId: 'todo'
+          id: organizationResults[0].ID,
+          type: organizationResults[0].TEST_TYPE,
+          activated: organizationResults[0].ACTIVATED,
+          executionFrequency: organizationResults[0].EXECUTION_FREQUENCY,
+          threshold: organizationResults[0].THRESHOLD,
+          materializationAddress: organizationResults[0].MATERIALIZATION_ADDRESS,
+          organizationId: organizationResults[0].ORGANIZATION_ID,
+          columnName: organizationResults[0].COLUMN_NAME
         })
       );
     } catch (error: unknown) {

@@ -53,6 +53,7 @@ export class CreateTestSuite
       });
 
       const query = CitoDataQuery.getInsertTestSuiteQuery(testSuite);
+    
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
         { query },

@@ -10,23 +10,24 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
 
   #serviceName = 'integration';
 
-  #port = '8081';
+  #port = '3002';
 
   querySnowflake = async (
     query: string,
     jwt: string
   ): Promise<SnowflakeQueryResultDto> => {
-    try {
+    try {     
       const apiRoot = await getRoot(this.#serviceName, this.#port, this.#path);
+
+      const data = {
+        query
+      };
 
       const config: AxiosRequestConfig = {
         headers: { Authorization: `Bearer ${jwt}` },
-        data: {
-          query
-        },
       };
 
-      const response = await axios.post(`${apiRoot}/snowflake/query`, config);
+      const response = await axios.post(`${apiRoot}/snowflake/query`, data, config);
       const jsonResponse = response.data;
       if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);
@@ -46,10 +47,9 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
 
       const config: AxiosRequestConfig = {
         headers: { Authorization: `Bearer ${jwt}` },
-        data: alert,
       };
 
-      const response = await axios.post(`${apiRoot}/slack/alert/send`, config);
+      const response = await axios.post(`${apiRoot}/slack/alert/send`, alert, config);
       const jsonResponse = response.data;
       if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);

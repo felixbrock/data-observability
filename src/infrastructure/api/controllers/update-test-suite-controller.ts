@@ -1,12 +1,11 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
-import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateTestSuite,
+  UpdateTestSuiteAuthDto,
   UpdateTestSuiteRequestDto,
   UpdateTestSuiteResponseDto,
 } from '../../../domain/test-suite/update-test-suite';
-import Dbo from '../../persistence/db/mongo-db';
 
 import {
   BaseController,
@@ -16,15 +15,9 @@ import {
 export default class UpdateTestSuiteController extends BaseController {
   readonly #updateTestSuite: UpdateTestSuite;
 
-  readonly #getAccounts: GetAccounts;
-
-  readonly #dbo: Dbo;
-
-  constructor(updateTestSuite: UpdateTestSuite, getAccounts: GetAccounts, dbo: Dbo) {
+  constructor(updateTestSuite: UpdateTestSuite) {
     super();
     this.#updateTestSuite = updateTestSuite;
-    this.#getAccounts = getAccounts;
-    this.#dbo = dbo;
   }
 
   #buildRequestDto = (httpRequest: Request): UpdateTestSuiteRequestDto => ({
@@ -32,18 +25,18 @@ export default class UpdateTestSuiteController extends BaseController {
     activated: httpRequest.body.activated,
   });
 
-  // #buildAuthDto = (userAccountInfo: UserAccountInfo): UpdateTestSuiteAuthDto => ({
-  //   organizationId: userAccountInfo.organizationId,
-  // });
+  #buildAuthDto = (jwt: string): UpdateTestSuiteAuthDto => ({
+    jwt
+  });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
-      // const authHeader = req.headers.authorization;
+      const authHeader = req.headers.authorization;
 
-      // if (!authHeader)
-      //   return UpdateTestSuiteController.unauthorized(res, 'Unauthorized');
+      if (!authHeader)
+        return UpdateTestSuiteController.unauthorized(res, 'Unauthorized');
 
-      // const jwt = authHeader.split(' ')[1];
+      const jwt = authHeader.split(' ')[1];
 
       // const getUserAccountInfoResult: Result<UserAccountInfo> =
       //   await UpdateTestSuiteInfoController.getUserAccountInfo(
@@ -60,16 +53,14 @@ export default class UpdateTestSuiteController extends BaseController {
       //   throw new ReferenceError('Authorization failed');
 
       const requestDto: UpdateTestSuiteRequestDto = this.#buildRequestDto(req);
-      // const authDto: UpdateTestSuiteAuthDto = this.#buildAuthDto(
-      //   getUserAccountResult.value
-      // );
+      const authDto: UpdateTestSuiteAuthDto = this.#buildAuthDto(
+        jwt
+      );
 
       const useCaseResult: UpdateTestSuiteResponseDto =
         await this.#updateTestSuite.execute(
           requestDto,
-          {
-            jwt: 'todo',
-          },
+          authDto,
         );
 
 

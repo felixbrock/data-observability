@@ -1,13 +1,12 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
-import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { buildTestSuiteDto } from '../../../domain/test-suite/test-suite-dto';
 import {
   ReadTestSuites,
+  ReadTestSuitesAuthDto,
   ReadTestSuitesRequestDto,
   ReadTestSuitesResponseDto,
 } from '../../../domain/test-suite/read-test-suites';
-import Dbo from '../../persistence/db/mongo-db';
 
 import {
   BaseController,
@@ -17,19 +16,11 @@ import {
 export default class ReadTestSuitesController extends BaseController {
   readonly #readTestSuites: ReadTestSuites;
 
-  readonly #getAccounts: GetAccounts;
-
-  readonly #dbo: Dbo;
-
   constructor(
     readTestSuites: ReadTestSuites,
-    getAccounts: GetAccounts,
-    dbo: Dbo
   ) {
     super();
     this.#readTestSuites = readTestSuites;
-    this.#getAccounts = getAccounts;
-    this.#dbo = dbo;
   }
 
   #buildRequestDto = (httpRequest: Request): ReadTestSuitesRequestDto => {
@@ -50,28 +41,29 @@ export default class ReadTestSuitesController extends BaseController {
     };
   };
 
-  // #buildAuthDto = (
-  //   userAccountInfo: UserAccountInfo
-  // ): ReadTestSuitesAuthDto => ({
-  // });
+  #buildAuthDto = (
+    jwt: string
+  ): ReadTestSuitesAuthDto => ({
+    jwt
+  });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
-      // const authHeader = req.headers.authorization;
+      const authHeader = req.headers.authorization;
 
-      // if (!authHeader)
-      //   return ReadTestSuitesController.unauthorized(res, 'Unauthorized');
+      if (!authHeader)
+        return ReadTestSuitesController.unauthorized(res, 'Unauthorized');
 
-      // const jwt = authHeader.split(' ')[1];
+      const jwt = authHeader.split(' ')[1];
 
       // const getUserAccountInfoResult: Result<UserAccountInfo> =
-      //   await ReadTestSuitesInfoController.getUserAccountInfo(
+      //   await ReadTestSuitesController.getUserAccountInfo(
       //     jwt,
       //     this.#getAccounts
       //   );
 
       // if (!getUserAccountInfoResult.success)
-      //   return ReadTestSuitesInfoController.unauthorized(
+      //   return ReadTestSuitesController.unauthorized(
       //     res,
       //     getUserAccountInfoResult.error
       //   );
@@ -79,16 +71,14 @@ export default class ReadTestSuitesController extends BaseController {
       //   throw new ReferenceError('Authorization failed');
 
       const requestDto: ReadTestSuitesRequestDto = this.#buildRequestDto(req);
-      // const authDto: ReadTestSuitesAuthDto = this.#buildAuthDto(
-      //   getUserAccountResult.value
-      // );
+      const authDto: ReadTestSuitesAuthDto = this.#buildAuthDto(
+        jwt
+      );
 
       const useCaseResult: ReadTestSuitesResponseDto =
         await this.#readTestSuites.execute(
           requestDto,
-          {
-            jwt: 'todo',
-          },
+          authDto,
         );
 
       if (!useCaseResult.success) {
