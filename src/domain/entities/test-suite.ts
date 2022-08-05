@@ -1,3 +1,16 @@
+export const materializationTypes = ['Table', 'View'];
+export type MaterializationType = typeof materializationTypes[number];
+
+export const parseMaterializationType = (
+  materializationType: unknown
+): MaterializationType => {
+  const identifiedElement = materializationTypes.find(
+    (element) => element === materializationType
+  );
+  if (identifiedElement) return identifiedElement;
+  throw new Error('Provision of invalid type');
+};
+
 export const testTypes = [
   'ColumnFreshness',
   'ColumnCardinality',
@@ -13,9 +26,9 @@ export const testTypes = [
 export type TestType = typeof testTypes[number];
 
 export const parseTestType = (testType: unknown): TestType => {
-  const identifiedFrequency = testTypes.find((element) => element === testType);
-  if (identifiedFrequency) return identifiedFrequency;
-  throw new Error('Provision of invalid test type');
+  const identifiedElement = testTypes.find((element) => element === testType);
+  if (identifiedElement) return identifiedElement;
+  throw new Error('Provision of invalid type');
 };
 
 export interface TestSuiteProperties {
@@ -24,7 +37,10 @@ export interface TestSuiteProperties {
   type: TestType;
   threshold: number;
   executionFrequency: number;
-  materializationAddress: string;
+  databaseName: string;
+  schemaName: string;
+  materializationName: string;
+  materializationType: MaterializationType;
   columnName?: string;
   organizationId: string;
 }
@@ -42,9 +58,15 @@ export class TestSuite {
 
   #executionFrequency: number;
 
-  #materializationAddress: string;
+  #databaseName: string;
+
+  #schemaName: string;
+
+  #materializationName: string;
 
   #columnName?: string;
+
+  #materializationType: MaterializationType;
 
   get id(): string {
     return this.#id;
@@ -70,12 +92,24 @@ export class TestSuite {
     return this.#executionFrequency;
   }
 
-  get materializationAddress(): string {
-    return this.#materializationAddress;
+  get databaseName(): string {
+    return this.#databaseName;
+  }
+
+  get schemaName(): string {
+    return this.#schemaName;
+  }
+
+  get materializationName(): string {
+    return this.#materializationName;
   }
 
   get columnName(): string | undefined {
     return this.#columnName;
+  }
+
+  get materializationType(): MaterializationType {
+    return this.#materializationType;
   }
 
   private constructor(props: TestSuiteProperties) {
@@ -85,7 +119,10 @@ export class TestSuite {
     this.#type = props.type;
     this.#threshold = props.threshold;
     this.#executionFrequency = props.executionFrequency;
-    this.#materializationAddress = props.materializationAddress;
+    this.#databaseName = props.databaseName;
+    this.#schemaName = props.schemaName;
+    this.#materializationName = props.materializationName;
+    this.#materializationType = props.materializationType;
     this.#columnName = props.columnName;
   }
 
@@ -94,8 +131,12 @@ export class TestSuite {
     if (!props.organizationId)
       throw new TypeError('TestSuite must have organization id');
     if (!props.type) throw new TypeError('TestSuite must have type');
-    if (!props.materializationAddress)
-      throw new TypeError('TestSuite must have materializationAddress');
+    if (!props.databaseName)
+      throw new TypeError('TestSuite must have databaseName');
+    if (!props.schemaName)
+      throw new TypeError('TestSuite must have schemaName');
+    if (!props.materializationName)
+      throw new TypeError('TestSuite must have materializationName');
 
     return new TestSuite(props);
   };

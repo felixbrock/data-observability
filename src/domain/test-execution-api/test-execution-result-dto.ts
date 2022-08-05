@@ -1,6 +1,8 @@
+import { MaterializationType, TestType } from '../entities/test-suite';
+
 export interface TestExecutionResultDto {
   testSuiteId: string;
-  testType: string;
+  testType: TestType;
   executionId: string;
   executedOn: string;
   isAnomolous: boolean;
@@ -10,7 +12,10 @@ export interface TestExecutionResultDto {
     value: number;
     expectedUpperBound: number;
     expectedLowerBound: number;
-    materializationAddress: string;
+    databaseName: string;
+    schemaName: string;
+    materializationName: string;
+    materializationType: MaterializationType;
     columnName?: string;
   };
   threshold: number;
