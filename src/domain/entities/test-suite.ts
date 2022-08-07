@@ -1,4 +1,4 @@
-export const materializationTypes = ['Table', 'View'];
+export const materializationTypes = ['Table', 'View'] as const;
 export type MaterializationType = typeof materializationTypes[number];
 
 export const parseMaterializationType = (
@@ -16,8 +16,6 @@ export const testTypes = [
   'ColumnCardinality',
   'ColumnUniqueness',
   'ColumnNullness',
-  'ColumnSortednessIncreasing',
-  'ColumnSortednessDecreasing',
   'ColumnDistribution',
   'MaterializationRowCount',
   'MaterializationColumnCount',
