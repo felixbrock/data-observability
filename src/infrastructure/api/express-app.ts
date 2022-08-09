@@ -35,8 +35,10 @@ export default class ExpressApp {
         iocRegister.resolve('executeTest'),
         iocRegister.resolve('dbo'),
       );
+      console.log(scheduler);
       
-      scheduler.run();
+      
+      // scheduler.run();
 
       this.#expressApp.listen(this.#config.port, () => {
         console.log(
