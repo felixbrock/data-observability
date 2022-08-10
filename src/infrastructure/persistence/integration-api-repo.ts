@@ -39,17 +39,22 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
   };
 
   sendSlackAlert = async (
-    alert: AlertDto,
+    message: string,
+    targetOrganizationId: string,
     jwt: string
   ): Promise<SendAlertResultDto> => {
     try {
       const apiRoot = await getRoot(this.#serviceName, this.#port, this.#path);
 
+      const data = {
+        message, targetOrganizationId
+      };
+
       const config: AxiosRequestConfig = {
         headers: { Authorization: `Bearer ${jwt}` },
       };
 
-      const response = await axios.post(`${apiRoot}/slack/alert/send`, alert, config);
+      const response = await axios.post(`${apiRoot}/slack/alert/send`, data, config);
       const jsonResponse = response.data;
       if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);

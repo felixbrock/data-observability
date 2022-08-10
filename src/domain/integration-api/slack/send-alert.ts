@@ -1,10 +1,16 @@
 import Result from '../../value-types/transient-types/result';
 import IUseCase from '../../services/use-case';
-import { IIntegrationApiRepo } from '../i-integration-api-repo';
+import {
+  AlertMessageConfig,
+  IIntegrationApiRepo,
+} from '../i-integration-api-repo';
 import { SendAlertResultDto } from './send-alert-result-dto';
 import { AlertDto } from './alert-dto';
 
-export type SendSlackAlertRequestDto = AlertDto;
+export type SendSlackAlertRequestDto = {
+  alertDto: AlertDto;
+  targetOrganizationId: string;
+};
 
 export interface SendSlackAlertAuthDto {
   jwt: string;
@@ -26,6 +32,22 @@ export class SendSlackAlert
     this.#integrationApiRepo = integrationApiRepo;
   }
 
+  #buildAlertMessageConfig = (alertDto: AlertDto): AlertMessageConfig => ({
+    alertId: alertDto.alertId,
+    occuredOn: `${alertDto.detectedOn} (UTC)`,
+    anomalyMessagePart: `Distribution alert for value of ${
+      alertDto.value
+    } at a deviation of ${alertDto.deviation * 100}%`,
+    detectedValuePart: `*Detected Value:*\n${alertDto.value} (${
+      alertDto.deviation * 100
+    }% deviation)`,
+    expectedRangePart: `*Expected Range:*\n${alertDto.expectedLowerBound} - ${alertDto.expectedUpperBound}`,
+    summaryPart: alertDto.message.replace(
+      '__link_to_resource__',
+      `https://www.app.citodata.com?resourceId=${alertDto.resourceId}`
+    ),
+  });
+
   async execute(
     request: SendSlackAlertRequestDto,
     auth: SendSlackAlertAuthDto
@@ -33,8 +55,14 @@ export class SendSlackAlert
     console.log(auth);
 
     try {
+      const messageConfig = this.#buildAlertMessageConfig(request.alertDto);
+
       const sendSlackAlertResponse: SendAlertResultDto =
-        await this.#integrationApiRepo.sendSlackAlert({...request}, auth.jwt);
+        await this.#integrationApiRepo.sendSlackAlert(
+          messageConfig,
+          request.targetOrganizationId,
+          auth.jwt
+        );
 
       return Result.ok(sendSlackAlertResponse);
     } catch (error: unknown) {

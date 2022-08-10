@@ -1,6 +1,7 @@
-import { MaterializationType, TestType } from "../../entities/test-suite";
+import { TestType } from "../../entities/test-suite";
 
 export interface AlertDto {
+  alertId: string;
   value: number;
   testType: TestType;
   message: string;
@@ -10,8 +11,7 @@ export interface AlertDto {
   databaseName: string;
   schemaName: string;
   materializationName: string;
-  materializationType: MaterializationType;
   columnName?: string;
   deviation: number;
-  organizationId: string;
+  resourceId: string;
 }
