@@ -6,8 +6,10 @@ const port = process.env.PORT
 const apiRoot = process.env.API_ROOT || 'api';
 const citoDataOrganizationId = process.env.CITO_ORGANIZATION_ID || '';
 
-const getServiceDiscoveryNamespace = (): string => {
+const getServiceDiscoveryNamespace = (): string | null => {
   switch (nodeEnv) {
+    case 'development':
+      return null;
     case 'test':
       return 'observability-staging';
     case 'production':
