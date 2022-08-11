@@ -67,8 +67,9 @@ export class ReadTestSuites
           schemaName: element.SCHEMA_NAME,
           materializationName: element.MATERIALIZATION_NAME,
           materializationType: element.MATERIALIZATION_TYPE,
+          columnName: element.COLUMN_NAME,
+          targetResourceId: element.TARGET_RESOURCE_ID,
           organizationId: element.ORGANIZATION_ID,
-          columnName: element.COLUMN_NAME
         }));
 
         return organizationTestSuites;

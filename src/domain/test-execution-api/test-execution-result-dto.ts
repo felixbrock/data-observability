@@ -22,5 +22,6 @@ export interface TestExecutionResultDto {
   executionFrequency: number;
   modifiedZScore: number;
   deviation: number;
+  targetResourceId: string;
   organizationId: string;
 }

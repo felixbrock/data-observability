@@ -7,7 +7,7 @@ import { ITestResultRepo } from './i-test-result-repo';
 
 export interface CreateTestResultRequestDto {
   testSuiteId: string;
-  alertId?: string
+  alertId?: string;
   testType: string;
   executionId: string;
   executedOn: string;
@@ -16,10 +16,11 @@ export interface CreateTestResultRequestDto {
   executionFrequency: number;
   modifiedZScore: number;
   deviation: number;
-  organizationId: string
+  targetResourceId: string;
+  organizationId: string;
 }
 
-export type CreateTestResultAuthDto = null; 
+export type CreateTestResultAuthDto = null;
 
 export type CreateTestResultResponseDto = Result<TestResult>;
 

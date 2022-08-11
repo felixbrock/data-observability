@@ -1,9 +1,9 @@
 import { CronJob, CronJobParameters } from 'cron';
-import axios, { AxiosRequestConfig} from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import { ReadTestSuites } from '../../domain/test-suite/read-test-suites';
 import Dbo from '../persistence/db/mongo-db';
-import { authEnvConfig } from '../../config';
 import { ExecuteTest } from '../../domain/test-execution-api/execute-test';
+import { appConfig } from '../../config';
 
 export default class Scheduler {
   readonly #readTestSuites: ReadTestSuites;
@@ -20,7 +20,7 @@ export default class Scheduler {
 
       const readTestSuitesResult = await this.#readTestSuites.execute(
         { executionFrequency: frequency, activated: true },
-        { jwt}
+        { jwt }
       );
 
       if (!readTestSuitesResult.success)
@@ -45,8 +45,14 @@ export default class Scheduler {
 
       console.log('--------results----------');
     } catch (error: unknown) {
-      if (typeof error === 'string') {console.trace(error); return;};
-      if (error instanceof Error) {console.trace(error.message); return;};
+      if (typeof error === 'string') {
+        console.trace(error);
+        return;
+      }
+      if (error instanceof Error) {
+        console.trace(error.message);
+        return;
+      }
       console.trace('Unknown error occured');
     }
   };
@@ -115,18 +121,18 @@ export default class Scheduler {
       const config: AxiosRequestConfig = {
         headers: {
           Authorization: `Basic ${Buffer.from(
-            `${authEnvConfig.userPoolWebClientId}:${authEnvConfig.authClientSecret}`
+            `${appConfig.cloud.authEnvConfig.userPoolWebClientId}:${appConfig.cloud.authEnvConfig.authClientSecret}`
           ).toString('base64')}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         params: new URLSearchParams({
           grant_type: 'client_credentials',
-          client_id: authEnvConfig.userPoolWebClientId,
+          client_id: appConfig.cloud.authEnvConfig.userPoolWebClientId,
         }),
       };
 
       const response = await axios.post(
-        authEnvConfig.tokenUrl,
+        appConfig.cloud.authEnvConfig.tokenUrl,
         undefined,
         config
       );

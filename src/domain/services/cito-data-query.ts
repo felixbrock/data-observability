@@ -10,7 +10,7 @@ export default class CitoDataQuery {
     testSuite.schemaName
   }', '${testSuite.materializationName}', '${testSuite.materializationType}', ${
     testSuite.columnName ? `'${testSuite.columnName}'` : null
-  }, '${testSuite.organizationId}');
+  },'${testSuite.targetResourceId}' '${testSuite.organizationId}');
     `;
 
   static getReadTestSuiteQuery = (id: string): string => `

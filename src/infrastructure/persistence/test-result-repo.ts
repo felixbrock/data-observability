@@ -16,6 +16,7 @@ interface TestResultPersistence {
   executionFrequency: number;
   modifiedZScore: number;
   deviation: number;
+  targetResourceId: string;
   organizationId: string;
 }
 
@@ -45,6 +46,7 @@ export default class TestResultRepo implements ITestResultRepo {
   #toPersistence = async (testResult: TestResult): Promise<Document> => {
     const persistenceObject: TestResultPersistence = {
       organizationId: testResult.organizationId,
+      targetResourceId: testResult.targetResourceId,
       testSuiteId: testResult.testSuiteId,
       testType: testResult.testType,
       executionId: testResult.executionId,

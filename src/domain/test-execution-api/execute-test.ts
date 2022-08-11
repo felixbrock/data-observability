@@ -4,7 +4,8 @@ import { ITestExecutionApiRepo } from './i-test-execution-api-repo';
 import { TestExecutionResultDto } from './test-execution-result-dto';
 import { DbConnection } from '../services/i-db';
 import { CreateTestResult } from '../test-result/create-test-result';
-import { IIntegrationApiRepo } from '../integration-api/i-integration-api-repo';
+import { SendSlackAlert } from '../integration-api/slack/send-alert';
+import { AlertDto } from '../integration-api/slack/alert-dto';
 
 export interface ExecuteTestRequestDto {
   testSuiteId: string;
@@ -28,20 +29,20 @@ export class ExecuteTest
 {
   readonly #testExecutionApiRepo: ITestExecutionApiRepo;
 
-  readonly #integrationApiRepo: IIntegrationApiRepo;
-
   readonly #createTestResult: CreateTestResult;
+
+  readonly #sendSlackAlert: SendSlackAlert;
 
   #dbConnection: DbConnection;
 
   constructor(
     testExecutionApiRepo: ITestExecutionApiRepo,
-    integrationApiRepo: IIntegrationApiRepo,
-    createTestResult: CreateTestResult
+    createTestResult: CreateTestResult,
+    sendSlackAlert: SendSlackAlert
   ) {
     this.#testExecutionApiRepo = testExecutionApiRepo;
-    this.#integrationApiRepo = integrationApiRepo;
     this.#createTestResult = createTestResult;
+    this.#sendSlackAlert = sendSlackAlert;
   }
 
   async execute(
@@ -77,6 +78,7 @@ export class ExecuteTest
           testSuiteId: testExecutionResult.testSuiteId,
           testType: testExecutionResult.testType,
           threshold: testExecutionResult.threshold,
+          targetResourceId: testExecutionResult.targetResourceId,
           organizationId: testExecutionResult.organizationId,
         },
         null,
@@ -92,28 +94,34 @@ export class ExecuteTest
       )
         return Result.ok(testExecutionResult);
 
-      const sendSlackAlertResult = await this.#integrationApiRepo.sendSlackAlert(
-        {
-          alertId: testExecutionResult.alertSpecificData.alertId,
-          testType: testExecutionResult.testType,
-          detectedOn: testExecutionResult.executedOn,
-          deviation: testExecutionResult.deviation,
-          expectedLowerBound:
-            testExecutionResult.alertSpecificData.expectedLowerBound,
-          expectedUpperBound:
-            testExecutionResult.alertSpecificData.expectedUpperBound,
-          databaseName: testExecutionResult.alertSpecificData.databaseName,
-          schemaName: testExecutionResult.alertSpecificData.schemaName,
-          materializationName: testExecutionResult.alertSpecificData.materializationName,
-          columnName: testExecutionResult.alertSpecificData.columnName,
-          message: testExecutionResult.alertSpecificData.message,
-          value: testExecutionResult.alertSpecificData.value,
-        },
-        auth.jwt
+      const alertDto: AlertDto = {
+        alertId: testExecutionResult.alertSpecificData.alertId,
+        testType: testExecutionResult.testType,
+        detectedOn: testExecutionResult.executedOn,
+        deviation: testExecutionResult.deviation,
+        expectedLowerBound:
+          testExecutionResult.alertSpecificData.expectedLowerBound,
+        expectedUpperBound:
+          testExecutionResult.alertSpecificData.expectedUpperBound,
+        databaseName: testExecutionResult.alertSpecificData.databaseName,
+        schemaName: testExecutionResult.alertSpecificData.schemaName,
+        materializationName:
+          testExecutionResult.alertSpecificData.materializationName,
+        columnName: testExecutionResult.alertSpecificData.columnName,
+        message: testExecutionResult.alertSpecificData.message,
+        value: testExecutionResult.alertSpecificData.value,
+        resourceId: testExecutionResult.targetResourceId,
+      };
+
+      const sendSlackAlertResult = await this.#sendSlackAlert.execute(
+        { alertDto, targetOrganizationId: testExecutionResult.organizationId },
+        { jwt: auth.jwt }
       );
 
-      if(!sendSlackAlertResult.success)
-        throw new Error(`Sending alert ${testExecutionResult.alertSpecificData.alertId} failed`);
+      if (!sendSlackAlertResult.success)
+        throw new Error(
+          `Sending alert ${testExecutionResult.alertSpecificData.alertId} failed`
+        );
 
       return Result.ok(testExecutionResult);
     } catch (error: unknown) {

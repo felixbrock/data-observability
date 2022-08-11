@@ -45,6 +45,7 @@ export default class CreateTestSuiteController extends BaseController {
     materializationName: httpRequest.body.materializationName,
     materializationType: httpRequest.body.materializationType,
     columnName: httpRequest.body.columnName,
+    targetResourceId: httpRequest.body.targetResourceId
   });
 
   #buildAuthDto = (

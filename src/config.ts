@@ -1,10 +1,10 @@
-export const nodeEnv = process.env.NODE_ENV || 'development';
-export const defaultPort = 3000;
-export const port = process.env.PORT
+const nodeEnv = process.env.NODE_ENV || 'development';
+const defaultPort = 3000;
+const port = process.env.PORT
   ? parseInt(process.env.PORT, 10)
   : defaultPort;
-export const apiRoot = process.env.API_ROOT || 'api';
-export const citoDataOrganizationId = process.env.CITO_ORGANIZATION_ID || '';
+const apiRoot = process.env.API_ROOT || 'api';
+const citoDataOrganizationId = process.env.CITO_ORGANIZATION_ID || '';
 
 const getServiceDiscoveryNamespace = (): string => {
   let namespace = '';
@@ -23,7 +23,18 @@ const getServiceDiscoveryNamespace = (): string => {
   return namespace;
 };
 
-export const serviceDiscoveryNamespace = getServiceDiscoveryNamespace();
+const getMessageResourceBaseUrl = (): string => {
+  switch (nodeEnv) {
+    case 'development':
+      return `http://localhost:${port}/lineage`;
+    case 'test':
+      return `https://www.app-staging.citodata.com/lineage`;
+    case 'production':
+      return `https://www.app.citodata.com/lineage`;
+    default:
+      throw new Error('nodenv type not found');
+  }
+};
 
 const getAuthEnvConfig = (): any => {
   const authEnvConfig: any = {};
@@ -34,7 +45,8 @@ const getAuthEnvConfig = (): any => {
     case 'development':
       authEnvConfig.userPoolId = 'eu-central-1_NVHpLpAIc';
       authEnvConfig.userPoolWebClientId = '13s39d3csd2t31stlu54p6q5a4';
-      authEnvConfig.tokenUrl = 'https://citodata.auth.eu-central-1.amazoncognito.com/oauth2/token';
+      authEnvConfig.tokenUrl =
+        'https://citodata.auth.eu-central-1.amazoncognito.com/oauth2/token';
       break;
     case 'test':
       authEnvConfig.userPoolId = '';
@@ -52,8 +64,6 @@ const getAuthEnvConfig = (): any => {
 
   return authEnvConfig;
 };
-
-export const authEnvConfig = getAuthEnvConfig();
 
 export interface MongoDbConfig {
   url: string;
@@ -89,6 +99,15 @@ export const appConfig = {
   express: {
     port,
     mode: nodeEnv,
+    apiRoot,
+    citoDataOrganizationId
+  },
+  cloud: {
+    serviceDiscoveryNamespace: getServiceDiscoveryNamespace(),
+    authEnvConfig: getAuthEnvConfig(),
+  },
+  slack: {
+    resourceBaseUrl: getMessageResourceBaseUrl(),
   },
   mongodb: {
     ...getMongodbConfig(),

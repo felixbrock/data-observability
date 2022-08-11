@@ -8,11 +8,12 @@ import { ReadTestSuites } from '../domain/test-suite/read-test-suites';
 import { ReadTestSuite } from '../domain/test-suite/read-test-suite';
 import { UpdateTestSuite } from '../domain/test-suite/update-test-suite';
 import TestExecutionRepo from './persistence/test-execution-api-repo';
-import { QuerySnowflake} from '../domain/integration-api/snowflake/query-snowflake';
+import { QuerySnowflake } from '../domain/integration-api/snowflake/query-snowflake';
 import IntegrationApiRepo from './persistence/integration-api-repo';
 import { CreateTestResult } from '../domain/test-result/create-test-result';
 import { ExecuteTest } from '../domain/test-execution-api/execute-test';
 import TestResultRepo from './persistence/test-result-repo';
+import { SendSlackAlert } from '../domain/integration-api/slack/send-alert';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
@@ -29,14 +30,15 @@ iocRegister.register({
 
   getAccounts: asClass(GetAccounts),
   querySnowflake: asClass(QuerySnowflake),
+  sendSlackAlert: asClass(SendSlackAlert),
 
-  testResultRepo: asClass(TestResultRepo),  
+  testResultRepo: asClass(TestResultRepo),
 
   accountApiRepo: asClass(AccountApiRepo),
   integrationApiRepo: asClass(IntegrationApiRepo),
   testExecutionApiRepo: asClass(TestExecutionRepo),
 
-  dbo: asClass(Dbo).singleton()
+  dbo: asClass(Dbo).singleton(),
 });
 
 export default iocRegister;

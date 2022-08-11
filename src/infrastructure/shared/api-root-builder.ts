@@ -1,4 +1,5 @@
-import { nodeEnv } from '../../config';
+import { appConfig } from "../../config";
+
 
 export default async (
   serviceName: string,
@@ -6,7 +7,7 @@ export default async (
   path: string
 ): Promise<string> => {
   try {
-    if (nodeEnv === 'development') return `http://localhost:${port}/${path}`;
+    if (appConfig.express.mode === 'development') return `http://localhost:${port}/${path}`;
     return `http://localhost:${port}/${path}`;
 
     console.log(serviceName);

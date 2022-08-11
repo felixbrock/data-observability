@@ -6,6 +6,7 @@ import {
 } from '../i-integration-api-repo';
 import { SendAlertResultDto } from './send-alert-result-dto';
 import { AlertDto } from './alert-dto';
+import { appConfig } from '../../../config';
 
 export type SendSlackAlertRequestDto = {
   alertDto: AlertDto;
@@ -43,8 +44,8 @@ export class SendSlackAlert
     }% deviation)`,
     expectedRangePart: `*Expected Range:*\n${alertDto.expectedLowerBound} - ${alertDto.expectedUpperBound}`,
     summaryPart: alertDto.message.replace(
-      '__link_to_resource__',
-      `https://www.app.citodata.com?resourceId=${alertDto.resourceId}`
+      '__base_url__',
+      appConfig.slack.resourceBaseUrl
     ),
   });
 
@@ -52,8 +53,6 @@ export class SendSlackAlert
     request: SendSlackAlertRequestDto,
     auth: SendSlackAlertAuthDto
   ): Promise<SendSlackAlertResponseDto> {
-    console.log(auth);
-
     try {
       const messageConfig = this.#buildAlertMessageConfig(request.alertDto);
 

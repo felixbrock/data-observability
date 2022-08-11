@@ -9,6 +9,7 @@ export interface TestResultProperties {
   modifiedZScore: number;
   deviation: number;
   alertId?: string;
+  targetResourceId: string;
   organizationId: string;
 }
 
@@ -32,6 +33,8 @@ export class TestResult {
   #deviation: number;
 
   #alertId?: string;
+
+  #targetResourceId: string;
 
   #organizationId: string;
 
@@ -75,6 +78,10 @@ export class TestResult {
     return this.#alertId;
   }
 
+  get targetResourceId(): string {
+    return this.#targetResourceId;
+  }
+
   get organizationId(): string {
     return this.#organizationId;
   }
@@ -90,6 +97,7 @@ export class TestResult {
     this.#modifiedZScore = props.modifiedZScore;
     this.#deviation = props.deviation;
     this.#alertId = props.alertId;
+    this.#targetResourceId = props.targetResourceId;
     this.#organizationId = props.organizationId;
   }
 
@@ -99,6 +107,7 @@ export class TestResult {
       throw new TypeError('TestResult must have test type');
     if (!props.executionId) throw new TypeError('TestResult must have execution id');
     if (!props.executedOn) throw new TypeError('TestResult must have executed on');
+    if (!props.targetResourceId) throw new TypeError('TestResult must have target resource id');
     if (!props.organizationId) throw new TypeError('TestResult must have organization id');
 
     return new TestResult(props);

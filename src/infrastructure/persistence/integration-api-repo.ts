@@ -1,8 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { SnowflakeQueryResultDto } from '../../domain/integration-api/snowflake/snowlake-query-result-dto';
-import { IIntegrationApiRepo } from '../../domain/integration-api/i-integration-api-repo';
+import { AlertMessageConfig, IIntegrationApiRepo } from '../../domain/integration-api/i-integration-api-repo';
 import getRoot from '../shared/api-root-builder';
-import { AlertDto } from '../../domain/integration-api/slack/alert-dto';
 import { SendAlertResultDto } from '../../domain/integration-api/slack/send-alert-result-dto';
 
 export default class IntegrationApiRepo implements IIntegrationApiRepo {
@@ -39,7 +38,7 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
   };
 
   sendSlackAlert = async (
-    message: string,
+    messageConfig: AlertMessageConfig,
     targetOrganizationId: string,
     jwt: string
   ): Promise<SendAlertResultDto> => {
@@ -47,7 +46,7 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
       const apiRoot = await getRoot(this.#serviceName, this.#port, this.#path);
 
       const data = {
-        message, targetOrganizationId
+        messageConfig, targetOrganizationId
       };
 
       const config: AxiosRequestConfig = {
