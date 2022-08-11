@@ -7,20 +7,14 @@ const apiRoot = process.env.API_ROOT || 'api';
 const citoDataOrganizationId = process.env.CITO_ORGANIZATION_ID || '';
 
 const getServiceDiscoveryNamespace = (): string => {
-  let namespace = '';
-
   switch (nodeEnv) {
     case 'test':
-      namespace = 'hivedive-test';
-      break;
+      return 'observability-staging';
     case 'production':
-      namespace = 'hivedive';
-      break;
+      return 'observability';
     default:
-      break;
+      throw new Error('No valid nodenv value provided');
   }
-
-  return namespace;
 };
 
 const getMessageResourceBaseUrl = (): string => {
@@ -43,19 +37,19 @@ const getAuthEnvConfig = (): any => {
 
   switch (nodeEnv) {
     case 'development':
-      authEnvConfig.userPoolId = 'eu-central-1_NVHpLpAIc';
-      authEnvConfig.userPoolWebClientId = '13s39d3csd2t31stlu54p6q5a4';
+      authEnvConfig.userPoolId = 'eu-central-1_HYLD4MoTL';
+      authEnvConfig.userPoolWebClientId = '496tv5tk13ofnb7brg7t6r90kn';
       authEnvConfig.tokenUrl =
-        'https://citodata.auth.eu-central-1.amazoncognito.com/oauth2/token';
+        '';
       break;
     case 'test':
-      authEnvConfig.userPoolId = '';
-      authEnvConfig.userPoolWebClientId = '';
+      authEnvConfig.userPoolId = 'eu-central-1_htA4V0E1g';
+      authEnvConfig.userPoolWebClientId = '2ccv0hpd4mq0rir7fs4qi7ah5l';
       authEnvConfig.tokenUrl = '';
       break;
     case 'production':
-      authEnvConfig.userPoolId = '';
-      authEnvConfig.userPoolWebClientId = '';
+      authEnvConfig.userPoolId = 'eu-central-1_fttc090sQ';
+      authEnvConfig.userPoolWebClientId = '4v72uodmi74apj2dobpd8jsr8k';
       authEnvConfig.tokenUrl = '';
       break;
     default:
