@@ -12,6 +12,7 @@ export interface ReadTestSuitesRequestDto {
 
 export interface ReadTestSuitesAuthDto {
   jwt: string;
+  isAdmin: boolean;
 }
 
 export type ReadTestSuitesResponseDto = Result<TestSuite[]>;
@@ -35,6 +36,8 @@ export class ReadTestSuites
     request: ReadTestSuitesRequestDto,
     auth: ReadTestSuitesAuthDto
   ): Promise<ReadTestSuitesResponseDto> {
+    if(!auth.isAdmin) throw new Error('Not authorized to perform operation');
+
     try {
       const query = CitoDataQuery.getReadTestSuitesQuery(
         request.executionFrequency,

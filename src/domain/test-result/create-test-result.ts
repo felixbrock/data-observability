@@ -20,7 +20,9 @@ export interface CreateTestResultRequestDto {
   organizationId: string;
 }
 
-export type CreateTestResultAuthDto = null;
+export type CreateTestResultAuthDto = {
+  isAdmin: boolean;
+};
 
 export type CreateTestResultResponseDto = Result<TestResult>;
 
@@ -46,6 +48,8 @@ export class CreateTestResult
     auth: CreateTestResultAuthDto,
     dbConnection: DbConnection
   ): Promise<CreateTestResultResponseDto> {
+    if (!auth.isAdmin) throw new Error('Unauthorized');
+
     try {
       this.#dbConnection = dbConnection;
 

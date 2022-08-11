@@ -33,16 +33,17 @@ export default class ExpressApp {
       const scheduler = new Scheduler(
         iocRegister.resolve('readTestSuites'),
         iocRegister.resolve('executeTest'),
-        iocRegister.resolve('dbo'),
+        iocRegister.resolve('getAccounts'),
+        iocRegister.resolve('dbo')
       );
-     
+
       scheduler.run();
 
       this.#expressApp.listen(this.#config.port, () => {
         console.log(
-          `App running under pid ${process.pid} and listening on port: ${this.#config.port} in ${
-            this.#config.mode
-          } mode`
+          `App running under pid ${process.pid} and listening on port: ${
+            this.#config.port
+          } in ${this.#config.mode} mode`
         );
       });
     });

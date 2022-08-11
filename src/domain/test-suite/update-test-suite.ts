@@ -49,8 +49,6 @@ export class UpdateTestSuite
       if(!readResult.value[Object.keys(readResult.value)[0]].length)
         throw new Error('Test suite id not found');
 
-      console.trace(readResult.value);
-
       const updateQuery = CitoDataQuery.getUpdateTestSuiteQuery(
         request.id,
         request.activated

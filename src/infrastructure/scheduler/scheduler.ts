@@ -4,11 +4,15 @@ import { ReadTestSuites } from '../../domain/test-suite/read-test-suites';
 import Dbo from '../persistence/db/mongo-db';
 import { ExecuteTest } from '../../domain/test-execution-api/execute-test';
 import { appConfig } from '../../config';
+import { BaseController } from '../shared/base-controller';
+import { GetAccounts } from '../../domain/account-api/get-accounts';
 
 export default class Scheduler {
   readonly #readTestSuites: ReadTestSuites;
 
   readonly #executeTest: ExecuteTest;
+
+  readonly #getAccounts: GetAccounts;
 
   readonly #dbo: Dbo;
 
@@ -18,9 +22,19 @@ export default class Scheduler {
 
       const jwt = await this.#getJwt();
 
+      const getUserAccountInfoResult = await BaseController.getUserAccountInfo(jwt, this.#getAccounts);
+
+      if (!getUserAccountInfoResult.success)
+        throw new Error(getUserAccountInfoResult.error);
+
+      const userAccountInfo = getUserAccountInfoResult.value;
+
+      if (!userAccountInfo)
+        throw new ReferenceError('Authorization failed');
+
       const readTestSuitesResult = await this.#readTestSuites.execute(
         { executionFrequency: frequency, activated: true },
-        { jwt }
+        { jwt, isAdmin: userAccountInfo.isAdmin }
       );
 
       if (!readTestSuitesResult.success)
@@ -34,7 +48,7 @@ export default class Scheduler {
         testSuites.map(async (testSuite) => {
           const executeTestResult = await this.#executeTest.execute(
             { testSuiteId: testSuite.id },
-            { jwt },
+            { jwt, isAdmin: userAccountInfo.isAdmin },
             this.#dbo.dbConnection
           );
 
@@ -109,10 +123,12 @@ export default class Scheduler {
   constructor(
     readTestSuites: ReadTestSuites,
     executeTest: ExecuteTest,
+    getAccounts: GetAccounts,
     dbo: Dbo
   ) {
     this.#readTestSuites = readTestSuites;
     this.#executeTest = executeTest;
+    this.#getAccounts = getAccounts;
     this.#dbo = dbo;
   }
 

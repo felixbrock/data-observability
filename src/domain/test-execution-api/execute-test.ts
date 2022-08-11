@@ -12,8 +12,8 @@ export interface ExecuteTestRequestDto {
 }
 
 export interface ExecuteTestAuthDto {
-  // todo - secure? optional due to organization agnostic cron job requests
   jwt: string;
+  isAdmin: boolean;
 }
 
 export type ExecuteTestResponseDto = Result<TestExecutionResultDto>;
@@ -50,6 +50,8 @@ export class ExecuteTest
     auth: ExecuteTestAuthDto,
     dbConnection: DbConnection
   ): Promise<ExecuteTestResponseDto> {
+    if (!auth.isAdmin) throw new Error('Unauthorized');
+
     try {
       this.#dbConnection = dbConnection;
 
@@ -81,7 +83,7 @@ export class ExecuteTest
           targetResourceId: testExecutionResult.targetResourceId,
           organizationId: testExecutionResult.organizationId,
         },
-        null,
+        {...auth},
         this.#dbConnection
       );
 
