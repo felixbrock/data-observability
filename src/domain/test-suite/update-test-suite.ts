@@ -61,7 +61,7 @@ export class UpdateTestSuite
         { jwt: auth.jwt }
       );
 
-      if (!updateResult.success) throw new Error(readResult.error);
+      if (!updateResult.success) throw new Error(updateResult.error);
 
       if (!updateResult.value)
         throw new Error(`Updating testSuite ${request.id} failed`);

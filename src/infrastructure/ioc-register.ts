@@ -14,6 +14,7 @@ import { CreateTestResult } from '../domain/test-result/create-test-result';
 import { ExecuteTest } from '../domain/test-execution-api/execute-test';
 import TestResultRepo from './persistence/test-result-repo';
 import { SendSlackAlert } from '../domain/integration-api/slack/send-alert';
+import { UpdateTestHistoryEntry } from '../domain/test-suite/update-test-history-entry';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
@@ -25,6 +26,7 @@ iocRegister.register({
   readTestSuites: asClass(ReadTestSuites),
 
   updateTestSuite: asClass(UpdateTestSuite),
+  updateTestHistoryEntry: asClass(UpdateTestHistoryEntry),
 
   executeTest: asClass(ExecuteTest),
 

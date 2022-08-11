@@ -1,22 +1,28 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateTestSuite,
   UpdateTestSuiteAuthDto,
   UpdateTestSuiteRequestDto,
   UpdateTestSuiteResponseDto,
 } from '../../../domain/test-suite/update-test-suite';
+import Result from '../../../domain/value-types/transient-types/result';
 
 import {
   BaseController,
   CodeHttp,
+  UserAccountInfo,
 } from '../../shared/base-controller';
 
 export default class UpdateTestSuiteController extends BaseController {
   readonly #updateTestSuite: UpdateTestSuite;
 
-  constructor(updateTestSuite: UpdateTestSuite) {
+  readonly #getAccounts: GetAccounts;
+
+  constructor(updateTestSuite: UpdateTestSuite, getAccounts: GetAccounts) {
     super();
+    this.#getAccounts = getAccounts;
     this.#updateTestSuite = updateTestSuite;
   }
 
@@ -38,19 +44,19 @@ export default class UpdateTestSuiteController extends BaseController {
 
       const jwt = authHeader.split(' ')[1];
 
-      // const getUserAccountInfoResult: Result<UserAccountInfo> =
-      //   await UpdateTestSuiteInfoController.getUserAccountInfo(
-      //     jwt,
-      //     this.#getAccounts
-      //   );
+      const getUserAccountInfoResult: Result<UserAccountInfo> =
+        await UpdateTestSuiteController.getUserAccountInfo(
+          jwt,
+          this.#getAccounts
+        );
 
-      // if (!getUserAccountInfoResult.success)
-      //   return UpdateTestSuiteInfoController.unauthorized(
-      //     res,
-      //     getUserAccountInfoResult.error
-      //   );
-      // if (!getUserAccountInfoResult.value)
-      //   throw new ReferenceError('Authorization failed');
+      if (!getUserAccountInfoResult.success)
+        return UpdateTestSuiteController.unauthorized(
+          res,
+          getUserAccountInfoResult.error
+        );
+      if (!getUserAccountInfoResult.value)
+        throw new ReferenceError('Authorization failed');
 
       const requestDto: UpdateTestSuiteRequestDto = this.#buildRequestDto(req);
       const authDto: UpdateTestSuiteAuthDto = this.#buildAuthDto(

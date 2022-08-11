@@ -26,7 +26,7 @@ const getServiceDiscoveryNamespace = (): string => {
 const getMessageResourceBaseUrl = (): string => {
   switch (nodeEnv) {
     case 'development':
-      return `http://localhost:${port}/lineage`;
+      return `http://localhost:3006/lineage`;
     case 'test':
       return `https://www.app-staging.citodata.com/lineage`;
     case 'production':

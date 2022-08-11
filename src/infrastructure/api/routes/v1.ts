@@ -10,7 +10,6 @@ const v1Router = Router();
 
 v1Router.get('/', (req, res) => res.json({ message: "Yo! We're up!" }));
 
-
 v1Router.use(`/${appConfig.express.apiRoot}/${version}/test-suite`, testSuiteRoutes);
 
 v1Router.use(`/${appConfig.express.apiRoot}/${version}/test-suites`, testSuitesRoutes);
