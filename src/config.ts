@@ -105,6 +105,7 @@ export const appConfig = {
   cloud: {
     serviceDiscoveryNamespace: getServiceDiscoveryNamespace(),
     authEnvConfig: getAuthEnvConfig(),
+    region: 'eu-central-1'
   },
   slack: {
     resourceBaseUrl: getMessageResourceBaseUrl(),
