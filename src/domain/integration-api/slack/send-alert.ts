@@ -36,9 +36,7 @@ export class SendSlackAlert
   #buildAlertMessageConfig = (alertDto: AlertDto): AlertMessageConfig => ({
     alertId: alertDto.alertId,
     occuredOn: `${alertDto.detectedOn} (UTC)`,
-    anomalyMessagePart: `Distribution alert for value of ${
-      alertDto.value
-    } at a deviation of ${alertDto.deviation * 100}%`,
+    anomalyMessagePart: `Distribution Alert - ${alertDto.deviation * 100}% Deviation`,
     detectedValuePart: `*Detected Value:*\n${alertDto.value} (${
       alertDto.deviation * 100
     }% deviation)`,
