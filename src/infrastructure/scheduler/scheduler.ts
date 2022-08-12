@@ -34,7 +34,7 @@ export default class Scheduler {
 
       const readTestSuitesResult = await this.#readTestSuites.execute(
         { executionFrequency: frequency, activated: true },
-        { jwt, isAdmin: userAccountInfo.isAdmin }
+        { jwt, isSystemInternal: userAccountInfo.isSystemInternal }
       );
 
       if (!readTestSuitesResult.success)
@@ -48,7 +48,7 @@ export default class Scheduler {
         testSuites.map(async (testSuite) => {
           const executeTestResult = await this.#executeTest.execute(
             { testSuiteId: testSuite.id },
-            { jwt, isAdmin: userAccountInfo.isAdmin },
+            { jwt, isSystemInternal: userAccountInfo.isSystemInternal },
             this.#dbo.dbConnection
           );
 
@@ -168,8 +168,6 @@ export default class Scheduler {
     try {
       this.#jobs.forEach((job) => job.start());
 
-      // if (auth.organizationId !== 'TODO')
-      //   throw new Error('Not authorized to perform action');
     } catch (error: unknown) {
       if (typeof error === 'string') console.trace(error);
       if (error instanceof Error) console.trace(error.message);

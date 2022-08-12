@@ -71,9 +71,6 @@ export class CreateTestSuite
       if (!querySnowflakeResult.success)
         throw new Error(querySnowflakeResult.error);
 
-      // if (auth.organizationId !== 'TODO')
-      //   throw new Error('Not authorized to perform action');
-
       return Result.ok(testSuite);
     } catch (error: unknown) {
       if (typeof error === 'string') return Result.fail(error);

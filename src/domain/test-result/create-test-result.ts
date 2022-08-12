@@ -21,7 +21,7 @@ export interface CreateTestResultRequestDto {
 }
 
 export type CreateTestResultAuthDto = {
-  isAdmin: boolean;
+  isSystemInternal: boolean;
 };
 
 export type CreateTestResultResponseDto = Result<TestResult>;
@@ -48,7 +48,7 @@ export class CreateTestResult
     auth: CreateTestResultAuthDto,
     dbConnection: DbConnection
   ): Promise<CreateTestResultResponseDto> {
-    if (!auth.isAdmin) throw new Error('Unauthorized');
+    if (!auth.isSystemInternal) throw new Error('Unauthorized');
 
     try {
       this.#dbConnection = dbConnection;
@@ -58,9 +58,6 @@ export class CreateTestResult
       });
 
       await this.#testResultRepo.insertOne(testResult, this.#dbConnection);
-
-      // if (auth.organizationId !== 'TODO')
-      //   throw new Error('Not authorized to perform action');
 
       return Result.ok(testResult);
     } catch (error: unknown) {

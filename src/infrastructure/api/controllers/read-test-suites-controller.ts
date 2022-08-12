@@ -50,7 +50,7 @@ export default class ReadTestSuitesController extends BaseController {
     userAccountInfo: UserAccountInfo
   ): ReadTestSuitesAuthDto => ({
     jwt,
-    isAdmin: userAccountInfo.isAdmin,
+    isSystemInternal: userAccountInfo.isSystemInternal,
   });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
@@ -76,7 +76,7 @@ export default class ReadTestSuitesController extends BaseController {
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      if (!getUserAccountInfoResult.value.isAdmin)
+      if (!getUserAccountInfoResult.value.isSystemInternal)
         return ReadTestSuitesController.unauthorized(res, 'Unauthorized');
 
       const requestDto: ReadTestSuitesRequestDto = this.#buildRequestDto(req);

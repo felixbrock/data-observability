@@ -13,7 +13,7 @@ export interface ExecuteTestRequestDto {
 
 export interface ExecuteTestAuthDto {
   jwt: string;
-  isAdmin: boolean;
+  isSystemInternal: boolean;
 }
 
 export type ExecuteTestResponseDto = Result<TestExecutionResultDto>;
@@ -50,7 +50,7 @@ export class ExecuteTest
     auth: ExecuteTestAuthDto,
     dbConnection: DbConnection
   ): Promise<ExecuteTestResponseDto> {
-    if (!auth.isAdmin) throw new Error('Unauthorized');
+    if (!auth.isSystemInternal) throw new Error('Unauthorized');
 
     try {
       this.#dbConnection = dbConnection;
