@@ -52,7 +52,7 @@ export default class CreateTestSuiteController extends BaseController {
     userAccountInfo: UserAccountInfo,
     jwt: string
   ): CreateTestSuiteAuthDto => ({
-    organizationId: userAccountInfo.organizationId,
+    organizationId: userAccountInfo.callerOrganizationId,
     jwt,
   });
 

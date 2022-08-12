@@ -50,9 +50,9 @@ export class ExecuteTest
     auth: ExecuteTestAuthDto,
     dbConnection: DbConnection
   ): Promise<ExecuteTestResponseDto> {
-    if (!auth.isSystemInternal) throw new Error('Unauthorized');
-
     try {
+      if (!auth.isSystemInternal) throw new Error('Unauthorized');
+
       this.#dbConnection = dbConnection;
 
       const testExecutionResult = await this.#testExecutionApiRepo.executeTest(
@@ -81,7 +81,7 @@ export class ExecuteTest
           testType: testExecutionResult.testType,
           threshold: testExecutionResult.threshold,
           targetResourceId: testExecutionResult.targetResourceId,
-          organizationId: testExecutionResult.organizationId,
+          targetOrganizationId: testExecutionResult.organizationId,
         },
         {...auth},
         this.#dbConnection

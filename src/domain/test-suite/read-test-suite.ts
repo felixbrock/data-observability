@@ -10,7 +10,7 @@ export interface ReadTestSuiteRequestDto {
 
 export interface ReadTestSuiteAuthDto {
   jwt: string;
-  organizationId: string;
+  callerOrganizationId: string;
 }
 
 export type ReadTestSuiteResponseDto = Result<TestSuite>;
@@ -51,7 +51,7 @@ export class ReadTestSuite
       if (!result)
         throw new Error(`TestSuite with id ${request.id} does not exist`);
 
-      const organizationResults = result[auth.organizationId];
+      const organizationResults = result[auth.callerOrganizationId];
 
       if(organizationResults.length !== 1)
         throw new Error('No or multiple test suites found');

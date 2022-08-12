@@ -40,7 +40,7 @@ export default class ReadTestSuiteController extends BaseController {
     userAccountInfo: UserAccountInfo
   ): ReadTestSuiteAuthDto => ({
     jwt,
-    organizationId: userAccountInfo.organizationId,
+    callerOrganizationId: userAccountInfo.callerOrganizationId,
   });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {

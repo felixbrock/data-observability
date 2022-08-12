@@ -17,7 +17,7 @@ export interface CreateTestResultRequestDto {
   modifiedZScore: number;
   deviation: number;
   targetResourceId: string;
-  organizationId: string;
+  targetOrganizationId: string;
 }
 
 export type CreateTestResultAuthDto = {
@@ -48,13 +48,14 @@ export class CreateTestResult
     auth: CreateTestResultAuthDto,
     dbConnection: DbConnection
   ): Promise<CreateTestResultResponseDto> {
-    if (!auth.isSystemInternal) throw new Error('Unauthorized');
-
     try {
+      if (!auth.isSystemInternal) throw new Error('Unauthorized');
+
       this.#dbConnection = dbConnection;
 
       const testResult = TestResult.create({
         ...request,
+        organizationId: request.targetOrganizationId
       });
 
       await this.#testResultRepo.insertOne(testResult, this.#dbConnection);

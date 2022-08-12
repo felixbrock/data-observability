@@ -22,7 +22,7 @@ export enum CodeHttp {
 export interface UserAccountInfo {
   userId: string;
   accountId: string;
-  organizationId: string;
+  callerOrganizationId: string;
   isSystemInternal: boolean;
 }
 
@@ -91,7 +91,7 @@ export abstract class BaseController {
       return Result.ok({
         userId: authPayload.username,
         accountId: getAccountsResult.value[0].id,
-        organizationId: getAccountsResult.value[0].organizationId,
+        callerOrganizationId: getAccountsResult.value[0].organizationId,
         isSystemInternal: authPayload['cognito:groups']
           ? authPayload['cognito:groups'].includes('system-internal')
           : false,
