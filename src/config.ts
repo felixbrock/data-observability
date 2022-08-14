@@ -39,19 +39,19 @@ const getAuthEnvConfig = (): any => {
 
   switch (nodeEnv) {
     case 'development':
-      authEnvConfig.userPoolId = 'eu-central-1_HYLD4MoTL';
-      authEnvConfig.userPoolWebClientId = '496tv5tk13ofnb7brg7t6r90kn';
+      authEnvConfig.userPoolId = 'eu-central-1_0Z8JhFj8z';
+      authEnvConfig.userPoolWebClientId = '';
       authEnvConfig.tokenUrl =
         '';
       break;
     case 'test':
-      authEnvConfig.userPoolId = 'eu-central-1_htA4V0E1g';
-      authEnvConfig.userPoolWebClientId = '2ccv0hpd4mq0rir7fs4qi7ah5l';
+      authEnvConfig.userPoolId = '';
+      authEnvConfig.userPoolWebClientId = '';
       authEnvConfig.tokenUrl = '';
       break;
     case 'production':
-      authEnvConfig.userPoolId = 'eu-central-1_fttc090sQ';
-      authEnvConfig.userPoolWebClientId = '4v72uodmi74apj2dobpd8jsr8k';
+      authEnvConfig.userPoolId = '';
+      authEnvConfig.userPoolWebClientId = '';
       authEnvConfig.tokenUrl = '';
       break;
     default:
