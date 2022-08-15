@@ -45,16 +45,20 @@ export default class CreateTestSuiteController extends BaseController {
     materializationName: httpRequest.body.materializationName,
     materializationType: httpRequest.body.materializationType,
     columnName: httpRequest.body.columnName,
-    targetResourceId: httpRequest.body.targetResourceId
+    targetResourceId: httpRequest.body.targetResourceId,
   });
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): CreateTestSuiteAuthDto => ({
-    organizationId: userAccountInfo.callerOrganizationId,
-    jwt,
-  });
+  ): CreateTestSuiteAuthDto => {
+    if (!userAccountInfo.callerOrganizationId) throw new Error('Unauthorized');
+
+    return {
+      organizationId: userAccountInfo.callerOrganizationId,
+      jwt,
+    };
+  };
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {

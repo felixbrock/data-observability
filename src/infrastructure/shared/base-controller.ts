@@ -20,9 +20,9 @@ export enum CodeHttp {
 }
 
 export interface UserAccountInfo {
-  userId: string;
-  accountId: string;
-  callerOrganizationId: string;
+  userId?: string;
+  accountId?: string;
+  callerOrganizationId?: string;
   isSystemInternal: boolean;
 }
 
@@ -71,6 +71,18 @@ export abstract class BaseController {
       if (typeof authPayload === 'string')
         return Result.fail('Unexpected auth payload format');
 
+      const isSystemInternal = authPayload['cognito:groups']
+        ? authPayload['cognito:groups'].includes('system-internal')
+        : authPayload.scope.includes('system-internal/system-internal');
+
+      if (isSystemInternal)
+        return Result.ok({
+          isSystemInternal,
+          accountId: undefined,
+          callerOrganizationId: undefined,
+          userId: undefined,
+        });
+
       const getAccountsResult: GetAccountsResponseDto =
         await getAccounts.execute(
           {
@@ -92,9 +104,7 @@ export abstract class BaseController {
         userId: authPayload.username,
         accountId: getAccountsResult.value[0].id,
         callerOrganizationId: getAccountsResult.value[0].organizationId,
-        isSystemInternal: authPayload['cognito:groups']
-          ? authPayload['cognito:groups'].includes('system-internal')
-          : false,
+        isSystemInternal,
       });
     } catch (error: unknown) {
       if (typeof error === 'string') return Result.fail(error);

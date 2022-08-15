@@ -72,12 +72,12 @@ export default class Scheduler {
   };
 
   #cronJobOption: { [key: string]: CronJobParameters } = {
-    // oneSecondCronJobOption: {
-    //   cronTime: '* * * * * *',
-    //   onTick: () => {
-    //     this.#onTick(1);
-    //   },
-    // },
+    oneSecondCronJobOption: {
+      cronTime: '*/10 * * * * *',
+      onTick: () => {
+        this.#onTick(1);
+      },
+    },
     oneHourCronJobOption: {
       cronTime: '0 * * * *',
       onTick: () => {
@@ -104,7 +104,7 @@ export default class Scheduler {
     },
 
     oneDayCronJobOption: {
-      cronTime: '0 * */1 * *',
+      cronTime: '0 0 * * *',
       onTick: () => {
         this.#onTick(24);
       },
@@ -112,7 +112,7 @@ export default class Scheduler {
   };
 
   #jobs: CronJob[] = [
-    // new CronJob(this.#cronJobOption.oneSecondCronJobOption),
+    new CronJob(this.#cronJobOption.oneSecondCronJobOption),
     new CronJob(this.#cronJobOption.oneHourCronJobOption),
     new CronJob(this.#cronJobOption.threeHourCronJobOption),
     new CronJob(this.#cronJobOption.sixHourCronJobOption),
@@ -137,18 +137,18 @@ export default class Scheduler {
       const config: AxiosRequestConfig = {
         headers: {
           Authorization: `Basic ${Buffer.from(
-            `${appConfig.cloud.authEnvConfig.userPoolWebClientId}:${appConfig.cloud.authEnvConfig.authClientSecret}`
+            `${appConfig.cloud.authSchedulerEnvConfig.clientId}:${appConfig.cloud.authSchedulerEnvConfig.clientSecret}`
           ).toString('base64')}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         params: new URLSearchParams({
           grant_type: 'client_credentials',
-          client_id: appConfig.cloud.authEnvConfig.userPoolWebClientId,
+          client_id: appConfig.cloud.authSchedulerEnvConfig.clientId,
         }),
       };
 
       const response = await axios.post(
-        appConfig.cloud.authEnvConfig.tokenUrl,
+        appConfig.cloud.authSchedulerEnvConfig.tokenUrl,
         undefined,
         config
       );
