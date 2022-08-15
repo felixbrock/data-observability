@@ -1,5 +1,9 @@
-import { TestExecutionResultDto } from "./test-execution-result-dto";
+import { TestExecutionResultDto } from './test-execution-result-dto';
 
 export interface ITestExecutionApiRepo {
-  executeTest(testId: string, jwt: string): Promise<TestExecutionResultDto>;
+  executeTest(
+    testSuiteId: string,
+    targetOrganizationId: string,
+    jwt: string
+  ): Promise<TestExecutionResultDto>;
 }

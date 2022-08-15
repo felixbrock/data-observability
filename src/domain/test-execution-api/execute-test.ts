@@ -9,6 +9,7 @@ import { AlertDto } from '../integration-api/slack/alert-dto';
 
 export interface ExecuteTestRequestDto {
   testSuiteId: string;
+  targetOrganizationId: string;
 }
 
 export interface ExecuteTestAuthDto {
@@ -57,33 +58,38 @@ export class ExecuteTest
 
       const testExecutionResult = await this.#testExecutionApiRepo.executeTest(
         request.testSuiteId,
+        request.targetOrganizationId,
         auth.jwt
       );
 
+      const { testSpecificData, alertSpecificData } = testExecutionResult;
+
+      if (!testSpecificData && !testExecutionResult.isWarmup)
+        throw new Error('Test result data misalignment');
+
       if (
-        !testExecutionResult.isAnomolous ||
-        !testExecutionResult.alertSpecificData
+        testSpecificData &&
+        testSpecificData.isAnomolous &&
+        !alertSpecificData
       )
         throw new Error('Anomaly data mismatch');
 
       const createTestResultResult = await this.#createTestResult.execute(
         {
-          alertId: testExecutionResult.alertSpecificData
-            ? testExecutionResult.alertSpecificData.alertId
-            : undefined,
-          deviation: testExecutionResult.deviation,
-          executedOn: testExecutionResult.executedOn,
+          isWarmup: testExecutionResult.isWarmup,
           executionFrequency: testExecutionResult.executionFrequency,
           executionId: testExecutionResult.executionId,
-          isAnomolous: testExecutionResult.isAnomolous,
-          modifiedZScore: testExecutionResult.modifiedZScore,
+          testSpecificData: testExecutionResult.testSpecificData,
+          alertSpecificData: testExecutionResult.alertSpecificData
+            ? { alertId: testExecutionResult.alertSpecificData.alertId }
+            : undefined,
           testSuiteId: testExecutionResult.testSuiteId,
           testType: testExecutionResult.testType,
           threshold: testExecutionResult.threshold,
           targetResourceId: testExecutionResult.targetResourceId,
           targetOrganizationId: testExecutionResult.organizationId,
         },
-        {...auth},
+        { ...auth },
         this.#dbConnection
       );
 
@@ -91,27 +97,34 @@ export class ExecuteTest
         throw new Error(createTestResultResult.error);
 
       if (
-        !testExecutionResult.isAnomolous &&
-        !testExecutionResult.alertSpecificData
+        !testExecutionResult.testSpecificData ||
+        (!testExecutionResult.testSpecificData.isAnomolous &&
+          !testExecutionResult.alertSpecificData)
       )
         return Result.ok(testExecutionResult);
 
+      if (!testSpecificData)
+        throw new Error(
+          'Missing test data. Previous checks indicated test data'
+        );
+      if (!alertSpecificData)
+        throw new Error(
+          'Missing alert data. Previous checks indicated alert data'
+        );
+
       const alertDto: AlertDto = {
-        alertId: testExecutionResult.alertSpecificData.alertId,
+        alertId: alertSpecificData.alertId,
         testType: testExecutionResult.testType,
-        detectedOn: testExecutionResult.executedOn,
-        deviation: testExecutionResult.deviation,
-        expectedLowerBound:
-          testExecutionResult.alertSpecificData.expectedLowerBound,
-        expectedUpperBound:
-          testExecutionResult.alertSpecificData.expectedUpperBound,
-        databaseName: testExecutionResult.alertSpecificData.databaseName,
-        schemaName: testExecutionResult.alertSpecificData.schemaName,
-        materializationName:
-          testExecutionResult.alertSpecificData.materializationName,
-        columnName: testExecutionResult.alertSpecificData.columnName,
-        message: testExecutionResult.alertSpecificData.message,
-        value: testExecutionResult.alertSpecificData.value,
+        detectedOn: testExecutionResult.testSpecificData.executedOn,
+        deviation: testExecutionResult.testSpecificData.deviation,
+        expectedLowerBound: alertSpecificData.expectedLowerBound,
+        expectedUpperBound: alertSpecificData.expectedUpperBound,
+        databaseName: alertSpecificData.databaseName,
+        schemaName: alertSpecificData.schemaName,
+        materializationName: alertSpecificData.materializationName,
+        columnName: alertSpecificData.columnName,
+        message: alertSpecificData.message,
+        value: alertSpecificData.value,
         resourceId: testExecutionResult.targetResourceId,
       };
 
@@ -122,7 +135,7 @@ export class ExecuteTest
 
       if (!sendSlackAlertResult.success)
         throw new Error(
-          `Sending alert ${testExecutionResult.alertSpecificData.alertId} failed`
+          `Sending alert ${alertSpecificData.alertId} failed`
         );
 
       return Result.ok(testExecutionResult);

@@ -47,7 +47,7 @@ export default class Scheduler {
       await Promise.all(
         testSuites.map(async (testSuite) => {
           const executeTestResult = await this.#executeTest.execute(
-            { testSuiteId: testSuite.id },
+            { testSuiteId: testSuite.id, targetOrganizationId: testSuite.organizationId },
             { jwt, isSystemInternal: userAccountInfo.isSystemInternal },
             this.#dbo.dbConnection
           );

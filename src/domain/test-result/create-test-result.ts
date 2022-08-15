@@ -4,18 +4,24 @@ import IUseCase from '../services/use-case';
 import { TestResult } from '../value-types/test-result';
 import { DbConnection } from '../services/i-db';
 import { ITestResultRepo } from './i-test-result-repo';
+import { TestType } from '../entities/test-suite';
 
 export interface CreateTestResultRequestDto {
   testSuiteId: string;
-  alertId?: string;
-  testType: string;
-  executionId: string;
-  executedOn: string;
-  isAnomolous: boolean;
+  testType: TestType;
   threshold: number;
   executionFrequency: number;
-  modifiedZScore: number;
-  deviation: number;
+  executionId: string;
+  isWarmup: boolean;
+  testSpecificData?: {
+    executedOn: string;
+    isAnomolous: boolean;
+    modifiedZScore: number;
+    deviation: number;
+  };
+  alertSpecificData?: {
+    alertId: string;
+  };
   targetResourceId: string;
   targetOrganizationId: string;
 }
@@ -53,10 +59,10 @@ export class CreateTestResult
 
       this.#dbConnection = dbConnection;
 
-      const testResult = TestResult.create({
+      const testResult: TestResult = {
         ...request,
-        organizationId: request.targetOrganizationId
-      });
+        organizationId: request.targetOrganizationId,
+      };
 
       await this.#testResultRepo.insertOne(testResult, this.#dbConnection);
 
