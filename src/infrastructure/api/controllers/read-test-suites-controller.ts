@@ -11,16 +11,20 @@ import {
 import {
   BaseController,
   CodeHttp,
+  UserAccountInfo,
 } from '../../shared/base-controller';
+import { GetAccounts } from '../../../domain/account-api/get-accounts';
+import Result from '../../../domain/value-types/transient-types/result';
 
 export default class ReadTestSuitesController extends BaseController {
   readonly #readTestSuites: ReadTestSuites;
 
-  constructor(
-    readTestSuites: ReadTestSuites,
-  ) {
+  readonly #getAccounts: GetAccounts;
+
+  constructor(readTestSuites: ReadTestSuites, getAccounts: GetAccounts) {
     super();
     this.#readTestSuites = readTestSuites;
+    this.#getAccounts = getAccounts;
   }
 
   #buildRequestDto = (httpRequest: Request): ReadTestSuitesRequestDto => {
@@ -42,9 +46,11 @@ export default class ReadTestSuitesController extends BaseController {
   };
 
   #buildAuthDto = (
-    jwt: string
+    jwt: string,
+    userAccountInfo: UserAccountInfo
   ): ReadTestSuitesAuthDto => ({
-    jwt
+    jwt,
+    isSystemInternal: userAccountInfo.isSystemInternal,
   });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
@@ -56,30 +62,31 @@ export default class ReadTestSuitesController extends BaseController {
 
       const jwt = authHeader.split(' ')[1];
 
-      // const getUserAccountInfoResult: Result<UserAccountInfo> =
-      //   await ReadTestSuitesController.getUserAccountInfo(
-      //     jwt,
-      //     this.#getAccounts
-      //   );
+      const getUserAccountInfoResult: Result<UserAccountInfo> =
+        await ReadTestSuitesController.getUserAccountInfo(
+          jwt,
+          this.#getAccounts
+        );
 
-      // if (!getUserAccountInfoResult.success)
-      //   return ReadTestSuitesController.unauthorized(
-      //     res,
-      //     getUserAccountInfoResult.error
-      //   );
-      // if (!getUserAccountInfoResult.value)
-      //   throw new ReferenceError('Authorization failed');
+      if (!getUserAccountInfoResult.success)
+        return ReadTestSuitesController.unauthorized(
+          res,
+          getUserAccountInfoResult.error
+        );
+      if (!getUserAccountInfoResult.value)
+        throw new ReferenceError('Authorization failed');
+
+      if (!getUserAccountInfoResult.value.isSystemInternal)
+        return ReadTestSuitesController.unauthorized(res, 'Unauthorized');
 
       const requestDto: ReadTestSuitesRequestDto = this.#buildRequestDto(req);
       const authDto: ReadTestSuitesAuthDto = this.#buildAuthDto(
-        jwt
+        jwt,
+        getUserAccountInfoResult.value
       );
 
       const useCaseResult: ReadTestSuitesResponseDto =
-        await this.#readTestSuites.execute(
-          requestDto,
-          authDto,
-        );
+        await this.#readTestSuites.execute(requestDto, authDto);
 
       if (!useCaseResult.success) {
         return ReadTestSuitesController.badRequest(res, useCaseResult.error);

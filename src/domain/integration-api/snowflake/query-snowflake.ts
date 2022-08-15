@@ -31,8 +31,6 @@ export class QuerySnowflake
     request: QuerySnowflakeRequestDto,
     auth: QuerySnowflakeAuthDto
   ): Promise<QuerySnowflakeResponseDto> {
-    console.log(auth);
-
     try {
       const querySnowflakeResponse: SnowflakeQueryResultDto =
         await this.#integrationApiRepo.querySnowflake(request.query, auth.jwt);

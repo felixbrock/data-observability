@@ -16,6 +16,7 @@ export interface CreateTestSuiteRequestDto {
   materializationName: string;
   materializationType: MaterializationType;
   columnName?: string;
+  targetResourceId: string;
 }
 
 export interface CreateTestSuiteAuthDto {
@@ -55,6 +56,7 @@ export class CreateTestSuite
         materializationName: request.materializationName,
         materializationType: request.materializationType,
         columnName: request.columnName,
+        targetResourceId: request.targetResourceId,
         organizationId: auth.organizationId
       });
 
@@ -68,9 +70,6 @@ export class CreateTestSuite
 
       if (!querySnowflakeResult.success)
         throw new Error(querySnowflakeResult.error);
-
-      // if (auth.organizationId !== 'TODO')
-      //   throw new Error('Not authorized to perform action');
 
       return Result.ok(testSuite);
     } catch (error: unknown) {

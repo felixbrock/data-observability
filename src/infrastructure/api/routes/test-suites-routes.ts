@@ -6,6 +6,7 @@ const testSuitesRoutes = Router();
 
 const readTestSuitesController = new ReadTestSuitesController(
   app.resolve('readTestSuites'),
+  app.resolve('getAccounts')
 );
 
 testSuitesRoutes.get('/', (req, res) => {

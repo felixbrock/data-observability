@@ -4,22 +4,31 @@ import IUseCase from '../services/use-case';
 import { TestResult } from '../value-types/test-result';
 import { DbConnection } from '../services/i-db';
 import { ITestResultRepo } from './i-test-result-repo';
+import { TestType } from '../entities/test-suite';
 
 export interface CreateTestResultRequestDto {
   testSuiteId: string;
-  alertId?: string
-  testType: string;
-  executionId: string;
-  executedOn: string;
-  isAnomolous: boolean;
+  testType: TestType;
   threshold: number;
   executionFrequency: number;
-  modifiedZScore: number;
-  deviation: number;
-  organizationId: string
+  executionId: string;
+  isWarmup: boolean;
+  testSpecificData?: {
+    executedOn: string;
+    isAnomolous: boolean;
+    modifiedZScore: number;
+    deviation: number;
+  };
+  alertSpecificData?: {
+    alertId: string;
+  };
+  targetResourceId: string;
+  targetOrganizationId: string;
 }
 
-export type CreateTestResultAuthDto = null; 
+export type CreateTestResultAuthDto = {
+  isSystemInternal: boolean;
+};
 
 export type CreateTestResultResponseDto = Result<TestResult>;
 
@@ -46,16 +55,16 @@ export class CreateTestResult
     dbConnection: DbConnection
   ): Promise<CreateTestResultResponseDto> {
     try {
+      if (!auth.isSystemInternal) throw new Error('Unauthorized');
+
       this.#dbConnection = dbConnection;
 
-      const testResult = TestResult.create({
+      const testResult: TestResult = {
         ...request,
-      });
+        organizationId: request.targetOrganizationId,
+      };
 
       await this.#testResultRepo.insertOne(testResult, this.#dbConnection);
-
-      // if (auth.organizationId !== 'TODO')
-      //   throw new Error('Not authorized to perform action');
 
       return Result.ok(testResult);
     } catch (error: unknown) {

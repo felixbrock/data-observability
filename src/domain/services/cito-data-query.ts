@@ -10,7 +10,7 @@ export default class CitoDataQuery {
     testSuite.schemaName
   }', '${testSuite.materializationName}', '${testSuite.materializationType}', ${
     testSuite.columnName ? `'${testSuite.columnName}'` : null
-  }, '${testSuite.organizationId}');
+  },'${testSuite.targetResourceId}' '${testSuite.organizationId}');
     `;
 
   static getReadTestSuiteQuery = (id: string): string => `
@@ -55,4 +55,13 @@ export default class CitoDataQuery {
     set activated = ${activated}
     where id = '${id}';
   `;
+
+  static getUpdateTestHistoryEntryQuery = (
+    alertId: string,
+    userFeedbackIsAnomaly: number
+  ): string => `
+  update cito.public.test_history
+  set user_feedback_is_anomaly = ${userFeedbackIsAnomaly}
+  where alert_id = '${alertId}';
+`;
 }

@@ -1,10 +1,17 @@
 import Result from '../../value-types/transient-types/result';
 import IUseCase from '../../services/use-case';
-import { IIntegrationApiRepo } from '../i-integration-api-repo';
+import {
+  AlertMessageConfig,
+  IIntegrationApiRepo,
+} from '../i-integration-api-repo';
 import { SendAlertResultDto } from './send-alert-result-dto';
 import { AlertDto } from './alert-dto';
+import { appConfig } from '../../../config';
 
-export type SendSlackAlertRequestDto = AlertDto;
+export type SendSlackAlertRequestDto = {
+  alertDto: AlertDto;
+  targetOrganizationId: string;
+};
 
 export interface SendSlackAlertAuthDto {
   jwt: string;
@@ -26,15 +33,33 @@ export class SendSlackAlert
     this.#integrationApiRepo = integrationApiRepo;
   }
 
+  #buildAlertMessageConfig = (alertDto: AlertDto): AlertMessageConfig => ({
+    alertId: alertDto.alertId,
+    occuredOn: `${alertDto.detectedOn} (UTC)`,
+    anomalyMessagePart: `Distribution Alert - ${alertDto.deviation * 100}% Deviation`,
+    detectedValuePart: `*Detected Value:*\n${alertDto.value} (${
+      alertDto.deviation * 100
+    }% deviation)`,
+    expectedRangePart: `*Expected Range:*\n${alertDto.expectedLowerBound} - ${alertDto.expectedUpperBound}`,
+    summaryPart: alertDto.message.replace(
+      '__base_url__',
+      appConfig.slack.resourceBaseUrl
+    ),
+  });
+
   async execute(
     request: SendSlackAlertRequestDto,
     auth: SendSlackAlertAuthDto
   ): Promise<SendSlackAlertResponseDto> {
-    console.log(auth);
-
     try {
+      const messageConfig = this.#buildAlertMessageConfig(request.alertDto);
+
       const sendSlackAlertResponse: SendAlertResultDto =
-        await this.#integrationApiRepo.sendSlackAlert({...request}, auth.jwt);
+        await this.#integrationApiRepo.sendSlackAlert(
+          messageConfig,
+          request.targetOrganizationId,
+          auth.jwt
+        );
 
       return Result.ok(sendSlackAlertResponse);
     } catch (error: unknown) {

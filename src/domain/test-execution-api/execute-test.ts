@@ -4,15 +4,17 @@ import { ITestExecutionApiRepo } from './i-test-execution-api-repo';
 import { TestExecutionResultDto } from './test-execution-result-dto';
 import { DbConnection } from '../services/i-db';
 import { CreateTestResult } from '../test-result/create-test-result';
-import { IIntegrationApiRepo } from '../integration-api/i-integration-api-repo';
+import { SendSlackAlert } from '../integration-api/slack/send-alert';
+import { AlertDto } from '../integration-api/slack/alert-dto';
 
 export interface ExecuteTestRequestDto {
   testSuiteId: string;
+  targetOrganizationId: string;
 }
 
 export interface ExecuteTestAuthDto {
-  // todo - secure? optional due to organization agnostic cron job requests
   jwt: string;
+  isSystemInternal: boolean;
 }
 
 export type ExecuteTestResponseDto = Result<TestExecutionResultDto>;
@@ -28,20 +30,20 @@ export class ExecuteTest
 {
   readonly #testExecutionApiRepo: ITestExecutionApiRepo;
 
-  readonly #integrationApiRepo: IIntegrationApiRepo;
-
   readonly #createTestResult: CreateTestResult;
+
+  readonly #sendSlackAlert: SendSlackAlert;
 
   #dbConnection: DbConnection;
 
   constructor(
     testExecutionApiRepo: ITestExecutionApiRepo,
-    integrationApiRepo: IIntegrationApiRepo,
-    createTestResult: CreateTestResult
+    createTestResult: CreateTestResult,
+    sendSlackAlert: SendSlackAlert
   ) {
     this.#testExecutionApiRepo = testExecutionApiRepo;
-    this.#integrationApiRepo = integrationApiRepo;
     this.#createTestResult = createTestResult;
+    this.#sendSlackAlert = sendSlackAlert;
   }
 
   async execute(
@@ -50,36 +52,44 @@ export class ExecuteTest
     dbConnection: DbConnection
   ): Promise<ExecuteTestResponseDto> {
     try {
+      if (!auth.isSystemInternal) throw new Error('Unauthorized');
+
       this.#dbConnection = dbConnection;
 
       const testExecutionResult = await this.#testExecutionApiRepo.executeTest(
         request.testSuiteId,
+        request.targetOrganizationId,
         auth.jwt
       );
 
+      const { testSpecificData, alertSpecificData } = testExecutionResult;
+
+      if (!testSpecificData && !testExecutionResult.isWarmup)
+        throw new Error('Test result data misalignment');
+
       if (
-        !testExecutionResult.isAnomolous ||
-        !testExecutionResult.alertSpecificData
+        testSpecificData &&
+        testSpecificData.isAnomolous &&
+        !alertSpecificData
       )
         throw new Error('Anomaly data mismatch');
 
       const createTestResultResult = await this.#createTestResult.execute(
         {
-          alertId: testExecutionResult.alertSpecificData
-            ? testExecutionResult.alertSpecificData.alertId
-            : undefined,
-          deviation: testExecutionResult.deviation,
-          executedOn: testExecutionResult.executedOn,
+          isWarmup: testExecutionResult.isWarmup,
           executionFrequency: testExecutionResult.executionFrequency,
           executionId: testExecutionResult.executionId,
-          isAnomolous: testExecutionResult.isAnomolous,
-          modifiedZScore: testExecutionResult.modifiedZScore,
+          testSpecificData: testExecutionResult.testSpecificData,
+          alertSpecificData: testExecutionResult.alertSpecificData
+            ? { alertId: testExecutionResult.alertSpecificData.alertId }
+            : undefined,
           testSuiteId: testExecutionResult.testSuiteId,
           testType: testExecutionResult.testType,
           threshold: testExecutionResult.threshold,
-          organizationId: testExecutionResult.organizationId,
+          targetResourceId: testExecutionResult.targetResourceId,
+          targetOrganizationId: testExecutionResult.organizationId,
         },
-        null,
+        { ...auth },
         this.#dbConnection
       );
 
@@ -87,34 +97,46 @@ export class ExecuteTest
         throw new Error(createTestResultResult.error);
 
       if (
-        !testExecutionResult.isAnomolous &&
-        !testExecutionResult.alertSpecificData
+        !testExecutionResult.testSpecificData ||
+        (!testExecutionResult.testSpecificData.isAnomolous &&
+          !testExecutionResult.alertSpecificData)
       )
         return Result.ok(testExecutionResult);
 
-      const sendSlackAlertResult = await this.#integrationApiRepo.sendSlackAlert(
-        {
-          testType: testExecutionResult.testType,
-          detectedOn: testExecutionResult.executedOn,
-          deviation: testExecutionResult.deviation,
-          expectedLowerBound:
-            testExecutionResult.alertSpecificData.expectedLowerBound,
-          expectedUpperBound:
-            testExecutionResult.alertSpecificData.expectedUpperBound,
-          databaseName: testExecutionResult.alertSpecificData.databaseName,
-          schemaName: testExecutionResult.alertSpecificData.schemaName,
-          materializationName: testExecutionResult.alertSpecificData.materializationName,
-          materializationType: testExecutionResult.alertSpecificData.materializationType,
-          columnName: testExecutionResult.alertSpecificData.columnName,
-          message: testExecutionResult.alertSpecificData.message,
-          value: testExecutionResult.alertSpecificData.value,
-          organizationId: testExecutionResult.organizationId
-        },
-        auth.jwt
+      if (!testSpecificData)
+        throw new Error(
+          'Missing test data. Previous checks indicated test data'
+        );
+      if (!alertSpecificData)
+        throw new Error(
+          'Missing alert data. Previous checks indicated alert data'
+        );
+
+      const alertDto: AlertDto = {
+        alertId: alertSpecificData.alertId,
+        testType: testExecutionResult.testType,
+        detectedOn: testExecutionResult.testSpecificData.executedOn,
+        deviation: testExecutionResult.testSpecificData.deviation,
+        expectedLowerBound: alertSpecificData.expectedLowerBound,
+        expectedUpperBound: alertSpecificData.expectedUpperBound,
+        databaseName: alertSpecificData.databaseName,
+        schemaName: alertSpecificData.schemaName,
+        materializationName: alertSpecificData.materializationName,
+        columnName: alertSpecificData.columnName,
+        message: alertSpecificData.message,
+        value: alertSpecificData.value,
+        resourceId: testExecutionResult.targetResourceId,
+      };
+
+      const sendSlackAlertResult = await this.#sendSlackAlert.execute(
+        { alertDto, targetOrganizationId: testExecutionResult.organizationId },
+        { jwt: auth.jwt }
       );
 
-      if(!sendSlackAlertResult.success)
-        throw new Error(`Sending alert ${testExecutionResult.alertSpecificData.alertId} failed`);
+      if (!sendSlackAlertResult.success)
+        throw new Error(
+          `Sending alert ${alertSpecificData.alertId} failed`
+        );
 
       return Result.ok(testExecutionResult);
     } catch (error: unknown) {

@@ -55,6 +55,7 @@
     "express": "^4.17.3",
     "helmet": "^5.1.0",
     "jsonwebtoken": "^8.5.1",
+    "jwks-rsa": "^2.1.4",
     "mongo-sanitize": "^1.1.0",
     "mongodb": "^4.4.1"
   }

@@ -10,7 +10,7 @@ export interface ReadTestSuiteRequestDto {
 
 export interface ReadTestSuiteAuthDto {
   jwt: string;
-  organizationId: string;
+  callerOrganizationId: string;
 }
 
 export type ReadTestSuiteResponseDto = Result<TestSuite>;
@@ -51,7 +51,7 @@ export class ReadTestSuite
       if (!result)
         throw new Error(`TestSuite with id ${request.id} does not exist`);
 
-      const organizationResults = result[auth.organizationId];
+      const organizationResults = result[auth.callerOrganizationId];
 
       if(organizationResults.length !== 1)
         throw new Error('No or multiple test suites found');
@@ -70,8 +70,9 @@ export class ReadTestSuite
           schemaName: organizationResults[0].SCHEMA_NAME,
           materializationName: organizationResults[0].MATERIALIZATION_NAME,
           materializationType: organizationResults[0].MATERIALIZATION_TYPE,
+          columnName: organizationResults[0].COLUMN_NAME,
+          targetResourceId: organizationResults[0].TARGET_RESOURCE_ID,
           organizationId: organizationResults[0].ORGANIZATION_ID,
-          columnName: organizationResults[0].COLUMN_NAME
         })
       );
     } catch (error: unknown) {

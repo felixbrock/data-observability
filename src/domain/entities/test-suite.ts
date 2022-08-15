@@ -31,6 +31,8 @@ export const parseTestType = (testType: unknown): TestType => {
 
 export interface TestSuiteProperties {
   id: string;
+  targetResourceId: string;
+  organizationId: string;
   activated: boolean;
   type: TestType;
   threshold: number;
@@ -40,13 +42,14 @@ export interface TestSuiteProperties {
   materializationName: string;
   materializationType: MaterializationType;
   columnName?: string;
-  organizationId: string;
 }
 
 export class TestSuite {
   #id: string;
 
   #organizationId: string;
+
+  #targetResourceId: string;
 
   #activated: boolean;
 
@@ -72,6 +75,10 @@ export class TestSuite {
 
   get organizationId(): string {
     return this.#organizationId;
+  }
+
+  get targetResourceId(): string {
+    return this.#targetResourceId;
   }
 
   get activated(): boolean {
@@ -112,6 +119,7 @@ export class TestSuite {
 
   private constructor(props: TestSuiteProperties) {
     this.#id = props.id;
+    this.#targetResourceId = props.targetResourceId;
     this.#organizationId = props.organizationId;
     this.#activated = props.activated;
     this.#type = props.type;
@@ -126,6 +134,8 @@ export class TestSuite {
 
   static create = (props: TestSuiteProperties): TestSuite => {
     if (!props.id) throw new TypeError('TestSuite must have id');
+    if (!props.targetResourceId)
+      throw new TypeError('Test suite must have resource id');
     if (!props.organizationId)
       throw new TypeError('TestSuite must have organization id');
     if (!props.type) throw new TypeError('TestSuite must have type');

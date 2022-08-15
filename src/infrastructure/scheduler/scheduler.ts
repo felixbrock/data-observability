@@ -1,14 +1,18 @@
 import { CronJob, CronJobParameters } from 'cron';
-import axios, { AxiosRequestConfig} from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import { ReadTestSuites } from '../../domain/test-suite/read-test-suites';
 import Dbo from '../persistence/db/mongo-db';
-import { authEnvConfig } from '../../config';
 import { ExecuteTest } from '../../domain/test-execution-api/execute-test';
+import { appConfig } from '../../config';
+import { BaseController } from '../shared/base-controller';
+import { GetAccounts } from '../../domain/account-api/get-accounts';
 
 export default class Scheduler {
   readonly #readTestSuites: ReadTestSuites;
 
   readonly #executeTest: ExecuteTest;
+
+  readonly #getAccounts: GetAccounts;
 
   readonly #dbo: Dbo;
 
@@ -18,9 +22,19 @@ export default class Scheduler {
 
       const jwt = await this.#getJwt();
 
+      const getUserAccountInfoResult = await BaseController.getUserAccountInfo(jwt, this.#getAccounts);
+
+      if (!getUserAccountInfoResult.success)
+        throw new Error(getUserAccountInfoResult.error);
+
+      const userAccountInfo = getUserAccountInfoResult.value;
+
+      if (!userAccountInfo)
+        throw new ReferenceError('Authorization failed');
+
       const readTestSuitesResult = await this.#readTestSuites.execute(
         { executionFrequency: frequency, activated: true },
-        { jwt}
+        { jwt, isSystemInternal: userAccountInfo.isSystemInternal }
       );
 
       if (!readTestSuitesResult.success)
@@ -33,8 +47,8 @@ export default class Scheduler {
       await Promise.all(
         testSuites.map(async (testSuite) => {
           const executeTestResult = await this.#executeTest.execute(
-            { testSuiteId: testSuite.id },
-            { jwt },
+            { testSuiteId: testSuite.id, targetOrganizationId: testSuite.organizationId },
+            { jwt, isSystemInternal: userAccountInfo.isSystemInternal },
             this.#dbo.dbConnection
           );
 
@@ -45,19 +59,25 @@ export default class Scheduler {
 
       console.log('--------results----------');
     } catch (error: unknown) {
-      if (typeof error === 'string') {console.trace(error); return;};
-      if (error instanceof Error) {console.trace(error.message); return;};
+      if (typeof error === 'string') {
+        console.trace(error);
+        return;
+      }
+      if (error instanceof Error) {
+        console.trace(error.message);
+        return;
+      }
       console.trace('Unknown error occured');
     }
   };
 
   #cronJobOption: { [key: string]: CronJobParameters } = {
-    // oneSecondCronJobOption: {
-    //   cronTime: '* * * * * *',
-    //   onTick: () => {
-    //     this.#onTick(1);
-    //   },
-    // },
+    oneSecondCronJobOption: {
+      cronTime: '*/10 * * * * *',
+      onTick: () => {
+        this.#onTick(1);
+      },
+    },
     oneHourCronJobOption: {
       cronTime: '0 * * * *',
       onTick: () => {
@@ -84,7 +104,7 @@ export default class Scheduler {
     },
 
     oneDayCronJobOption: {
-      cronTime: '0 * */1 * *',
+      cronTime: '0 0 * * *',
       onTick: () => {
         this.#onTick(24);
       },
@@ -92,7 +112,7 @@ export default class Scheduler {
   };
 
   #jobs: CronJob[] = [
-    // new CronJob(this.#cronJobOption.oneSecondCronJobOption),
+    new CronJob(this.#cronJobOption.oneSecondCronJobOption),
     new CronJob(this.#cronJobOption.oneHourCronJobOption),
     new CronJob(this.#cronJobOption.threeHourCronJobOption),
     new CronJob(this.#cronJobOption.sixHourCronJobOption),
@@ -103,10 +123,12 @@ export default class Scheduler {
   constructor(
     readTestSuites: ReadTestSuites,
     executeTest: ExecuteTest,
+    getAccounts: GetAccounts,
     dbo: Dbo
   ) {
     this.#readTestSuites = readTestSuites;
     this.#executeTest = executeTest;
+    this.#getAccounts = getAccounts;
     this.#dbo = dbo;
   }
 
@@ -115,18 +137,18 @@ export default class Scheduler {
       const config: AxiosRequestConfig = {
         headers: {
           Authorization: `Basic ${Buffer.from(
-            `${authEnvConfig.userPoolWebClientId}:${authEnvConfig.authClientSecret}`
+            `${appConfig.cloud.authSchedulerEnvConfig.clientId}:${appConfig.cloud.authSchedulerEnvConfig.clientSecret}`
           ).toString('base64')}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         params: new URLSearchParams({
           grant_type: 'client_credentials',
-          client_id: authEnvConfig.userPoolWebClientId,
+          client_id: appConfig.cloud.authSchedulerEnvConfig.clientId,
         }),
       };
 
       const response = await axios.post(
-        authEnvConfig.tokenUrl,
+        appConfig.cloud.authSchedulerEnvConfig.tokenUrl,
         undefined,
         config
       );
@@ -146,8 +168,6 @@ export default class Scheduler {
     try {
       this.#jobs.forEach((job) => job.start());
 
-      // if (auth.organizationId !== 'TODO')
-      //   throw new Error('Not authorized to perform action');
     } catch (error: unknown) {
       if (typeof error === 'string') console.trace(error);
       if (error instanceof Error) console.trace(error.message);

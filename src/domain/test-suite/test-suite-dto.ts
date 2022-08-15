@@ -15,6 +15,7 @@ export interface TestSuiteDto {
   materializationName: string;
   materializationType: MaterializationType;
   columnName?: string;
+  targetResourceId: string;
   organizationId: string;
 }
 
@@ -29,5 +30,6 @@ export const buildTestSuiteDto = (testSuite: TestSuite): TestSuiteDto => ({
   materializationName: testSuite.materializationName,
   materializationType: testSuite.materializationType,
   columnName: testSuite.columnName,
+  targetResourceId: testSuite.targetResourceId,
   organizationId: testSuite.organizationId,
 });

@@ -3,9 +3,16 @@ import { MaterializationType, TestType } from '../entities/test-suite';
 export interface TestExecutionResultDto {
   testSuiteId: string;
   testType: TestType;
+  threshold: number;
+  executionFrequency: number;
   executionId: string;
-  executedOn: string;
-  isAnomolous: boolean;
+  isWarmup: boolean;
+  testSpecificData?: {
+    executedOn: string;
+    isAnomolous: boolean;
+    modifiedZScore: number;
+    deviation: number;
+  };
   alertSpecificData?: {
     alertId: string;
     message: string;
@@ -18,9 +25,6 @@ export interface TestExecutionResultDto {
     materializationType: MaterializationType;
     columnName?: string;
   };
-  threshold: number;
-  executionFrequency: number;
-  modifiedZScore: number;
-  deviation: number;
+  targetResourceId: string;
   organizationId: string;
 }

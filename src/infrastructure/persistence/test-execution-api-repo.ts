@@ -1,7 +1,6 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { ITestExecutionApiRepo } from '../../domain/test-execution-api/i-test-execution-api-repo';
 import { TestExecutionResultDto } from '../../domain/test-execution-api/test-execution-result-dto';
-import getRoot from '../shared/api-root-builder';
 
 export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
   #path = '127.0.0.1';
@@ -11,19 +10,22 @@ export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
   #port = '5000';
 
   executeTest = async (
-    testId: string,
+    testSuiteId: string,
+    targetOrganizationId: string,
     jwt: string
   ): Promise<TestExecutionResultDto> => {
     try {
-      const apiRoot = await getRoot(this.#serviceName, this.#port, this.#path);
+      const payload = {
+        targetOrganizationId
+      };
 
       const config: AxiosRequestConfig = {
         headers: { Authorization: `Bearer ${jwt}` },
       };
 
-      const response = await axios.post(`${apiRoot}/tests/${testId}/execute`, config);
+      const response = await axios.post(`http://${this.#path}:${this.#port}/tests/${testSuiteId}/execute`, payload, config);
       const jsonResponse = response.data;
-      if (response.status === 200) return jsonResponse;
+      if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);
     } catch (error: unknown) {
       if(typeof error === 'string') return Promise.reject(error);

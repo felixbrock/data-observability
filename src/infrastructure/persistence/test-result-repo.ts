@@ -5,17 +5,25 @@ import sanitize from 'mongo-sanitize';
 
 import { ITestResultRepo } from '../../domain/test-result/i-test-result-repo';
 import { TestResult } from '../../domain/value-types/test-result';
+import { TestType } from '../../domain/entities/test-suite';
 
 interface TestResultPersistence {
   testSuiteId: string;
-  testType: string;
-  executionId: string;
-  executedOn: string;
-  isAnomolous: boolean;
+  testType: TestType;
   threshold: number;
   executionFrequency: number;
-  modifiedZScore: number;
-  deviation: number;
+  executionId: string;
+  isWarmup: boolean;
+  testSpecificData?: {
+    executedOn: string;
+    isAnomolous: boolean;
+    modifiedZScore: number;
+    deviation: number;
+  };
+  alertSpecificData?: {
+    alertId: string;
+  };
+  targetResourceId: string;
   organizationId: string;
 }
 
@@ -44,16 +52,7 @@ export default class TestResultRepo implements ITestResultRepo {
 
   #toPersistence = async (testResult: TestResult): Promise<Document> => {
     const persistenceObject: TestResultPersistence = {
-      organizationId: testResult.organizationId,
-      testSuiteId: testResult.testSuiteId,
-      testType: testResult.testType,
-      executionId: testResult.executionId,
-      executedOn: testResult.executedOn,
-      isAnomolous: testResult.isAnomolous,
-      threshold: testResult.threshold,
-      executionFrequency: testResult.executionFrequency,
-      modifiedZScore: testResult.modifiedZScore,
-      deviation: testResult.deviation,
+      ...testResult,
     };
 
     return persistenceObject;

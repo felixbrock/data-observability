@@ -12,6 +12,7 @@ export interface ReadTestSuitesRequestDto {
 
 export interface ReadTestSuitesAuthDto {
   jwt: string;
+  isSystemInternal: boolean;
 }
 
 export type ReadTestSuitesResponseDto = Result<TestSuite[]>;
@@ -35,6 +36,8 @@ export class ReadTestSuites
     request: ReadTestSuitesRequestDto,
     auth: ReadTestSuitesAuthDto
   ): Promise<ReadTestSuitesResponseDto> {
+    if(!auth.isSystemInternal) throw new Error('Not authorized to perform operation');
+
     try {
       const query = CitoDataQuery.getReadTestSuitesQuery(
         request.executionFrequency,
@@ -67,8 +70,9 @@ export class ReadTestSuites
           schemaName: element.SCHEMA_NAME,
           materializationName: element.MATERIALIZATION_NAME,
           materializationType: element.MATERIALIZATION_TYPE,
+          columnName: element.COLUMN_NAME,
+          targetResourceId: element.TARGET_RESOURCE_ID,
           organizationId: element.ORGANIZATION_ID,
-          columnName: element.COLUMN_NAME
         }));
 
         return organizationTestSuites;

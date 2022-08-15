@@ -38,10 +38,14 @@ export default class ReadTestSuiteController extends BaseController {
   #buildAuthDto = (
     jwt: string,
     userAccountInfo: UserAccountInfo
-  ): ReadTestSuiteAuthDto => ({
-    jwt,
-    organizationId: userAccountInfo.organizationId,
-  });
+  ): ReadTestSuiteAuthDto => {
+    if (!userAccountInfo.callerOrganizationId) throw new Error('Unauthorized');
+
+    return {
+      jwt,
+      callerOrganizationId: userAccountInfo.callerOrganizationId,
+    };
+  };
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
