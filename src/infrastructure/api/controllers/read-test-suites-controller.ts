@@ -51,6 +51,7 @@ export default class ReadTestSuitesController extends BaseController {
   ): ReadTestSuitesAuthDto => ({
     jwt,
     isSystemInternal: userAccountInfo.isSystemInternal,
+    callerOrganizationId: userAccountInfo.callerOrganizationId,
   });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {

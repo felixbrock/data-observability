@@ -13,6 +13,7 @@ export interface ReadTestSuitesRequestDto {
 export interface ReadTestSuitesAuthDto {
   jwt: string;
   isSystemInternal: boolean;
+  callerOrganizationId?: string;
 }
 
 export type ReadTestSuitesResponseDto = Result<TestSuite[]>;
@@ -36,7 +37,7 @@ export class ReadTestSuites
     request: ReadTestSuitesRequestDto,
     auth: ReadTestSuitesAuthDto
   ): Promise<ReadTestSuitesResponseDto> {
-    if(!auth.isSystemInternal) throw new Error('Not authorized to perform operation');
+    if(!auth.isSystemInternal && !auth.callerOrganizationId) throw new Error('Not authorized to perform operation');
 
     try {
       const query = CitoDataQuery.getReadTestSuitesQuery(
