@@ -29,6 +29,8 @@ export default class UpdateTestSuiteController extends BaseController {
   #buildRequestDto = (httpRequest: Request): UpdateTestSuiteRequestDto => ({
     id: httpRequest.params.testSuiteId,
     activated: httpRequest.body.activated,
+    threshold: httpRequest.body.threshold,
+    frequency: httpRequest.body.frequency,
   });
 
   #buildAuthDto = (jwt: string): UpdateTestSuiteAuthDto => ({

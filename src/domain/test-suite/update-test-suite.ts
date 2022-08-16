@@ -5,7 +5,9 @@ import CitoDataQuery from '../services/cito-data-query';
 
 export interface UpdateTestSuiteRequestDto {
   id: string;
-  activated: boolean;
+  activated?: boolean;
+  threshold?: number;
+  frequency?: number
 }
 
 export interface UpdateTestSuiteAuthDto {
@@ -51,7 +53,9 @@ export class UpdateTestSuite
 
       const updateQuery = CitoDataQuery.getUpdateTestSuiteQuery(
         request.id,
-        request.activated
+        request.activated,
+        request.threshold,
+        request.frequency
       );
 
       const updateResult = await this.#querySnowflake.execute(

@@ -50,11 +50,25 @@ export default class CitoDataQuery {
     `;
   };
 
-  static getUpdateTestSuiteQuery = (id: string, activated: boolean): string => `
+  static getUpdateTestSuiteQuery = (
+    id: string,
+    activated?: boolean,
+    threshold?: number,
+    frequency?: number
+  ): string => {
+    const columnNames = `${activated ? 'activated,' : ''}${
+      threshold ? 'threshold,' : ''
+    }${frequency ? 'execution_frequency' : ''}`;
+    const updateValues = `${activated ? `${activated},` : ''}${
+      threshold ? `${threshold},` : ''
+    }${frequency || ''}`;
+
+    return `
     update cito.public.test_suites
-    set activated = ${activated}
+    set (${columnNames}) = (${updateValues})
     where id = '${id}';
   `;
+  };
 
   static getUpdateTestHistoryEntryQuery = (
     alertId: string,
