@@ -77,9 +77,6 @@ export default class ReadTestSuitesController extends BaseController {
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      if (!getUserAccountInfoResult.value.isSystemInternal)
-        return ReadTestSuitesController.unauthorized(res, 'Unauthorized');
-
       const requestDto: ReadTestSuitesRequestDto = this.#buildRequestDto(req);
       const authDto: ReadTestSuitesAuthDto = this.#buildAuthDto(
         jwt,

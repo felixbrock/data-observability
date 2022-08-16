@@ -72,12 +72,12 @@ export default class Scheduler {
   };
 
   #cronJobOption: { [key: string]: CronJobParameters } = {
-    oneSecondCronJobOption: {
-      cronTime: '*/10 * * * * *',
-      onTick: () => {
-        this.#onTick(1);
-      },
-    },
+    // oneSecondCronJobOption: {
+    //   cronTime: '*/10 * * * * *',
+    //   onTick: () => {
+    //     this.#onTick(1);
+    //   },
+    // },
     oneHourCronJobOption: {
       cronTime: '0 * * * *',
       onTick: () => {
@@ -112,7 +112,7 @@ export default class Scheduler {
   };
 
   #jobs: CronJob[] = [
-    new CronJob(this.#cronJobOption.oneSecondCronJobOption),
+    // new CronJob(this.#cronJobOption.oneSecondCronJobOption),
     new CronJob(this.#cronJobOption.oneHourCronJobOption),
     new CronJob(this.#cronJobOption.threeHourCronJobOption),
     new CronJob(this.#cronJobOption.sixHourCronJobOption),
