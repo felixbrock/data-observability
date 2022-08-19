@@ -35,7 +35,7 @@ export class UpdateTestSuite
     auth: UpdateTestSuiteAuthDto
   ): Promise<UpdateTestSuiteResponseDto> {
     try {
-      // todo -replace
+      if(!request.activated === undefined && !request.frequency && !request.threshold) return Result.ok(request.id);
 
       const readQuery = CitoDataQuery.getReadTestSuiteQuery(request.id);
 
