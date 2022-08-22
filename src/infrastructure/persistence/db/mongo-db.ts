@@ -13,17 +13,11 @@ export default class Dbo {
 		return this.#dbConnection;
 	}
 
-	connectToServer = (callback: (err?: unknown) => unknown): any => {
-    this.#client.connect((err, db) =>  {
-      if (err || !db) {
-        return callback(err);
-      }
+  connectToServer = async (): Promise<void> => {
+    const db = await this.#client.connect();
 
-      this.#dbConnection = db.db(appConfig.mongodb.dbName);
-      console.log('Successfully connected to MongoDB.');
-
-      return callback();
-    });
+    this.#dbConnection = db.db(appConfig.mongodb.dbName);
+    console.log('Successfully connected to MongoDB.');
   };
 
 };

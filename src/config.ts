@@ -1,3 +1,7 @@
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 const nodeEnv = process.env.NODE_ENV || 'development';
 const defaultPort = 3000;
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : defaultPort;
@@ -39,7 +43,7 @@ export interface AuthSchedulerEnvConfig {
 const getAuthSchedulerEnvConfig = (): AuthSchedulerEnvConfig => {
   switch (nodeEnv) {
     case 'development': {
-      const clientSecret = process.env.AUTH_SCHEDULER_CLIENT_SECRET_DEV || '';
+      const clientSecret = process.env.SYSTEM_INTERNAL_AUTH_CLIENT_SECRET_DEV || '';
       if (!clientSecret) throw new Error('auth client secret missing');
 
       const clientId = '3o029nji154v0bm109hkvkoi5h';
@@ -57,11 +61,11 @@ const getAuthSchedulerEnvConfig = (): AuthSchedulerEnvConfig => {
       return { clientSecret, clientId, tokenUrl };
     }
     case 'production': {
-      const clientSecret = process.env.AUTH_SCHEDULER_CLIENT_SECRET_PROD || '';
+      const clientSecret = process.env.SYSTEM_INTERNAL_AUTH_CLIENT_SECRET_PROD || '';
       if (!clientSecret) throw new Error('auth client secret missing');
 
-      const clientId = '';
-      const tokenUrl = '';
+      const clientId = '54n1ig9sb07d4d9tiihdi0kifq';
+      const tokenUrl = 'https://auth.citodata.com/oauth2/token';
       return { clientSecret, clientId, tokenUrl };
     }
     default:
@@ -101,24 +105,21 @@ const getMongodbConfig = (): MongoDbConfig => {
   switch (nodeEnv) {
     case 'development':
       return {
-        url: process.env.DATABASE_DEV_URL || '',
-        dbName: process.env.DATABASE_DEV_NAME || '',
+        url: process.env.DATABASE_URL_DEV || '',
+        dbName: process.env.DATABASE_NAME_DEV || '',
       };
     case 'test':
       return {
-        url: process.env.DATABASE_TEST_URL || '',
-        dbName: process.env.DATABASE_TEST_NAME || '',
+        url: process.env.DATABASE_URL_STAGING || '',
+        dbName: process.env.DATABASE_NAME_STAGING || '',
       };
     case 'production':
       return {
-        url: process.env.DATABASE_URL || '',
-        dbName: process.env.DATABASE_NAME || '',
+        url: process.env.DATABASE_URL_PROD || '',
+        dbName: process.env.DATABASE_NAME_PROD || '',
       };
     default:
-      return {
-        url: process.env.DATABASE_DEV_URL || '',
-        dbName: process.env.DATABASE_DEV_URL || '',
-      };
+      throw new Error('Node environment mismatch');
   }
 };
 

@@ -100,6 +100,7 @@ export default class CreateTestSuiteController extends BaseController {
 
       return CreateTestSuiteController.ok(res, resultValue, CodeHttp.CREATED);
     } catch (error: unknown) {
+      console.error(error);
       if (typeof error === 'string')
         return CreateTestSuiteController.fail(res, error);
       if (error instanceof Error)

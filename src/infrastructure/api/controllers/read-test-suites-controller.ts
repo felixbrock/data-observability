@@ -96,6 +96,7 @@ export default class ReadTestSuitesController extends BaseController {
 
       return ReadTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
+      console.error(error);
       if (typeof error === 'string')
         return ReadTestSuitesController.fail(res, error);
       if (error instanceof Error)

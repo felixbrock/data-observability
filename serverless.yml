@@ -1,0 +1,22 @@
+service: observability-service
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  stage: production
+  region: eu-central-1
+  memorySize: 128
+  architecture: arm64
+functions:
+  app:
+    handler: dist/lambda.handler
+    events: 
+      - http: 
+          path: /
+          method: ANY
+          cors: true
+      - http: 
+          path: /{proxy+}
+          method: ANY
+          cors: true
