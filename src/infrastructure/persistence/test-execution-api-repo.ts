@@ -1,13 +1,16 @@
 import axios, { AxiosRequestConfig } from 'axios';
+import { appConfig } from '../../config';
 import { ITestExecutionApiRepo } from '../../domain/test-execution-api/i-test-execution-api-repo';
 import { TestExecutionResultDto } from '../../domain/test-execution-api/test-execution-result-dto';
+import getRoot from '../shared/api-root-builder';
+
 
 export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
-  #path = '127.0.0.1';
+  #path = 'tests';
 
-  #serviceName = 'test-engine';
+  #port = '3000';
 
-  #port = '5000';
+  #prodGateway = 'wvetgwc0ua.execute-api.eu-central-1.amazonaws.com/Prod';
 
   executeTest = async (
     testSuiteId: string,
@@ -15,6 +18,11 @@ export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
     jwt: string
   ): Promise<TestExecutionResultDto> => {
     try {
+      let gateway = this.#port;
+      if(appConfig.express.mode === 'production') gateway = this.#prodGateway;
+
+      const apiRoot = await getRoot(gateway, this.#path, true);
+
       const payload = {
         targetOrganizationId
       };
@@ -23,7 +31,7 @@ export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
         headers: { Authorization: `Bearer ${jwt}` },
       };
 
-      const response = await axios.post(`http://${this.#path}:${this.#port}/tests/${testSuiteId}/execute`, payload, config);
+      const response = await axios.post(`${apiRoot}/${testSuiteId}/execute`, payload, config);
       const jsonResponse = response.data;
       if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);
@@ -34,3 +42,4 @@ export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
     }
   };
 }
+

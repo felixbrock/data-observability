@@ -10,7 +10,7 @@ export default class CitoDataQuery {
     testSuite.schemaName
   }', '${testSuite.materializationName}', '${testSuite.materializationType}', ${
     testSuite.columnName ? `'${testSuite.columnName}'` : null
-  },'${testSuite.targetResourceId}' '${testSuite.organizationId}');
+  },'${testSuite.targetResourceId}', '${testSuite.organizationId}');
     `;
 
   static getReadTestSuiteQuery = (id: string): string => `
@@ -56,16 +56,26 @@ export default class CitoDataQuery {
     threshold?: number,
     frequency?: number
   ): string => {
-    const columnNames = `${activated ? 'activated,' : ''}${
-      threshold ? 'threshold,' : ''
-    }${frequency ? 'execution_frequency' : ''}`;
-    const updateValues = `${activated ? `${activated},` : ''}${
-      threshold ? `${threshold},` : ''
-    }${frequency || ''}`;
+    if (activated === undefined && !threshold && !frequency)
+      throw new Error('No update values provided');
+
+    const columnNames = [];
+    if (activated !== undefined) columnNames.push('activated');
+    if (threshold) columnNames.push('threshold');
+    if (frequency) columnNames.push('execution_frequency');
+
+    const updateValues = [];
+    if (activated !== undefined) updateValues.push(activated);
+    if (threshold) updateValues.push(threshold);
+    if (frequency) updateValues.push(frequency);
 
     return `
     update cito.public.test_suites
-    set (${columnNames}) = (${updateValues})
+    set ${
+      columnNames.length > 1 ? `(${columnNames.join(',')})` : columnNames[0]
+    } = ${
+      updateValues.length > 1 ? `(${updateValues.join(',')})` : updateValues[0]
+    }
     where id = '${id}';
   `;
   };

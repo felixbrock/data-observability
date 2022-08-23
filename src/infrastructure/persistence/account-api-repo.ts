@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { URLSearchParams } from 'url';
+import { appConfig } from '../../config';
 import { AccountDto } from '../../domain/account-api/account-dto';
 import { IAccountApiRepo } from '../../domain/account-api/i-account-api-repo';
 import getRoot from '../shared/api-root-builder';
@@ -7,16 +8,19 @@ import getRoot from '../shared/api-root-builder';
 export default class AccountApiRepo implements IAccountApiRepo {
   #path = 'api/v1';
 
-  #serviceName = 'account';
-
   #port = '8081';
 
+  #prodGateway = 'p2krek4fsj.execute-api.eu-central-1.amazonaws.com/production';
+ 
   getBy = async (
     params: URLSearchParams,
     jwt: string
   ): Promise<AccountDto[]> => {
     try {
-      const apiRoot = await getRoot(this.#serviceName, this.#port, this.#path);
+      let gateway = this.#port;
+      if(appConfig.express.mode === 'production') gateway = this.#prodGateway;
+
+      const apiRoot = await getRoot(gateway, this.#path, false);
 
       const config: AxiosRequestConfig = {
         headers: { Authorization: `Bearer ${jwt}` },

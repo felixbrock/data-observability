@@ -80,6 +80,7 @@ export default class UpdateTestSuiteController extends BaseController {
 
       return UpdateTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
+      console.error(error);
       if (typeof error === 'string')
         return UpdateTestSuiteController.fail(res, error);
       if (error instanceof Error)
