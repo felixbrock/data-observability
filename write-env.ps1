@@ -6,9 +6,9 @@ if (-Not $functionName) {
 
 $envValues=''
 
-$functionConfig = aws lambda get-function-configuration --function-name $functionName | ConvertFrom-Json
+# $functionConfig = aws lambda get-function-configuration --function-name $functionName | ConvertFrom-Json
 
-$envVariables = $functionConfig.Environment.Variables
+# $envVariables = $functionConfig.Environment.Variables
 
 function Add-EnvValue([string]$base, [string]$new) {
   if(-not $base) {$base = $new}
@@ -17,11 +17,11 @@ function Add-EnvValue([string]$base, [string]$new) {
   $base
 }
 
-$envVariables.PSObject.Properties | ForEach-Object {
+# $envVariables.PSObject.Properties | ForEach-Object {
  
-  if($_.Name -and $_.Value) {$envValues = Add-EnvValue -base $envValues -new "$($_.Name)=$($_.Value)"}
+#   if($_.Name -and $_.Value) {$envValues = Add-EnvValue -base $envValues -new "$($_.Name)=$($_.Value)"}
 
-}
+# }
 
 get-content .env | ForEach-Object {
   if($_) {$envValues = Add-EnvValue -base $envValues -new $_}

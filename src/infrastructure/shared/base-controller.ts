@@ -120,7 +120,7 @@ export abstract class BaseController {
 
       return res.status(codeHttp).json(dto);
     }
-    return res.sendStatus(codeHttp);
+    return res.status(codeHttp).json(dto);
   }
 
   static badRequest(res: Response, message?: string): Response {
