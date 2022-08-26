@@ -11,8 +11,9 @@ $envValues=''
 # $envVariables = $functionConfig.Environment.Variables
 
 function Add-EnvValue([string]$base, [string]$new) {
-  if(-not $base) {$base = $new}
-  else {$base = $base + "," + $new}
+  $valueToAdd = if($new -Match 'NODE_ENV') {'NODE_ENV=production'} else {$new}
+  if(-not $base) {$base = $valueToAdd}
+  else {$base = $base + "," + $valueToAdd}
 
   $base
 }
