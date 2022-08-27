@@ -4,7 +4,6 @@ import compression from 'compression';
 import helmet from 'helmet';
 import v1Router from './routes/v1';
 import iocRegister from '../ioc-register';
-import Scheduler from '../scheduler/scheduler';
 import Dbo from '../persistence/db/mongo-db';
 
 interface AppConfig {
@@ -29,15 +28,6 @@ export default class ExpressApp {
       await dbo.connectToServer();
 
       this.configApp();
-
-      const scheduler = new Scheduler(
-        iocRegister.resolve('readTestSuites'),
-        iocRegister.resolve('executeTest'),
-        iocRegister.resolve('getAccounts'),
-        iocRegister.resolve('dbo')
-      );
-
-      scheduler.run();
 
       if (runningLocal)
         this.#expressApp.listen(this.#config.port, () => {
