@@ -6,7 +6,7 @@ import {
   TriggerTestSuiteExecutionAuthDto,
   TriggerTestSuiteExecutionRequestDto,
   TriggerTestSuiteExecutionResponseDto,
-} from '../../../domain/test-suite/trigger-test-execution';
+} from '../../../domain/test-suite/trigger-test-suite-execution';
 import { buildTestSuiteDto } from '../../../domain/test-suite/test-suite-dto';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
@@ -47,14 +47,10 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): TriggerTestSuiteExecutionAuthDto => {
-    if (!userAccountInfo.callerOrganizationId) throw new Error('Unauthorized');
-
-    return {
+  ): TriggerTestSuiteExecutionAuthDto => ({
       isSystemInternal: userAccountInfo.isSystemInternal,
       jwt,
-    };
-  };
+    });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {

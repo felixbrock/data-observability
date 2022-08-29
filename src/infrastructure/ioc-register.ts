@@ -15,7 +15,7 @@ import { ExecuteTest } from '../domain/test-execution-api/execute-test';
 import TestResultRepo from './persistence/test-result-repo';
 import { SendSlackAlert } from '../domain/integration-api/slack/send-alert';
 import { UpdateTestHistoryEntry } from '../domain/test-suite/update-test-history-entry';
-import { TriggerTestSuiteExecution } from '../domain/test-suite/trigger-test-execution';
+import { TriggerTestSuiteExecution } from '../domain/test-suite/trigger-test-suite-execution';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
