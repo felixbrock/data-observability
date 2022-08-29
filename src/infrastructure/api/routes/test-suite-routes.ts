@@ -2,6 +2,7 @@ import { Router } from 'express';
 import app from '../../ioc-register';
 import CreateTestSuiteController from '../controllers/create-test-suite-controller';
 import ReadTestSuiteController from '../controllers/read-test-suite-controller';
+import TriggerTestSuiteExecutionController from '../controllers/trigger-test-suite-execution-controller';
 import UpdateTestHistoryEntryController from '../controllers/update-test-history-enty-controller';
 import UpdateTestSuiteController from '../controllers/update-test-suite-controller';
 
@@ -31,6 +32,12 @@ const updateTestHistoryEntryController = new UpdateTestHistoryEntryController(
   getAccounts
 );
 
+const triggerTestSuiteExecutionController = new TriggerTestSuiteExecutionController(
+  app.resolve('triggerTestSuiteExecution'),
+  getAccounts,
+  dbo
+);
+
 testSuiteRoutes.get('/:testSuiteId', (req, res) => {
   readTestSuiteController.execute(req, res);
 });
@@ -45,6 +52,10 @@ testSuiteRoutes.patch('/:testSuiteId', (req, res) => {
 
 testSuiteRoutes.patch('/history/:alertId', (req, res) => {
   updateTestHistoryEntryController.execute(req, res);
+});
+
+testSuiteRoutes.post('/execute', (req, res) => {
+  triggerTestSuiteExecutionController.execute(req, res);
 });
 
 export default testSuiteRoutes;
