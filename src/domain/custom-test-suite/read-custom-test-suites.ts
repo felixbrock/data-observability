@@ -1,29 +1,29 @@
-import { TestSuite } from '../entities/test-suite';
+import { CustomTestSuite } from '../entities/custom-test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
 import { DbConnection } from '../services/i-db';
 import IUseCase from '../services/use-case';
 import Result from '../value-types/transient-types/result';
 
-export interface ReadTestSuitesRequestDto {
+export interface ReadCustomTestSuitesRequestDto {
   activated?: boolean;
   executionFrequency?: number;
 }
 
-export interface ReadTestSuitesAuthDto {
+export interface ReadCustomTestSuitesAuthDto {
   jwt: string;
   isSystemInternal: boolean;
   callerOrganizationId?: string;
 }
 
-export type ReadTestSuitesResponseDto = Result<TestSuite[]>;
+export type ReadCustomTestSuitesResponseDto = Result<CustomTestSuite[]>;
 
-export class ReadTestSuites
+export class ReadCustomTestSuites
   implements
     IUseCase<
-      ReadTestSuitesRequestDto,
-      ReadTestSuitesResponseDto,
-      ReadTestSuitesAuthDto,
+      ReadCustomTestSuitesRequestDto,
+      ReadCustomTestSuitesResponseDto,
+      ReadCustomTestSuitesAuthDto,
       DbConnection
     >
 {
@@ -34,15 +34,15 @@ export class ReadTestSuites
   }
 
   async execute(
-    request: ReadTestSuitesRequestDto,
-    auth: ReadTestSuitesAuthDto
-  ): Promise<ReadTestSuitesResponseDto> {
+    request: ReadCustomTestSuitesRequestDto,
+    auth: ReadCustomTestSuitesAuthDto
+  ): Promise<ReadCustomTestSuitesResponseDto> {
     if (!auth.isSystemInternal && !auth.callerOrganizationId)
       throw new Error('Not authorized to perform operation');
 
     try {
       const query = CitoDataQuery.getReadTestSuitesQuery(
-        false,
+        true,
         request.executionFrequency,
         request.activated
       );
@@ -59,35 +59,30 @@ export class ReadTestSuites
 
       if (!result) throw new Error(`No test suites found that match condition`);
 
-      const testSuites = Object.keys(result).map((key) => {
+      const customTestSuites = Object.keys(result).map((key) => {
         const organizationResult = result[key];
 
-        const organizationTestSuites = organizationResult.map((element) =>
-          TestSuite.create({
+        const organizationCustomTestSuites = organizationResult.map(
+          (element): CustomTestSuite => ({
             id: element.ID,
-            type: element.TEST_TYPE,
             activated: element.ACTIVATED,
             executionFrequency: element.EXECUTION_FREQUENCY,
             threshold: element.THRESHOLD,
-            target: {
-              databaseName: element.DATABASE_NAME,
-              schemaName: element.SCHEMA_NAME,
-              materializationName: element.MATERIALIZATION_NAME,
-              materializationType: element.MATERIALIZATION_TYPE,
-              columnName: element.COLUMN_NAME,
-              targetResourceId: element.TARGET_RESOURCE_ID,
-            },
+            name: element.NAME,
+            description: element.DESCRIPTION,
+            sqlLogic: element.SQL_LOGIC,
+            targetResourceIds: element.TARGET_RESOURCE_IDS,
             organizationId: element.ORGANIZATION_ID,
           })
         );
 
-        return organizationTestSuites;
+        return organizationCustomTestSuites;
       });
 
-      // if (testSuite.organizationId !== auth.organizationId)
+      // if (customTestSuite.organizationId !== auth.organizationId)
       //   throw new Error('Not authorized to perform action');
 
-      return Result.ok(testSuites.flat());
+      return Result.ok(customTestSuites.flat());
     } catch (error: unknown) {
       if (typeof error === 'string') return Result.fail(error);
       if (error instanceof Error) return Result.fail(error.message);

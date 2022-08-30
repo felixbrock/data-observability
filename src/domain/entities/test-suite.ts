@@ -1,3 +1,5 @@
+import { BaseTestSuite } from '../value-types/transient-types/base-test-suite';
+
 export const materializationTypes = ['Table', 'View'] as const;
 export type MaterializationType = typeof materializationTypes[number];
 
@@ -11,6 +13,15 @@ export const parseMaterializationType = (
   throw new Error('Provision of invalid type');
 };
 
+export interface TestTarget {
+  targetResourceId: string;
+  databaseName: string;
+  schemaName: string;
+  materializationName: string;
+  materializationType: MaterializationType;
+  columnName?: string;
+}
+
 export const testTypes = [
   'ColumnFreshness',
   'ColumnCardinality',
@@ -20,6 +31,7 @@ export const testTypes = [
   'MaterializationRowCount',
   'MaterializationColumnCount',
   'MaterializationFreshness',
+  // 'TestTemplate'
 ] as const;
 export type TestType = typeof testTypes[number];
 
@@ -29,19 +41,10 @@ export const parseTestType = (testType: unknown): TestType => {
   throw new Error('Provision of invalid type');
 };
 
-export interface TestSuiteProperties {
-  id: string;
-  targetResourceId: string;
-  organizationId: string;
-  activated: boolean;
+export interface TestSuiteProperties extends BaseTestSuite{
   type: TestType;
-  threshold: number;
-  executionFrequency: number;
-  databaseName: string;
-  schemaName: string;
-  materializationName: string;
-  materializationType: MaterializationType;
-  columnName?: string;
+  target: TestTarget;
+  // template?: TestTemplate
 }
 
 export class TestSuite {
@@ -49,25 +52,15 @@ export class TestSuite {
 
   #organizationId: string;
 
-  #targetResourceId: string;
-
   #activated: boolean;
 
   #type: TestType;
 
+  #target: TestTarget;
+
   #threshold: number;
 
   #executionFrequency: number;
-
-  #databaseName: string;
-
-  #schemaName: string;
-
-  #materializationName: string;
-
-  #columnName?: string;
-
-  #materializationType: MaterializationType;
 
   get id(): string {
     return this.#id;
@@ -75,10 +68,6 @@ export class TestSuite {
 
   get organizationId(): string {
     return this.#organizationId;
-  }
-
-  get targetResourceId(): string {
-    return this.#targetResourceId;
   }
 
   get activated(): boolean {
@@ -89,6 +78,10 @@ export class TestSuite {
     return this.#type;
   }
 
+  get target(): TestTarget {
+    return this.#target;
+  }
+
   get threshold(): number {
     return this.#threshold;
   }
@@ -97,54 +90,20 @@ export class TestSuite {
     return this.#executionFrequency;
   }
 
-  get databaseName(): string {
-    return this.#databaseName;
-  }
-
-  get schemaName(): string {
-    return this.#schemaName;
-  }
-
-  get materializationName(): string {
-    return this.#materializationName;
-  }
-
-  get columnName(): string | undefined {
-    return this.#columnName;
-  }
-
-  get materializationType(): MaterializationType {
-    return this.#materializationType;
-  }
-
   private constructor(props: TestSuiteProperties) {
     this.#id = props.id;
-    this.#targetResourceId = props.targetResourceId;
     this.#organizationId = props.organizationId;
     this.#activated = props.activated;
     this.#type = props.type;
     this.#threshold = props.threshold;
     this.#executionFrequency = props.executionFrequency;
-    this.#databaseName = props.databaseName;
-    this.#schemaName = props.schemaName;
-    this.#materializationName = props.materializationName;
-    this.#materializationType = props.materializationType;
-    this.#columnName = props.columnName;
+    this.#target = props.target;
   }
 
   static create = (props: TestSuiteProperties): TestSuite => {
     if (!props.id) throw new TypeError('TestSuite must have id');
-    if (!props.targetResourceId)
-      throw new TypeError('Test suite must have resource id');
     if (!props.organizationId)
       throw new TypeError('TestSuite must have organization id');
-    if (!props.type) throw new TypeError('TestSuite must have type');
-    if (!props.databaseName)
-      throw new TypeError('TestSuite must have databaseName');
-    if (!props.schemaName)
-      throw new TypeError('TestSuite must have schemaName');
-    if (!props.materializationName)
-      throw new TypeError('TestSuite must have materializationName');
 
     return new TestSuite(props);
   };

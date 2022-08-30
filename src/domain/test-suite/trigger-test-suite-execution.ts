@@ -41,7 +41,7 @@ export class TriggerTestSuiteExecution
     auth: TriggerTestSuiteExecutionAuthDto
   ): Promise<TriggerTestSuiteExecutionResponseDto> {
     try {
-      console.log(`Executing jobs with frequency ${request.frequency} h`);
+      console.log(`Executing tets suites with frequency ${request.frequency} h`);
 
       const readTestSuitesResult = await this.#readTestSuites.execute(
         { executionFrequency: request.frequency, activated: true },
@@ -72,7 +72,7 @@ export class TriggerTestSuiteExecution
       );
 
       console.log(
-        `Finished execution of jobs with frequency ${request.frequency}`
+        `Finished execution of test suites with frequency ${request.frequency}`
       );
       return Result.ok();
     } catch (error: unknown) {

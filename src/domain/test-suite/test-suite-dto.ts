@@ -1,6 +1,6 @@
 import {
-  MaterializationType,
   TestSuite,
+  TestTarget,
   TestType,
 } from '../entities/test-suite';
 
@@ -10,12 +10,7 @@ export interface TestSuiteDto {
   type: TestType;
   threshold: number;
   executionFrequency: number;
-  databaseName: string;
-  schemaName: string;
-  materializationName: string;
-  materializationType: MaterializationType;
-  columnName?: string;
-  targetResourceId: string;
+  target: TestTarget;
   organizationId: string;
 }
 
@@ -25,11 +20,6 @@ export const buildTestSuiteDto = (testSuite: TestSuite): TestSuiteDto => ({
   type: testSuite.type,
   threshold: testSuite.threshold,
   executionFrequency: testSuite.executionFrequency,
-  databaseName: testSuite.databaseName,
-  schemaName: testSuite.schemaName,
-  materializationName: testSuite.materializationName,
-  materializationType: testSuite.materializationType,
-  columnName: testSuite.columnName,
-  targetResourceId: testSuite.targetResourceId,
+  target: testSuite.target,
   organizationId: testSuite.organizationId,
 });

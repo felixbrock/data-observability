@@ -1,7 +1,7 @@
-import IUseCase from '../services/use-case';
-import Result from '../value-types/transient-types/result';
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
-import CitoDataQuery from '../services/cito-data-query';
+import IUseCase from '../../services/use-case';
+import Result from '../../value-types/transient-types/result';
+import { QuerySnowflake } from './query-snowflake';
+import CitoDataQuery from '../../services/cito-data-query';
 
 export interface UpdateTestHistoryEntryRequestDto {
   id: string;

@@ -2,12 +2,11 @@
 import { Request, Response } from 'express';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
-  CreateTestSuite,
-  CreateTestSuiteAuthDto,
-  CreateTestSuiteRequestDto,
-  CreateTestSuiteResponseDto,
-} from '../../../domain/test-suite/create-test-suite';
-import { buildTestSuiteDto } from '../../../domain/test-suite/test-suite-dto';
+  CreateCustomTestSuite,
+  CreateCustomTestSuiteAuthDto,
+  CreateCustomTestSuiteRequestDto,
+  CreateCustomTestSuiteResponseDto,
+} from '../../../domain/custom-test-suite/create-custom-test-suite';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
 
@@ -17,41 +16,38 @@ import {
   UserAccountInfo,
 } from '../../shared/base-controller';
 
-export default class CreateTestSuiteController extends BaseController {
-  readonly #createTestSuite: CreateTestSuite;
+export default class CreateCustomTestSuiteController extends BaseController {
+  readonly #createCustomTestSuite: CreateCustomTestSuite;
 
   readonly #getAccounts: GetAccounts;
 
   readonly #dbo: Dbo;
 
   constructor(
-    createTestSuite: CreateTestSuite,
+    createCustomTestSuite: CreateCustomTestSuite,
     getAccounts: GetAccounts,
     dbo: Dbo
   ) {
     super();
-    this.#createTestSuite = createTestSuite;
+    this.#createCustomTestSuite = createCustomTestSuite;
     this.#getAccounts = getAccounts;
     this.#dbo = dbo;
   }
 
-  #buildRequestDto = (httpRequest: Request): CreateTestSuiteRequestDto => ({
+  #buildRequestDto = (httpRequest: Request): CreateCustomTestSuiteRequestDto => ({
     activated: httpRequest.body.activated,
-    type: httpRequest.body.type,
     threshold: httpRequest.body.threshold,
     executionFrequency: httpRequest.body.executionFrequency,
-    databaseName: httpRequest.body.databaseName,
-    schemaName: httpRequest.body.schemaName,
-    materializationName: httpRequest.body.materializationName,
-    materializationType: httpRequest.body.materializationType,
-    columnName: httpRequest.body.columnName,
-    targetResourceId: httpRequest.body.targetResourceId,
+    name: httpRequest.body.name,
+    description: httpRequest.body.description,
+    sqlLogic: httpRequest.body.sqlLogic,
+    targetResourceIds: httpRequest.body.targetResourceIds
   });
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): CreateTestSuiteAuthDto => {
+  ): CreateCustomTestSuiteAuthDto => {
     if (!userAccountInfo.callerOrganizationId) throw new Error('Unauthorized');
 
     return {
@@ -65,47 +61,43 @@ export default class CreateTestSuiteController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return CreateTestSuiteController.unauthorized(res, 'Unauthorized');
+        return CreateCustomTestSuiteController.unauthorized(res, 'Unauthorized');
 
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await CreateTestSuiteController.getUserAccountInfo(
+        await CreateCustomTestSuiteController.getUserAccountInfo(
           jwt,
           this.#getAccounts
         );
 
       if (!getUserAccountInfoResult.success)
-        return CreateTestSuiteController.unauthorized(
+        return CreateCustomTestSuiteController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: CreateTestSuiteRequestDto = this.#buildRequestDto(req);
+      const requestDto: CreateCustomTestSuiteRequestDto = this.#buildRequestDto(req);
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
-      const useCaseResult: CreateTestSuiteResponseDto =
-        await this.#createTestSuite.execute(requestDto, authDto);
+      const useCaseResult: CreateCustomTestSuiteResponseDto =
+        await this.#createCustomTestSuite.execute(requestDto, authDto);
 
       if (!useCaseResult.success) {
-        return CreateTestSuiteController.badRequest(res, useCaseResult.error);
+        return CreateCustomTestSuiteController.badRequest(res, useCaseResult.error);
       }
 
-      const resultValue = useCaseResult.value
-        ? buildTestSuiteDto(useCaseResult.value)
-        : useCaseResult.value;
-
-      return CreateTestSuiteController.ok(res, resultValue, CodeHttp.CREATED);
+      return CreateCustomTestSuiteController.ok(res, useCaseResult.value, CodeHttp.CREATED);
     } catch (error: unknown) {
       console.error(error);
       if (typeof error === 'string')
-        return CreateTestSuiteController.fail(res, error);
+        return CreateCustomTestSuiteController.fail(res, error);
       if (error instanceof Error)
-        return CreateTestSuiteController.fail(res, error);
-      return CreateTestSuiteController.fail(res, 'Unknown error occured');
+        return CreateCustomTestSuiteController.fail(res, error);
+      return CreateCustomTestSuiteController.fail(res, 'Unknown error occured');
     }
   }
 }
