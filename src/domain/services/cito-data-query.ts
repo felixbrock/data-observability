@@ -109,9 +109,8 @@ export default class CitoDataQuery {
   static getInsertCustomTestSuiteQuery = (
     customTestSuite: CustomTestSuite
   ): string => `
-insert into cito.public.custom_test_suites
-values
-('${customTestSuite.id}', ${customTestSuite.activated}, ${
+insert into cito.public.custom_test_suites (id, activated, threshold, execution_frequency, name, description, sql_logic, target_resource_ids, organization_id)
+select '${customTestSuite.id}', ${customTestSuite.activated}, ${
     customTestSuite.threshold
   }, ${customTestSuite.executionFrequency}, '${customTestSuite.name}', '${
     customTestSuite.description
@@ -119,7 +118,7 @@ values
     customTestSuite.sqlLogic
   }', array_construct(${customTestSuite.targetResourceIds
     .map((el) => `'${el}'`)
-    .join(',')}), '${customTestSuite.organizationId}');
+    .join(',')}), '${customTestSuite.organizationId}';
   `;
 
   static getUpdateCustomTestSuiteQuery = (

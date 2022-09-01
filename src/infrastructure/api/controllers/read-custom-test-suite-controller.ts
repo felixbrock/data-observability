@@ -20,7 +20,10 @@ export default class ReadCustomTestSuiteController extends BaseController {
 
   readonly #getAccounts: GetAccounts;
 
-  constructor(readCustomTestSuite: ReadCustomTestSuite, getAccounts: GetAccounts) {
+  constructor(
+    readCustomTestSuite: ReadCustomTestSuite,
+    getAccounts: GetAccounts
+  ) {
     super();
     this.#getAccounts = getAccounts;
     this.#readCustomTestSuite = readCustomTestSuite;
@@ -69,7 +72,8 @@ export default class ReadCustomTestSuiteController extends BaseController {
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: ReadCustomTestSuiteRequestDto = this.#buildRequestDto(req);
+      const requestDto: ReadCustomTestSuiteRequestDto =
+        this.#buildRequestDto(req);
       const authDto: ReadCustomTestSuiteAuthDto = this.#buildAuthDto(
         jwt,
         getUserAccountInfoResult.value
@@ -79,10 +83,20 @@ export default class ReadCustomTestSuiteController extends BaseController {
         await this.#readCustomTestSuite.execute(requestDto, authDto);
 
       if (!useCaseResult.success) {
-        return ReadCustomTestSuiteController.badRequest(res, useCaseResult.error);
+        return ReadCustomTestSuiteController.badRequest(
+          res,
+          useCaseResult.error
+        );
       }
 
-      return ReadCustomTestSuiteController.ok(res, useCaseResult.value, CodeHttp.OK);
+      const result = useCaseResult.value;
+      if (!result)
+        return ReadCustomTestSuiteController.notFound(
+          res,
+          'Custom test suite not created. Internal error.'
+        );
+
+      return ReadCustomTestSuiteController.ok(res, result, CodeHttp.OK);
     } catch (error: unknown) {
       console.error(error);
       if (typeof error === 'string')

@@ -90,7 +90,10 @@ export default class CreateCustomTestSuiteController extends BaseController {
         return CreateCustomTestSuiteController.badRequest(res, useCaseResult.error);
       }
 
-      return CreateCustomTestSuiteController.ok(res, useCaseResult.value, CodeHttp.CREATED);
+      const result = useCaseResult.value;
+      if(!result) return CreateCustomTestSuiteController.fail(res, 'Custom test suite not created. Internal error.');
+
+      return CreateCustomTestSuiteController.ok(res, result.toDto(), CodeHttp.CREATED);
     } catch (error: unknown) {
       console.error(error);
       if (typeof error === 'string')

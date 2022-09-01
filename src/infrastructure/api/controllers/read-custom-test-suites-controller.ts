@@ -20,7 +20,10 @@ export default class ReadCustomTestSuitesController extends BaseController {
 
   readonly #getAccounts: GetAccounts;
 
-  constructor(readCustomTestSuites: ReadCustomTestSuites, getAccounts: GetAccounts) {
+  constructor(
+    readCustomTestSuites: ReadCustomTestSuites,
+    getAccounts: GetAccounts
+  ) {
     super();
     this.#readCustomTestSuites = readCustomTestSuites;
     this.#getAccounts = getAccounts;
@@ -76,7 +79,8 @@ export default class ReadCustomTestSuitesController extends BaseController {
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: ReadCustomTestSuitesRequestDto = this.#buildRequestDto(req);
+      const requestDto: ReadCustomTestSuitesRequestDto =
+        this.#buildRequestDto(req);
       const authDto: ReadCustomTestSuitesAuthDto = this.#buildAuthDto(
         jwt,
         getUserAccountInfoResult.value
@@ -86,10 +90,24 @@ export default class ReadCustomTestSuitesController extends BaseController {
         await this.#readCustomTestSuites.execute(requestDto, authDto);
 
       if (!useCaseResult.success) {
-        return ReadCustomTestSuitesController.badRequest(res, useCaseResult.error);
+        return ReadCustomTestSuitesController.badRequest(
+          res,
+          useCaseResult.error
+        );
       }
 
-      return ReadCustomTestSuitesController.ok(res, useCaseResult.value, CodeHttp.OK);
+      const result = useCaseResult.value;
+      if (!result)
+        return ReadCustomTestSuitesController.fail(
+          res,
+          'Readin custom tests failed. Internal error.'
+        );
+
+      return ReadCustomTestSuitesController.ok(
+        res,
+        result,
+        CodeHttp.OK
+      );
     } catch (error: unknown) {
       console.error(error);
       if (typeof error === 'string')

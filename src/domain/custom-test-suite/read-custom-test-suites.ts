@@ -1,4 +1,4 @@
-import { CustomTestSuite } from '../entities/custom-test-suite';
+import { CustomTestSuite, CustomTestSuiteDto } from '../entities/custom-test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
 import { DbConnection } from '../services/i-db';
@@ -16,7 +16,7 @@ export interface ReadCustomTestSuitesAuthDto {
   callerOrganizationId?: string;
 }
 
-export type ReadCustomTestSuitesResponseDto = Result<CustomTestSuite[]>;
+export type ReadCustomTestSuitesResponseDto = Result<CustomTestSuiteDto[]>;
 
 export class ReadCustomTestSuites
   implements
@@ -62,8 +62,8 @@ export class ReadCustomTestSuites
       const customTestSuites = Object.keys(result).map((key) => {
         const organizationResult = result[key];
 
-        const organizationCustomTestSuites = organizationResult.map(
-          (element): CustomTestSuite => ({
+        const organizationCustomTestSuites = organizationResult.map((element) =>
+          CustomTestSuite.create({
             id: element.ID,
             activated: element.ACTIVATED,
             executionFrequency: element.EXECUTION_FREQUENCY,

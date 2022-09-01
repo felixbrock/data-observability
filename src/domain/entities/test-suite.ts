@@ -47,7 +47,7 @@ export interface TestSuiteProperties extends BaseTestSuite{
   // template?: TestTemplate
 }
 
-export class TestSuite {
+export class TestSuite implements BaseTestSuite{
   #id: string;
 
   #organizationId: string;

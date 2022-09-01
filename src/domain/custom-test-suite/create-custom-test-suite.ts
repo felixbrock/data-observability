@@ -42,7 +42,7 @@ export class CreateCustomTestSuite
     auth: CreateCustomTestSuiteAuthDto
   ): Promise<CreateCustomTestSuiteResponseDto> {
     try {
-      const customTestSuite: CustomTestSuite = {
+      const customTestSuite = CustomTestSuite.create({
         id: new ObjectId().toHexString(),
         name: request.name,
         description: request.description,
@@ -52,7 +52,7 @@ export class CreateCustomTestSuite
         organizationId: auth.callerOrganizationId,
         threshold: request.threshold,
         targetResourceIds: request.targetResourceIds
-      };
+      });
 
       const query = CitoDataQuery.getInsertCustomTestSuiteQuery(customTestSuite);
 

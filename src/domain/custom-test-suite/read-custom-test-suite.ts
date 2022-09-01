@@ -1,6 +1,6 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { CustomTestSuite } from '../entities/custom-test-suite';
+import { CustomTestSuiteDto } from '../entities/custom-test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
 
@@ -13,7 +13,7 @@ export interface ReadCustomTestSuiteAuthDto {
   callerOrganizationId: string;
 }
 
-export type ReadCustomTestSuiteResponseDto = Result<CustomTestSuite>;
+export type ReadCustomTestSuiteResponseDto = Result<CustomTestSuiteDto>;
 
 export class ReadCustomTestSuite
   implements

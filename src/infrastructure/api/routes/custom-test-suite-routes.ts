@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import app from '../../ioc-register';
-import CreateCustomTestSuiteController from '../controllers/create-test-suite-controller';
-import ReadCustomTestSuiteController from '../controllers/read-test-suite-controller';
-import TriggerCustomTestSuiteExecutionController from '../controllers/trigger-test-suite-execution-controller';
-import UpdateCustomTestSuiteController from '../controllers/update-test-suite-controller';
+import CreateCustomTestSuiteController from '../controllers/create-custom-test-suite-controller';
+import ReadCustomTestSuiteController from '../controllers/read-custom-test-suite-controller';
+import TriggerCustomTestSuiteExecutionController from '../controllers/trigger-custom-test-suite-execution-controller';
+import UpdateCustomTestSuiteController from '../controllers/update-custom-test-suite-controller';
 
 const customTestSuiteRoutes = Router();
 

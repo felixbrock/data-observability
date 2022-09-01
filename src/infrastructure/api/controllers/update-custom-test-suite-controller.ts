@@ -83,6 +83,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
       }
 
       const resultValue = useCaseResult.value;
+      if(!resultValue) UpdateCustomTestSuiteController.fail(res, 'Update failed. Internal error.');
 
       return UpdateCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
