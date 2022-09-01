@@ -36,6 +36,10 @@ export default class UpdateCustomTestSuiteController extends BaseController {
     activated: httpRequest.body.activated,
     threshold: httpRequest.body.threshold,
     frequency: httpRequest.body.frequency,
+    targetResourceIds: httpRequest.body.targetResourceIds,
+    name: httpRequest.body.name,
+    description: httpRequest.body.description,
+    sqlLogic: httpRequest.body.sqlLogic,
   });
 
   #buildAuthDto = (jwt: string): UpdateCustomTestSuiteAuthDto => ({
@@ -83,7 +87,11 @@ export default class UpdateCustomTestSuiteController extends BaseController {
       }
 
       const resultValue = useCaseResult.value;
-      if(!resultValue) UpdateCustomTestSuiteController.fail(res, 'Update failed. Internal error.');
+      if (!resultValue)
+        UpdateCustomTestSuiteController.fail(
+          res,
+          'Update failed. Internal error.'
+        );
 
       return UpdateCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

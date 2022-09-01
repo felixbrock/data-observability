@@ -6,6 +6,7 @@ provider:
   runtime: nodejs16.x
   stage: production
   region: eu-central-1
+  timeout: 30
   memorySize: 128
   architecture: arm64
 functions:
@@ -20,3 +21,13 @@ functions:
           path: /{proxy+}
           method: ANY
           cors: true
+plugins:
+  - serverless-domain-manager
+custom:
+  customDomain:
+    domainName: observability.citodata.com
+    basePath: ''
+    stage: ${self:provider.stage}
+    certificateArn: 'arn:aws:acm:eu-central-1:966593446935:certificate/a79ce2b2-7007-4897-88a1-3ce3e6af5b09'
+    createRoute53Record: false
+    autoDomain: true
