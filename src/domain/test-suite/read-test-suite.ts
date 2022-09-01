@@ -36,7 +36,7 @@ export class ReadTestSuite
     try {
       // todo -replace
 
-      const query = CitoDataQuery.getReadTestSuiteQuery(request.id);
+      const query = CitoDataQuery.getReadTestSuiteQuery(request.id, false);
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
         { query },
@@ -53,7 +53,7 @@ export class ReadTestSuite
 
       const organizationResults = result[auth.callerOrganizationId];
 
-      if(organizationResults.length !== 1)
+      if (organizationResults.length !== 1)
         throw new Error('No or multiple test suites found');
 
       // if (testSuite.organizationId !== auth.organizationId)
@@ -66,12 +66,14 @@ export class ReadTestSuite
           activated: organizationResults[0].ACTIVATED,
           executionFrequency: organizationResults[0].EXECUTION_FREQUENCY,
           threshold: organizationResults[0].THRESHOLD,
-          databaseName: organizationResults[0].DATABASE_NAME,
-          schemaName: organizationResults[0].SCHEMA_NAME,
-          materializationName: organizationResults[0].MATERIALIZATION_NAME,
-          materializationType: organizationResults[0].MATERIALIZATION_TYPE,
-          columnName: organizationResults[0].COLUMN_NAME,
-          targetResourceId: organizationResults[0].TARGET_RESOURCE_ID,
+          target: {
+            databaseName: organizationResults[0].DATABASE_NAME,
+            schemaName: organizationResults[0].SCHEMA_NAME,
+            materializationName: organizationResults[0].MATERIALIZATION_NAME,
+            materializationType: organizationResults[0].MATERIALIZATION_TYPE,
+            columnName: organizationResults[0].COLUMN_NAME,
+            targetResourceId: organizationResults[0].TARGET_RESOURCE_ID,
+          },
           organizationId: organizationResults[0].ORGANIZATION_ID,
         })
       );

@@ -6,7 +6,7 @@ import {
   UpdateTestHistoryEntryAuthDto,
   UpdateTestHistoryEntryRequestDto,
   UpdateTestHistoryEntryResponseDto,
-} from '../../../domain/test-suite/update-test-history-entry';
+} from '../../../domain/integration-api/snowflake/update-test-history-entry';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {

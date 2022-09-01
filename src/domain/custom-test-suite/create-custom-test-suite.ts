@@ -2,36 +2,33 @@
 import { ObjectId } from 'mongodb';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { MaterializationType, TestSuite, TestType } from '../entities/test-suite';
+import { CustomTestSuite } from '../entities/custom-test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
 
-export interface CreateTestSuiteRequestDto {
+export interface CreateCustomTestSuiteRequestDto {
   activated: boolean;
-  type: TestType;
   threshold: number;
   executionFrequency: number;
-  databaseName: string;
-  schemaName: string;
-  materializationName: string;
-  materializationType: MaterializationType;
-  columnName?: string;
-  targetResourceId: string;
+  name: string;
+  description: string;
+  sqlLogic: string;
+  targetResourceIds: string[]
 }
 
-export interface CreateTestSuiteAuthDto {
+export interface CreateCustomTestSuiteAuthDto {
   jwt: string;
   callerOrganizationId: string;
 }
 
-export type CreateTestSuiteResponseDto = Result<TestSuite>;
+export type CreateCustomTestSuiteResponseDto = Result<CustomTestSuite>;
 
-export class CreateTestSuite
+export class CreateCustomTestSuite
   implements
     IUseCase<
-      CreateTestSuiteRequestDto,
-      CreateTestSuiteResponseDto,
-      CreateTestSuiteAuthDto
+      CreateCustomTestSuiteRequestDto,
+      CreateCustomTestSuiteResponseDto,
+      CreateCustomTestSuiteAuthDto
     >
 {
   readonly #querySnowflake: QuerySnowflake;
@@ -41,28 +38,23 @@ export class CreateTestSuite
   }
 
   async execute(
-    request: CreateTestSuiteRequestDto,
-    auth: CreateTestSuiteAuthDto
-  ): Promise<CreateTestSuiteResponseDto> {
+    request: CreateCustomTestSuiteRequestDto,
+    auth: CreateCustomTestSuiteAuthDto
+  ): Promise<CreateCustomTestSuiteResponseDto> {
     try {
-      const testSuite = TestSuite.create({
+      const customTestSuite = CustomTestSuite.create({
         id: new ObjectId().toHexString(),
+        name: request.name,
+        description: request.description,
+        sqlLogic: request.sqlLogic,
         activated: request.activated,
-        type: request.type,
-        threshold: request.threshold,
         executionFrequency: request.executionFrequency,
-        target: {
-          databaseName: request.databaseName,
-          schemaName: request.schemaName,
-          materializationName: request.materializationName,
-          materializationType: request.materializationType,
-          columnName: request.columnName,
-          targetResourceId: request.targetResourceId,
-        },
         organizationId: auth.callerOrganizationId,
+        threshold: request.threshold,
+        targetResourceIds: request.targetResourceIds
       });
 
-      const query = CitoDataQuery.getInsertTestSuiteQuery(testSuite);
+      const query = CitoDataQuery.getInsertCustomTestSuiteQuery(customTestSuite);
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
         { query },
@@ -72,7 +64,7 @@ export class CreateTestSuite
       if (!querySnowflakeResult.success)
         throw new Error(querySnowflakeResult.error);
 
-      return Result.ok(testSuite);
+      return Result.ok(customTestSuite);
     } catch (error: unknown) {
       if (typeof error === 'string') return Result.fail(error);
       if (error instanceof Error) return Result.fail(error.message);

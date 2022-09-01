@@ -3,25 +3,29 @@ import Result from '../value-types/transient-types/result';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
 
-export interface UpdateTestSuiteRequestDto {
+export interface UpdateCustomTestSuiteRequestDto {
   id: string;
   activated?: boolean;
   threshold?: number;
   frequency?: number;
+  targetResourceIds?: string[];
+  name?: string;
+  description?: string;
+  sqlLogic?: string;
 }
 
-export interface UpdateTestSuiteAuthDto {
+export interface UpdateCustomTestSuiteAuthDto {
   jwt: string;
 }
 
-export type UpdateTestSuiteResponseDto = Result<string>;
+export type UpdateCustomTestSuiteResponseDto = Result<string>;
 
-export class UpdateTestSuite
+export class UpdateCustomTestSuite
   implements
     IUseCase<
-      UpdateTestSuiteRequestDto,
-      UpdateTestSuiteResponseDto,
-      UpdateTestSuiteAuthDto
+      UpdateCustomTestSuiteRequestDto,
+      UpdateCustomTestSuiteResponseDto,
+      UpdateCustomTestSuiteAuthDto
     >
 {
   readonly #querySnowflake: QuerySnowflake;
@@ -31,9 +35,9 @@ export class UpdateTestSuite
   }
 
   async execute(
-    request: UpdateTestSuiteRequestDto,
-    auth: UpdateTestSuiteAuthDto
-  ): Promise<UpdateTestSuiteResponseDto> {
+    request: UpdateCustomTestSuiteRequestDto,
+    auth: UpdateCustomTestSuiteAuthDto
+  ): Promise<UpdateCustomTestSuiteResponseDto> {
     try {
       if (
         !request.activated === undefined &&
@@ -42,7 +46,7 @@ export class UpdateTestSuite
       )
         return Result.ok(request.id);
 
-      const readQuery = CitoDataQuery.getReadTestSuiteQuery(request.id, false);
+      const readQuery = CitoDataQuery.getReadTestSuiteQuery(request.id, true);
 
       const readResult = await this.#querySnowflake.execute(
         { query: readQuery },
@@ -56,12 +60,16 @@ export class UpdateTestSuite
       if (!readResult.value[Object.keys(readResult.value)[0]].length)
         throw new Error('Test suite id not found');
 
-      const updateQuery = CitoDataQuery.getUpdateTestSuiteQuery(
-        request.id,
-        request.activated,
-        request.threshold,
-        request.frequency
-      );
+      const updateQuery = CitoDataQuery.getUpdateCustomTestSuiteQuery({
+        id: request.id,
+        activated: request.activated,
+        threshold: request.threshold,
+        frequency: request.frequency,
+        name: request.name,
+        description: request.description,
+        sqlLogic: request.sqlLogic,
+        targetResourceIds: request.targetResourceIds,
+      });
 
       const updateResult = await this.#querySnowflake.execute(
         { query: updateQuery },
@@ -71,9 +79,9 @@ export class UpdateTestSuite
       if (!updateResult.success) throw new Error(updateResult.error);
 
       if (!updateResult.value)
-        throw new Error(`Updating testSuite ${request.id} failed`);
+        throw new Error(`Updating customTestSuite ${request.id} failed`);
 
-      // if (testSuite.organizationId !== auth.organizationId)
+      // if (customTestSuite.organizationId !== auth.organizationId)
       //   throw new Error('Not authorized to perform action');
 
       return Result.ok(request.id);
