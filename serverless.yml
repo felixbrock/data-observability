@@ -7,7 +7,7 @@ provider:
   stage: production
   region: eu-central-1
   timeout: 30
-  memorySize: 128
+  memorySize: 256
   architecture: arm64
 functions:
   app:
