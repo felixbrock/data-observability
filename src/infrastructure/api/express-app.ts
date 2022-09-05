@@ -2,6 +2,7 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import compression from 'compression';
 import helmet from 'helmet';
+import morgan from 'morgan';
 import v1Router from './routes/v1';
 import iocRegister from '../ioc-register';
 import Dbo from '../persistence/db/mongo-db';
@@ -49,7 +50,7 @@ export default class ExpressApp {
     this.#expressApp.use(express.urlencoded({ extended: true }));
     this.#expressApp.use(cors());
     this.#expressApp.use(compression());
-    // // this.#expressApp.use(morgan("combined"));
+    this.#expressApp.use(morgan("combined"));
     this.#expressApp.use(helmet());
     this.#expressApp.use(v1Router);
   }
