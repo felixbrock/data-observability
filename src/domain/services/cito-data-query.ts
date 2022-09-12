@@ -71,7 +71,7 @@ export default class CitoDataQuery {
     id: string,
     activated?: boolean,
     threshold?: number,
-    frequency?: number
+    frequency?: number|string
   ): string => {
     if (activated === undefined && threshold === undefined && !frequency)
       throw new Error('No update values provided');

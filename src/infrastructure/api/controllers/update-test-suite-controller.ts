@@ -1,5 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { EventBridgeClient, PutRuleCommand } from "@aws-sdk/client-eventbridge";
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateTestSuite,
@@ -36,6 +37,65 @@ export default class UpdateTestSuiteController extends BaseController {
   #buildAuthDto = (jwt: string): UpdateTestSuiteAuthDto => ({
     jwt
   });
+
+  #createCronJob = async (id: string, cron: string): Promise<any> => {
+
+    const REGION = "REGION"; // e.g. "us-east-1"
+    // Create an Amazon EventBridge service client object.
+    const eventBridgeClient = new EventBridgeClient({ region: REGION });
+
+    // 
+    // Name: string | undefined;
+    //  The name of the rule that you are creating or updating
+    //  
+    // ScheduleExpression?: string;
+    // (cron)
+    //  The scheduling expression. For example, "cron(0 20 * * ? *)"
+    // 
+    // EventPattern?: string; (non necessary?)
+    //  The event pattern. For more information, see <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html.html">EventBridge event
+    //  patterns</a> in the <i>Amazon EventBridge User Guide</i>.</p>
+    //  
+    // State?: RuleState | string;
+    //  * <p>Indicates whether the rule is enabled or disabled.</p>
+    // 
+    // Description?: string;
+    //  A description of the rule
+    // 
+    // RoleArn?: string;
+    //  * <p>The Amazon Resource Name (ARN) of the IAM role associated with the rule.</p>
+    //  *          <p>If you're setting an event bus in another account as the target and that account granted
+    //  *       permission to your account through an organization instead of directly by the account ID, you
+    //  *       must specify a <code>RoleArn</code> with proper permissions in the <code>Target</code>
+    //  *       structure, instead of here in this parameter.</p>
+    //  
+    //  Tags?: Tag[];
+    //  * <p>The list of key-value pairs to associate with the rule.</p>
+    //  */
+    // 
+    // EventBusName?: string;
+    //  * <p>The name or ARN of the event bus to associate with this rule. If you omit this, the
+    //  *       default event bus is used.</p>
+    //  */
+
+    // const cronExpr = this.#rruleToCron(rule);
+
+    const params = {
+      Name: `Custom frequency for test suite: ${id}`,
+      ScheduleExpression: cron,
+      State: "ENABLED",
+    };
+
+
+    try {
+      const data = await eventBridgeClient.send(new PutRuleCommand(params));
+      console.log("Success, scheduled rule created; Rule ARN:", data);
+      return data;
+    } catch (err) {
+      throw new Error("Unable to create cron job");
+    }
+  };
+
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -76,7 +136,13 @@ export default class UpdateTestSuiteController extends BaseController {
         return UpdateTestSuiteController.badRequest(res, useCaseResult.error);
       }
 
+      if (typeof requestDto.frequency === 'string') {
+
+        this.#createCronJob(requestDto.id, requestDto.frequency);
+      }
+
       const resultValue = useCaseResult.value;
+      console.log(`Success with cron ${requestDto.frequency}`);
 
       return UpdateTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

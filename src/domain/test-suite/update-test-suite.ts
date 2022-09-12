@@ -7,7 +7,7 @@ export interface UpdateTestSuiteRequestDto {
   id: string;
   activated?: boolean;
   threshold?: number;
-  frequency?: number;
+  frequency?: number | string;
 }
 
 export interface UpdateTestSuiteAuthDto {
