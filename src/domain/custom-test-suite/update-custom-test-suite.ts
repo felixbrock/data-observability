@@ -108,8 +108,6 @@ export class UpdateCustomTestSuite
         columnDefinitions,
         values
       );
-
-      console.log(updateQuery);
       
 
       const updateResult = await this.#querySnowflake.execute(
