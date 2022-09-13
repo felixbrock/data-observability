@@ -8,7 +8,7 @@ import {
   TestType,
 } from '../entities/test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
-import CitoDataQuery from '../services/cito-data-query';
+import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
 
 interface CreateObject {
   activated: boolean;
@@ -53,38 +53,65 @@ export class CreateTestSuites
     auth: CreateTestSuitesAuthDto
   ): Promise<CreateTestSuitesResponseDto> {
     try {
-      const testSuites = await Promise.all(
-        request.createObjects.map(async (createObject) => {
-          const testSuite = TestSuite.create({
-            id: new ObjectId().toHexString(),
-            activated: createObject.activated,
-            type: createObject.type,
-            threshold: createObject.threshold,
-            executionFrequency: createObject.executionFrequency,
-            target: {
-              databaseName: createObject.databaseName,
-              schemaName: createObject.schemaName,
-              materializationName: createObject.materializationName,
-              materializationType: createObject.materializationType,
-              columnName: createObject.columnName,
-              targetResourceId: createObject.targetResourceId,
-            },
-            organizationId: auth.callerOrganizationId,
-          });
-
-          const query = CitoDataQuery.getInsertTestSuiteQuery(testSuite);
-
-          const querySnowflakeResult = await this.#querySnowflake.execute(
-            { query },
-            { jwt: auth.jwt }
-          );
-
-          if (!querySnowflakeResult.success)
-            throw new Error(querySnowflakeResult.error);
-
-          return testSuite;
+      const testSuites = request.createObjects.map((createObject) =>
+        TestSuite.create({
+          id: new ObjectId().toHexString(),
+          activated: createObject.activated,
+          type: createObject.type,
+          threshold: createObject.threshold,
+          executionFrequency: createObject.executionFrequency,
+          target: {
+            databaseName: createObject.databaseName,
+            schemaName: createObject.schemaName,
+            materializationName: createObject.materializationName,
+            materializationType: createObject.materializationType,
+            columnName: createObject.columnName,
+            targetResourceId: createObject.targetResourceId,
+          },
+          organizationId: auth.callerOrganizationId,
         })
       );
+
+      const columnDefinitions: ColumnDefinition[] = [
+        { name: 'id' },
+        { name: 'test_type' },
+        { name: 'activated' },
+        { name: 'threshold' },
+        { name: 'execution_frequency' },
+        { name: 'database_name' },
+        { name: 'schema_name' },
+        { name: 'materialization_name' },
+        { name: 'materialization_type' },
+        { name: 'column_name' },
+        { name: 'target_resource_id' },
+        { name: 'organization_id' },
+        { name: 'cron' },
+      ];
+
+      const values = testSuites.map(
+        (el) =>
+          `('${el.id}','${el.type}',${el.activated},${el.threshold},${
+            el.executionFrequency
+          },'${el.target.databaseName}','${el.target.schemaName}','${
+            el.target.materializationName
+          }','${el.target.materializationType}','${
+            el.target.columnName ? el.target.columnName : null
+          }','${el.target.targetResourceId}','${el.organizationId}', null)`
+      );
+
+      const query = CitoDataQuery.getInsertQuery(
+        'cito.public.test_suites',
+        columnDefinitions,
+        values
+      );
+
+      const querySnowflakeResult = await this.#querySnowflake.execute(
+        { query },
+        { jwt: auth.jwt }
+      );
+
+      if (!querySnowflakeResult.success)
+        throw new Error(querySnowflakeResult.error);
 
       return Result.ok(testSuites);
     } catch (error: unknown) {

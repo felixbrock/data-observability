@@ -1,6 +1,9 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { SnowflakeQueryResultDto } from '../../domain/integration-api/snowflake/snowlake-query-result-dto';
-import { AlertMessageConfig, IIntegrationApiRepo } from '../../domain/integration-api/i-integration-api-repo';
+import {
+  AlertMessageConfig,
+  IIntegrationApiRepo,
+} from '../../domain/integration-api/i-integration-api-repo';
 import getRoot from '../shared/api-root-builder';
 import { SendAlertResultDto } from '../../domain/integration-api/slack/send-alert-result-dto';
 import { appConfig } from '../../config';
@@ -16,27 +19,31 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
     query: string,
     jwt: string
   ): Promise<SnowflakeQueryResultDto> => {
-    try {     
+    try {
       let gateway = this.#port;
-      if(appConfig.express.mode === 'production') gateway = this.#prodGateway;
+      if (appConfig.express.mode === 'production') gateway = this.#prodGateway;
 
       const apiRoot = await getRoot(gateway, this.#path, false);
 
       const data = {
-        query
+        query,
       };
 
       const config: AxiosRequestConfig = {
         headers: { Authorization: `Bearer ${jwt}` },
       };
 
-      const response = await axios.post(`${apiRoot}/snowflake/query`, data, config);
+      const response = await axios.post(
+        `${apiRoot}/snowflake/query`,
+        data,
+        config
+      );
       const jsonResponse = response.data;
       if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);
     } catch (error: unknown) {
-      if(typeof error === 'string') return Promise.reject(error);
-      if(error instanceof Error) return Promise.reject(error.message);
+      if (typeof error === 'string') return Promise.reject(error);
+      if (error instanceof Error) return Promise.reject(error.message);
       return Promise.reject(new Error('Unknown error occured'));
     }
   };
@@ -48,25 +55,30 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
   ): Promise<SendAlertResultDto> => {
     try {
       let gateway = this.#port;
-      if(appConfig.express.mode === 'production') gateway = this.#prodGateway;
+      if (appConfig.express.mode === 'production') gateway = this.#prodGateway;
 
       const apiRoot = await getRoot(gateway, this.#path, false);
 
       const data = {
-        messageConfig, targetOrganizationId
+        messageConfig,
+        targetOrganizationId,
       };
 
       const config: AxiosRequestConfig = {
         headers: { Authorization: `Bearer ${jwt}` },
       };
 
-      const response = await axios.post(`${apiRoot}/slack/alert/send`, data, config);
+      const response = await axios.post(
+        `${apiRoot}/slack/alert/send`,
+        data,
+        config
+      );
       const jsonResponse = response.data;
       if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);
     } catch (error: unknown) {
-      if(typeof error === 'string') return Promise.reject(error);
-      if(error instanceof Error) return Promise.reject(error.message);
+      if (typeof error === 'string') return Promise.reject(error);
+      if (error instanceof Error) return Promise.reject(error.message);
       return Promise.reject(new Error('Unknown error occured'));
     }
   };

@@ -35,7 +35,7 @@ export default class CreateTestSuitesController extends BaseController {
     userAccountInfo: UserAccountInfo,
     jwt: string
   ): CreateTestSuitesAuthDto => {
-    if (!userAccountInfo.callerOrganizationId) throw new Error('Unauthorized');
+    if (!userAccountInfo.callerOrganizationId) throw new Error('Unauthorized - Caller organization id missing');
 
     return {
       callerOrganizationId: userAccountInfo.callerOrganizationId,
@@ -48,7 +48,7 @@ export default class CreateTestSuitesController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return CreateTestSuitesController.unauthorized(res, 'Unauthorized');
+        return CreateTestSuitesController.unauthorized(res, 'Unauthorized - auth-header missing');
 
       const jwt = authHeader.split(' ')[1];
 

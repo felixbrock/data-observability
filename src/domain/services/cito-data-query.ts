@@ -1,6 +1,3 @@
-import { CustomTestSuite } from '../entities/custom-test-suite';
-import { TestSuite } from '../entities/test-suite';
-
 export interface CustomTestSuiteUpdateDto {
   id: string;
   activated?: boolean;
@@ -12,20 +9,25 @@ export interface CustomTestSuiteUpdateDto {
   targetResourceIds?: string[];
 }
 
+export interface ColumnDefinition {
+  name: string;
+  selectType?: string;
+}
+
 export default class CitoDataQuery {
-  static getInsertTestSuiteQuery = (testSuite: TestSuite): string => `
-    insert into cito.public.test_suites
-    values
-    ('${testSuite.id}', '${testSuite.type}', ${testSuite.activated}, ${
-    testSuite.threshold
-  }, ${testSuite.executionFrequency}, '${testSuite.target.databaseName}','${
-    testSuite.target.schemaName
-  }', '${testSuite.target.materializationName}', '${
-    testSuite.target.materializationType
-  }', ${
-    testSuite.target.columnName ? `'${testSuite.target.columnName}'` : null
-  },'${testSuite.target.targetResourceId}', '${testSuite.organizationId}');
-    `;
+  static getInsertQuery = (
+    materializationAddress: string,
+    columnDefinitions: ColumnDefinition[],
+    values: string[]
+  ): string => `
+  insert into ${materializationAddress}(${columnDefinitions
+    .map((el) => el.name)
+    .join(', ')})
+  select ${columnDefinitions.map((el, index) =>
+    el.selectType ? `${el.selectType}($${index + 1})` : `$${index + 1}`
+  )}
+  from values ${values.join(', ')};
+  `;
 
   static getReadTestSuiteQuery = (id: string, isCustom: boolean): string => `
     select * from cito.public.${isCustom ? 'custom_test_suites' : 'test_suites'}
@@ -105,21 +107,6 @@ export default class CitoDataQuery {
   set user_feedback_is_anomaly = ${userFeedbackIsAnomaly}
   where alert_id = '${alertId}';
 `;
-
-  static getInsertCustomTestSuiteQuery = (
-    customTestSuite: CustomTestSuite
-  ): string => `
-insert into cito.public.custom_test_suites (id, activated, threshold, execution_frequency, name, description, sql_logic, target_resource_ids, organization_id)
-select '${customTestSuite.id}', ${customTestSuite.activated}, ${
-    customTestSuite.threshold
-  }, ${customTestSuite.executionFrequency}, '${customTestSuite.name}', '${
-    customTestSuite.description
-  }', '${
-    customTestSuite.sqlLogic
-  }', array_construct(${customTestSuite.targetResourceIds
-    .map((el) => `'${el}'`)
-    .join(',')}), '${customTestSuite.organizationId}';
-  `;
 
   static getUpdateCustomTestSuiteQuery = (
     updateDto: CustomTestSuiteUpdateDto

@@ -4,7 +4,7 @@ import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { CustomTestSuite } from '../entities/custom-test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
-import CitoDataQuery from '../services/cito-data-query';
+import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
 
 export interface CreateCustomTestSuiteRequestDto {
   activated: boolean;
@@ -13,7 +13,7 @@ export interface CreateCustomTestSuiteRequestDto {
   name: string;
   description: string;
   sqlLogic: string;
-  targetResourceIds: string[]
+  targetResourceIds: string[];
 }
 
 export interface CreateCustomTestSuiteAuthDto {
@@ -51,10 +51,37 @@ export class CreateCustomTestSuite
         executionFrequency: request.executionFrequency,
         organizationId: auth.callerOrganizationId,
         threshold: request.threshold,
-        targetResourceIds: request.targetResourceIds
+        targetResourceIds: request.targetResourceIds,
       });
 
-      const query = CitoDataQuery.getInsertCustomTestSuiteQuery(customTestSuite);
+      const columnDefinitions: ColumnDefinition[] = [
+        { name: 'id' },
+        { name: 'activated' },
+        { name: 'threshold' },
+        { name: 'execution_frequency' },
+        { name: 'name' },
+        { name: 'description' },
+        { name: 'sql_logic' },
+        { name: 'target_resource_ids', selectType: 'parse_json' },
+        { name: 'organization_id' },
+        { name: 'cron' },
+      ];
+
+      const values = [
+        `('${customTestSuite.id}',${customTestSuite.activated},${
+          customTestSuite.threshold
+        },${customTestSuite.executionFrequency},'${customTestSuite.name}','${
+          customTestSuite.description
+        }','${customTestSuite.sqlLogic}','[${customTestSuite.targetResourceIds
+          .map((el) => `'${el}'`)
+          .join(',')}]','${customTestSuite.organizationId}',null)`,
+      ];
+
+      const query = CitoDataQuery.getInsertQuery(
+        'cito.public.custom_test_suites',
+        columnDefinitions,
+        values
+      );
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
         { query },
