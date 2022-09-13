@@ -104,7 +104,7 @@ export class CreateTestSuites
         columnDefinitions,
         values
       );
-
+     
       const querySnowflakeResult = await this.#querySnowflake.execute(
         { query },
         { jwt: auth.jwt }

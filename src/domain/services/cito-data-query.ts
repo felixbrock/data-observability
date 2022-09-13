@@ -23,15 +23,17 @@ export default class CitoDataQuery {
   insert into ${materializationAddress}(${columnDefinitions
     .map((el) => el.name)
     .join(', ')})
-  select ${columnDefinitions.map((el, index) =>
-    el.selectType ? `${el.selectType}($${index + 1})` : `$${index + 1}`
-  )}
+  select ${columnDefinitions
+    .map((el, index) =>
+      el.selectType ? `${el.selectType}($${index + 1})` : `$${index + 1}`
+    )
+    .join(', ')}
   from values ${values.join(', ')};
   `;
 
-  static getReadTestSuiteQuery = (id: string, isCustom: boolean): string => `
+  static getReadTestSuiteQuery = (ids: string[], isCustom: boolean): string => `
     select * from cito.public.${isCustom ? 'custom_test_suites' : 'test_suites'}
-    where id = '${id}';
+    where ${ids.map((el) => `id = '${el}'`).join(' or ')};
     `;
 
   static getReadTestSuitesQuery = (
@@ -69,35 +71,96 @@ export default class CitoDataQuery {
     `;
   };
 
-  static getUpdateTestSuiteQuery = (
-    id: string,
-    activated?: boolean,
-    threshold?: number,
-    frequency?: number
-  ): string => {
-    if (activated === undefined && threshold === undefined && !frequency)
-      throw new Error('No update values provided');
-
-    const columnNames = [];
-    if (activated !== undefined) columnNames.push('activated');
-    if (threshold) columnNames.push('threshold');
-    if (frequency) columnNames.push('execution_frequency');
-
-    const updateValues = [];
-    if (activated !== undefined) updateValues.push(activated);
-    if (threshold) updateValues.push(threshold);
-    if (frequency) updateValues.push(frequency);
-
-    return `
-    update cito.public.test_suites
-    set ${
-      columnNames.length > 1 ? `(${columnNames.join(',')})` : columnNames[0]
-    } = ${
-      updateValues.length > 1 ? `(${updateValues.join(',')})` : updateValues[0]
-    }
-    where id = '${id}';
+  static getUpdateQuery = (
+    materializationAddress: string,
+    columnDefinitions: ColumnDefinition[],
+    values: string[]
+  ): string => `
+  merge into ${materializationAddress} target
+  using (
+  select ${columnDefinitions
+    .map((el, index) =>
+      el.selectType
+        ? `${el.selectType}($${index + 1}) as ${el.name}`
+        : `$${index + 1} as ${el.name}`
+    )
+    .join(', ')}
+  from values ${values.join(', ')}) as source
+  on source.id = target.id
+when matched then update set ${columnDefinitions
+    .map((el) => `target.${el.name} = source.${el.name}`)
+    .join(', ')};
   `;
-  };
+
+  // {
+  //   if (activated === undefined && threshold === undefined && !frequency)
+  //     throw new Error('No update values provided');
+
+  //   const columnNames = [];
+  //   if (activated !== undefined) columnNames.push('activated');
+  //   if (threshold) columnNames.push('threshold');
+  //   if (frequency) columnNames.push('execution_frequency');
+
+  //   const updateValues = [];
+  //   if (activated !== undefined) updateValues.push(activated);
+  //   if (threshold) updateValues.push(threshold);
+  //   if (frequency) updateValues.push(frequency);
+
+  //   return `
+  //   update cito.public.test_suites
+  //   set ${
+  //     columnNames.length > 1 ? `(${columnNames.join(',')})` : columnNames[0]
+  //   } = ${
+  //     updateValues.length > 1 ? `(${updateValues.join(',')})` : updateValues[0]
+  //   }
+  //   where id = '${id}';
+  // `;
+  // };
+
+  // static aaagetUpdateCustomTestSuiteQuery = (
+  //   updateDto: CustomTestSuiteUpdateDto
+  // ): string => {
+  //   if (
+  //     updateDto.activated === undefined &&
+  //     updateDto.threshold === undefined &&
+  //     !updateDto.frequency &&
+  //     !updateDto.name &&
+  //     !updateDto.description &&
+  //     !updateDto.sqlLogic &&
+  //     !updateDto.targetResourceIds
+  //   )
+  //     throw new Error('No update values provided');
+
+  //   const columnNames = [];
+  //   if (updateDto.activated !== undefined) columnNames.push('activated');
+  //   if (updateDto.threshold) columnNames.push('threshold');
+  //   if (updateDto.frequency) columnNames.push('execution_frequency');
+  //   if (updateDto.name) columnNames.push('name');
+  //   if (updateDto.description) columnNames.push('description');
+  //   if (updateDto.sqlLogic) columnNames.push('sql_logic');
+  //   if (updateDto.targetResourceIds) columnNames.push('target_resource_ids');
+
+  //   const updateValues = [];
+  //   if (updateDto.activated !== undefined)
+  //     updateValues.push(updateDto.activated);
+  //   if (updateDto.threshold) updateValues.push(updateDto.threshold);
+  //   if (updateDto.frequency) updateValues.push(updateDto.frequency);
+  //   if (updateDto.name) columnNames.push(updateDto.name);
+  //   if (updateDto.description) columnNames.push(updateDto.description);
+  //   if (updateDto.sqlLogic) columnNames.push(updateDto.sqlLogic);
+  //   if (updateDto.targetResourceIds)
+  //     columnNames.push(updateDto.targetResourceIds);
+
+  //   return `
+  //   update cito.public.custom_test_suites
+  //   set ${
+  //     columnNames.length > 1 ? `(${columnNames.join(',')})` : columnNames[0]
+  //   } = ${
+  //     updateValues.length > 1 ? `(${updateValues.join(',')})` : updateValues[0]
+  //   }
+  //   where id = '${updateDto.id}';
+  // `;
+  // };
 
   static getUpdateTestHistoryEntryQuery = (
     alertId: string,
@@ -107,49 +170,4 @@ export default class CitoDataQuery {
   set user_feedback_is_anomaly = ${userFeedbackIsAnomaly}
   where alert_id = '${alertId}';
 `;
-
-  static getUpdateCustomTestSuiteQuery = (
-    updateDto: CustomTestSuiteUpdateDto
-  ): string => {
-    if (
-      updateDto.activated === undefined &&
-      updateDto.threshold === undefined &&
-      !updateDto.frequency &&
-      !updateDto.name &&
-      !updateDto.description &&
-      !updateDto.sqlLogic &&
-      !updateDto.targetResourceIds
-    )
-      throw new Error('No update values provided');
-
-    const columnNames = [];
-    if (updateDto.activated !== undefined) columnNames.push('activated');
-    if (updateDto.threshold) columnNames.push('threshold');
-    if (updateDto.frequency) columnNames.push('execution_frequency');
-    if (updateDto.name) columnNames.push('name');
-    if (updateDto.description) columnNames.push('description');
-    if (updateDto.sqlLogic) columnNames.push('sql_logic');
-    if (updateDto.targetResourceIds) columnNames.push('target_resource_ids');
-
-    const updateValues = [];
-    if (updateDto.activated !== undefined)
-      updateValues.push(updateDto.activated);
-    if (updateDto.threshold) updateValues.push(updateDto.threshold);
-    if (updateDto.frequency) updateValues.push(updateDto.frequency);
-    if (updateDto.name) columnNames.push(updateDto.name);
-    if (updateDto.description) columnNames.push(updateDto.description);
-    if (updateDto.sqlLogic) columnNames.push(updateDto.sqlLogic);
-    if (updateDto.targetResourceIds)
-      columnNames.push(updateDto.targetResourceIds);
-
-    return `
-    update cito.public.custom_test_suites
-    set ${
-      columnNames.length > 1 ? `(${columnNames.join(',')})` : columnNames[0]
-    } = ${
-      updateValues.length > 1 ? `(${updateValues.join(',')})` : updateValues[0]
-    }
-    where id = '${updateDto.id}';
-  `;
-  };
 }
