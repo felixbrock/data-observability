@@ -50,7 +50,7 @@ export default class UpdateTestSuiteController extends BaseController {
     const command = new PutRuleCommand(
       {
         Name: `TestSuite-${id}`,
-        ScheduleExpression: cron,
+        ScheduleExpression: `cron(${cron})`,
         State: "ENABLED",
       }
     );
@@ -106,7 +106,7 @@ export default class UpdateTestSuiteController extends BaseController {
         return UpdateTestSuiteController.badRequest(res, useCaseResult.error);
       }
 
-      if (requestDto.cron && appConfig.express.mode === 'production') {
+      if (requestDto.cron) {
         this.#createCronJob(requestDto.id, requestDto.cron);
       }
 

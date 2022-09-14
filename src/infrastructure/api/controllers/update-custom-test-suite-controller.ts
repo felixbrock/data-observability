@@ -53,7 +53,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
     const command = new PutRuleCommand(
       {
         Name: `TestSuite-${id}`,
-        ScheduleExpression: cron,
+        ScheduleExpression: `cron(${cron})`,
         State: "ENABLED",
       }
     );
