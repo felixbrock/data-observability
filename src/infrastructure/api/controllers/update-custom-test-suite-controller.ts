@@ -1,4 +1,5 @@
 // TODO: Violation of control flow. DI for express instead
+import { EventBridgeClient, PutRuleCommand } from '@aws-sdk/client-eventbridge';
 import { Request, Response } from 'express';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
@@ -36,11 +37,43 @@ export default class UpdateCustomTestSuiteController extends BaseController {
     activated: httpRequest.body.activated,
     threshold: httpRequest.body.threshold,
     frequency: httpRequest.body.frequency,
+    cron: httpRequest.body.cron,
   });
 
   #buildAuthDto = (jwt: string): UpdateCustomTestSuiteAuthDto => ({
     jwt,
   });
+
+  #createCronJob = async (id: string, cron: string): Promise<any> => {
+
+    const REGION = "eu-central-1";
+    const eventBridgeClient = new EventBridgeClient({ region: REGION });
+
+    const command = new PutRuleCommand(
+      {
+        Name: `TestSuite-${id}`,
+        ScheduleExpression: cron,
+        State: "ENABLED",
+      }
+    );
+
+    const response = await eventBridgeClient.send(command);
+    if (response.RuleArn) {
+
+      console.log(`Success with cron ${cron}`);
+      console.log(response);
+      return response.RuleArn;
+    }
+    throw new Error(
+      `Unexpected http status (${response.$metadata.httpStatusCode}) code when creating cron job: ${response}`
+    );
+
+
+    // if (appConfig.express.mode === 'production') {
+
+
+    // }
+  };
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -82,8 +115,12 @@ export default class UpdateCustomTestSuiteController extends BaseController {
         );
       }
 
+      if (requestDto.cron) {
+        this.#createCronJob(requestDto.id, requestDto.cron);
+      }
+
       const resultValue = useCaseResult.value;
-      if(!resultValue) UpdateCustomTestSuiteController.fail(res, 'Update failed. Internal error.');
+      if (!resultValue) UpdateCustomTestSuiteController.fail(res, 'Update failed. Internal error.');
 
       return UpdateCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

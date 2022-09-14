@@ -10,6 +10,7 @@ export interface CustomTestSuiteUpdateDto {
   description?: string;
   sqlLogic?: string;
   targetResourceIds?: string[];
+  cron?: string,
 }
 
 export default class CitoDataQuery {
@@ -134,7 +135,8 @@ select '${customTestSuite.id}', ${customTestSuite.activated}, ${
       !updateDto.name &&
       !updateDto.description &&
       !updateDto.sqlLogic &&
-      !updateDto.targetResourceIds
+      !updateDto.targetResourceIds &&
+      !updateDto.cron
     )
       throw new Error('No update values provided');
 
@@ -146,6 +148,7 @@ select '${customTestSuite.id}', ${customTestSuite.activated}, ${
     if (updateDto.description) columnNames.push('description');
     if (updateDto.sqlLogic) columnNames.push('sql_logic');
     if (updateDto.targetResourceIds) columnNames.push('target_resource_ids');
+    if (updateDto.cron) columnNames.push('cron');
 
     const updateValues = [];
     if (updateDto.activated !== undefined)
@@ -157,6 +160,7 @@ select '${customTestSuite.id}', ${customTestSuite.activated}, ${
     if (updateDto.sqlLogic) columnNames.push(updateDto.sqlLogic);
     if (updateDto.targetResourceIds)
       columnNames.push(updateDto.targetResourceIds);
+    if (updateDto.cron) updateValues.push(`'${updateDto.cron}'`);
 
     return `
     update cito.public.custom_test_suites

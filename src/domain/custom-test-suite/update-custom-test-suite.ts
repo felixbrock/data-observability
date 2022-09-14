@@ -12,6 +12,7 @@ export interface UpdateCustomTestSuiteRequestDto {
   name?: string;
   description?: string;
   sqlLogic?: string;
+  cron?: string;
 }
 
 export interface UpdateCustomTestSuiteAuthDto {
@@ -69,6 +70,7 @@ export class UpdateCustomTestSuite
         description: request.description,
         sqlLogic: request.sqlLogic,
         targetResourceIds: request.targetResourceIds,
+        cron: request.cron,
       });
 
       const updateResult = await this.#querySnowflake.execute(
