@@ -1,6 +1,7 @@
 // TODO: Violation of control flow. DI for express instead
 import { EventBridgeClient, PutRuleCommand } from '@aws-sdk/client-eventbridge';
 import { Request, Response } from 'express';
+import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateCustomTestSuite,
@@ -58,21 +59,11 @@ export default class UpdateCustomTestSuiteController extends BaseController {
     );
 
     const response = await eventBridgeClient.send(command);
-    if (response.RuleArn) {
-
-      console.log(`Success with cron ${cron}`);
-      console.log(response);
+    if (response.RuleArn) 
       return response.RuleArn;
-    }
     throw new Error(
       `Unexpected http status (${response.$metadata.httpStatusCode}) code when creating cron job: ${response}`
     );
-
-
-    // if (appConfig.express.mode === 'production') {
-
-
-    // }
   };
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
@@ -115,7 +106,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
         );
       }
 
-      if (requestDto.cron) {
+      if (requestDto.cron && appConfig.express.mode === 'production') {
         this.#createCronJob(requestDto.id, requestDto.cron);
       }
 
