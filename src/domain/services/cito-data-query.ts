@@ -87,7 +87,7 @@ export default class CitoDataQuery {
     if (activated !== undefined) updateValues.push(activated);
     if (threshold) updateValues.push(threshold);
     if (frequency) updateValues.push(frequency);
-    if (cron) updateValues.push(`\'${cron}\'`);
+    if (cron) updateValues.push(`'${cron}'`);
 
     return `
     update cito.public.test_suites

@@ -81,21 +81,49 @@ export default class UpdateTestSuiteController extends BaseController {
 
     // const cronExpr = this.#rruleToCron(rule);
 
-    const params = {
-      Name: `Custom frequency for test suite: ${id}`,
-      ScheduleExpression: cron,
-      State: "ENABLED",
-    };
+    const command = new PutRuleCommand(
+      {
+        Name: `TestSuite-${id}`,
+        ScheduleExpression: cron,
+        State: "ENABLED",
+      }
+    );
+
+    
+      const response = await eventBridgeClient.send(command);
+
+      if (response.RuleArn){
+
+        console.log(`Success with cron ${cron}`);
+        console.log(response);
+        return response.RuleArn;
+      }
+      throw new Error(
+        `Unexpected http status (${response.$metadata.httpStatusCode}) code when creating cron job: ${response}`
+      );
 
 
-    try {
-      const data = await eventBridgeClient.send(new PutRuleCommand(params));
-      console.log("Success, scheduled rule created; Rule ARN:", data);
-      return data;
-    } catch (err:any) {
-      console.log(err.message);
-      throw new Error("Unable to create cron job");
-    }
+    // try {
+    //   const data = await eventBridgeClient.send(command);
+    //   console.log("Success, scheduled rule created; Rule ARN:", data);
+    //   return data;
+    // } catch (err: any) {
+    //   console.log(err.message);
+    //   console.log("Unable to create cron job");
+    // }
+
+
+    // if (appConfig.express.mode === 'production') {
+    
+    //   const decoder = new TextDecoder();
+    //   const resPayload = decoder.decode(response.Payload);
+
+    //   if (/status.*:.*201/.test(resPayload))
+    //     return { ...response, Payload: resPayload };
+    //   throw new Error(
+    //     `Unexpected http status code when creating lineage: ${resPayload}`
+    //   );
+    // }
   };
 
 
@@ -143,7 +171,6 @@ export default class UpdateTestSuiteController extends BaseController {
       }
 
       const resultValue = useCaseResult.value;
-      console.log(`Success with cron ${requestDto.cron}`);
 
       return UpdateTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
