@@ -32,6 +32,7 @@ export default class UpdateTestSuiteController extends BaseController {
     activated: httpRequest.body.activated,
     threshold: httpRequest.body.threshold,
     frequency: httpRequest.body.frequency,
+    cron: httpRequest.body.cron,
   });
 
   #buildAuthDto = (jwt: string): UpdateTestSuiteAuthDto => ({
@@ -40,7 +41,7 @@ export default class UpdateTestSuiteController extends BaseController {
 
   #createCronJob = async (id: string, cron: string): Promise<any> => {
 
-    const REGION = "REGION"; // e.g. "us-east-1"
+    const REGION = "eu-central-1";
     // Create an Amazon EventBridge service client object.
     const eventBridgeClient = new EventBridgeClient({ region: REGION });
 
@@ -91,7 +92,8 @@ export default class UpdateTestSuiteController extends BaseController {
       const data = await eventBridgeClient.send(new PutRuleCommand(params));
       console.log("Success, scheduled rule created; Rule ARN:", data);
       return data;
-    } catch (err) {
+    } catch (err:any) {
+      console.log(err.message);
       throw new Error("Unable to create cron job");
     }
   };
@@ -136,13 +138,12 @@ export default class UpdateTestSuiteController extends BaseController {
         return UpdateTestSuiteController.badRequest(res, useCaseResult.error);
       }
 
-      if (typeof requestDto.frequency === 'string') {
-
-        this.#createCronJob(requestDto.id, requestDto.frequency);
+      if (requestDto.cron) {
+        this.#createCronJob(requestDto.id, requestDto.cron);
       }
 
       const resultValue = useCaseResult.value;
-      console.log(`Success with cron ${requestDto.frequency}`);
+      console.log(`Success with cron ${requestDto.cron}`);
 
       return UpdateTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

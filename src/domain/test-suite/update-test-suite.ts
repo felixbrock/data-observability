@@ -7,7 +7,8 @@ export interface UpdateTestSuiteRequestDto {
   id: string;
   activated?: boolean;
   threshold?: number;
-  frequency?: number | string;
+  frequency?: number;
+  cron?: string;
 }
 
 export interface UpdateTestSuiteAuthDto {
@@ -38,7 +39,8 @@ export class UpdateTestSuite
       if (
         !request.activated === undefined &&
         !request.frequency &&
-        !request.threshold
+        !request.threshold &&
+        !request.cron
       )
         return Result.ok(request.id);
 
@@ -60,7 +62,8 @@ export class UpdateTestSuite
         request.id,
         request.activated,
         request.threshold,
-        request.frequency
+        request.frequency,
+        request.cron
       );
 
       const updateResult = await this.#querySnowflake.execute(

@@ -71,20 +71,23 @@ export default class CitoDataQuery {
     id: string,
     activated?: boolean,
     threshold?: number,
-    frequency?: number|string
+    frequency?: number,
+    cron?: string,
   ): string => {
-    if (activated === undefined && threshold === undefined && !frequency)
+    if (activated === undefined && threshold === undefined && !frequency && !cron)
       throw new Error('No update values provided');
 
     const columnNames = [];
     if (activated !== undefined) columnNames.push('activated');
     if (threshold) columnNames.push('threshold');
     if (frequency) columnNames.push('execution_frequency');
+    if (cron) columnNames.push('cron');
 
     const updateValues = [];
     if (activated !== undefined) updateValues.push(activated);
     if (threshold) updateValues.push(threshold);
     if (frequency) updateValues.push(frequency);
+    if (cron) updateValues.push(`\'${cron}\'`);
 
     return `
     update cito.public.test_suites
