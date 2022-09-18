@@ -1,6 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
-import { EventBridgeClient, PutRuleCommand } from "@aws-sdk/client-eventbridge";
+import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateTestSuite,
@@ -15,7 +15,7 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from '../../shared/base-controller';
-import { appConfig } from '../../../config';
+import { putCronJob } from './util';
 
 export default class UpdateTestSuiteController extends BaseController {
   readonly #updateTestSuite: UpdateTestSuite;
@@ -37,35 +37,8 @@ export default class UpdateTestSuiteController extends BaseController {
   });
 
   #buildAuthDto = (jwt: string): UpdateTestSuiteAuthDto => ({
-    jwt
+    jwt,
   });
-
-  #createCronJob = async (id: string, cron: string): Promise<any> => {
-
-    const REGION = "eu-central-1";
-    const eventBridgeClient = new EventBridgeClient({ region: REGION });
-
-   
-
-    const command = new PutRuleCommand(
-      {
-        Name: `TestSuite-${id}`,
-        ScheduleExpression: `cron(${cron})`,
-        State: "ENABLED",
-      }
-    );
-
-    
-      const response = await eventBridgeClient.send(command);
-
-      if (response.RuleArn)
-        return response.RuleArn;
-      throw new Error(
-        `Unexpected http status (${response.$metadata.httpStatusCode}) code when creating cron job: ${response}`
-      );
-
-  };
-
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -91,24 +64,20 @@ export default class UpdateTestSuiteController extends BaseController {
         throw new ReferenceError('Authorization failed');
 
       const requestDto: UpdateTestSuiteRequestDto = this.#buildRequestDto(req);
-      const authDto: UpdateTestSuiteAuthDto = this.#buildAuthDto(
-        jwt
-      );
+      const authDto: UpdateTestSuiteAuthDto = this.#buildAuthDto(jwt);
 
       const useCaseResult: UpdateTestSuiteResponseDto =
-        await this.#updateTestSuite.execute(
-          requestDto,
-          authDto,
-        );
-
+        await this.#updateTestSuite.execute(requestDto, authDto);
 
       if (!useCaseResult.success) {
         return UpdateTestSuiteController.badRequest(res, useCaseResult.error);
       }
 
-      if (requestDto.cron) {
-        this.#createCronJob(requestDto.id, requestDto.cron);
-      }
+      if (
+        appConfig.express.mode === 'production' &&
+        (requestDto.cron || requestDto.activated !== undefined)
+      )
+        putCronJob(requestDto.id, requestDto.cron, requestDto.activated);
 
       const resultValue = useCaseResult.value;
 

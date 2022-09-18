@@ -1,5 +1,4 @@
 // TODO: Violation of control flow. DI for express instead
-import { EventBridgeClient, PutRuleCommand } from '@aws-sdk/client-eventbridge';
 import { Request, Response } from 'express';
 import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
@@ -16,6 +15,7 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from '../../shared/base-controller';
+import { putCronJob } from './util';
 
 export default class UpdateCustomTestSuiteController extends BaseController {
   readonly #updateCustomTestSuite: UpdateCustomTestSuite;
@@ -44,27 +44,6 @@ export default class UpdateCustomTestSuiteController extends BaseController {
   #buildAuthDto = (jwt: string): UpdateCustomTestSuiteAuthDto => ({
     jwt,
   });
-
-  #createCronJob = async (id: string, cron: string): Promise<any> => {
-
-    const REGION = "eu-central-1";
-    const eventBridgeClient = new EventBridgeClient({ region: REGION });
-
-    const command = new PutRuleCommand(
-      {
-        Name: `TestSuite-${id}`,
-        ScheduleExpression: `cron(${cron})`,
-        State: "ENABLED",
-      }
-    );
-
-    const response = await eventBridgeClient.send(command);
-    if (response.RuleArn) 
-      return response.RuleArn;
-    throw new Error(
-      `Unexpected http status (${response.$metadata.httpStatusCode}) code when creating cron job: ${response}`
-    );
-  };
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -106,12 +85,19 @@ export default class UpdateCustomTestSuiteController extends BaseController {
         );
       }
 
-      if (requestDto.cron && appConfig.express.mode === 'production') {
-        this.#createCronJob(requestDto.id, requestDto.cron);
+      if (
+        appConfig.express.mode === 'production' &&
+        (requestDto.cron || requestDto.activated !== undefined)
+      ) {
+        putCronJob(requestDto.id, requestDto.cron, requestDto.activated);
       }
 
       const resultValue = useCaseResult.value;
-      if (!resultValue) UpdateCustomTestSuiteController.fail(res, 'Update failed. Internal error.');
+      if (!resultValue)
+        UpdateCustomTestSuiteController.fail(
+          res,
+          'Update failed. Internal error.'
+        );
 
       return UpdateCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
