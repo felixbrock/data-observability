@@ -80,6 +80,11 @@ export default class UpdateTestSuiteController extends BaseController {
         putCronJob(requestDto.id, requestDto.cron, requestDto.activated);
 
       const resultValue = useCaseResult.value;
+      if (!resultValue)
+        UpdateTestSuiteController.fail(
+          res,
+          'Update of test suite failed. Internal error.'
+        );
 
       return UpdateTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
