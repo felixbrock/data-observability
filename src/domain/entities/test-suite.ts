@@ -31,6 +31,7 @@ export const testTypes = [
   'MaterializationRowCount',
   'MaterializationColumnCount',
   'MaterializationFreshness',
+  'MaterializationSchemaChange',
   // 'TestTemplate'
 ] as const;
 export type TestType = typeof testTypes[number];
@@ -41,13 +42,13 @@ export const parseTestType = (testType: unknown): TestType => {
   throw new Error('Provision of invalid type');
 };
 
-export interface TestSuiteProperties extends BaseTestSuite{
+export interface TestSuiteProperties extends BaseTestSuite {
   type: TestType;
   target: TestTarget;
   // template?: TestTemplate
 }
 
-export class TestSuite implements BaseTestSuite{
+export class TestSuite implements BaseTestSuite {
   #id: string;
 
   #organizationId: string;
