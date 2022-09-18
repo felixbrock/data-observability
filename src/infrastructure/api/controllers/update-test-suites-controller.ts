@@ -1,5 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateTestSuites,
@@ -14,6 +15,7 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from '../../shared/base-controller';
+import { putCronJob } from './util';
 
 export default class UpdateTestSuitesController extends BaseController {
   readonly #updateTestSuites: UpdateTestSuites;
@@ -79,6 +81,21 @@ export default class UpdateTestSuitesController extends BaseController {
       }
 
       const resultValue = useCaseResult.value;
+      if (!resultValue)
+        UpdateTestSuitesController.fail(
+          res,
+          'Update of test suites failed. Internal error.'
+        );
+
+      if (appConfig.express.mode !== 'production')
+        return UpdateTestSuitesController.ok(res, resultValue, CodeHttp.OK);
+
+      await Promise.all(
+        requestDto.updateObjects.map(async (obj) => {
+          if (obj.cron || obj.activated !== undefined)
+            await putCronJob(obj.id, obj.cron, obj.activated);
+        })
+      );
 
       return UpdateTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

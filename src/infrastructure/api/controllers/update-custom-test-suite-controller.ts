@@ -1,5 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateCustomTestSuite,
@@ -14,6 +15,7 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from '../../shared/base-controller';
+import { putCronJob } from './util';
 
 export default class UpdateCustomTestSuiteController extends BaseController {
   readonly #updateCustomTestSuite: UpdateCustomTestSuite;
@@ -40,6 +42,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
     name: httpRequest.body.name,
     description: httpRequest.body.description,
     sqlLogic: httpRequest.body.sqlLogic,
+    cron: httpRequest.body.cron,
   });
 
   #buildAuthDto = (jwt: string): UpdateCustomTestSuiteAuthDto => ({
@@ -92,6 +95,13 @@ export default class UpdateCustomTestSuiteController extends BaseController {
           res,
           'Update failed. Internal error.'
         );
+
+      if (
+        appConfig.express.mode === 'production' &&
+        (requestDto.cron || requestDto.activated !== undefined)
+      ) {
+        await putCronJob(requestDto.id, requestDto.cron, requestDto.activated);
+      }
 
       return UpdateCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

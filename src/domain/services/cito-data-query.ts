@@ -7,6 +7,7 @@ export interface CustomTestSuiteUpdateDto {
   description?: string;
   sqlLogic?: string;
   targetResourceIds?: string[];
+  cron?: string,
 }
 
 export interface ColumnDefinition {
