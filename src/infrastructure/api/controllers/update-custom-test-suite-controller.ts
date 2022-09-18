@@ -38,6 +38,10 @@ export default class UpdateCustomTestSuiteController extends BaseController {
     activated: httpRequest.body.activated,
     threshold: httpRequest.body.threshold,
     frequency: httpRequest.body.frequency,
+    targetResourceIds: httpRequest.body.targetResourceIds,
+    name: httpRequest.body.name,
+    description: httpRequest.body.description,
+    sqlLogic: httpRequest.body.sqlLogic,
     cron: httpRequest.body.cron,
   });
 
@@ -85,19 +89,19 @@ export default class UpdateCustomTestSuiteController extends BaseController {
         );
       }
 
-      if (
-        appConfig.express.mode === 'production' &&
-        (requestDto.cron || requestDto.activated !== undefined)
-      ) {
-        putCronJob(requestDto.id, requestDto.cron, requestDto.activated);
-      }
-
       const resultValue = useCaseResult.value;
       if (!resultValue)
         UpdateCustomTestSuiteController.fail(
           res,
           'Update failed. Internal error.'
         );
+
+      if (
+        appConfig.express.mode === 'production' &&
+        (requestDto.cron || requestDto.activated !== undefined)
+      ) {
+        await putCronJob(requestDto.id, requestDto.cron, requestDto.activated);
+      }
 
       return UpdateCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

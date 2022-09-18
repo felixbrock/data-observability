@@ -71,7 +71,7 @@ export abstract class BaseController {
       if (typeof authPayload === 'string')
         return Result.fail('Unexpected auth payload format');
 
-        const isSystemInternal = authPayload.scope
+      const isSystemInternal = authPayload.scope
         ? authPayload.scope.includes('system-internal/system-internal')
         : false;
 
@@ -99,6 +99,8 @@ export abstract class BaseController {
         throw new ReferenceError(
           `No account found for ${authPayload.username}`
         );
+
+      console.log(`Requested by ${authPayload.username}`);
 
       return Result.ok({
         userId: authPayload.username,

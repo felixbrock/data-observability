@@ -9,8 +9,9 @@
     "tsc": "tsc",
     "clean": "rimraf dist",
     "build": "npm run clean && npm run tsc && npm run lint",
-    "start": "npm run build && nodemon ./src/index.ts",
-    "start-dependencies": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./start-dependencies.ps1 -serviceDependencyNames @('account', 'integration-service')",
+    "start": "npm run build &&set NODE_ENV=production&& nodemon ./src/index.ts",
+    "dev": "npm run build &&set NODE_ENV=development&&  nodemon ./src/index.ts",
+    "start-deps": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./start-dependencies.ps1 -serviceDependencyNames @('account', 'integration-service')",
     "deploy": "npm run build && serverless deploy && npm run write-env ",
     "write-env": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./write-env.ps1 -functionName observability-service-production-app",
     "debug": "npm run build && nodemon --inspect=3013 ./src/index.ts"
@@ -34,6 +35,7 @@
     "@types/jest": "^27.4.1",
     "@types/jsonwebtoken": "^8.5.8",
     "@types/mongo-sanitize": "^1.0.1",
+    "@types/morgan": "^1.9.3",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "eslint": "^8.2.0",
@@ -62,6 +64,7 @@
     "jsonwebtoken": "^8.5.1",
     "jwks-rsa": "^2.1.4",
     "mongo-sanitize": "^1.1.0",
-    "mongodb": "^4.4.1"
+    "mongodb": "^4.4.1",
+    "morgan": "^1.10.0"
   }
 }

@@ -1,6 +1,3 @@
-import { CustomTestSuite } from '../entities/custom-test-suite';
-import { TestSuite } from '../entities/test-suite';
-
 export interface CustomTestSuiteUpdateDto {
   id: string;
   activated?: boolean;
@@ -13,24 +10,31 @@ export interface CustomTestSuiteUpdateDto {
   cron?: string,
 }
 
-export default class CitoDataQuery {
-  static getInsertTestSuiteQuery = (testSuite: TestSuite): string => `
-    insert into cito.public.test_suites
-    values
-    ('${testSuite.id}', '${testSuite.type}', ${testSuite.activated}, ${
-    testSuite.threshold
-  }, ${testSuite.executionFrequency}, '${testSuite.target.databaseName}','${
-    testSuite.target.schemaName
-  }', '${testSuite.target.materializationName}', '${
-    testSuite.target.materializationType
-  }', ${
-    testSuite.target.columnName ? `'${testSuite.target.columnName}'` : null
-  },'${testSuite.target.targetResourceId}', '${testSuite.organizationId}');
-    `;
+export interface ColumnDefinition {
+  name: string;
+  selectType?: string;
+}
 
-  static getReadTestSuiteQuery = (id: string, isCustom: boolean): string => `
+export default class CitoDataQuery {
+  static getInsertQuery = (
+    materializationAddress: string,
+    columnDefinitions: ColumnDefinition[],
+    values: string[]
+  ): string => `
+  insert into ${materializationAddress}(${columnDefinitions
+    .map((el) => el.name)
+    .join(', ')})
+  select ${columnDefinitions
+    .map((el, index) =>
+      el.selectType ? `${el.selectType}($${index + 1})` : `$${index + 1}`
+    )
+    .join(', ')}
+  from values ${values.join(', ')};
+  `;
+
+  static getReadTestSuiteQuery = (ids: string[], isCustom: boolean): string => `
     select * from cito.public.${isCustom ? 'custom_test_suites' : 'test_suites'}
-    where id = '${id}';
+    where ${ids.map((el) => `id = '${el}'`).join(' or ')};
     `;
 
   static getReadTestSuitesQuery = (
@@ -68,38 +72,26 @@ export default class CitoDataQuery {
     `;
   };
 
-  static getUpdateTestSuiteQuery = (
-    id: string,
-    activated?: boolean,
-    threshold?: number,
-    frequency?: number,
-    cron?: string,
-  ): string => {
-    if (activated === undefined && threshold === undefined && !frequency && !cron)
-      throw new Error('No update values provided');
-
-    const columnNames = [];
-    if (activated !== undefined) columnNames.push('activated');
-    if (threshold) columnNames.push('threshold');
-    if (frequency) columnNames.push('execution_frequency');
-    if (cron) columnNames.push('cron');
-
-    const updateValues = [];
-    if (activated !== undefined) updateValues.push(activated);
-    if (threshold) updateValues.push(threshold);
-    if (frequency) updateValues.push(frequency);
-    if (cron) updateValues.push(`'${cron}'`);
-
-    return `
-    update cito.public.test_suites
-    set ${
-      columnNames.length > 1 ? `(${columnNames.join(',')})` : columnNames[0]
-    } = ${
-      updateValues.length > 1 ? `(${updateValues.join(',')})` : updateValues[0]
-    }
-    where id = '${id}';
+  static getUpdateQuery = (
+    materializationAddress: string,
+    columnDefinitions: ColumnDefinition[],
+    values: string[]
+  ): string => `
+  merge into ${materializationAddress} target
+  using (
+  select ${columnDefinitions
+    .map((el, index) =>
+      el.selectType
+        ? `${el.selectType}($${index + 1}) as ${el.name}`
+        : `$${index + 1} as ${el.name}`
+    )
+    .join(', ')}
+  from values ${values.join(', ')}) as source
+  on source.id = target.id
+when matched then update set ${columnDefinitions
+    .map((el) => `target.${el.name} = source.${el.name}`)
+    .join(', ')};
   `;
-  };
 
   static getUpdateTestHistoryEntryQuery = (
     alertId: string,
@@ -109,67 +101,4 @@ export default class CitoDataQuery {
   set user_feedback_is_anomaly = ${userFeedbackIsAnomaly}
   where alert_id = '${alertId}';
 `;
-
-  static getInsertCustomTestSuiteQuery = (
-    customTestSuite: CustomTestSuite
-  ): string => `
-insert into cito.public.custom_test_suites (id, activated, threshold, execution_frequency, name, description, sql_logic, target_resource_ids, organization_id)
-select '${customTestSuite.id}', ${customTestSuite.activated}, ${
-    customTestSuite.threshold
-  }, ${customTestSuite.executionFrequency}, '${customTestSuite.name}', '${
-    customTestSuite.description
-  }', '${
-    customTestSuite.sqlLogic
-  }', array_construct(${customTestSuite.targetResourceIds
-    .map((el) => `'${el}'`)
-    .join(',')}), '${customTestSuite.organizationId}';
-  `;
-
-  static getUpdateCustomTestSuiteQuery = (
-    updateDto: CustomTestSuiteUpdateDto
-  ): string => {
-    if (
-      updateDto.activated === undefined &&
-      updateDto.threshold === undefined &&
-      !updateDto.frequency &&
-      !updateDto.name &&
-      !updateDto.description &&
-      !updateDto.sqlLogic &&
-      !updateDto.targetResourceIds &&
-      !updateDto.cron
-    )
-      throw new Error('No update values provided');
-
-    const columnNames = [];
-    if (updateDto.activated !== undefined) columnNames.push('activated');
-    if (updateDto.threshold) columnNames.push('threshold');
-    if (updateDto.frequency) columnNames.push('execution_frequency');
-    if (updateDto.name) columnNames.push('name');
-    if (updateDto.description) columnNames.push('description');
-    if (updateDto.sqlLogic) columnNames.push('sql_logic');
-    if (updateDto.targetResourceIds) columnNames.push('target_resource_ids');
-    if (updateDto.cron) columnNames.push('cron');
-
-    const updateValues = [];
-    if (updateDto.activated !== undefined)
-      updateValues.push(updateDto.activated);
-    if (updateDto.threshold) updateValues.push(updateDto.threshold);
-    if (updateDto.frequency) updateValues.push(updateDto.frequency);
-    if (updateDto.name) columnNames.push(updateDto.name);
-    if (updateDto.description) columnNames.push(updateDto.description);
-    if (updateDto.sqlLogic) columnNames.push(updateDto.sqlLogic);
-    if (updateDto.targetResourceIds)
-      columnNames.push(updateDto.targetResourceIds);
-    if (updateDto.cron) updateValues.push(`'${updateDto.cron}'`);
-
-    return `
-    update cito.public.custom_test_suites
-    set ${
-      columnNames.length > 1 ? `(${columnNames.join(',')})` : columnNames[0]
-    } = ${
-      updateValues.length > 1 ? `(${updateValues.join(',')})` : updateValues[0]
-    }
-    where id = '${updateDto.id}';
-  `;
-  };
 }

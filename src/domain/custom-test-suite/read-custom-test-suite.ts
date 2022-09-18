@@ -36,7 +36,7 @@ export class ReadCustomTestSuite
     try {
       // todo -replace
 
-      const query = CitoDataQuery.getReadTestSuiteQuery(request.id, true);
+      const query = CitoDataQuery.getReadTestSuiteQuery([request.id], true);
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
         { query },

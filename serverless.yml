@@ -6,7 +6,8 @@ provider:
   runtime: nodejs16.x
   stage: production
   region: eu-central-1
-  memorySize: 128
+  timeout: 30
+  memorySize: 256
   architecture: arm64
 functions:
   app:

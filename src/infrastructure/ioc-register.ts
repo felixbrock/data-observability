@@ -2,11 +2,11 @@ import { InjectionMode, asClass, createContainer } from 'awilix';
 
 import AccountApiRepo from './persistence/account-api-repo';
 import { GetAccounts } from '../domain/account-api/get-accounts';
-import { CreateTestSuite } from '../domain/test-suite/create-test-suite';
+import { CreateTestSuites } from '../domain/test-suite/create-test-suites';
 import Dbo from './persistence/db/mongo-db';
 import { ReadTestSuites } from '../domain/test-suite/read-test-suites';
 import { ReadTestSuite } from '../domain/test-suite/read-test-suite';
-import { UpdateTestSuite } from '../domain/test-suite/update-test-suite';
+import { UpdateTestSuites } from '../domain/test-suite/update-test-suites';
 import TestExecutionRepo from './persistence/test-execution-api-repo';
 import { QuerySnowflake } from '../domain/integration-api/snowflake/query-snowflake';
 import IntegrationApiRepo from './persistence/integration-api-repo';
@@ -35,12 +35,12 @@ iocRegister.register({
   updateCustomTestSuite: asClass(UpdateCustomTestSuite),
   triggerCustomTestSuiteExecution: asClass(TriggerCustomTestSuiteExecution),
 
-  createTestSuite: asClass(CreateTestSuite),
+  createTestSuites: asClass(CreateTestSuites),
 
   readTestSuite: asClass(ReadTestSuite),
   readTestSuites: asClass(ReadTestSuites),
 
-  updateTestSuite: asClass(UpdateTestSuite),
+  updateTestSuites: asClass(UpdateTestSuites),
   triggerTestSuiteExecution: asClass(TriggerTestSuiteExecution),
 
   updateTestHistoryEntry: asClass(UpdateTestHistoryEntry),

@@ -6,28 +6,21 @@ if (-Not $functionName) {
 
 $envValues=''
 
-# $functionConfig = aws lambda get-function-configuration --function-name $functionName | ConvertFrom-Json
-
-# $envVariables = $functionConfig.Environment.Variables
-
 function Add-EnvValue([string]$base, [string]$new) {
-  $valueToAdd = if($new -Match 'NODE_ENV') {'NODE_ENV=production'} else {$new}
-  if(-not $base) {$base = $valueToAdd}
-  else {$base = $base + "," + $valueToAdd}
+  if($new -Match 'NODE_ENV') {exit}
+  if(-not $base) {$base = $new}
+  else {$base = $base + "," + $new}
 
   $base
 }
 
-# $envVariables.PSObject.Properties | ForEach-Object {
- 
-#   if($_.Name -and $_.Value) {$envValues = Add-EnvValue -base $envValues -new "$($_.Name)=$($_.Value)"}
-
-# }
-
 get-content .env | ForEach-Object {
   if($_) {$envValues = Add-EnvValue -base $envValues -new $_}
-
 }
+
+$nodeEnv = 'NODE_ENV=production'
+if(-not $envValues) {$envValues = $nodeEnv}
+else {$envValues = $envValues + "," + $nodeEnv}
 
 if(-not $envValues) {exit}
 
