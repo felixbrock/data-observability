@@ -1,72 +1,72 @@
 // todo - clean architecture violation
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { TestResult } from '../value-types/test-result';
+import { AnomalyTestResult } from '../value-types/anomaly-test-result';
 import { DbConnection } from '../services/i-db';
-import { ITestResultRepo } from './i-test-result-repo';
+import { IAnomalyTestResultRepo } from './i-anomaly-test-result-repo';
 import { TestType } from '../entities/test-suite';
 
-export interface CreateTestResultRequestDto {
+export interface CreateAnomalyTestResultRequestDto {
   testSuiteId: string;
   testType: TestType;
   threshold: number;
   executionFrequency: number;
   executionId: string;
   isWarmup: boolean;
-  testSpecificData?: {
+  testData?: {
     executedOn: string;
     isAnomolous: boolean;
     modifiedZScore: number;
     deviation: number;
   };
-  alertSpecificData?: {
+  alertData?: {
     alertId: string;
   };
   targetResourceId: string;
   targetOrganizationId: string;
 }
 
-export type CreateTestResultAuthDto = {
+export type CreateAnomalyTestResultAuthDto = {
   isSystemInternal: boolean;
 };
 
-export type CreateTestResultResponseDto = Result<TestResult>;
+export type CreateAnomalyTestResultResponseDto = Result<AnomalyTestResult>;
 
-export class CreateTestResult
+export class CreateAnomalyTestResult
   implements
     IUseCase<
-      CreateTestResultRequestDto,
-      CreateTestResultResponseDto,
-      CreateTestResultAuthDto,
+      CreateAnomalyTestResultRequestDto,
+      CreateAnomalyTestResultResponseDto,
+      CreateAnomalyTestResultAuthDto,
       DbConnection
     >
 {
-  readonly #testResultRepo: ITestResultRepo;
+  readonly #anomalyTestResultRepo: IAnomalyTestResultRepo;
 
   #dbConnection: DbConnection;
 
-  constructor(testResultRepo: ITestResultRepo) {
-    this.#testResultRepo = testResultRepo;
+  constructor(anomalyTestResultRepo: IAnomalyTestResultRepo) {
+    this.#anomalyTestResultRepo = anomalyTestResultRepo;
   }
 
   async execute(
-    request: CreateTestResultRequestDto,
-    auth: CreateTestResultAuthDto,
+    request: CreateAnomalyTestResultRequestDto,
+    auth: CreateAnomalyTestResultAuthDto,
     dbConnection: DbConnection
-  ): Promise<CreateTestResultResponseDto> {
+  ): Promise<CreateAnomalyTestResultResponseDto> {
     try {
       if (!auth.isSystemInternal) throw new Error('Unauthorized');
 
       this.#dbConnection = dbConnection;
 
-      const testResult: TestResult = {
+      const anomalyTestResult: AnomalyTestResult = {
         ...request,
         organizationId: request.targetOrganizationId,
       };
 
-      await this.#testResultRepo.insertOne(testResult, this.#dbConnection);
+      await this.#anomalyTestResultRepo.insertOne(anomalyTestResult, this.#dbConnection);
 
-      return Result.ok(testResult);
+      return Result.ok(anomalyTestResult);
     } catch (error: unknown) {
       if (typeof error === 'string') return Result.fail(error);
       if (error instanceof Error) return Result.fail(error.message);

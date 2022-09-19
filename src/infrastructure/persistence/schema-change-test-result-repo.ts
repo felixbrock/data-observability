@@ -3,44 +3,40 @@
 import { Db, Document, InsertOneResult } from 'mongodb';
 import sanitize from 'mongo-sanitize';
 
-import { ITestResultRepo } from '../../domain/test-result/i-test-result-repo';
-import { TestResult } from '../../domain/value-types/test-result';
+import { ISchemaChangeTestResultRepo } from '../../domain/schema-change-test-result/i-schema-change-test-result-repo';
+import { SchemaChangeTestResult } from '../../domain/value-types/schema-change-test-result';
 import { TestType } from '../../domain/entities/test-suite';
 
-interface TestResultPersistence {
+interface SchemaChangeTestResultPersistence {
   testSuiteId: string;
   testType: TestType;
-  threshold: number;
-  executionFrequency: number;
   executionId: string;
-  isWarmup: boolean;
-  testSpecificData?: {
+  testData?: {
     executedOn: string;
     isAnomolous: boolean;
-    modifiedZScore: number;
-    deviation: number;
+    schemaDiffs: any;
   };
-  alertSpecificData?: {
+  alertData?: {
     alertId: string;
   };
   targetResourceId: string;
   organizationId: string;
 }
 
-const collectionName = 'testResult';
+const collectionName = 'schemaChangeTestResult';
 
-export default class TestResultRepo implements ITestResultRepo {
+export default class SchemaChangeTestResultRepo implements ISchemaChangeTestResultRepo {
   insertOne = async (
-    testResult: TestResult,
+    schemaChangeTestResult: SchemaChangeTestResult,
     dbConnection: Db
   ): Promise<string> => {
     try {
       const result: InsertOneResult<Document> = await dbConnection
         .collection(collectionName)
-        .insertOne(await this.#toPersistence(sanitize(testResult)));
+        .insertOne(await this.#toPersistence(sanitize(schemaChangeTestResult)));
 
       if (!result.acknowledged)
-        throw new Error('TestResult creation failed. Insert not acknowledged');
+        throw new Error('SchemaChangeTestResult creation failed. Insert not acknowledged');
 
       return result.insertedId.toHexString();
     } catch (error: unknown) {
@@ -50,9 +46,9 @@ export default class TestResultRepo implements ITestResultRepo {
     }
   };
 
-  #toPersistence = async (testResult: TestResult): Promise<Document> => {
-    const persistenceObject: TestResultPersistence = {
-      ...testResult,
+  #toPersistence = async (schemaChangeTestResult: SchemaChangeTestResult): Promise<Document> => {
+    const persistenceObject: SchemaChangeTestResultPersistence = {
+      ...schemaChangeTestResult,
     };
 
     return persistenceObject;

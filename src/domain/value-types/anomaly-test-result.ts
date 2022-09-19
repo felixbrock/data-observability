@@ -1,20 +1,20 @@
 import { TestType } from '../entities/test-suite';
 
 // todo - evaluate. approach to replace tedious work of working with classes. Imo does not violate Clean architecture & DDD
-export interface TestResult {
+export interface AnomalyTestResult {
   testSuiteId: string;
   testType: TestType;
   threshold: number;
   executionFrequency: number;
   executionId: string;
   isWarmup: boolean;
-  testSpecificData?: {
+  testData?: {
     executedOn: string;
     isAnomolous: boolean;
     modifiedZScore: number;
     deviation: number;
   };
-  alertSpecificData?: {
+  alertData?: {
     alertId: string;
   };
   targetResourceId: string;

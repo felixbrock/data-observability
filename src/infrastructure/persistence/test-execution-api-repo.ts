@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { appConfig } from '../../config';
 import { ITestExecutionApiRepo } from '../../domain/test-execution-api/i-test-execution-api-repo';
-import { TestExecutionResultDto } from '../../domain/test-execution-api/test-execution-result-dto';
+import { AnomalyTestExecutionResultDto } from '../../domain/test-execution-api/anomaly-test-execution-result-dto';
 import getRoot from '../shared/api-root-builder';
 
 
@@ -16,7 +16,7 @@ export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
     testSuiteId: string,
     targetOrganizationId: string,
     jwt: string
-  ): Promise<TestExecutionResultDto> => {
+  ): Promise<AnomalyTestExecutionResultDto> => {
     try {
       let gateway = this.#port;
       if(appConfig.express.mode === 'production') gateway = this.#prodGateway;

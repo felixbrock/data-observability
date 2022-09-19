@@ -1,29 +1,21 @@
 import { MaterializationType, TestType } from '../entities/test-suite';
 
-export interface TestExecutionResultDto {
+export interface SchemaChangeTestExecutionResultDto {
   testSuiteId: string;
   testType: TestType;
-  threshold: number;
-  executionFrequency: number;
   executionId: string;
-  isWarmup: boolean;
-  testSpecificData?: {
+  testData: {
     executedOn: string;
     isAnomolous: boolean;
-    modifiedZScore: number;
-    deviation: number;
+    schemaDiffs: any;
   };
-  alertSpecificData?: {
+  alertData?: {
     alertId: string;
     message: string;
-    value: number;
-    expectedUpperBound: number;
-    expectedLowerBound: number;
     databaseName: string;
     schemaName: string;
     materializationName: string;
     materializationType: MaterializationType;
-    columnName?: string;
   };
   targetResourceId: string;
   organizationId: string;

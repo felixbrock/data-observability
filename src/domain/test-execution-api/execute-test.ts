@@ -1,11 +1,15 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { ITestExecutionApiRepo } from './i-test-execution-api-repo';
-import { TestExecutionResultDto } from './test-execution-result-dto';
+import { AnomalyTestExecutionResultDto } from './anomaly-test-execution-result-dto';
 import { DbConnection } from '../services/i-db';
-import { CreateTestResult } from '../test-result/create-test-result';
-import { SendSlackAlert } from '../integration-api/slack/send-alert';
-import { AlertDto } from '../integration-api/slack/alert-dto';
+import { CreateAnomalyTestResult } from '../anomaly-test-result/create-anomaly-test-result';
+import { CreateSchemaChangeTestResult } from '../schema-change-test-result/create-schema-change-test-result';
+import { SendAnomalySlackAlert } from '../integration-api/slack/send-anomaly-alert';
+import { AnomalyAlertDto } from '../integration-api/slack/anomaly-alert-dto';
+import { SendSchemaChangeSlackAlert } from '../integration-api/slack/send-schema-change-alert';
+import { SchemaChangeAlertDto } from '../integration-api/slack/schema-change-alert-dto';
+import { SchemaChangeTestExecutionResultDto } from './schema-change-test-execution-result-dto';
 
 export interface ExecuteTestRequestDto {
   testSuiteId: string;
@@ -17,7 +21,9 @@ export interface ExecuteTestAuthDto {
   isSystemInternal: boolean;
 }
 
-export type ExecuteTestResponseDto = Result<TestExecutionResultDto>;
+export type ExecuteTestResponseDto = Result<
+  AnomalyTestExecutionResultDto | SchemaChangeTestExecutionResultDto
+>;
 
 export class ExecuteTest
   implements
@@ -30,21 +36,158 @@ export class ExecuteTest
 {
   readonly #testExecutionApiRepo: ITestExecutionApiRepo;
 
-  readonly #createTestResult: CreateTestResult;
+  readonly #createAnomalyTestResult: CreateAnomalyTestResult;
 
-  readonly #sendSlackAlert: SendSlackAlert;
+  readonly #createSchemaChangeTestResult: CreateSchemaChangeTestResult;
+
+  readonly #sendAnomalySlackAlert: SendAnomalySlackAlert;
+
+  readonly #sendSchemaChangeSlackAlert: SendSchemaChangeSlackAlert;
 
   #dbConnection: DbConnection;
 
   constructor(
     testExecutionApiRepo: ITestExecutionApiRepo,
-    createTestResult: CreateTestResult,
-    sendSlackAlert: SendSlackAlert
+    createAnomalyTestResult: CreateAnomalyTestResult,
+    createSchemaChangeTestResult: CreateSchemaChangeTestResult,
+    sendAnomalySlackAlert: SendAnomalySlackAlert,
+    sendSchemaChangeSlackAlert: SendSchemaChangeSlackAlert
   ) {
     this.#testExecutionApiRepo = testExecutionApiRepo;
-    this.#createTestResult = createTestResult;
-    this.#sendSlackAlert = sendSlackAlert;
+    this.#createAnomalyTestResult = createAnomalyTestResult;
+    this.#createSchemaChangeTestResult = createSchemaChangeTestResult;
+    this.#sendAnomalySlackAlert = sendAnomalySlackAlert;
+    this.#sendSchemaChangeSlackAlert = sendSchemaChangeSlackAlert;
   }
+
+  #createSchemaChangeTestExecutionResult = async (
+    testExecutionResult: SchemaChangeTestExecutionResultDto,
+    auth: ExecuteTestAuthDto
+  ): Promise<void> => {
+    const createTestResultResult =
+      await this.#createSchemaChangeTestResult.execute(
+        {
+          executionId: testExecutionResult.executionId,
+          testData: testExecutionResult.testData,
+          alertData: testExecutionResult.alertData
+            ? { alertId: testExecutionResult.alertData.alertId }
+            : undefined,
+          testSuiteId: testExecutionResult.testSuiteId,
+          testType: testExecutionResult.testType,
+          targetResourceId: testExecutionResult.targetResourceId,
+          targetOrganizationId: testExecutionResult.organizationId,
+        },
+        { ...auth },
+        this.#dbConnection
+      );
+
+    if (!createTestResultResult.success)
+      throw new Error(createTestResultResult.error);
+  };
+
+  #createAnomalyTestExecutionResult = async (
+    testExecutionResult: AnomalyTestExecutionResultDto,
+    auth: ExecuteTestAuthDto
+  ): Promise<void> => {
+    const { testData } = testExecutionResult;
+
+    if (!testData && !testExecutionResult.isWarmup)
+      throw new Error('Test result data misalignment');
+
+    const createTestResultResult = await this.#createAnomalyTestResult.execute(
+      {
+        isWarmup: testExecutionResult.isWarmup,
+        executionFrequency: testExecutionResult.executionFrequency,
+        executionId: testExecutionResult.executionId,
+        testData,
+        alertData: testExecutionResult.alertData
+          ? { alertId: testExecutionResult.alertData.alertId }
+          : undefined,
+        testSuiteId: testExecutionResult.testSuiteId,
+        testType: testExecutionResult.testType,
+        threshold: testExecutionResult.threshold,
+        targetResourceId: testExecutionResult.targetResourceId,
+        targetOrganizationId: testExecutionResult.organizationId,
+      },
+      { ...auth },
+      this.#dbConnection
+    );
+
+    if (!createTestResultResult.success)
+      throw new Error(createTestResultResult.error);
+  };
+
+  #sendAnomalyAlert = async (
+    testExecutionResult: AnomalyTestExecutionResultDto,
+    auth: ExecuteTestAuthDto
+  ): Promise<void> => {
+    if (!testExecutionResult.testData)
+      throw new Error('Missing test data. Previous checks indicated test data');
+    if (!testExecutionResult.alertData)
+      throw new Error(
+        'Missing alert data. Previous checks indicated alert data'
+      );
+
+    const alertDto: AnomalyAlertDto = {
+      alertId: testExecutionResult.alertData.alertId,
+      testType: testExecutionResult.testType,
+      detectedOn: testExecutionResult.testData.executedOn,
+      deviation: testExecutionResult.testData.deviation,
+      expectedLowerBound: testExecutionResult.alertData.expectedLowerBound,
+      expectedUpperBound: testExecutionResult.alertData.expectedUpperBound,
+      databaseName: testExecutionResult.alertData.databaseName,
+      schemaName: testExecutionResult.alertData.schemaName,
+      materializationName: testExecutionResult.alertData.materializationName,
+      columnName: testExecutionResult.alertData.columnName,
+      message: testExecutionResult.alertData.message,
+      value: testExecutionResult.alertData.value,
+      resourceId: testExecutionResult.targetResourceId,
+    };
+
+    const sendSlackAlertResult = await this.#sendAnomalySlackAlert.execute(
+      { alertDto, targetOrganizationId: testExecutionResult.organizationId },
+      { jwt: auth.jwt }
+    );
+
+    if (!sendSlackAlertResult.success)
+      throw new Error(
+        `Sending alert ${testExecutionResult.alertData.alertId} failed`
+      );
+  };
+
+  #sendSchemaChangeAlert = async (
+    testExecutionResult: SchemaChangeTestExecutionResultDto,
+    auth: ExecuteTestAuthDto
+  ): Promise<void> => {
+    if (!testExecutionResult.testData)
+      throw new Error('Missing test data. Previous checks indicated test data');
+    if (!testExecutionResult.alertData)
+      throw new Error(
+        'Missing alert data. Previous checks indicated alert data'
+      );
+
+    const alertDto: SchemaChangeAlertDto = {
+      alertId: testExecutionResult.alertData.alertId,
+      testType: testExecutionResult.testType,
+      detectedOn: testExecutionResult.testData.executedOn,
+      databaseName: testExecutionResult.alertData.databaseName,
+      schemaName: testExecutionResult.alertData.schemaName,
+      materializationName: testExecutionResult.alertData.materializationName,
+      message: testExecutionResult.alertData.message,
+      resourceId: testExecutionResult.targetResourceId,
+      schemaDiffs: testExecutionResult.testData.schemaDiffs,
+    };
+
+    const sendSlackAlertResult = await this.#sendSchemaChangeSlackAlert.execute(
+      { alertDto, targetOrganizationId: testExecutionResult.organizationId },
+      { jwt: auth.jwt }
+    );
+
+    if (!sendSlackAlertResult.success)
+      throw new Error(
+        `Sending alert ${testExecutionResult.alertData.alertId} failed`
+      );
+  };
 
   async execute(
     request: ExecuteTestRequestDto,
@@ -62,81 +205,34 @@ export class ExecuteTest
         auth.jwt
       );
 
-      const { testSpecificData, alertSpecificData } = testExecutionResult;
-
-      if (!testSpecificData && !testExecutionResult.isWarmup)
-        throw new Error('Test result data misalignment');
-
       if (
-        testSpecificData &&
-        testSpecificData.isAnomolous &&
-        !alertSpecificData
+        testExecutionResult.testData &&
+        testExecutionResult.testData.isAnomolous &&
+        !testExecutionResult.alertData
       )
         throw new Error('Anomaly data mismatch');
 
-      const createTestResultResult = await this.#createTestResult.execute(
-        {
-          isWarmup: testExecutionResult.isWarmup,
-          executionFrequency: testExecutionResult.executionFrequency,
-          executionId: testExecutionResult.executionId,
-          testSpecificData: testExecutionResult.testSpecificData,
-          alertSpecificData: testExecutionResult.alertSpecificData
-            ? { alertId: testExecutionResult.alertSpecificData.alertId }
-            : undefined,
-          testSuiteId: testExecutionResult.testSuiteId,
-          testType: testExecutionResult.testType,
-          threshold: testExecutionResult.threshold,
-          targetResourceId: testExecutionResult.targetResourceId,
-          targetOrganizationId: testExecutionResult.organizationId,
-        },
-        { ...auth },
-        this.#dbConnection
-      );
-
-      if (!createTestResultResult.success)
-        throw new Error(createTestResultResult.error);
+      const instanceOfAnomalyTestExecutionResultDto = (
+        object: any
+      ): object is AnomalyTestExecutionResultDto => 'isWarmup' in object;
+      if (!instanceOfAnomalyTestExecutionResultDto(testExecutionResult))
+        await this.#createSchemaChangeTestExecutionResult(
+          testExecutionResult,
+          auth
+        );
+      else
+        await this.#createAnomalyTestExecutionResult(testExecutionResult, auth);
 
       if (
-        !testExecutionResult.testSpecificData ||
-        (!testExecutionResult.testSpecificData.isAnomolous &&
-          !testExecutionResult.alertSpecificData)
+        !testExecutionResult.testData ||
+        (!testExecutionResult.testData.isAnomolous &&
+          !testExecutionResult.alertData)
       )
         return Result.ok(testExecutionResult);
 
-      if (!testSpecificData)
-        throw new Error(
-          'Missing test data. Previous checks indicated test data'
-        );
-      if (!alertSpecificData)
-        throw new Error(
-          'Missing alert data. Previous checks indicated alert data'
-        );
-
-      const alertDto: AlertDto = {
-        alertId: alertSpecificData.alertId,
-        testType: testExecutionResult.testType,
-        detectedOn: testExecutionResult.testSpecificData.executedOn,
-        deviation: testExecutionResult.testSpecificData.deviation,
-        expectedLowerBound: alertSpecificData.expectedLowerBound,
-        expectedUpperBound: alertSpecificData.expectedUpperBound,
-        databaseName: alertSpecificData.databaseName,
-        schemaName: alertSpecificData.schemaName,
-        materializationName: alertSpecificData.materializationName,
-        columnName: alertSpecificData.columnName,
-        message: alertSpecificData.message,
-        value: alertSpecificData.value,
-        resourceId: testExecutionResult.targetResourceId,
-      };
-
-      const sendSlackAlertResult = await this.#sendSlackAlert.execute(
-        { alertDto, targetOrganizationId: testExecutionResult.organizationId },
-        { jwt: auth.jwt }
-      );
-
-      if (!sendSlackAlertResult.success)
-        throw new Error(
-          `Sending alert ${alertSpecificData.alertId} failed`
-        );
+      if (!instanceOfAnomalyTestExecutionResultDto(testExecutionResult))
+        await this.#sendSchemaChangeAlert(testExecutionResult, auth);
+      else await this.#sendAnomalyAlert(testExecutionResult, auth);
 
       return Result.ok(testExecutionResult);
     } catch (error: unknown) {
