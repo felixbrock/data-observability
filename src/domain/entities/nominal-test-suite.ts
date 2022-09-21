@@ -1,4 +1,4 @@
-import { BaseAnomalyTestSuite } from '../value-types/transient-types/base-test-suite';
+import { BaseTestSuite } from '../value-types/transient-types/base-test-suite';
 
 export const materializationTypes = ['Table', 'View'] as const;
 export type MaterializationType = typeof materializationTypes[number];
@@ -22,41 +22,32 @@ export interface TestTarget {
   columnName?: string;
 }
 
-export const testTypes = [
-  'ColumnFreshness',
-  'ColumnCardinality',
-  'ColumnUniqueness',
-  'ColumnNullness',
-  'ColumnDistribution',
-  'MaterializationRowCount',
-  'MaterializationColumnCount',
-  'MaterializationFreshness',
+export const nominalTestTypes = [
+  'MaterializationSchemaChange',
 ] as const;
-export type TestType = typeof testTypes[number];
+export type NominalTestType = typeof nominalTestTypes[number];
 
-export const parseTestType = (testType: unknown): TestType => {
-  const identifiedElement = testTypes.find((element) => element === testType);
+export const parseNominalTestType = (testType: unknown): NominalTestType => {
+  const identifiedElement = nominalTestTypes.find((element) => element === testType);
   if (identifiedElement) return identifiedElement;
   throw new Error('Provision of invalid type');
 };
 
-export interface TestSuiteProperties extends BaseAnomalyTestSuite {
-  type: TestType;
+export interface NominalTestSuiteProperties extends BaseTestSuite {
+  type: NominalTestType;
   target: TestTarget;
 }
 
-export class TestSuite implements BaseAnomalyTestSuite {
+export class NominalTestSuite implements BaseTestSuite {
   #id: string;
 
   #organizationId: string;
 
   #activated: boolean;
 
-  #type: TestType;
+  #type: NominalTestType;
 
   #target: TestTarget;
-
-  #threshold: number;
 
   #executionFrequency: number;
 
@@ -72,7 +63,7 @@ export class TestSuite implements BaseAnomalyTestSuite {
     return this.#activated;
   }
 
-  get type(): TestType {
+  get type(): NominalTestType {
     return this.#type;
   }
 
@@ -80,29 +71,24 @@ export class TestSuite implements BaseAnomalyTestSuite {
     return this.#target;
   }
 
-  get threshold(): number {
-    return this.#threshold;
-  }
-
   get executionFrequency(): number {
     return this.#executionFrequency;
   }
 
-  private constructor(props: TestSuiteProperties) {
+  private constructor(props: NominalTestSuiteProperties) {
     this.#id = props.id;
     this.#organizationId = props.organizationId;
     this.#activated = props.activated;
     this.#type = props.type;
-    this.#threshold = props.threshold;
     this.#executionFrequency = props.executionFrequency;
     this.#target = props.target;
   }
 
-  static create = (props: TestSuiteProperties): TestSuite => {
+  static create = (props: NominalTestSuiteProperties): NominalTestSuite => {
     if (!props.id) throw new TypeError('TestSuite must have id');
     if (!props.organizationId)
       throw new TypeError('TestSuite must have organization id');
 
-    return new TestSuite(props);
+    return new NominalTestSuite(props);
   };
 }

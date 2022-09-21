@@ -1,10 +1,23 @@
-import { BaseTestSuite } from '../value-types/transient-types/base-test-suite';
+import { BaseAnomalyTestSuite } from '../value-types/transient-types/base-test-suite';
 
-export interface CustomTestSuiteProperties extends BaseTestSuite {
+export const customTestTypes = [
+  'Custom',
+  // 'TestTemplate'
+] as const;
+export type CustomTestType = typeof customTestTypes[number];
+
+export const parseCustomTestType = (testType: unknown): CustomTestType => {
+  const identifiedElement = customTestTypes.find((element) => element === testType);
+  if (identifiedElement) return identifiedElement;
+  throw new Error('Provision of invalid type');
+};
+
+export interface CustomTestSuiteProperties extends BaseAnomalyTestSuite {
   name: string;
   description: string;
   sqlLogic: string;
   targetResourceIds: string[];
+  // template?: TestTemplate
 }
 
 export interface CustomTestSuiteDto extends CustomTestSuiteProperties {

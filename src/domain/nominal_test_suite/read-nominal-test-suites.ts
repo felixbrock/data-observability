@@ -1,29 +1,29 @@
-import { TestSuite } from '../entities/test-suite';
+import { NominalTestSuite } from '../entities/nominal-test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
 import { DbConnection } from '../services/i-db';
 import IUseCase from '../services/use-case';
 import Result from '../value-types/transient-types/result';
 
-export interface ReadTestSuitesRequestDto {
+export interface ReadNominalTestSuitesRequestDto {
   activated?: boolean;
   executionFrequency?: number;
 }
 
-export interface ReadTestSuitesAuthDto {
+export interface ReadNominalTestSuitesAuthDto {
   jwt: string;
   isSystemInternal: boolean;
   callerOrganizationId?: string;
 }
 
-export type ReadTestSuitesResponseDto = Result<TestSuite[]>;
+export type ReadNominalTestSuitesResponseDto = Result<NominalTestSuite[]>;
 
-export class ReadTestSuites
+export class ReadNominalTestSuites
   implements
     IUseCase<
-      ReadTestSuitesRequestDto,
-      ReadTestSuitesResponseDto,
-      ReadTestSuitesAuthDto,
+      ReadNominalTestSuitesRequestDto,
+      ReadNominalTestSuitesResponseDto,
+      ReadNominalTestSuitesAuthDto,
       DbConnection
     >
 {
@@ -34,15 +34,15 @@ export class ReadTestSuites
   }
 
   async execute(
-    request: ReadTestSuitesRequestDto,
-    auth: ReadTestSuitesAuthDto
-  ): Promise<ReadTestSuitesResponseDto> {
+    request: ReadNominalTestSuitesRequestDto,
+    auth: ReadNominalTestSuitesAuthDto
+  ): Promise<ReadNominalTestSuitesResponseDto> {
     if (!auth.isSystemInternal && !auth.callerOrganizationId)
       throw new Error('Not authorized to perform operation');
 
     try {
       const query = CitoDataQuery.getReadTestSuitesQuery(
-        'test_suites',
+        'test_suites_nominal',
         request.executionFrequency,
         request.activated
       );
@@ -59,16 +59,15 @@ export class ReadTestSuites
 
       if (!result) throw new Error(`No test suites found that match condition`);
 
-      const testSuites = Object.keys(result).map((key) => {
+      const nominalTestSuites = Object.keys(result).map((key) => {
         const organizationResult = result[key];
 
-        const organizationTestSuites = organizationResult.map((element) =>
-          TestSuite.create({
+        const organizationNominalTestSuites = organizationResult.map((element) =>
+          NominalTestSuite.create({
             id: element.ID,
             type: element.TEST_TYPE,
             activated: element.ACTIVATED,
             executionFrequency: element.EXECUTION_FREQUENCY,
-            threshold: element.THRESHOLD,
             target: {
               databaseName: element.DATABASE_NAME,
               schemaName: element.SCHEMA_NAME,
@@ -81,13 +80,13 @@ export class ReadTestSuites
           })
         );
 
-        return organizationTestSuites;
+        return organizationNominalTestSuites;
       });
 
-      // if (testSuite.organizationId !== auth.organizationId)
+      // if (nominalTestSuite.organizationId !== auth.organizationId)
       //   throw new Error('Not authorized to perform action');
 
-      return Result.ok(testSuites.flat());
+      return Result.ok(nominalTestSuites.flat());
     } catch (error: unknown) {
       if (typeof error === 'string') return Result.fail(error);
       if (error instanceof Error) return Result.fail(error.message);

@@ -1,6 +1,6 @@
 import { MaterializationType, TestType } from '../entities/test-suite';
 
-export interface SchemaChangeTestExecutionResultDto {
+export interface NominalTestExecutionResultDto {
   testSuiteId: string;
   testType: TestType;
   executionId: string;

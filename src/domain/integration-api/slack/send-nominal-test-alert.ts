@@ -5,26 +5,26 @@ import {
   IIntegrationApiRepo,
 } from '../i-integration-api-repo';
 import { SendAlertResultDto } from './send-alert-result-dto';
-import { SchemaChangeAlertDto } from './schema-change-alert-dto';
+import { NominalTestAlertDto } from './nominal-test-alert-dto';
 import { appConfig } from '../../../config';
 
-export type SendSchemaChangeSlackAlertRequestDto = {
-  alertDto: SchemaChangeAlertDto;
+export type SendNominalTestSlackAlertRequestDto = {
+  alertDto: NominalTestAlertDto;
   targetOrganizationId: string;
 };
 
-export interface SendSchemaChangeSlackAlertAuthDto {
+export interface SendNominalTestSlackAlertAuthDto {
   jwt: string;
 }
 
-export type SendSchemaChangeSlackAlertResponseDto = Result<SendAlertResultDto>;
+export type SendNominalTestSlackAlertResponseDto = Result<SendAlertResultDto>;
 
-export class SendSchemaChangeSlackAlert
+export class SendNominalTestSlackAlert
   implements
     IUseCase<
-      SendSchemaChangeSlackAlertRequestDto,
-      SendSchemaChangeSlackAlertResponseDto,
-      SendSchemaChangeSlackAlertAuthDto
+      SendNominalTestSlackAlertRequestDto,
+      SendNominalTestSlackAlertResponseDto,
+      SendNominalTestSlackAlertAuthDto
     >
 {
   readonly #integrationApiRepo: IIntegrationApiRepo;
@@ -33,33 +33,33 @@ export class SendSchemaChangeSlackAlert
     this.#integrationApiRepo = integrationApiRepo;
   }
 
-  #buildAlertMessageConfig = (schemaChangeAlertDto: SchemaChangeAlertDto): AlertMessageConfig => ({
-    alertId: schemaChangeAlertDto.alertId,
-    occuredOn: `${schemaChangeAlertDto.detectedOn} (UTC)`,
+  #buildAlertMessageConfig = (alertDto: NominalTestAlertDto): AlertMessageConfig => ({
+    alertId: alertDto.alertId,
+    occuredOn: `${alertDto.detectedOn} (UTC)`,
     anomalyMessagePart: `Schema Change Alert`,
-    detectedValuePart: `*Detected Schema Change:*\n${schemaChangeAlertDto.schemaDiffs}`,
+    detectedValuePart: `*Detected Schema Change:*\n${alertDto.schemaDiffs}`,
     expectedRangePart: ``,
-    summaryPart: schemaChangeAlertDto.message.replace(
+    summaryPart: alertDto.message.replace(
       '__base_url__',
       appConfig.slack.resourceBaseUrl
     ),
   });
 
   async execute(
-    request: SendSchemaChangeSlackAlertRequestDto,
-    auth: SendSchemaChangeSlackAlertAuthDto
-  ): Promise<SendSchemaChangeSlackAlertResponseDto> {
+    request: SendNominalTestSlackAlertRequestDto,
+    auth: SendNominalTestSlackAlertAuthDto
+  ): Promise<SendNominalTestSlackAlertResponseDto> {
     try {
       const messageConfig = this.#buildAlertMessageConfig(request.alertDto);
 
-      const sendSchemaChangeSlackAlertResponse: SendAlertResultDto =
+      const sendSlackAlertResponse: SendAlertResultDto =
         await this.#integrationApiRepo.sendSlackAlert(
           messageConfig,
           request.targetOrganizationId,
           auth.jwt
         );
 
-      return Result.ok(sendSchemaChangeSlackAlertResponse);
+      return Result.ok(sendSlackAlertResponse);
     } catch (error: unknown) {
       if (typeof error === 'string') return Result.fail(error);
       if (error instanceof Error) return Result.fail(error.message);

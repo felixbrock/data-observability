@@ -3,11 +3,11 @@
 import { Db, Document, InsertOneResult } from 'mongodb';
 import sanitize from 'mongo-sanitize';
 
-import { ISchemaChangeTestResultRepo } from '../../domain/schema-change-test-result/i-schema-change-test-result-repo';
-import { SchemaChangeTestResult } from '../../domain/value-types/schema-change-test-result';
+import { INominalTestResultRepo } from '../../domain/nominal-test-result/i-nominal-test-result-repo';
+import { NominalTestResult } from '../../domain/value-types/nominal-test-result';
 import { TestType } from '../../domain/entities/test-suite';
 
-interface SchemaChangeTestResultPersistence {
+interface NominalTestResultPersistence {
   testSuiteId: string;
   testType: TestType;
   executionId: string;
@@ -23,20 +23,20 @@ interface SchemaChangeTestResultPersistence {
   organizationId: string;
 }
 
-const collectionName = 'schemaChangeTestResult';
+const collectionName = 'nominalTestResult';
 
-export default class SchemaChangeTestResultRepo implements ISchemaChangeTestResultRepo {
+export default class NominalTestResultRepo implements INominalTestResultRepo {
   insertOne = async (
-    schemaChangeTestResult: SchemaChangeTestResult,
+    nominalTestResult: NominalTestResult,
     dbConnection: Db
   ): Promise<string> => {
     try {
       const result: InsertOneResult<Document> = await dbConnection
         .collection(collectionName)
-        .insertOne(await this.#toPersistence(sanitize(schemaChangeTestResult)));
+        .insertOne(await this.#toPersistence(sanitize(nominalTestResult)));
 
       if (!result.acknowledged)
-        throw new Error('SchemaChangeTestResult creation failed. Insert not acknowledged');
+        throw new Error('NominalTestResult creation failed. Insert not acknowledged');
 
       return result.insertedId.toHexString();
     } catch (error: unknown) {
@@ -46,9 +46,9 @@ export default class SchemaChangeTestResultRepo implements ISchemaChangeTestResu
     }
   };
 
-  #toPersistence = async (schemaChangeTestResult: SchemaChangeTestResult): Promise<Document> => {
-    const persistenceObject: SchemaChangeTestResultPersistence = {
-      ...schemaChangeTestResult,
+  #toPersistence = async (nominalTestResult: NominalTestResult): Promise<Document> => {
+    const persistenceObject: NominalTestResultPersistence = {
+      ...nominalTestResult,
     };
 
     return persistenceObject;

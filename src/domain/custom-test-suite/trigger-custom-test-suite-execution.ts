@@ -61,6 +61,7 @@ export class TriggerCustomTestSuiteExecution
             {
               testSuiteId: customTestSuite.id,
               targetOrganizationId: customTestSuite.organizationId,
+              testType: 'Custom'
             },
             { jwt: auth.jwt, isSystemInternal: auth.isSystemInternal },
             this.#dbConnection

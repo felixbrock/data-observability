@@ -42,7 +42,7 @@ export class ReadCustomTestSuites
 
     try {
       const query = CitoDataQuery.getReadTestSuitesQuery(
-        true,
+        'test_suites_custom',
         request.executionFrequency,
         request.activated
       );

@@ -1,12 +1,12 @@
 // todo - clean architecture violation
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { SchemaChangeTestResult } from '../value-types/schema-change-test-result';
+import { NominalTestResult } from '../value-types/nominal-test-result';
 import { DbConnection } from '../services/i-db';
-import { ISchemaChangeTestResultRepo } from './i-schema-change-test-result-repo';
+import { INominalTestResultRepo } from './i-nominal-test-result-repo';
 import { TestType } from '../entities/test-suite';
 
-export interface CreateSchemaChangeTestResultRequestDto {
+export interface CreateNominalTestTestResultRequestDto {
   testSuiteId: string;
   testType: TestType;
   executionId: string;
@@ -22,47 +22,47 @@ export interface CreateSchemaChangeTestResultRequestDto {
   targetOrganizationId: string;
 }
 
-export type CreateSchemaChangeTestResultAuthDto = {
+export type CreateNominalTestResultAuthDto = {
   isSystemInternal: boolean;
 };
 
-export type CreateSchemaChangeTestResultResponseDto = Result<SchemaChangeTestResult>;
+export type CreateNominalTestResultResponseDto = Result<NominalTestResult>;
 
-export class CreateSchemaChangeTestResult
+export class CreateNominalTestResult
   implements
     IUseCase<
-      CreateSchemaChangeTestResultRequestDto,
-      CreateSchemaChangeTestResultResponseDto,
-      CreateSchemaChangeTestResultAuthDto,
+      CreateNominalTestTestResultRequestDto,
+      CreateNominalTestResultResponseDto,
+      CreateNominalTestResultAuthDto,
       DbConnection
     >
 {
-  readonly #schemaChangeTestResultRepo: ISchemaChangeTestResultRepo;
+  readonly #nominalTestResultRepo: INominalTestResultRepo;
 
   #dbConnection: DbConnection;
 
-  constructor(schemaChangeTestResultRepo: ISchemaChangeTestResultRepo) {
-    this.#schemaChangeTestResultRepo = schemaChangeTestResultRepo;
+  constructor(nominalTestResultRepo: INominalTestResultRepo) {
+    this.#nominalTestResultRepo = nominalTestResultRepo;
   }
 
   async execute(
-    request: CreateSchemaChangeTestResultRequestDto,
-    auth: CreateSchemaChangeTestResultAuthDto,
+    request: CreateNominalTestTestResultRequestDto,
+    auth: CreateNominalTestResultAuthDto,
     dbConnection: DbConnection
-  ): Promise<CreateSchemaChangeTestResultResponseDto> {
+  ): Promise<CreateNominalTestResultResponseDto> {
     try {
       if (!auth.isSystemInternal) throw new Error('Unauthorized');
 
       this.#dbConnection = dbConnection;
 
-      const schemaChangeTestResult: SchemaChangeTestResult = {
+      const nominalTestResult: NominalTestResult = {
         ...request,
         organizationId: request.targetOrganizationId,
       };
 
-      await this.#schemaChangeTestResultRepo.insertOne(schemaChangeTestResult, this.#dbConnection);
+      await this.#nominalTestResultRepo.insertOne(nominalTestResult, this.#dbConnection);
 
-      return Result.ok(schemaChangeTestResult);
+      return Result.ok(nominalTestResult);
     } catch (error: unknown) {
       if (typeof error === 'string') return Result.fail(error);
       if (error instanceof Error) return Result.fail(error.message);

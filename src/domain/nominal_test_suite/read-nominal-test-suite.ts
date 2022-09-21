@@ -1,26 +1,26 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { TestSuite } from '../entities/test-suite';
+import { NominalTestSuite } from '../entities/nominal-test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
 
-export interface ReadTestSuiteRequestDto {
+export interface ReadNominalTestSuiteRequestDto {
   id: string;
 }
 
-export interface ReadTestSuiteAuthDto {
+export interface ReadNominalTestSuiteAuthDto {
   jwt: string;
   callerOrganizationId: string;
 }
 
-export type ReadTestSuiteResponseDto = Result<TestSuite>;
+export type ReadNominalTestSuiteResponseDto = Result<NominalTestSuite>;
 
-export class ReadTestSuite
+export class ReadNominalTestSuite
   implements
     IUseCase<
-      ReadTestSuiteRequestDto,
-      ReadTestSuiteResponseDto,
-      ReadTestSuiteAuthDto
+      ReadNominalTestSuiteRequestDto,
+      ReadNominalTestSuiteResponseDto,
+      ReadNominalTestSuiteAuthDto
     >
 {
   readonly #querySnowflake: QuerySnowflake;
@@ -30,13 +30,13 @@ export class ReadTestSuite
   }
 
   async execute(
-    request: ReadTestSuiteRequestDto,
-    auth: ReadTestSuiteAuthDto
-  ): Promise<ReadTestSuiteResponseDto> {
+    request: ReadNominalTestSuiteRequestDto,
+    auth: ReadNominalTestSuiteAuthDto
+  ): Promise<ReadNominalTestSuiteResponseDto> {
     try {
       // todo -replace
 
-      const query = CitoDataQuery.getReadTestSuiteQuery([request.id], 'test_suites');
+      const query = CitoDataQuery.getReadTestSuiteQuery([request.id], 'test_suites_nominal');
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
         { query },
@@ -49,23 +49,22 @@ export class ReadTestSuite
       const result = querySnowflakeResult.value;
 
       if (!result)
-        throw new Error(`TestSuite with id ${request.id} does not exist`);
+        throw new Error(`NominalTestSuite with id ${request.id} does not exist`);
 
       const organizationResults = result[auth.callerOrganizationId];
 
       if (organizationResults.length !== 1)
         throw new Error('No or multiple test suites found');
 
-      // if (testSuite.organizationId !== auth.organizationId)
+      // if (nominalTestSuite.organizationId !== auth.organizationId)
       //   throw new Error('Not authorized to perform action');
 
       return Result.ok(
-        TestSuite.create({
+        NominalTestSuite.create({
           id: organizationResults[0].ID,
           type: organizationResults[0].TEST_TYPE,
           activated: organizationResults[0].ACTIVATED,
           executionFrequency: organizationResults[0].EXECUTION_FREQUENCY,
-          threshold: organizationResults[0].THRESHOLD,
           target: {
             databaseName: organizationResults[0].DATABASE_NAME,
             schemaName: organizationResults[0].SCHEMA_NAME,

@@ -12,23 +12,23 @@ interface UpdateObject {
   cron?: string;
 }
 
-export interface UpdateTestSuitesRequestDto {
+export interface UpdateNominalTestSuitesRequestDto {
   updateObjects: UpdateObject[];
 }
 
-export interface UpdateTestSuitesAuthDto {
+export interface UpdateNominalTestSuitesAuthDto {
   callerOrganizationId: string;
   jwt: string;
 }
 
-export type UpdateTestSuitesResponseDto = Result<SnowflakeQueryResultDto>;
+export type UpdateNominalTestSuitesResponseDto = Result<SnowflakeQueryResultDto>;
 
-export class UpdateTestSuites
+export class UpdateNominalTestSuites
   implements
     IUseCase<
-      UpdateTestSuitesRequestDto,
-      UpdateTestSuitesResponseDto,
-      UpdateTestSuitesAuthDto
+      UpdateNominalTestSuitesRequestDto,
+      UpdateNominalTestSuitesResponseDto,
+      UpdateNominalTestSuitesAuthDto
     >
 {
   readonly #querySnowflake: QuerySnowflake;
@@ -38,9 +38,9 @@ export class UpdateTestSuites
   }
 
   async execute(
-    request: UpdateTestSuitesRequestDto,
-    auth: UpdateTestSuitesAuthDto
-  ): Promise<UpdateTestSuitesResponseDto> {
+    request: UpdateNominalTestSuitesRequestDto,
+    auth: UpdateNominalTestSuitesAuthDto
+  ): Promise<UpdateNominalTestSuitesResponseDto> {
     try {
       const nothingToUpdate =
         request.updateObjects[0].activated === undefined &&
@@ -51,7 +51,7 @@ export class UpdateTestSuites
 
       const readQuery = CitoDataQuery.getReadTestSuiteQuery(
         request.updateObjects.map((el) => el.id),
-        'test_suites'
+        'test_suites_nominal'
       );
 
       const readResult = await this.#querySnowflake.execute(
@@ -61,13 +61,13 @@ export class UpdateTestSuites
 
       if (!readResult.success) throw new Error(readResult.error);
 
-      const testSuites = readResult.value;
+      const nominalTestSuites = readResult.value;
 
-      if (!testSuites) throw new Error(`Error when running snowflake query`);
-      if (!testSuites[Object.keys(testSuites)[0]].length)
+      if (!nominalTestSuites) throw new Error(`Error when running snowflake query`);
+      if (!nominalTestSuites[Object.keys(nominalTestSuites)[0]].length)
         throw new Error('Test suites not found');
       if (
-        testSuites[Object.keys(testSuites)[0]].length !==
+        nominalTestSuites[Object.keys(nominalTestSuites)[0]].length !==
         request.updateObjects.length
       )
         throw new Error(
@@ -108,7 +108,7 @@ export class UpdateTestSuites
 
       if (!updateResult.success) throw new Error(updateResult.error);
 
-      if (!updateResult.value) throw new Error(`Updating testSuites failed`);
+      if (!updateResult.value) throw new Error(`Updating nominalTestSuites failed`);
 
       return Result.ok(updateResult.value);
     } catch (error: unknown) {

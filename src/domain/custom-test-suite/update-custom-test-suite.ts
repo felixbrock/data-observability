@@ -51,7 +51,7 @@ export class UpdateCustomTestSuite
         !request.targetResourceIds;
       if (nothingToUpdate) return Result.ok(request.id);
 
-      const readQuery = CitoDataQuery.getReadTestSuiteQuery([request.id], true);
+      const readQuery = CitoDataQuery.getReadTestSuiteQuery([request.id], 'test_suites_custom');
 
       const readResult = await this.#querySnowflake.execute(
         { query: readQuery },
@@ -104,7 +104,7 @@ export class UpdateCustomTestSuite
       const values = [`(${updateValues.join(', ')})`];
 
       const updateQuery = CitoDataQuery.getUpdateQuery(
-        'cito.public.custom_test_suites',
+        'cito.public.test_suites_custom',
         columnDefinitions,
         values
       );

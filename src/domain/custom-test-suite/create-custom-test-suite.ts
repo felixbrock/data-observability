@@ -78,7 +78,7 @@ export class CreateCustomTestSuite
       ];
 
       const query = CitoDataQuery.getInsertQuery(
-        'cito.public.custom_test_suites',
+        'cito.public.test_suites_custom',
         columnDefinitions,
         values
       );

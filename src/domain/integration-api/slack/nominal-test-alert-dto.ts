@@ -1,6 +1,6 @@
 import { TestType } from "../../entities/test-suite";
 
-export interface SchemaChangeAlertDto {
+export interface NominalTestAlertDto {
   alertId: string;
   testType: TestType;
   message: string;

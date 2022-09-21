@@ -7,8 +7,33 @@ export interface CustomTestSuiteUpdateDto {
   description?: string;
   sqlLogic?: string;
   targetResourceIds?: string[];
-  cron?: string,
+  cron?: string;
 }
+
+export const citoMaterializationNames = [
+  'test_suites',
+  'test_history',
+  'test_results',
+  'test_executions',
+  'test_alerts',
+  'test_suites_nominal',
+  'test_history_nominal',
+  'test_results_nominal',
+  'test_executions_nominal',
+  'test_alerts_nominal',
+  'test_suites_custom',
+] as const;
+export type CitoMaterializationName = typeof citoMaterializationNames[number];
+
+export const parseCitoMaterializationName = (
+  citoMaterializationName: unknown
+): CitoMaterializationName => {
+  const identifiedElement = citoMaterializationNames.find(
+    (element) => element === citoMaterializationName
+  );
+  if (identifiedElement) return identifiedElement;
+  throw new Error('Provision of invalid type');
+};
 
 export interface ColumnDefinition {
   name: string;
@@ -32,20 +57,18 @@ export default class CitoDataQuery {
   from values ${values.join(', ')};
   `;
 
-  static getReadTestSuiteQuery = (ids: string[], isCustom: boolean): string => `
-    select * from cito.public.${isCustom ? 'custom_test_suites' : 'test_suites'}
+  static getReadTestSuiteQuery = (ids: string[], tableName: CitoMaterializationName): string => `
+    select * from cito.public.${tableName}
     where ${ids.map((el) => `id = '${el}'`).join(' or ')};
     `;
 
   static getReadTestSuitesQuery = (
-    isCustom: boolean,
+    tableName: CitoMaterializationName,
     executionFrequency?: number,
     activated?: boolean,
     organizationId?: string
   ): string => {
-    const selectClause = `select * from cito.public.${
-      isCustom ? 'custom_test_suites' : 'test_suites'
-    }`;
+    const selectClause = `select * from cito.public.${tableName}`;
 
     if (!executionFrequency && !activated && !organizationId)
       return selectClause.concat(';');

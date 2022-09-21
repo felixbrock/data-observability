@@ -4,15 +4,19 @@ import { ITestExecutionApiRepo } from './i-test-execution-api-repo';
 import { AnomalyTestExecutionResultDto } from './anomaly-test-execution-result-dto';
 import { DbConnection } from '../services/i-db';
 import { CreateAnomalyTestResult } from '../anomaly-test-result/create-anomaly-test-result';
-import { CreateSchemaChangeTestResult } from '../schema-change-test-result/create-schema-change-test-result';
+import { CreateNominalTestResult } from '../nominal-test-result/create-nominal-test-result';
 import { SendAnomalySlackAlert } from '../integration-api/slack/send-anomaly-alert';
 import { AnomalyAlertDto } from '../integration-api/slack/anomaly-alert-dto';
-import { SendSchemaChangeSlackAlert } from '../integration-api/slack/send-schema-change-alert';
-import { SchemaChangeAlertDto } from '../integration-api/slack/schema-change-alert-dto';
-import { SchemaChangeTestExecutionResultDto } from './schema-change-test-execution-result-dto';
+import { SendNominalTestSlackAlert } from '../integration-api/slack/send-nominal-test-alert';
+import { NominalTestAlertDto } from '../integration-api/slack/nominal-test-alert-dto';
+import { NominalTestExecutionResultDto } from './nominal-test-execution-result-dto';
+import { TestType } from '../entities/test-suite';
+import { NominalTestType } from '../entities/nominal-test-suite';
+import { CustomTestType } from '../entities/custom-test-suite';
 
 export interface ExecuteTestRequestDto {
   testSuiteId: string;
+  testType: TestType | NominalTestType | CustomTestType;
   targetOrganizationId: string;
 }
 
@@ -22,7 +26,7 @@ export interface ExecuteTestAuthDto {
 }
 
 export type ExecuteTestResponseDto = Result<
-  AnomalyTestExecutionResultDto | SchemaChangeTestExecutionResultDto
+  AnomalyTestExecutionResultDto | NominalTestExecutionResultDto
 >;
 
 export class ExecuteTest
@@ -38,34 +42,34 @@ export class ExecuteTest
 
   readonly #createAnomalyTestResult: CreateAnomalyTestResult;
 
-  readonly #createSchemaChangeTestResult: CreateSchemaChangeTestResult;
+  readonly #createNominalTestResult: CreateNominalTestResult;
 
   readonly #sendAnomalySlackAlert: SendAnomalySlackAlert;
 
-  readonly #sendSchemaChangeSlackAlert: SendSchemaChangeSlackAlert;
+  readonly #sendNominalTestSlackAlert: SendNominalTestSlackAlert;
 
   #dbConnection: DbConnection;
 
   constructor(
     testExecutionApiRepo: ITestExecutionApiRepo,
     createAnomalyTestResult: CreateAnomalyTestResult,
-    createSchemaChangeTestResult: CreateSchemaChangeTestResult,
+    createNominalTestResult: CreateNominalTestResult,
     sendAnomalySlackAlert: SendAnomalySlackAlert,
-    sendSchemaChangeSlackAlert: SendSchemaChangeSlackAlert
+    sendNominalTestSlackAlert: SendNominalTestSlackAlert
   ) {
     this.#testExecutionApiRepo = testExecutionApiRepo;
     this.#createAnomalyTestResult = createAnomalyTestResult;
-    this.#createSchemaChangeTestResult = createSchemaChangeTestResult;
+    this.#createNominalTestResult = createNominalTestResult;
     this.#sendAnomalySlackAlert = sendAnomalySlackAlert;
-    this.#sendSchemaChangeSlackAlert = sendSchemaChangeSlackAlert;
+    this.#sendNominalTestSlackAlert = sendNominalTestSlackAlert;
   }
 
-  #createSchemaChangeTestExecutionResult = async (
-    testExecutionResult: SchemaChangeTestExecutionResultDto,
+  #createNominalTestExecutionResult = async (
+    testExecutionResult: NominalTestExecutionResultDto,
     auth: ExecuteTestAuthDto
   ): Promise<void> => {
     const createTestResultResult =
-      await this.#createSchemaChangeTestResult.execute(
+      await this.#createNominalTestResult.execute(
         {
           executionId: testExecutionResult.executionId,
           testData: testExecutionResult.testData,
@@ -155,8 +159,8 @@ export class ExecuteTest
       );
   };
 
-  #sendSchemaChangeAlert = async (
-    testExecutionResult: SchemaChangeTestExecutionResultDto,
+  #sendNominalTestAlert = async (
+    testExecutionResult: NominalTestExecutionResultDto,
     auth: ExecuteTestAuthDto
   ): Promise<void> => {
     if (!testExecutionResult.testData)
@@ -166,7 +170,7 @@ export class ExecuteTest
         'Missing alert data. Previous checks indicated alert data'
       );
 
-    const alertDto: SchemaChangeAlertDto = {
+    const alertDto: NominalTestAlertDto = {
       alertId: testExecutionResult.alertData.alertId,
       testType: testExecutionResult.testType,
       detectedOn: testExecutionResult.testData.executedOn,
@@ -178,7 +182,7 @@ export class ExecuteTest
       schemaDiffs: testExecutionResult.testData.schemaDiffs,
     };
 
-    const sendSlackAlertResult = await this.#sendSchemaChangeSlackAlert.execute(
+    const sendSlackAlertResult = await this.#sendNominalTestSlackAlert.execute(
       { alertDto, targetOrganizationId: testExecutionResult.organizationId },
       { jwt: auth.jwt }
     );
@@ -216,7 +220,7 @@ export class ExecuteTest
         object: any
       ): object is AnomalyTestExecutionResultDto => 'isWarmup' in object;
       if (!instanceOfAnomalyTestExecutionResultDto(testExecutionResult))
-        await this.#createSchemaChangeTestExecutionResult(
+        await this.#createNominalTestExecutionResult(
           testExecutionResult,
           auth
         );
@@ -231,7 +235,7 @@ export class ExecuteTest
         return Result.ok(testExecutionResult);
 
       if (!instanceOfAnomalyTestExecutionResultDto(testExecutionResult))
-        await this.#sendSchemaChangeAlert(testExecutionResult, auth);
+        await this.#sendNominalTestAlert(testExecutionResult, auth);
       else await this.#sendAnomalyAlert(testExecutionResult, auth);
 
       return Result.ok(testExecutionResult);
