@@ -2,7 +2,7 @@ import { Router } from 'express';
 import app from '../../ioc-register';
 import ReadTestSuiteController from '../controllers/read-test-suite-controller';
 import TriggerTestSuiteExecutionController from '../controllers/trigger-test-suite-execution-controller';
-import UpdateTestHistoryEntryController from '../controllers/update-test-history-enty-controller';
+import UpdateTestHistoryEntryController from '../controllers/update-test-history-entry-controller';
 
 const testSuiteRoutes = Router();
 

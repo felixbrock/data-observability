@@ -24,11 +24,11 @@ import { ReadCustomTestSuites } from '../domain/custom-test-suite/read-custom-te
 import { UpdateCustomTestSuite } from '../domain/custom-test-suite/update-custom-test-suite';
 import { TriggerCustomTestSuiteExecution } from '../domain/custom-test-suite/trigger-custom-test-suite-execution';
 import NominalTestResultRepo from './persistence/schema-change-test-result-repo';
-import { CreateNominalTestSuites } from '../domain/nominal_test_suite/create-nominal-test-suites';
-import { ReadNominalTestSuite } from '../domain/nominal_test_suite/read-nominal-test-suite';
-import { ReadNominalTestSuites } from '../domain/nominal_test_suite/read-nominal-test-suites';
-import { TriggerNominalTestSuiteExecution } from '../domain/nominal_test_suite/trigger-nominal-test-suite-execution';
-import { UpdateNominalTestSuites } from '../domain/nominal_test_suite/update-nominal-test-suites';
+import { CreateNominalTestSuites } from '../domain/nominal-test-suite/create-nominal-test-suites';
+import { ReadNominalTestSuite } from '../domain/nominal-test-suite/read-nominal-test-suite';
+import { ReadNominalTestSuites } from '../domain/nominal-test-suite/read-nominal-test-suites';
+import { TriggerNominalTestSuiteExecution } from '../domain/nominal-test-suite/trigger-nominal-test-suite-execution';
+import { UpdateNominalTestSuites } from '../domain/nominal-test-suite/update-nominal-test-suites';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 

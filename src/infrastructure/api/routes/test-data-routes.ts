@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import app from '../../ioc-register';
-import UpdateTestHistoryEntryController from '../controllers/update-test-history-enty-controller';
+import UpdateTestHistoryEntryController from '../controllers/update-test-history-entry-controller';
 
 const testDataRoutes = Router();
 
