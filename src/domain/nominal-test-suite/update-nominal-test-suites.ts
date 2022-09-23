@@ -96,7 +96,7 @@ export class UpdateNominalTestSuites
       });
 
       const updateQuery = CitoDataQuery.getUpdateQuery(
-        'cito.public.test_suites',
+        'cito.public.test_suites_nominal',
         columnDefinitions,
         values
       );
