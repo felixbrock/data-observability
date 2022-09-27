@@ -22,9 +22,7 @@ export interface CreateNominalTestTestResultRequestDto {
   targetOrganizationId: string;
 }
 
-export type CreateNominalTestResultAuthDto = {
-  isSystemInternal: boolean;
-};
+export type CreateNominalTestResultAuthDto = null;
 
 export type CreateNominalTestResultResponseDto = Result<NominalTestResult>;
 
@@ -51,8 +49,6 @@ export class CreateNominalTestResult
     dbConnection: DbConnection
   ): Promise<CreateNominalTestResultResponseDto> {
     try {
-      if (!auth.isSystemInternal) throw new Error('Unauthorized');
-
       this.#dbConnection = dbConnection;
 
       const nominalTestResult: NominalTestResult = {

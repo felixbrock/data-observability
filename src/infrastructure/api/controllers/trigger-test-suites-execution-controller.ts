@@ -2,11 +2,11 @@
 import { Request, Response } from 'express';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
-  TriggerTestSuiteExecution,
-  TriggerTestSuiteExecutionAuthDto,
-  TriggerTestSuiteExecutionRequestDto,
-  TriggerTestSuiteExecutionResponseDto,
-} from '../../../domain/test-suite/trigger-test-suite-execution';
+  TriggerTestSuitesExecution,
+  TriggerTestSuitesExecutionAuthDto,
+  TriggerTestSuitesExecutionRequestDto,
+  TriggerTestSuitesExecutionResponseDto,
+} from '../../../domain/test-suite/trigger-test-suites-execution';
 import { buildTestSuiteDto } from '../../../domain/test-suite/test-suite-dto';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
@@ -17,47 +17,47 @@ import {
   UserAccountInfo,
 } from '../../shared/base-controller';
 
-export default class TriggerTestSuiteExecutionController extends BaseController {
-  readonly #triggerTestSuiteExecution: TriggerTestSuiteExecution;
+export default class TriggerTestSuitesExecutionController extends BaseController {
+  readonly #triggerTestSuitesExecution: TriggerTestSuitesExecution;
 
   readonly #getAccounts: GetAccounts;
 
   readonly #dbo: Dbo;
 
   constructor(
-    triggerTestSuiteExecution: TriggerTestSuiteExecution,
+    triggerTestSuitesExecution: TriggerTestSuitesExecution,
     getAccounts: GetAccounts,
     dbo: Dbo
   ) {
     super();
-    this.#triggerTestSuiteExecution = triggerTestSuiteExecution;
+    this.#triggerTestSuitesExecution = triggerTestSuitesExecution;
     this.#getAccounts = getAccounts;
     this.#dbo = dbo;
   }
 
   #buildRequestDto = (
     httpRequest: Request
-  ): TriggerTestSuiteExecutionRequestDto => ({ id: httpRequest.body.id });
+  ): TriggerTestSuitesExecutionRequestDto => {
+    if (Number.isNaN(httpRequest.body.frequency))
+      throw new Error('Provided frequency not in the right format');
+
+    return { frequency: httpRequest.body.frequency };
+  };
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): TriggerTestSuiteExecutionAuthDto => {
-    if (!userAccountInfo.callerOrganizationId)
-      throw new Error('tigger-test-execution - callerOrganizationId missing');
-
-    return {
+  ): TriggerTestSuitesExecutionAuthDto => ({
+      isSystemInternal: userAccountInfo.isSystemInternal,
       jwt,
-      callerOrganizationId: userAccountInfo.callerOrganizationId,
-    };
-  };
+    });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return TriggerTestSuiteExecutionController.unauthorized(
+        return TriggerTestSuitesExecutionController.unauthorized(
           res,
           'Unauthorized'
         );
@@ -65,35 +65,31 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await TriggerTestSuiteExecutionController.getUserAccountInfo(
+        await TriggerTestSuitesExecutionController.getUserAccountInfo(
           jwt,
           this.#getAccounts
         );
 
       if (!getUserAccountInfoResult.success)
-        return TriggerTestSuiteExecutionController.unauthorized(
+        return TriggerTestSuitesExecutionController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      if (!getUserAccountInfoResult.value.isSystemInternal)
-        return TriggerTestSuiteExecutionController.unauthorized(
-          res,
-          'Unauthorized'
-        );
+      if(!getUserAccountInfoResult.value.isSystemInternal) return TriggerTestSuitesExecutionController.unauthorized(res, 'Unauthorized');
 
-      const requestDto: TriggerTestSuiteExecutionRequestDto =
+      const requestDto: TriggerTestSuitesExecutionRequestDto =
         this.#buildRequestDto(req);
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
-      const useCaseResult: TriggerTestSuiteExecutionResponseDto =
-        await this.#triggerTestSuiteExecution.execute(requestDto, authDto);
+      const useCaseResult: TriggerTestSuitesExecutionResponseDto =
+        await this.#triggerTestSuitesExecution.execute(requestDto, authDto);
 
       if (!useCaseResult.success) {
-        return TriggerTestSuiteExecutionController.badRequest(
+        return TriggerTestSuitesExecutionController.badRequest(
           res,
           useCaseResult.error
         );
@@ -103,7 +99,7 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
         ? buildTestSuiteDto(useCaseResult.value)
         : useCaseResult.value;
 
-      return TriggerTestSuiteExecutionController.ok(
+      return TriggerTestSuitesExecutionController.ok(
         res,
         resultValue,
         CodeHttp.CREATED
@@ -111,10 +107,10 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
     } catch (error: unknown) {
       console.error(error);
       if (typeof error === 'string')
-        return TriggerTestSuiteExecutionController.fail(res, error);
+        return TriggerTestSuitesExecutionController.fail(res, error);
       if (error instanceof Error)
-        return TriggerTestSuiteExecutionController.fail(res, error);
-      return TriggerTestSuiteExecutionController.fail(
+        return TriggerTestSuitesExecutionController.fail(res, error);
+      return TriggerTestSuitesExecutionController.fail(
         res,
         'Unknown error occured'
       );

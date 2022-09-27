@@ -11,7 +11,7 @@ const dbo = app.resolve('dbo');
 
 const readTestSuiteController = new ReadTestSuiteController(
   app.resolve('readTestSuite'),
-  getAccounts,
+  getAccounts
 );
 
 const updateTestHistoryEntryController = new UpdateTestHistoryEntryController(
@@ -19,11 +19,12 @@ const updateTestHistoryEntryController = new UpdateTestHistoryEntryController(
   getAccounts
 );
 
-const triggerTestSuiteExecutionController = new TriggerTestSuiteExecutionController(
-  app.resolve('triggerTestSuiteExecution'),
-  getAccounts,
-  dbo
-);
+const triggerTestSuiteExecutionController =
+  new TriggerTestSuiteExecutionController(
+    app.resolve('triggerTestSuiteExecution'),
+    getAccounts,
+    dbo
+  );
 
 testSuiteRoutes.get('/:testSuiteId', (req, res) => {
   readTestSuiteController.execute(req, res);

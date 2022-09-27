@@ -26,9 +26,7 @@ export interface CreateAnomalyTestResultRequestDto {
   targetOrganizationId: string;
 }
 
-export type CreateAnomalyTestResultAuthDto = {
-  isSystemInternal: boolean;
-};
+export type CreateAnomalyTestResultAuthDto = null;
 
 export type CreateAnomalyTestResultResponseDto = Result<AnomalyTestResult>;
 
@@ -55,8 +53,6 @@ export class CreateAnomalyTestResult
     dbConnection: DbConnection
   ): Promise<CreateAnomalyTestResultResponseDto> {
     try {
-      if (!auth.isSystemInternal) throw new Error('Unauthorized');
-
       this.#dbConnection = dbConnection;
 
       const anomalyTestResult: AnomalyTestResult = {

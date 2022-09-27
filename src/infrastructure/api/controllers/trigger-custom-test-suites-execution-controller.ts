@@ -2,11 +2,11 @@
 import { Request, Response } from 'express';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
-  TriggerCustomTestSuiteExecution,
-  TriggerCustomTestSuiteExecutionAuthDto,
-  TriggerCustomTestSuiteExecutionRequestDto,
-  TriggerCustomTestSuiteExecutionResponseDto,
-} from '../../../domain/custom-test-suite/trigger-custom-test-suite-execution';
+  TriggerCustomTestSuitesExecution,
+  TriggerCustomTestSuitesExecutionAuthDto,
+  TriggerCustomTestSuitesExecutionRequestDto,
+  TriggerCustomTestSuitesExecutionResponseDto,
+} from '../../../domain/custom-test-suite/trigger-custom-test-suites-execution';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
 
@@ -16,47 +16,47 @@ import {
   UserAccountInfo,
 } from '../../shared/base-controller';
 
-export default class TriggerCustomTestSuiteExecutionController extends BaseController {
-  readonly #triggerCustomTestSuiteExecution: TriggerCustomTestSuiteExecution;
+export default class TriggerCustomTestSuitesExecutionController extends BaseController {
+  readonly #triggerCustomTestSuitesExecution: TriggerCustomTestSuitesExecution;
 
   readonly #getAccounts: GetAccounts;
 
   readonly #dbo: Dbo;
 
   constructor(
-    triggerCustomTestSuiteExecution: TriggerCustomTestSuiteExecution,
+    triggerCustomTestSuitesExecution: TriggerCustomTestSuitesExecution,
     getAccounts: GetAccounts,
     dbo: Dbo
   ) {
     super();
-    this.#triggerCustomTestSuiteExecution = triggerCustomTestSuiteExecution;
+    this.#triggerCustomTestSuitesExecution = triggerCustomTestSuitesExecution;
     this.#getAccounts = getAccounts;
     this.#dbo = dbo;
   }
 
   #buildRequestDto = (
     httpRequest: Request
-  ): TriggerCustomTestSuiteExecutionRequestDto => ({ id: httpRequest.body.id });
+  ): TriggerCustomTestSuitesExecutionRequestDto => {
+    if (Number.isNaN(httpRequest.body.frequency))
+      throw new Error('Provided frequency not in the right format');
+
+    return { frequency: httpRequest.body.frequency };
+  };
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): TriggerCustomTestSuiteExecutionAuthDto => {
-    if (!userAccountInfo.callerOrganizationId)
-      throw new Error('tigger-test-execution - callerOrganizationId missing');
-
-    return {
-      jwt,
-      callerOrganizationId: userAccountInfo.callerOrganizationId,
-    };
-  };
+  ): TriggerCustomTestSuitesExecutionAuthDto => ({
+    isSystemInternal: userAccountInfo.isSystemInternal,
+    jwt,
+  });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return TriggerCustomTestSuiteExecutionController.unauthorized(
+        return TriggerCustomTestSuitesExecutionController.unauthorized(
           res,
           'Unauthorized'
         );
@@ -64,13 +64,13 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await TriggerCustomTestSuiteExecutionController.getUserAccountInfo(
+        await TriggerCustomTestSuitesExecutionController.getUserAccountInfo(
           jwt,
           this.#getAccounts
         );
 
       if (!getUserAccountInfoResult.success)
-        return TriggerCustomTestSuiteExecutionController.unauthorized(
+        return TriggerCustomTestSuitesExecutionController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
@@ -78,30 +78,30 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
         throw new ReferenceError('Authorization failed');
 
       if (!getUserAccountInfoResult.value.isSystemInternal)
-        return TriggerCustomTestSuiteExecutionController.unauthorized(
+        return TriggerCustomTestSuitesExecutionController.unauthorized(
           res,
           'Unauthorized'
         );
 
-      const requestDto: TriggerCustomTestSuiteExecutionRequestDto =
+      const requestDto: TriggerCustomTestSuitesExecutionRequestDto =
         this.#buildRequestDto(req);
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
-      const useCaseResult: TriggerCustomTestSuiteExecutionResponseDto =
-        await this.#triggerCustomTestSuiteExecution.execute(
+      const useCaseResult: TriggerCustomTestSuitesExecutionResponseDto =
+        await this.#triggerCustomTestSuitesExecution.execute(
           requestDto,
           authDto
         );
 
       if (!useCaseResult.success) {
-        return TriggerCustomTestSuiteExecutionController.badRequest(
+        return TriggerCustomTestSuitesExecutionController.badRequest(
           res,
           useCaseResult.error
         );
       }
 
-      return TriggerCustomTestSuiteExecutionController.ok(
+      return TriggerCustomTestSuitesExecutionController.ok(
         res,
         useCaseResult.value,
         CodeHttp.CREATED
@@ -109,10 +109,10 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
     } catch (error: unknown) {
       console.error(error);
       if (typeof error === 'string')
-        return TriggerCustomTestSuiteExecutionController.fail(res, error);
+        return TriggerCustomTestSuitesExecutionController.fail(res, error);
       if (error instanceof Error)
-        return TriggerCustomTestSuiteExecutionController.fail(res, error);
-      return TriggerCustomTestSuiteExecutionController.fail(
+        return TriggerCustomTestSuitesExecutionController.fail(res, error);
+      return TriggerCustomTestSuitesExecutionController.fail(
         res,
         'Unknown error occured'
       );

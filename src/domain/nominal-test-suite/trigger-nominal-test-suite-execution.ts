@@ -1,17 +1,18 @@
 // todo - clean architecture violation
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { ReadNominalTestSuites } from './read-nominal-test-suites';
+import { ReadNominalTestSuite } from './read-nominal-test-suite';
 import { ExecuteTest } from '../test-execution-api/execute-test';
 import { DbConnection } from '../services/i-db';
 
 export interface TriggerNominalTestSuiteExecutionRequestDto {
-  frequency: number;
+  id: string;
 }
 
 export interface TriggerNominalTestSuiteExecutionAuthDto {
   jwt: string;
-  isSystemInternal: boolean;
+  callerOrganizationId: string;
+  
 }
 
 export type TriggerNominalTestSuiteExecutionResponseDto = Result<void>;
@@ -25,14 +26,17 @@ export class TriggerNominalTestSuiteExecution
       DbConnection
     >
 {
-  readonly #readNominalTestSuites: ReadNominalTestSuites;
+  readonly #readNominalTestSuite: ReadNominalTestSuite;
 
   readonly #executeTest: ExecuteTest;
 
   #dbConnection: DbConnection;
 
-  constructor(readNominalTestSuites: ReadNominalTestSuites, executeTest: ExecuteTest) {
-    this.#readNominalTestSuites = readNominalTestSuites;
+  constructor(
+    readNominalTestSuite: ReadNominalTestSuite,
+    executeTest: ExecuteTest
+  ) {
+    this.#readNominalTestSuite = readNominalTestSuite;
     this.#executeTest = executeTest;
   }
 
@@ -41,40 +45,31 @@ export class TriggerNominalTestSuiteExecution
     auth: TriggerNominalTestSuiteExecutionAuthDto
   ): Promise<TriggerNominalTestSuiteExecutionResponseDto> {
     try {
-      console.log(`Executing tets suites with frequency ${request.frequency} h`);
+      const readNominalTestSuiteResult =
+        await this.#readNominalTestSuite.execute(
+          { id: request.id },
+          { jwt: auth.jwt, callerOrganizationId: auth.callerOrganizationId }
+        );
 
-      const readNominalTestSuitesResult = await this.#readNominalTestSuites.execute(
-        { executionFrequency: request.frequency, activated: true },
-        { jwt: auth.jwt, isSystemInternal: auth.isSystemInternal }
+      if (!readNominalTestSuiteResult.success)
+        throw new Error(readNominalTestSuiteResult.error);
+      if (!readNominalTestSuiteResult.value)
+        throw new Error('Reading nominal test suite failed');
+
+      const nominalTestSuite = readNominalTestSuiteResult.value;
+
+      const executeTestResult = await this.#executeTest.execute(
+        {
+          testSuiteId: nominalTestSuite.id,
+          testType: nominalTestSuite.type,
+          targetOrganizationId: nominalTestSuite.organizationId,
+        },
+        { jwt: auth.jwt },
+        this.#dbConnection
       );
 
-      if (!readNominalTestSuitesResult.success)
-        throw new Error(readNominalTestSuitesResult.error);
-      if (!readNominalTestSuitesResult.value) throw new Error('Reading jobs failed');
-      if (!readNominalTestSuitesResult.value.length) return Result.ok();
+      if (!executeTestResult.success) throw new Error(executeTestResult.error);
 
-      const nominalTestSuites = readNominalTestSuitesResult.value;
-
-      await Promise.all(
-        nominalTestSuites.map(async (nominalTestSuite) => {
-          const executeTestResult = await this.#executeTest.execute(
-            {
-              testSuiteId: nominalTestSuite.id,
-              testType: nominalTestSuite.type,
-              targetOrganizationId: nominalTestSuite.organizationId,
-            },
-            { jwt: auth.jwt, isSystemInternal: auth.isSystemInternal },
-            this.#dbConnection
-          );
-
-          if (!executeTestResult.success)
-            throw new Error(executeTestResult.error);
-        })
-      );
-
-      console.log(
-        `Finished execution of test suites with frequency ${request.frequency}`
-      );
       return Result.ok();
     } catch (error: unknown) {
       if (typeof error === 'string') console.trace(error);

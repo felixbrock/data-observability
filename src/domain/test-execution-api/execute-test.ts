@@ -22,7 +22,6 @@ export interface ExecuteTestRequestDto {
 
 export interface ExecuteTestAuthDto {
   jwt: string;
-  isSystemInternal: boolean;
 }
 
 export type ExecuteTestResponseDto = Result<
@@ -66,24 +65,22 @@ export class ExecuteTest
 
   #createNominalTestExecutionResult = async (
     testExecutionResult: NominalTestExecutionResultDto,
-    auth: ExecuteTestAuthDto
   ): Promise<void> => {
-    const createTestResultResult =
-      await this.#createNominalTestResult.execute(
-        {
-          executionId: testExecutionResult.executionId,
-          testData: testExecutionResult.testData,
-          alertData: testExecutionResult.alertData
-            ? { alertId: testExecutionResult.alertData.alertId }
-            : undefined,
-          testSuiteId: testExecutionResult.testSuiteId,
-          testType: testExecutionResult.testType,
-          targetResourceId: testExecutionResult.targetResourceId,
-          targetOrganizationId: testExecutionResult.organizationId,
-        },
-        { ...auth },
-        this.#dbConnection
-      );
+    const createTestResultResult = await this.#createNominalTestResult.execute(
+      {
+        executionId: testExecutionResult.executionId,
+        testData: testExecutionResult.testData,
+        alertData: testExecutionResult.alertData
+          ? { alertId: testExecutionResult.alertData.alertId }
+          : undefined,
+        testSuiteId: testExecutionResult.testSuiteId,
+        testType: testExecutionResult.testType,
+        targetResourceId: testExecutionResult.targetResourceId,
+        targetOrganizationId: testExecutionResult.organizationId,
+      },
+      null,
+      this.#dbConnection
+    );
 
     if (!createTestResultResult.success)
       throw new Error(createTestResultResult.error);
@@ -91,7 +88,6 @@ export class ExecuteTest
 
   #createAnomalyTestExecutionResult = async (
     testExecutionResult: AnomalyTestExecutionResultDto,
-    auth: ExecuteTestAuthDto
   ): Promise<void> => {
     const { testData } = testExecutionResult;
 
@@ -113,7 +109,7 @@ export class ExecuteTest
         targetResourceId: testExecutionResult.targetResourceId,
         targetOrganizationId: testExecutionResult.organizationId,
       },
-      { ...auth },
+      null,
       this.#dbConnection
     );
 
@@ -198,11 +194,10 @@ export class ExecuteTest
     auth: ExecuteTestAuthDto,
     dbConnection: DbConnection
   ): Promise<ExecuteTestResponseDto> {
+  
+    this.#dbConnection = dbConnection;
+
     try {
-      if (!auth.isSystemInternal) throw new Error('Unauthorized');
-
-      this.#dbConnection = dbConnection;
-
       const testExecutionResult = await this.#testExecutionApiRepo.executeTest(
         request.testSuiteId,
         request.targetOrganizationId,
@@ -220,12 +215,9 @@ export class ExecuteTest
         object: any
       ): object is AnomalyTestExecutionResultDto => 'isWarmup' in object;
       if (!instanceOfAnomalyTestExecutionResultDto(testExecutionResult))
-        await this.#createNominalTestExecutionResult(
-          testExecutionResult,
-          auth
-        );
+        await this.#createNominalTestExecutionResult(testExecutionResult);
       else
-        await this.#createAnomalyTestExecutionResult(testExecutionResult, auth);
+        await this.#createAnomalyTestExecutionResult(testExecutionResult);
 
       if (
         !testExecutionResult.testData ||
