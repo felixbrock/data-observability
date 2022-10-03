@@ -113,9 +113,9 @@ export class CreateNominalTestSuites
 
       return Result.ok(nominalTestSuites);
     } catch (error: unknown) {
-      if (typeof error === 'string') return Result.fail(error);
-      if (error instanceof Error) return Result.fail(error.message);
-      return Result.fail('Unknown error occured');
+      if (error instanceof Error && error.message) console.trace(error.message);
+      else if (!(error instanceof Error) && error) console.trace(error);
+      return Result.fail('');
     }
   }
 }

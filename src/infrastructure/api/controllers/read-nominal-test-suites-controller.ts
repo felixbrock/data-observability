@@ -87,7 +87,7 @@ export default class ReadNominalTestSuitesController extends BaseController {
         await this.#readNominalTestSuites.execute(requestDto, authDto);
 
       if (!useCaseResult.success) {
-        return ReadNominalTestSuitesController.badRequest(res, useCaseResult.error);
+        return ReadNominalTestSuitesController.badRequest(res);
       }
 
       const resultValue = useCaseResult.value
@@ -96,12 +96,7 @@ export default class ReadNominalTestSuitesController extends BaseController {
 
       return ReadNominalTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return ReadNominalTestSuitesController.fail(res, error);
-      if (error instanceof Error)
-        return ReadNominalTestSuitesController.fail(res, error);
-      return ReadNominalTestSuitesController.fail(res, 'Unknown error occured');
+      return ReadNominalTestSuitesController.fail(res, 'read nominal test suites - Unknown error occured');
     }
   }
 }

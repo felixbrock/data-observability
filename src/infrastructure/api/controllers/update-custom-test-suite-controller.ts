@@ -85,7 +85,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
       if (!useCaseResult.success) {
         return UpdateCustomTestSuiteController.badRequest(
           res,
-          useCaseResult.error
+        
         );
       }
 
@@ -105,12 +105,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
 
       return UpdateCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return UpdateCustomTestSuiteController.fail(res, error);
-      if (error instanceof Error)
-        return UpdateCustomTestSuiteController.fail(res, error);
-      return UpdateCustomTestSuiteController.fail(res, 'Unknown error occured');
+      return UpdateCustomTestSuiteController.fail(res, 'update custom test suite - Unknown error occured');
     }
   }
 }

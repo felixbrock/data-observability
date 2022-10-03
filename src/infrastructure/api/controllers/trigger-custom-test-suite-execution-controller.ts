@@ -77,12 +77,6 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      if (!getUserAccountInfoResult.value.isSystemInternal)
-        return TriggerCustomTestSuiteExecutionController.unauthorized(
-          res,
-          'Unauthorized'
-        );
-
       const requestDto: TriggerCustomTestSuiteExecutionRequestDto =
         this.#buildRequestDto(req);
 
@@ -97,7 +91,6 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
       if (!useCaseResult.success) {
         return TriggerCustomTestSuiteExecutionController.badRequest(
           res,
-          useCaseResult.error
         );
       }
 
@@ -107,14 +100,9 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return TriggerCustomTestSuiteExecutionController.fail(res, error);
-      if (error instanceof Error)
-        return TriggerCustomTestSuiteExecutionController.fail(res, error);
       return TriggerCustomTestSuiteExecutionController.fail(
         res,
-        'Unknown error occured'
+        'trigger custom test suite execution - Unknown error occured'
       );
     }
   }

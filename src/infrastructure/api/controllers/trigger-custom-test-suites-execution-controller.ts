@@ -97,7 +97,6 @@ export default class TriggerCustomTestSuitesExecutionController extends BaseCont
       if (!useCaseResult.success) {
         return TriggerCustomTestSuitesExecutionController.badRequest(
           res,
-          useCaseResult.error
         );
       }
 
@@ -107,14 +106,9 @@ export default class TriggerCustomTestSuitesExecutionController extends BaseCont
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return TriggerCustomTestSuitesExecutionController.fail(res, error);
-      if (error instanceof Error)
-        return TriggerCustomTestSuitesExecutionController.fail(res, error);
       return TriggerCustomTestSuitesExecutionController.fail(
         res,
-        'Unknown error occured'
+        'trigger custom test suites execution - Unknown error occured'
       );
     }
   }

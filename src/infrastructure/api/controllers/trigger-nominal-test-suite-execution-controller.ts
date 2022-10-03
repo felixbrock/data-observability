@@ -80,12 +80,6 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      if (!getUserAccountInfoResult.value.isSystemInternal)
-        return TriggerNominalTestSuiteExecutionController.unauthorized(
-          res,
-          'Unauthorized'
-        );
-
       const requestDto: TriggerNominalTestSuiteExecutionRequestDto =
         this.#buildRequestDto(req);
 
@@ -100,7 +94,6 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
       if (!useCaseResult.success) {
         return TriggerNominalTestSuiteExecutionController.badRequest(
           res,
-          useCaseResult.error
         );
       }
 
@@ -114,14 +107,9 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return TriggerNominalTestSuiteExecutionController.fail(res, error);
-      if (error instanceof Error)
-        return TriggerNominalTestSuiteExecutionController.fail(res, error);
       return TriggerNominalTestSuiteExecutionController.fail(
         res,
-        'Unknown error occured'
+        'trigger nominal test suite - Unknown error occured'
       );
     }
   }

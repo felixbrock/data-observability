@@ -87,7 +87,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
         await this.#createCustomTestSuite.execute(requestDto, authDto);
 
       if (!useCaseResult.success) {
-        return CreateCustomTestSuiteController.badRequest(res, useCaseResult.error);
+        return CreateCustomTestSuiteController.badRequest(res);
       }
 
       const result = useCaseResult.value;
@@ -95,12 +95,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
 
       return CreateCustomTestSuiteController.ok(res, result.toDto(), CodeHttp.CREATED);
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return CreateCustomTestSuiteController.fail(res, error);
-      if (error instanceof Error)
-        return CreateCustomTestSuiteController.fail(res, error);
-      return CreateCustomTestSuiteController.fail(res, 'Unknown error occured');
+      return CreateCustomTestSuiteController.fail(res, 'create custom test suite - unknown error occured');
     }
   }
 }

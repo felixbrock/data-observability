@@ -98,7 +98,6 @@ export default class TriggerNominalTestSuitesExecutionController extends BaseCon
       if (!useCaseResult.success) {
         return TriggerNominalTestSuitesExecutionController.badRequest(
           res,
-          useCaseResult.error
         );
       }
 
@@ -112,14 +111,9 @@ export default class TriggerNominalTestSuitesExecutionController extends BaseCon
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return TriggerNominalTestSuitesExecutionController.fail(res, error);
-      if (error instanceof Error)
-        return TriggerNominalTestSuitesExecutionController.fail(res, error);
       return TriggerNominalTestSuitesExecutionController.fail(
         res,
-        'Unknown error occured'
+        'trigger nominal test suites - Unknown error occured'
       );
     }
   }

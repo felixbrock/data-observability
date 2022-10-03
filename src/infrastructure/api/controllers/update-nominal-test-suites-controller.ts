@@ -119,14 +119,9 @@ export default class UpdateNominalTestSuitesController extends BaseController {
         CodeHttp.OK
       );
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return UpdateNominalTestSuitesController.fail(res, error);
-      if (error instanceof Error)
-        return UpdateNominalTestSuitesController.fail(res, error);
       return UpdateNominalTestSuitesController.fail(
         res,
-        'Unknown error occured'
+        'update nominal test suites - Unknown error occured'
       );
     }
   }

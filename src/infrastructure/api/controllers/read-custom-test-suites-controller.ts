@@ -91,8 +91,7 @@ export default class ReadCustomTestSuitesController extends BaseController {
 
       if (!useCaseResult.success) {
         return ReadCustomTestSuitesController.badRequest(
-          res,
-          useCaseResult.error
+          res
         );
       }
 
@@ -109,12 +108,7 @@ export default class ReadCustomTestSuitesController extends BaseController {
         CodeHttp.OK
       );
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return ReadCustomTestSuitesController.fail(res, error);
-      if (error instanceof Error)
-        return ReadCustomTestSuitesController.fail(res, error);
-      return ReadCustomTestSuitesController.fail(res, 'Unknown error occured');
+      return ReadCustomTestSuitesController.fail(res, 'read custom test suites - Unknown error occured');
     }
   }
 }

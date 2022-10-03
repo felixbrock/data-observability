@@ -67,9 +67,9 @@ export class TriggerTestSuiteExecution
 
       return Result.ok();
     } catch (error: unknown) {
-      if (typeof error === 'string') console.trace(error);
-      if (error instanceof Error) console.trace(error.message);
-      return Result.fail('test execution failed');
+      if (error instanceof Error && error.message) console.trace(error.message);
+      else if (!(error instanceof Error) && error) console.trace(error);
+      return Result.fail('');
     }
   }
 }

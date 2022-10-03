@@ -80,7 +80,7 @@ export default class ReadTestSuiteController extends BaseController {
         await this.#readTestSuite.execute(requestDto, authDto);
 
       if (!useCaseResult.success) {
-        return ReadTestSuiteController.badRequest(res, useCaseResult.error);
+        return ReadTestSuiteController.badRequest(res);
       }
 
       const resultValue = useCaseResult.value
@@ -89,12 +89,7 @@ export default class ReadTestSuiteController extends BaseController {
 
       return ReadTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return ReadTestSuiteController.fail(res, error);
-      if (error instanceof Error)
-        return ReadTestSuiteController.fail(res, error);
-      return ReadTestSuiteController.fail(res, 'Unknown error occured');
+      return ReadTestSuiteController.fail(res, 'read test suite - Unknown error occured');
     }
   }
 }

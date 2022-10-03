@@ -91,7 +91,7 @@ export default class TriggerTestSuitesExecutionController extends BaseController
       if (!useCaseResult.success) {
         return TriggerTestSuitesExecutionController.badRequest(
           res,
-          useCaseResult.error
+        
         );
       }
 
@@ -105,14 +105,9 @@ export default class TriggerTestSuitesExecutionController extends BaseController
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return TriggerTestSuitesExecutionController.fail(res, error);
-      if (error instanceof Error)
-        return TriggerTestSuitesExecutionController.fail(res, error);
       return TriggerTestSuitesExecutionController.fail(
         res,
-        'Unknown error occured'
+        'trigger test suites execution - Unknown error occured'
       );
     }
   }

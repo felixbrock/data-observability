@@ -8,7 +8,7 @@ import getRoot from '../shared/api-root-builder';
 export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
   #path = 'tests';
 
-  #port = '3000';
+  #port = '3047';
 
   #prodGateway = 'wvetgwc0ua.execute-api.eu-central-1.amazonaws.com/Prod';
 
