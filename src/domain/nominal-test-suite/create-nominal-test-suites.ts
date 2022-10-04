@@ -98,7 +98,7 @@ export class CreateNominalTestSuites
       );
 
       const query = CitoDataQuery.getInsertQuery(
-        'cito.public.test_suites_nominal',
+        'cito.observability.test_suites_nominal',
         columnDefinitions,
         values
       );

@@ -104,7 +104,7 @@ export class UpdateCustomTestSuite
       const values = [`(${updateValues.join(', ')})`];
 
       const updateQuery = CitoDataQuery.getUpdateQuery(
-        'cito.public.test_suites_custom',
+        'cito.observability.test_suites_custom',
         columnDefinitions,
         values
       );
