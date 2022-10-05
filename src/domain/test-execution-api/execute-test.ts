@@ -199,6 +199,7 @@ export class ExecuteTest
     try {
       const testExecutionResult = await this.#testExecutionApiRepo.executeTest(
         request.testSuiteId,
+        request.testType,
         auth.jwt,
         request.targetOrganizationId
       );

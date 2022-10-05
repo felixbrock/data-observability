@@ -14,6 +14,7 @@ export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
 
   executeTest = async (
     testSuiteId: string,
+    testType: string,
     jwt: string,
     targetOrganizationId?: string,
   ): Promise<AnomalyTestExecutionResultDto> => {
@@ -24,7 +25,8 @@ export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
       const apiRoot = await getRoot(gateway, this.#path, false);
 
       const payload = {
-        targetOrganizationId
+        targetOrganizationId,
+        testType
       };
 
       const config: AxiosRequestConfig = {
