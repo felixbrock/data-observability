@@ -21,7 +21,7 @@ export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
       let gateway = this.#port;
       if(appConfig.express.mode === 'production') gateway = this.#prodGateway;
 
-      const apiRoot = await getRoot(gateway, this.#path, true);
+      const apiRoot = await getRoot(gateway, this.#path, false);
 
       const payload = {
         targetOrganizationId

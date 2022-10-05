@@ -3,12 +3,12 @@ import { ObjectId } from 'mongodb';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import {
-  MaterializationType,
   TestSuite,
   TestType,
 } from '../entities/test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
+import { MaterializationType } from '../value-types/materialization-type';
 
 interface CreateObject {
   activated: boolean;
