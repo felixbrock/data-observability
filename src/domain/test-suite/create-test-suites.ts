@@ -100,7 +100,7 @@ export class CreateTestSuites
       );
 
       const query = CitoDataQuery.getInsertQuery(
-        'cito.public.test_suites',
+        'cito.observability.test_suites',
         columnDefinitions,
         values
       );

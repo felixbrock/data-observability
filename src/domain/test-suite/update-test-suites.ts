@@ -96,7 +96,7 @@ export class UpdateTestSuites
       });
 
       const updateQuery = CitoDataQuery.getUpdateQuery(
-        'cito.public.test_suites',
+        'cito.observability.test_suites',
         columnDefinitions,
         values
       );

@@ -92,7 +92,7 @@ export default class UpdateTestSuitesController extends BaseController {
 
       await Promise.all(
         requestDto.updateObjects.map(async (obj) => {
-          if (obj.cron || obj.activated !== undefined)
+          if (obj.cron && obj.activated !== undefined)
             await putCronJob(obj.id, obj.cron, obj.activated);
         })
       );

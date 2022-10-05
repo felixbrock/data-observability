@@ -58,7 +58,7 @@ export default class CitoDataQuery {
   `;
 
   static getReadTestSuiteQuery = (ids: string[], tableName: CitoMaterializationName): string => `
-    select * from cito.public.${tableName}
+    select * from cito.observability.${tableName}
     where ${ids.map((el) => `id = '${el}'`).join(' or ')};
     `;
 
@@ -68,7 +68,7 @@ export default class CitoDataQuery {
     activated?: boolean,
     organizationId?: string
   ): string => {
-    const selectClause = `select * from cito.public.${tableName}`;
+    const selectClause = `select * from cito.observability.${tableName}`;
 
     if (!executionFrequency && !activated && !organizationId)
       return selectClause.concat(';');
@@ -120,7 +120,7 @@ when matched then update set ${columnDefinitions
     alertId: string,
     userFeedbackIsAnomaly: number
   ): string => `
-  update cito.public.test_history
+  update cito.observability.test_history
   set user_feedback_is_anomaly = ${userFeedbackIsAnomaly}
   where alert_id = '${alertId}';
 `;
