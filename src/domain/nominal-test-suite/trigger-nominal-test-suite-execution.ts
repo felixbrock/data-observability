@@ -62,7 +62,6 @@ export class TriggerNominalTestSuiteExecution
         {
           testSuiteId: nominalTestSuite.id,
           testType: nominalTestSuite.type,
-          targetOrganizationId: nominalTestSuite.organizationId,
         },
         { jwt: auth.jwt },
         this.#dbConnection

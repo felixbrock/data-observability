@@ -17,7 +17,7 @@ import { CustomTestType } from '../entities/custom-test-suite';
 export interface ExecuteTestRequestDto {
   testSuiteId: string;
   testType: TestType | NominalTestType | CustomTestType;
-  targetOrganizationId: string;
+  targetOrganizationId?: string;
 }
 
 export interface ExecuteTestAuthDto {
@@ -64,7 +64,7 @@ export class ExecuteTest
   }
 
   #createNominalTestExecutionResult = async (
-    testExecutionResult: NominalTestExecutionResultDto,
+    testExecutionResult: NominalTestExecutionResultDto
   ): Promise<void> => {
     const createTestResultResult = await this.#createNominalTestResult.execute(
       {
@@ -87,7 +87,7 @@ export class ExecuteTest
   };
 
   #createAnomalyTestExecutionResult = async (
-    testExecutionResult: AnomalyTestExecutionResultDto,
+    testExecutionResult: AnomalyTestExecutionResultDto
   ): Promise<void> => {
     const { testData } = testExecutionResult;
 
@@ -194,14 +194,13 @@ export class ExecuteTest
     auth: ExecuteTestAuthDto,
     dbConnection: DbConnection
   ): Promise<ExecuteTestResponseDto> {
-  
     this.#dbConnection = dbConnection;
 
     try {
       const testExecutionResult = await this.#testExecutionApiRepo.executeTest(
         request.testSuiteId,
-        request.targetOrganizationId,
-        auth.jwt
+        auth.jwt,
+        request.targetOrganizationId
       );
 
       if (
@@ -216,8 +215,7 @@ export class ExecuteTest
       ): object is AnomalyTestExecutionResultDto => 'isWarmup' in object;
       if (!instanceOfAnomalyTestExecutionResultDto(testExecutionResult))
         await this.#createNominalTestExecutionResult(testExecutionResult);
-      else
-        await this.#createAnomalyTestExecutionResult(testExecutionResult);
+      else await this.#createAnomalyTestExecutionResult(testExecutionResult);
 
       if (
         !testExecutionResult.testData ||

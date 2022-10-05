@@ -4,7 +4,7 @@ import { NominalTestExecutionResultDto } from './nominal-test-execution-result-d
 export interface ITestExecutionApiRepo {
   executeTest(
     testSuiteId: string,
-    targetOrganizationId: string,
-    jwt: string
+    jwt: string,
+    targetOrganizationId?: string,
   ): Promise<AnomalyTestExecutionResultDto | NominalTestExecutionResultDto>;
 }

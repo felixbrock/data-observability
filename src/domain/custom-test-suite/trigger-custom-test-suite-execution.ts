@@ -59,7 +59,6 @@ export class TriggerCustomTestSuiteExecution
       const executeTestResult = await this.#executeTest.execute(
         {
           testSuiteId: customTestSuite.id,
-          targetOrganizationId: customTestSuite.organizationId,
           testType: 'Custom',
         },
         { jwt: auth.jwt },

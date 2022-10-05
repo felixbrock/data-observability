@@ -14,8 +14,8 @@ export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
 
   executeTest = async (
     testSuiteId: string,
-    targetOrganizationId: string,
-    jwt: string
+    jwt: string,
+    targetOrganizationId?: string,
   ): Promise<AnomalyTestExecutionResultDto> => {
     try {
       let gateway = this.#port;

@@ -57,7 +57,6 @@ export class TriggerTestSuiteExecution
         {
           testSuiteId: testSuite.id,
           testType: testSuite.type,
-          targetOrganizationId: testSuite.organizationId,
         },
         { jwt: auth.jwt },
         this.#dbConnection
