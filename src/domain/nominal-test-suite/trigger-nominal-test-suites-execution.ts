@@ -31,7 +31,10 @@ export class TriggerNominalTestSuitesExecution
 
   #dbConnection: DbConnection;
 
-  constructor(readNominalTestSuites: ReadNominalTestSuites, executeTest: ExecuteTest) {
+  constructor(
+    readNominalTestSuites: ReadNominalTestSuites,
+    executeTest: ExecuteTest
+  ) {
     this.#readNominalTestSuites = readNominalTestSuites;
     this.#executeTest = executeTest;
   }
@@ -40,39 +43,59 @@ export class TriggerNominalTestSuitesExecution
     request: TriggerNominalTestSuitesExecutionRequestDto,
     auth: TriggerNominalTestSuitesExecutionAuthDto
   ): Promise<TriggerNominalTestSuitesExecutionResponseDto> {
-    if(!auth.isSystemInternal) throw new Error('Unauthorized');
+    if (!auth.isSystemInternal) throw new Error('Unauthorized');
 
     try {
-      console.log(`Executing test suites with frequency ${request.frequency} h`);
-
-      const readNominalTestSuitesResult = await this.#readNominalTestSuites.execute(
-        { executionFrequency: request.frequency, activated: true },
-        { jwt: auth.jwt, isSystemInternal: auth.isSystemInternal }
+      console.log(
+        `Executing test suites with frequency ${request.frequency} h`
       );
+
+      const readNominalTestSuitesResult =
+        await this.#readNominalTestSuites.execute(
+          { executionFrequency: request.frequency, activated: true },
+          { jwt: auth.jwt, isSystemInternal: auth.isSystemInternal }
+        );
 
       if (!readNominalTestSuitesResult.success)
         throw new Error(readNominalTestSuitesResult.error);
-      if (!readNominalTestSuitesResult.value) throw new Error('Reading jobs failed');
+      if (!readNominalTestSuitesResult.value)
+        throw new Error('Reading jobs failed');
       if (!readNominalTestSuitesResult.value.length) return Result.ok();
 
       const nominalTestSuites = readNominalTestSuitesResult.value;
 
-      await Promise.all(
-        nominalTestSuites.map(async (nominalTestSuite) => {
-          const executeTestResult = await this.#executeTest.execute(
+      const executionResults = await Promise.all(
+        nominalTestSuites.map(async (testSuite) => {
+          const result = await this.#executeTest.execute(
             {
-              testSuiteId: nominalTestSuite.id,
-              testType: nominalTestSuite.type,
-              targetOrganizationId: nominalTestSuite.organizationId,
+              testSuiteId: testSuite.id,
+              testType: testSuite.type,
+              targetOrganizationId: testSuite.organizationId,
             },
             { jwt: auth.jwt },
             this.#dbConnection
           );
 
-          if (!executeTestResult.success)
-            throw new Error(executeTestResult.error);
+          return {
+            testSuiteId: testSuite.id,
+            organizationId: testSuite.organizationId,
+            result,
+          };
         })
       );
+
+      const isString = (obj: unknown): obj is string => typeof obj === 'string';
+
+      const failedExecutionErrorMessages = executionResults
+        .map((result) => {
+          if (!result.result.success)
+            return `Execution of test suite ${result.testSuiteId} for organization ${result.organizationId} failed with error msg: ${result.result.error}`;
+          return undefined;
+        })
+        .filter(isString);
+
+      if(failedExecutionErrorMessages.length)
+        console.error(failedExecutionErrorMessages.join());
 
       console.log(
         `Finished execution of test suites with frequency ${request.frequency}`
