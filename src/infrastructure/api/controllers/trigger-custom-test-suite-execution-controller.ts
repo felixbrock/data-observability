@@ -85,7 +85,8 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
       const useCaseResult: TriggerCustomTestSuiteExecutionResponseDto =
         await this.#triggerCustomTestSuiteExecution.execute(
           requestDto,
-          authDto
+          authDto,
+          this.#dbo.dbConnection
         );
 
       if (!useCaseResult.success) {

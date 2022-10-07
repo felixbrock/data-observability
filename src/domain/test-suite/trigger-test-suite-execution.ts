@@ -38,8 +38,11 @@ export class TriggerTestSuiteExecution
 
   async execute(
     request: TriggerTestSuiteExecutionRequestDto,
-    auth: TriggerTestSuiteExecutionAuthDto
+    auth: TriggerTestSuiteExecutionAuthDto,
+    dbConnection: DbConnection
   ): Promise<TriggerTestSuiteExecutionResponseDto> {
+    this.#dbConnection = dbConnection;
+
     try {
       const readTestSuiteResult = await this.#readTestSuite.execute(
         { id: request.id },

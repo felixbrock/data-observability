@@ -41,8 +41,11 @@ export class TriggerCustomTestSuiteExecution
 
   async execute(
     request: TriggerCustomTestSuiteExecutionRequestDto,
-    auth: TriggerCustomTestSuiteExecutionAuthDto
+    auth: TriggerCustomTestSuiteExecutionAuthDto,
+    dbConnection: DbConnection
   ): Promise<TriggerCustomTestSuiteExecutionResponseDto> {
+    this.#dbConnection = dbConnection;
+
     try {
       const readCustomTestSuiteResult = await this.#readCustomTestSuite.execute(
         { id: request.id },

@@ -41,9 +41,12 @@ export class TriggerNominalTestSuitesExecution
 
   async execute(
     request: TriggerNominalTestSuitesExecutionRequestDto,
-    auth: TriggerNominalTestSuitesExecutionAuthDto
+    auth: TriggerNominalTestSuitesExecutionAuthDto,
+    dbConnection: DbConnection
   ): Promise<TriggerNominalTestSuitesExecutionResponseDto> {
     if (!auth.isSystemInternal) throw new Error('Unauthorized');
+
+    this.#dbConnection = dbConnection;
 
     try {
       console.log(

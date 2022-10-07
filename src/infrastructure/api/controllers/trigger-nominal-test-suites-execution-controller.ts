@@ -92,7 +92,8 @@ export default class TriggerNominalTestSuitesExecutionController extends BaseCon
       const useCaseResult: TriggerNominalTestSuitesExecutionResponseDto =
         await this.#triggerNominalTestSuitesExecution.execute(
           requestDto,
-          authDto
+          authDto,
+          this.#dbo.dbConnection
         );
 
       if (!useCaseResult.success) {

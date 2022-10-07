@@ -42,8 +42,11 @@ export class TriggerNominalTestSuiteExecution
 
   async execute(
     request: TriggerNominalTestSuiteExecutionRequestDto,
-    auth: TriggerNominalTestSuiteExecutionAuthDto
+    auth: TriggerNominalTestSuiteExecutionAuthDto,
+    dbConnection: DbConnection
   ): Promise<TriggerNominalTestSuiteExecutionResponseDto> {
+    this.#dbConnection = dbConnection;
+
     try {
       const readNominalTestSuiteResult =
         await this.#readNominalTestSuite.execute(

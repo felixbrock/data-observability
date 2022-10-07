@@ -84,7 +84,9 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
       const useCaseResult: TriggerTestSuiteExecutionResponseDto =
-        await this.#triggerTestSuiteExecution.execute(requestDto, authDto);
+        await this.#triggerTestSuiteExecution.execute(requestDto, authDto,
+          this.#dbo.dbConnection
+          );
 
       if (!useCaseResult.success) {
         return TriggerTestSuiteExecutionController.badRequest(

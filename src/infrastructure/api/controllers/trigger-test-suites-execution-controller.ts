@@ -48,9 +48,9 @@ export default class TriggerTestSuitesExecutionController extends BaseController
     userAccountInfo: UserAccountInfo,
     jwt: string
   ): TriggerTestSuitesExecutionAuthDto => ({
-      isSystemInternal: userAccountInfo.isSystemInternal,
-      jwt,
-    });
+    isSystemInternal: userAccountInfo.isSystemInternal,
+    jwt,
+  });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -78,7 +78,11 @@ export default class TriggerTestSuitesExecutionController extends BaseController
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      if(!getUserAccountInfoResult.value.isSystemInternal) return TriggerTestSuitesExecutionController.unauthorized(res, 'Unauthorized');
+      if (!getUserAccountInfoResult.value.isSystemInternal)
+        return TriggerTestSuitesExecutionController.unauthorized(
+          res,
+          'Unauthorized'
+        );
 
       const requestDto: TriggerTestSuitesExecutionRequestDto =
         this.#buildRequestDto(req);
@@ -86,13 +90,14 @@ export default class TriggerTestSuitesExecutionController extends BaseController
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
       const useCaseResult: TriggerTestSuitesExecutionResponseDto =
-        await this.#triggerTestSuitesExecution.execute(requestDto, authDto);
+        await this.#triggerTestSuitesExecution.execute(
+          requestDto,
+          authDto,
+          this.#dbo.dbConnection
+        );
 
       if (!useCaseResult.success) {
-        return TriggerTestSuitesExecutionController.badRequest(
-          res,
-        
-        );
+        return TriggerTestSuitesExecutionController.badRequest(res);
       }
 
       const resultValue = useCaseResult.value
