@@ -98,7 +98,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
 
       if (
         appConfig.express.mode === 'production' &&
-        (requestDto.cron || requestDto.activated !== undefined)
+        (requestDto.cron && requestDto.activated !== undefined)
       ) {
         await putCronJob(requestDto.id, requestDto.cron, requestDto.activated);
       }

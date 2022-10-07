@@ -78,7 +78,6 @@ export class ReadTestSuites
               targetResourceId: element.TARGET_RESOURCE_ID,
             },
             organizationId: element.ORGANIZATION_ID,
-            cron: element.CRON
           })
         );
 

@@ -28,10 +28,10 @@ export default class ReadNominalTestSuiteController extends BaseController {
   }
 
   #buildRequestDto = (httpRequest: Request): ReadNominalTestSuiteRequestDto => {
-    const { nominalTestSuiteId } = httpRequest.params;
+    const { testSuiteId } = httpRequest.params;
 
     return {
-      id: nominalTestSuiteId,
+      id: testSuiteId,
     };
   };
 

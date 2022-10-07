@@ -30,10 +30,10 @@ export default class ReadCustomTestSuiteController extends BaseController {
   }
 
   #buildRequestDto = (httpRequest: Request): ReadCustomTestSuiteRequestDto => {
-    const { customTestSuiteId } = httpRequest.params;
+    const { testSuiteId } = httpRequest.params;
 
     return {
-      id: customTestSuiteId,
+      id: testSuiteId,
     };
   };
 
