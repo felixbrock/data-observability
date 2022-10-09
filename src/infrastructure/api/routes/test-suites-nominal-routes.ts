@@ -27,7 +27,7 @@ const updateNominalTestSuitesController = new UpdateNominalTestSuitesController(
 
 const triggerNominalTestSuitesExecutionController =
   new TriggerNominalTestSuitesExecutionController(
-    app.resolve('triggerTestSuitesExecution'),
+    app.resolve('triggerNominalTestSuitesExecution'),
     getAccounts,
     dbo
   );
