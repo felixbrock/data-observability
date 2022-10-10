@@ -1,4 +1,5 @@
-import { MaterializationType, TestType } from '../entities/test-suite';
+import {TestType } from '../entities/test-suite';
+import { MaterializationType } from '../value-types/materialization-type';
 
 export interface AnomalyTestExecutionResultDto {
   testSuiteId: string;

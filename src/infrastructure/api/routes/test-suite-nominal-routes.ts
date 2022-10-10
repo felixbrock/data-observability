@@ -25,7 +25,7 @@ const triggerNominalTestSuiteExecutionController = new TriggerNominalTestSuiteEx
   dbo
 );
 
-nominalTestSuiteRoutes.get('/:nominalTestSuiteId', (req, res) => {
+nominalTestSuiteRoutes.get('/:testSuiteId', (req, res) => {
   readNominalTestSuiteController.execute(req, res);
 });
 

@@ -2,11 +2,11 @@
 import { Request, Response } from 'express';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
-  TriggerNominalTestSuiteExecution,
-  TriggerNominalTestSuiteExecutionAuthDto,
-  TriggerNominalTestSuiteExecutionRequestDto,
-  TriggerNominalTestSuiteExecutionResponseDto,
-} from '../../../domain/nominal-test-suite/trigger-nominal-test-suite-execution';
+  TriggerNominalTestSuitesExecution,
+  TriggerNominalTestSuitesExecutionAuthDto,
+  TriggerNominalTestSuitesExecutionRequestDto,
+  TriggerNominalTestSuitesExecutionResponseDto,
+} from '../../../domain/nominal-test-suite/trigger-nominal-test-suites-execution';
 import { buildNominalTestSuiteDto } from '../../../domain/nominal-test-suite/nominal-test-suite-dto';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
@@ -17,49 +17,47 @@ import {
   UserAccountInfo,
 } from '../../shared/base-controller';
 
-export default class TriggerNominalTestSuiteExecutionController extends BaseController {
-  readonly #triggerNominalTestSuiteExecution: TriggerNominalTestSuiteExecution;
+export default class TriggerNominalTestSuitesExecutionController extends BaseController {
+  readonly #triggerNominalTestSuitesExecution: TriggerNominalTestSuitesExecution;
 
   readonly #getAccounts: GetAccounts;
 
   readonly #dbo: Dbo;
 
   constructor(
-    triggerNominalTestSuiteExecution: TriggerNominalTestSuiteExecution,
+    triggerNominalTestSuitesExecution: TriggerNominalTestSuitesExecution,
     getAccounts: GetAccounts,
     dbo: Dbo
   ) {
     super();
-    this.#triggerNominalTestSuiteExecution = triggerNominalTestSuiteExecution;
+    this.#triggerNominalTestSuitesExecution = triggerNominalTestSuitesExecution;
     this.#getAccounts = getAccounts;
     this.#dbo = dbo;
   }
 
   #buildRequestDto = (
     httpRequest: Request
-  ): TriggerNominalTestSuiteExecutionRequestDto => ({
-    id: httpRequest.body.id,
-  });
+  ): TriggerNominalTestSuitesExecutionRequestDto => {
+    if (Number.isNaN(httpRequest.body.frequency))
+      throw new Error('Provided frequency not in the right format');
+
+    return { frequency: httpRequest.body.frequency };
+  };
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): TriggerNominalTestSuiteExecutionAuthDto => {
-    if (!userAccountInfo.callerOrganizationId)
-      throw new Error('tigger-test-execution - callerOrganizationId missing');
-
-    return {
-      jwt,
-      callerOrganizationId: userAccountInfo.callerOrganizationId,
-    };
-  };
+  ): TriggerNominalTestSuitesExecutionAuthDto => ({
+    isSystemInternal: userAccountInfo.isSystemInternal,
+    jwt,
+  });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return TriggerNominalTestSuiteExecutionController.unauthorized(
+        return TriggerNominalTestSuitesExecutionController.unauthorized(
           res,
           'Unauthorized'
         );
@@ -67,33 +65,39 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await TriggerNominalTestSuiteExecutionController.getUserAccountInfo(
+        await TriggerNominalTestSuitesExecutionController.getUserAccountInfo(
           jwt,
           this.#getAccounts
         );
 
       if (!getUserAccountInfoResult.success)
-        return TriggerNominalTestSuiteExecutionController.unauthorized(
+        return TriggerNominalTestSuitesExecutionController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: TriggerNominalTestSuiteExecutionRequestDto =
+      if (!getUserAccountInfoResult.value.isSystemInternal)
+        return TriggerNominalTestSuitesExecutionController.unauthorized(
+          res,
+          'Unauthorized'
+        );
+
+      const requestDto: TriggerNominalTestSuitesExecutionRequestDto =
         this.#buildRequestDto(req);
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
-      const useCaseResult: TriggerNominalTestSuiteExecutionResponseDto =
-        await this.#triggerNominalTestSuiteExecution.execute(
+      const useCaseResult: TriggerNominalTestSuitesExecutionResponseDto =
+        await this.#triggerNominalTestSuitesExecution.execute(
           requestDto,
           authDto,
           this.#dbo.dbConnection
         );
 
       if (!useCaseResult.success) {
-        return TriggerNominalTestSuiteExecutionController.badRequest(
+        return TriggerNominalTestSuitesExecutionController.badRequest(
           res,
         );
       }
@@ -102,15 +106,15 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
         ? buildNominalTestSuiteDto(useCaseResult.value)
         : useCaseResult.value;
 
-      return TriggerNominalTestSuiteExecutionController.ok(
+      return TriggerNominalTestSuitesExecutionController.ok(
         res,
         resultValue,
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
-      return TriggerNominalTestSuiteExecutionController.fail(
+      return TriggerNominalTestSuitesExecutionController.fail(
         res,
-        'trigger nominal test suite - Unknown error occured'
+        'trigger nominal test suites - Unknown error occured'
       );
     }
   }

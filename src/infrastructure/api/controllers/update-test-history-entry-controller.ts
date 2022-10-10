@@ -71,19 +71,14 @@ export default class UpdateTestHistoryEntryController extends BaseController {
 
 
       if (!useCaseResult.success) {
-        return UpdateTestHistoryEntryController.badRequest(res, useCaseResult.error);
+        return UpdateTestHistoryEntryController.badRequest(res,);
       }
 
       const resultValue = useCaseResult.value;
 
       return UpdateTestHistoryEntryController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return UpdateTestHistoryEntryController.fail(res, error);
-      if (error instanceof Error)
-        return UpdateTestHistoryEntryController.fail(res, error);
-      return UpdateTestHistoryEntryController.fail(res, 'Unknown error occured');
+      return UpdateTestHistoryEntryController.fail(res, 'udpate test history - Unknown error occured');
     }
   }
 }

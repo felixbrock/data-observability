@@ -36,20 +36,20 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
 
   #buildRequestDto = (
     httpRequest: Request
-  ): TriggerCustomTestSuiteExecutionRequestDto => {
-    if (Number.isNaN(httpRequest.body.frequency))
-      throw new Error('Provided frequency not in the right format');
-
-    return { frequency: httpRequest.body.frequency };
-  };
+  ): TriggerCustomTestSuiteExecutionRequestDto => ({ id: httpRequest.body.id });
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): TriggerCustomTestSuiteExecutionAuthDto => ({
-    isSystemInternal: userAccountInfo.isSystemInternal,
-    jwt,
-  });
+  ): TriggerCustomTestSuiteExecutionAuthDto => {
+    if (!userAccountInfo.callerOrganizationId)
+      throw new Error('tigger-test-execution - callerOrganizationId missing');
+
+    return {
+      jwt,
+      callerOrganizationId: userAccountInfo.callerOrganizationId,
+    };
+  };
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -77,12 +77,6 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      if (!getUserAccountInfoResult.value.isSystemInternal)
-        return TriggerCustomTestSuiteExecutionController.unauthorized(
-          res,
-          'Unauthorized'
-        );
-
       const requestDto: TriggerCustomTestSuiteExecutionRequestDto =
         this.#buildRequestDto(req);
 
@@ -91,13 +85,13 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
       const useCaseResult: TriggerCustomTestSuiteExecutionResponseDto =
         await this.#triggerCustomTestSuiteExecution.execute(
           requestDto,
-          authDto
+          authDto,
+          this.#dbo.dbConnection
         );
 
       if (!useCaseResult.success) {
         return TriggerCustomTestSuiteExecutionController.badRequest(
           res,
-          useCaseResult.error
         );
       }
 
@@ -107,14 +101,9 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return TriggerCustomTestSuiteExecutionController.fail(res, error);
-      if (error instanceof Error)
-        return TriggerCustomTestSuiteExecutionController.fail(res, error);
       return TriggerCustomTestSuiteExecutionController.fail(
         res,
-        'Unknown error occured'
+        'trigger custom test suite execution - Unknown error occured'
       );
     }
   }

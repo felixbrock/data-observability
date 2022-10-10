@@ -3,12 +3,12 @@ import { ObjectId } from 'mongodb';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import {
-  MaterializationType,
   TestSuite,
   TestType,
 } from '../entities/test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
+import { MaterializationType } from '../value-types/materialization-type';
 
 interface CreateObject {
   activated: boolean;
@@ -115,9 +115,9 @@ export class CreateTestSuites
 
       return Result.ok(testSuites);
     } catch (error: unknown) {
-      if (typeof error === 'string') return Result.fail(error);
-      if (error instanceof Error) return Result.fail(error.message);
-      return Result.fail('Unknown error occured');
+      if (error instanceof Error && error.message) console.trace(error.message);
+      else if (!(error instanceof Error) && error) console.trace(error);
+      return Result.fail('');
     }
   }
 }

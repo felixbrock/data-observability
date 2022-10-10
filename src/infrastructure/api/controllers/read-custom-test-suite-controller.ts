@@ -30,10 +30,10 @@ export default class ReadCustomTestSuiteController extends BaseController {
   }
 
   #buildRequestDto = (httpRequest: Request): ReadCustomTestSuiteRequestDto => {
-    const { customTestSuiteId } = httpRequest.params;
+    const { testSuiteId } = httpRequest.params;
 
     return {
-      id: customTestSuiteId,
+      id: testSuiteId,
     };
   };
 
@@ -84,8 +84,7 @@ export default class ReadCustomTestSuiteController extends BaseController {
 
       if (!useCaseResult.success) {
         return ReadCustomTestSuiteController.badRequest(
-          res,
-          useCaseResult.error
+          res
         );
       }
 
@@ -98,12 +97,7 @@ export default class ReadCustomTestSuiteController extends BaseController {
 
       return ReadCustomTestSuiteController.ok(res, result, CodeHttp.OK);
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return ReadCustomTestSuiteController.fail(res, error);
-      if (error instanceof Error)
-        return ReadCustomTestSuiteController.fail(res, error);
-      return ReadCustomTestSuiteController.fail(res, 'Unknown error occured');
+      return ReadCustomTestSuiteController.fail(res, 'read custom test suite - Unknown error occured');
     }
   }
 }

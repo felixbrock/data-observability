@@ -74,7 +74,7 @@ export default class CreateNominalTestSuitesController extends BaseController {
         await this.#createNominalTestSuites.execute(requestDto, authDto);
 
       if (!useCaseResult.success) {
-        return CreateNominalTestSuitesController.badRequest(res, useCaseResult.error);
+        return CreateNominalTestSuitesController.badRequest(res);
       }
 
       if (!useCaseResult.value)
@@ -86,12 +86,7 @@ export default class CreateNominalTestSuitesController extends BaseController {
 
       return CreateNominalTestSuitesController.ok(res, resultValue, CodeHttp.CREATED);
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return CreateNominalTestSuitesController.fail(res, error);
-      if (error instanceof Error)
-        return CreateNominalTestSuitesController.fail(res, error);
-      return CreateNominalTestSuitesController.fail(res, 'Unknown error occured');
+      return CreateNominalTestSuitesController.fail(res, 'create nominal test suites - Unknown error occured');
     }
   }
 }

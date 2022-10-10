@@ -99,12 +99,7 @@ export default class UpdateTestSuitesController extends BaseController {
 
       return UpdateTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      console.error(error);
-      if (typeof error === 'string')
-        return UpdateTestSuitesController.fail(res, error);
-      if (error instanceof Error)
-        return UpdateTestSuitesController.fail(res, error);
-      return UpdateTestSuitesController.fail(res, 'Unknown error occured');
+      return UpdateTestSuitesController.fail(res, 'update test suites - Unknown error occured');
     }
   }
 }

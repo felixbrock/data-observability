@@ -1,17 +1,8 @@
+import {
+  MaterializationType,
+  parseMaterializationType,
+} from '../value-types/materialization-type';
 import { BaseTestSuite } from '../value-types/transient-types/base-test-suite';
-
-export const materializationTypes = ['Table', 'View'] as const;
-export type MaterializationType = typeof materializationTypes[number];
-
-export const parseMaterializationType = (
-  materializationType: unknown
-): MaterializationType => {
-  const identifiedElement = materializationTypes.find(
-    (element) => element === materializationType
-  );
-  if (identifiedElement) return identifiedElement;
-  throw new Error('Provision of invalid type');
-};
 
 export interface TestTarget {
   targetResourceId: string;
@@ -22,13 +13,18 @@ export interface TestTarget {
   columnName?: string;
 }
 
-export const nominalTestTypes = [
-  'MaterializationSchemaChange',
-] as const;
-export type NominalTestType = typeof nominalTestTypes[number];
+export const nominalMatTestTypes = ['MaterializationSchemaChange'] as const;
+
+export const nominalColumnTestTypes = [] as const;
+
+export type NominalTestType =
+  | typeof nominalMatTestTypes[number]
+  | typeof nominalColumnTestTypes[number];
 
 export const parseNominalTestType = (testType: unknown): NominalTestType => {
-  const identifiedElement = nominalTestTypes.find((element) => element === testType);
+  const identifiedElement = nominalMatTestTypes
+    .concat(nominalColumnTestTypes)
+    .find((element) => element === testType);
   if (identifiedElement) return identifiedElement;
   throw new Error('Provision of invalid type');
 };
@@ -85,10 +81,28 @@ export class NominalTestSuite implements BaseTestSuite {
   }
 
   static create = (props: NominalTestSuiteProperties): NominalTestSuite => {
-    if (!props.id) throw new TypeError('TestSuite must have id');
-    if (!props.organizationId)
-      throw new TypeError('TestSuite must have organization id');
+    const { type, target, ...remainingProps } = props;
 
-    return new NominalTestSuite(props);
+    if (!remainingProps.id) throw new TypeError('TestSuite must have id');
+    if (!remainingProps.organizationId)
+      throw new TypeError('TestSuite must have organization id');
+    if (nominalMatTestTypes.includes(type) && target.columnName)
+      throw new SyntaxError(
+        'Column name provision only allowed for column level tests'
+      );
+
+    const parsedType = parseNominalTestType(type);
+    const parsedMaterializationType = parseMaterializationType(
+      target.materializationType
+    );
+
+    return new NominalTestSuite({
+      ...props,
+      type: parsedType,
+      target: {
+        ...target,
+        materializationType: parsedMaterializationType,
+      },
+    });
   };
 }

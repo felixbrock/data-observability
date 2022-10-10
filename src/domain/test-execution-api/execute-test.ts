@@ -17,12 +17,11 @@ import { CustomTestType } from '../entities/custom-test-suite';
 export interface ExecuteTestRequestDto {
   testSuiteId: string;
   testType: TestType | NominalTestType | CustomTestType;
-  targetOrganizationId: string;
+  targetOrganizationId?: string;
 }
 
 export interface ExecuteTestAuthDto {
   jwt: string;
-  isSystemInternal: boolean;
 }
 
 export type ExecuteTestResponseDto = Result<
@@ -65,33 +64,30 @@ export class ExecuteTest
   }
 
   #createNominalTestExecutionResult = async (
-    testExecutionResult: NominalTestExecutionResultDto,
-    auth: ExecuteTestAuthDto
+    testExecutionResult: NominalTestExecutionResultDto
   ): Promise<void> => {
-    const createTestResultResult =
-      await this.#createNominalTestResult.execute(
-        {
-          executionId: testExecutionResult.executionId,
-          testData: testExecutionResult.testData,
-          alertData: testExecutionResult.alertData
-            ? { alertId: testExecutionResult.alertData.alertId }
-            : undefined,
-          testSuiteId: testExecutionResult.testSuiteId,
-          testType: testExecutionResult.testType,
-          targetResourceId: testExecutionResult.targetResourceId,
-          targetOrganizationId: testExecutionResult.organizationId,
-        },
-        { ...auth },
-        this.#dbConnection
-      );
+    const createTestResultResult = await this.#createNominalTestResult.execute(
+      {
+        executionId: testExecutionResult.executionId,
+        testData: testExecutionResult.testData,
+        alertData: testExecutionResult.alertData
+          ? { alertId: testExecutionResult.alertData.alertId }
+          : undefined,
+        testSuiteId: testExecutionResult.testSuiteId,
+        testType: testExecutionResult.testType,
+        targetResourceId: testExecutionResult.targetResourceId,
+        targetOrganizationId: testExecutionResult.organizationId,
+      },
+      null,
+      this.#dbConnection
+    );
 
     if (!createTestResultResult.success)
       throw new Error(createTestResultResult.error);
   };
 
   #createAnomalyTestExecutionResult = async (
-    testExecutionResult: AnomalyTestExecutionResultDto,
-    auth: ExecuteTestAuthDto
+    testExecutionResult: AnomalyTestExecutionResultDto
   ): Promise<void> => {
     const { testData } = testExecutionResult;
 
@@ -113,7 +109,7 @@ export class ExecuteTest
         targetResourceId: testExecutionResult.targetResourceId,
         targetOrganizationId: testExecutionResult.organizationId,
       },
-      { ...auth },
+      null,
       this.#dbConnection
     );
 
@@ -198,15 +194,14 @@ export class ExecuteTest
     auth: ExecuteTestAuthDto,
     dbConnection: DbConnection
   ): Promise<ExecuteTestResponseDto> {
+    this.#dbConnection = dbConnection;
+
     try {
-      if (!auth.isSystemInternal) throw new Error('Unauthorized');
-
-      this.#dbConnection = dbConnection;
-
       const testExecutionResult = await this.#testExecutionApiRepo.executeTest(
         request.testSuiteId,
-        request.targetOrganizationId,
-        auth.jwt
+        request.testType,
+        auth.jwt,
+        request.targetOrganizationId
       );
 
       if (
@@ -220,12 +215,8 @@ export class ExecuteTest
         object: any
       ): object is AnomalyTestExecutionResultDto => 'isWarmup' in object;
       if (!instanceOfAnomalyTestExecutionResultDto(testExecutionResult))
-        await this.#createNominalTestExecutionResult(
-          testExecutionResult,
-          auth
-        );
-      else
-        await this.#createAnomalyTestExecutionResult(testExecutionResult, auth);
+        await this.#createNominalTestExecutionResult(testExecutionResult);
+      else await this.#createAnomalyTestExecutionResult(testExecutionResult);
 
       if (
         !testExecutionResult.testData ||
@@ -240,9 +231,9 @@ export class ExecuteTest
 
       return Result.ok(testExecutionResult);
     } catch (error: unknown) {
-      if (typeof error === 'string') return Result.fail(error);
-      if (error instanceof Error) return Result.fail(error.message);
-      return Result.fail('Unknown error occured');
+      if (error instanceof Error && error.message) console.trace(error.message);
+      else if (!(error instanceof Error) && error) console.trace(error);
+      return Result.fail('');
     }
   }
 }

@@ -26,9 +26,7 @@ export interface CreateAnomalyTestResultRequestDto {
   targetOrganizationId: string;
 }
 
-export type CreateAnomalyTestResultAuthDto = {
-  isSystemInternal: boolean;
-};
+export type CreateAnomalyTestResultAuthDto = null;
 
 export type CreateAnomalyTestResultResponseDto = Result<AnomalyTestResult>;
 
@@ -55,8 +53,6 @@ export class CreateAnomalyTestResult
     dbConnection: DbConnection
   ): Promise<CreateAnomalyTestResultResponseDto> {
     try {
-      if (!auth.isSystemInternal) throw new Error('Unauthorized');
-
       this.#dbConnection = dbConnection;
 
       const anomalyTestResult: AnomalyTestResult = {
@@ -68,9 +64,9 @@ export class CreateAnomalyTestResult
 
       return Result.ok(anomalyTestResult);
     } catch (error: unknown) {
-      if (typeof error === 'string') return Result.fail(error);
-      if (error instanceof Error) return Result.fail(error.message);
-      return Result.fail('Unknown error occured');
+      if (error instanceof Error && error.message) console.trace(error.message);
+      else if (!(error instanceof Error) && error) console.trace(error);
+      return Result.fail('');
     }
   }
 }

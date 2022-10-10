@@ -40,8 +40,10 @@ export default class ExpressApp {
         });
 
       return this.#expressApp;
-    } catch (error: any) {
-      throw new Error(error);
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message) throw new Error(error.message);
+      if (!(error instanceof Error) && error) throw error;
+      throw new Error('starting express app - unknown error');
     }
   }
 

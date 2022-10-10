@@ -1,17 +1,17 @@
 // todo - clean architecture violation
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { ReadTestSuites } from './read-test-suites';
+import { ReadTestSuite } from './read-test-suite';
 import { ExecuteTest } from '../test-execution-api/execute-test';
 import { DbConnection } from '../services/i-db';
 
 export interface TriggerTestSuiteExecutionRequestDto {
-  frequency: number;
+  id: string;
 }
 
 export interface TriggerTestSuiteExecutionAuthDto {
   jwt: string;
-  isSystemInternal: boolean;
+  callerOrganizationId: string;
 }
 
 export type TriggerTestSuiteExecutionResponseDto = Result<void>;
@@ -25,61 +25,53 @@ export class TriggerTestSuiteExecution
       DbConnection
     >
 {
-  readonly #readTestSuites: ReadTestSuites;
+  readonly #readTestSuite: ReadTestSuite;
 
   readonly #executeTest: ExecuteTest;
 
   #dbConnection: DbConnection;
 
-  constructor(readTestSuites: ReadTestSuites, executeTest: ExecuteTest) {
-    this.#readTestSuites = readTestSuites;
+  constructor(readTestSuite: ReadTestSuite, executeTest: ExecuteTest) {
+    this.#readTestSuite = readTestSuite;
     this.#executeTest = executeTest;
   }
 
   async execute(
     request: TriggerTestSuiteExecutionRequestDto,
-    auth: TriggerTestSuiteExecutionAuthDto
+    auth: TriggerTestSuiteExecutionAuthDto,
+    dbConnection: DbConnection
   ): Promise<TriggerTestSuiteExecutionResponseDto> {
+    this.#dbConnection = dbConnection;
+
     try {
-      console.log(`Executing tets suites with frequency ${request.frequency} h`);
-
-      const readTestSuitesResult = await this.#readTestSuites.execute(
-        { executionFrequency: request.frequency, activated: true },
-        { jwt: auth.jwt, isSystemInternal: auth.isSystemInternal }
+      const readTestSuiteResult = await this.#readTestSuite.execute(
+        { id: request.id },
+        { jwt: auth.jwt, callerOrganizationId: auth.callerOrganizationId }
       );
 
-      if (!readTestSuitesResult.success)
-        throw new Error(readTestSuitesResult.error);
-      if (!readTestSuitesResult.value) throw new Error('Reading jobs failed');
-      if (!readTestSuitesResult.value.length) return Result.ok();
+      if (!readTestSuiteResult.success)
+        throw new Error(readTestSuiteResult.error);
+      if (!readTestSuiteResult.value)
+        throw new Error('Reading test suite failed');
 
-      const testSuites = readTestSuitesResult.value;
+      const testSuite = readTestSuiteResult.value;
 
-      await Promise.all(
-        testSuites.map(async (testSuite) => {
-          const executeTestResult = await this.#executeTest.execute(
-            {
-              testSuiteId: testSuite.id,
-              testType: testSuite.type,
-              targetOrganizationId: testSuite.organizationId,
-            },
-            { jwt: auth.jwt, isSystemInternal: auth.isSystemInternal },
-            this.#dbConnection
-          );
-
-          if (!executeTestResult.success)
-            throw new Error(executeTestResult.error);
-        })
+      const executeTestResult = await this.#executeTest.execute(
+        {
+          testSuiteId: testSuite.id,
+          testType: testSuite.type,
+        },
+        { jwt: auth.jwt },
+        this.#dbConnection
       );
 
-      console.log(
-        `Finished execution of test suites with frequency ${request.frequency}`
-      );
+      if (!executeTestResult.success) throw new Error(executeTestResult.error);
+
       return Result.ok();
     } catch (error: unknown) {
-      if (typeof error === 'string') console.trace(error);
-      if (error instanceof Error) console.trace(error.message);
-      return Result.fail('test execution failed');
+      if (error instanceof Error && error.message) console.trace(error.message);
+      else if (!(error instanceof Error) && error) console.trace(error);
+      return Result.fail('');
     }
   }
 }

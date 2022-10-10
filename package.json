@@ -14,7 +14,7 @@
     "start-deps": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./start-dependencies.ps1 -serviceDependencyNames @('account', 'integration-service', 'lineage-analysis')",
     "deploy": "npm run build && serverless deploy && npm run write-env ",
     "write-env": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./write-env.ps1 -functionName observability-service-production-app",
-    "debug": "npm run build && nodemon --inspect=3013 ./src/index.ts"
+    "debug": "npm run build&&set NODE_ENV=development&& nodemon --inspect=3013 ./src/index.ts"
   },
   "repository": {
     "type": "git",
