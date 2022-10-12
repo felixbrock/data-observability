@@ -1,0 +1,49 @@
+#!/bin/bash
+
+if [  $# -eq 0  ];
+then
+    echo Please enter function name:
+    read functionName
+else
+    functionName=$1
+fi
+
+envValues=""
+
+while read -r el; do
+    if [ ! -z "$el" ]
+    then  
+        if [[ $el =~ "NODE_ENV" ]];
+        then
+            continue
+        elif [ -z $envValues ];
+        then
+            envValues=$el
+        else
+            envValues="${envValues},${el}"
+        fi
+    fi
+done < .env
+
+nodeEnv="NODE_ENV=production"
+if [ -z "$envValues" ]; 
+then
+    envValues=$nodeEnv
+else   
+    envValues="${envValues},${nodeEnv}"
+fi
+
+if [ -z "$envValues" ];
+then
+    exit
+fi
+
+{ 
+    result=$(aws lambda update-function-configuration --function-name $functionName  --environment "Variables={${envValues}}")    
+} || { 
+    exit 1
+}
+
+echo "Successfully updated env vars"
+
+exit

@@ -4,27 +4,21 @@ import {
   AlertMessageConfig,
   IIntegrationApiRepo,
 } from '../../domain/integration-api/i-integration-api-repo';
-import getRoot from '../shared/api-root-builder';
 import { SendAlertResultDto } from '../../domain/integration-api/slack/send-alert-result-dto';
 import { appConfig } from '../../config';
 
 export default class IntegrationApiRepo implements IIntegrationApiRepo {
-  #path = 'api/v1';
+  #version = 'v1';
 
-  #port = '3002';
+  #baseUrl = appConfig.baseUrl.integrationService;
 
-  #prodGateway = 'wej7xjkvug.execute-api.eu-central-1.amazonaws.com/production';
+  #apiRoot = appConfig.express.apiRoot;
 
   querySnowflake = async (
     query: string,
     jwt: string
   ): Promise<SnowflakeQueryResultDto> => {
     try {
-      let gateway = this.#port;
-      if (appConfig.express.mode === 'production') gateway = this.#prodGateway;
-
-      const apiRoot = await getRoot(gateway, this.#path, false);
-
       const data = {
         query,
       };
@@ -34,7 +28,7 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
       };
 
       const response = await axios.post(
-        `${apiRoot}/snowflake/query`,
+        `${this.#baseUrl}/${this.#apiRoot}/${this.#version}/snowflake/query`,
         data,
         config
       );
@@ -42,7 +36,7 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
       if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);
     } catch (error: unknown) {
-      if(error instanceof Error && error.message) console.trace(error.message); 
+      if (error instanceof Error && error.message) console.trace(error.message);
       else if (!(error instanceof Error) && error) console.trace(error);
       return Promise.reject(new Error(''));
     }
@@ -54,11 +48,6 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
     jwt: string
   ): Promise<SendAlertResultDto> => {
     try {
-      let gateway = this.#port;
-      if (appConfig.express.mode === 'production') gateway = this.#prodGateway;
-
-      const apiRoot = await getRoot(gateway, this.#path, false);
-
       const data = {
         messageConfig,
         targetOrganizationId,
@@ -69,7 +58,7 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
       };
 
       const response = await axios.post(
-        `${apiRoot}/slack/alert/send`,
+        `${this.#baseUrl}/${this.#apiRoot}/${this.#version}/slack/alert/send`,
         data,
         config
       );
@@ -77,7 +66,7 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
       if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);
     } catch (error: unknown) {
-      if(error instanceof Error && error.message) console.trace(error.message); 
+      if (error instanceof Error && error.message) console.trace(error.message);
       else if (!(error instanceof Error) && error) console.trace(error);
       return Promise.reject(new Error(''));
     }

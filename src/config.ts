@@ -1,38 +1,12 @@
 import dotenv from 'dotenv';
 
-dotenv.config();
+import path from 'path';
 
-const nodeEnv = process.env.NODE_ENV || 'development';
-const defaultPort = 3000;
-const port = process.env.PORT ? parseInt(process.env.PORT, 10) : defaultPort;
-const apiRoot = process.env.API_ROOT || 'api';
-const citoDataOrganizationId = process.env.CITO_ORGANIZATION_ID || '';
-
-const getServiceDiscoveryNamespace = (): string | null => {
-  switch (nodeEnv) {
-    case 'development':
-      return null;
-    case 'test':
-      return 'observability-staging';
-    case 'production':
-      return 'observability';
-    default:
-      throw new Error('No valid nodenv value provided');
-  }
-};
-
-const getMessageResourceBaseUrl = (): string => {
-  switch (nodeEnv) {
-    case 'development':
-      return `http://localhost:3006/lineage`;
-    case 'test':
-      return `https://www.app-staging.citodata.com/lineage`;
-    case 'production':
-      return `https://www.app.citodata.com/lineage`;
-    default:
-      throw new Error('nodenv type not found');
-  }
-};
+const dotenvConfig =
+  process.env.NODE_ENV === 'development'
+    ? { path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`) }
+    : {};
+dotenv.config(dotenvConfig);
 
 export interface AuthSchedulerEnvConfig {
   clientSecret: string;
@@ -41,59 +15,29 @@ export interface AuthSchedulerEnvConfig {
 }
 
 const getAuthSchedulerEnvConfig = (): AuthSchedulerEnvConfig => {
-  switch (nodeEnv) {
-    case 'development': {
-      const clientSecret = process.env.SYSTEM_INTERNAL_AUTH_CLIENT_SECRET_DEV || '';
-      if (!clientSecret) throw new Error('auth client secret missing');
+  const clientSecret = process.env.SYSTEM_INTERNAL_AUTH_CLIENT_SECRET;
+  const clientId = process.env.SYSTEM_INTERNAL_AUTH_CLIENT_ID;
+  const tokenUrl = process.env.SYSTEM_INTERNAL_AUTH_TOKEN_URL;
 
-      const clientId = '3o029nji154v0bm109hkvkoi5h';
-      const tokenUrl =
-        'https://auth-cito-dev.auth.eu-central-1.amazoncognito.com/oauth2/token';
-      return { clientSecret, clientId, tokenUrl };
-    }
-    case 'test': {
-      const clientSecret =
-        process.env.AUTH_SCHEDULER_CLIENT_SECRET_STAGING || '';
-      if (!clientSecret) throw new Error('auth client secret missing');
+  if (!clientSecret || !clientId || !tokenUrl)
+    throw new Error('missing auth scheduler env values');
 
-      const clientId = '';
-      const tokenUrl = '';
-      return { clientSecret, clientId, tokenUrl };
-    }
-    case 'production': {
-      const clientSecret = process.env.SYSTEM_INTERNAL_AUTH_CLIENT_SECRET_PROD || '';
-      if (!clientSecret) throw new Error('auth client secret missing');
-
-      const clientId = '54n1ig9sb07d4d9tiihdi0kifq';
-      const tokenUrl = 'https://auth.citodata.com/oauth2/token';
-      return { clientSecret, clientId, tokenUrl };
-    }
-    default:
-      throw new Error('node env misconfiguration');
-  }
+  return { clientSecret, clientId, tokenUrl };
 };
 
-const getAuthEnvConfig = (): any => {
-  const authEnvConfig: any = {};
+interface AuthEnvConfig {
+  userPoolId: string;
+  userPoolWebClientId: string;
+}
 
-  switch (nodeEnv) {
-    case 'development':
-      authEnvConfig.userPoolId = 'eu-central-1_0Z8JhFj8z';
-      authEnvConfig.userPoolWebClientId = '2kt5cdpsbfc53sokgii4l5lecc';
-      break;
-    case 'test':
-      authEnvConfig.userPoolId = '';
-      authEnvConfig.userPoolWebClientId = '';
-      break;
-    case 'production':
-      authEnvConfig.userPoolId = 'eu-central-1_0muGtKMk3';
-      authEnvConfig.userPoolWebClientId = '90hkfejkd81bp3ta5gd80hanp';
-      break;
-    default:
-      throw new Error('node env misconfiguration');
-  }
+const getAuthEnvConfig = (): AuthEnvConfig => {
+  const userPoolId = process.env.USER_POOL_ID;
+  const userPoolWebClientId = process.env.USER_POOL_WEB_CLIENT_ID;
 
-  return authEnvConfig;
+  if (!userPoolId || !userPoolWebClientId)
+    throw new Error('missing auth env values');
+
+  return { userPoolId, userPoolWebClientId };
 };
 
 export interface MongoDbConfig {
@@ -102,44 +46,56 @@ export interface MongoDbConfig {
 }
 
 const getMongodbConfig = (): MongoDbConfig => {
-  switch (nodeEnv) {
-    case 'development':
-      return {
-        url: process.env.DATABASE_URL_DEV || '',
-        dbName: process.env.DATABASE_NAME_DEV || '',
-      };
-    case 'test':
-      return {
-        url: process.env.DATABASE_URL_STAGING || '',
-        dbName: process.env.DATABASE_NAME_STAGING || '',
-      };
-    case 'production':
-      return {
-        url: process.env.DATABASE_URL_PROD || '',
-        dbName: process.env.DATABASE_NAME_PROD || '',
-      };
-    default:
-      throw new Error('Node environment mismatch');
-  }
+  const url = process.env.DATABASE_URL || '';
+  const dbName = process.env.DATABASE_NAME || '';
+
+  if (!url || !dbName) throw new Error('Missing Mongo DB env values');
+
+  return { url, dbName };
+};
+
+export interface SlackConfig {
+  callbackRoot: string;
+}
+
+const getSlackConfig = (): SlackConfig => {
+  const callbackRoot = process.env.SLACK_ALERT_CALLBACK_ROOT;
+
+  if (!callbackRoot) throw new Error('Missing Slack env values');
+
+  return { callbackRoot };
+};
+
+export interface BaseUrlConfig {
+  testEngine: string;
+  integrationService: string;
+  accountService: string;
+}
+
+const getBaseUrlConfig = (): BaseUrlConfig => {
+  const testEngine = process.env.BASE_URL_TEST_ENGINE;
+  const integrationService = process.env.BASE_URL_INTEGRATION_SERVICE;
+  const accountService = process.env.BASE_URL_ACCOUNT_SERVICE;
+
+  if (!testEngine || !integrationService || !accountService)
+    throw new Error('Missing Base url env values');
+
+  return { testEngine, integrationService, accountService };
 };
 
 export const appConfig = {
   express: {
-    port,
-    mode: nodeEnv,
-    apiRoot,
-    citoDataOrganizationId,
+    mode: process.env.NODE_ENV || 'development',
+    port: process.env.PORT ? parseInt(process.env.PORT, 10) : 3000,
+    apiRoot: process.env.API_ROOT || 'api',
+    citoDataOrganizationId: process.env.CITO_ORGANIZATION_ID || '',
   },
   cloud: {
-    serviceDiscoveryNamespace: getServiceDiscoveryNamespace(),
     authEnvConfig: getAuthEnvConfig(),
     authSchedulerEnvConfig: getAuthSchedulerEnvConfig(),
     region: 'eu-central-1',
   },
-  slack: {
-    resourceBaseUrl: getMessageResourceBaseUrl(),
-  },
-  mongodb: {
-    ...getMongodbConfig(),
-  },
+  slack: getSlackConfig(),
+  baseUrl: getBaseUrlConfig(),
+  mongodb: getMongodbConfig(),
 };
