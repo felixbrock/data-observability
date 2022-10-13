@@ -41,7 +41,7 @@ export class SendNominalTestSlackAlert
     expectedRangePart: ``,
     summaryPart: alertDto.message.replace(
       '__base_url__',
-      appConfig.slack.resourceBaseUrl
+      appConfig.slack.callbackRoot
     ),
   });
 

@@ -43,7 +43,7 @@ export class SendAnomalySlackAlert
     expectedRangePart: `*Expected Range:*\n${anomalyAlertDto.expectedLowerBound} - ${anomalyAlertDto.expectedUpperBound}`,
     summaryPart: anomalyAlertDto.message.replace(
       '__base_url__',
-      appConfig.slack.resourceBaseUrl
+      appConfig.slack.callbackRoot
     ),
   });
 

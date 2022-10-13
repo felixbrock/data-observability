@@ -11,9 +11,8 @@
     "build": "npm run clean && npm run tsc && npm run lint",
     "start": "npm run build &&export NODE_ENV=production&& nodemon ./src/index.ts",
     "dev": "npm run build &&export NODE_ENV=development&&  nodemon ./src/index.ts",
-    "start-deps": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./start-dependencies.ps1 -serviceDependencyNames @('account', 'integration-service', 'lineage-analysis')",
     "deploy": "npm run build && serverless deploy && npm run write-env ",
-    "write-env": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./write-env.ps1 -functionName observability-service-production-app",
+    "write-env": "./write-env \"observability-service-production-app\"",
     "debug": "npm run build&&export NODE_ENV=development&& nodemon --inspect=3013 ./src/index.ts"
   },
   "repository": {
