@@ -13,10 +13,10 @@ envValues=""
 while read -r el; do
     if [ ! -z "$el" ]
     then  
-        if [[ $el =~ "NODE_ENV" ]];
+        if [[ "$el" =~ "NODE_ENV" ]];
         then
             continue
-        elif [ -z $envValues ];
+        elif [ -z "$envValues" ];
         then
             envValues=$el
         else
