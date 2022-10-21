@@ -2,12 +2,15 @@
 import { Request, Response } from 'express';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
+  createCronJob,
+  getFrequencyCronExpression,
+} from '../../../domain/services/cron-job';
+import {
   CreateTestSuites,
   CreateTestSuitesAuthDto,
   CreateTestSuitesRequestDto,
   CreateTestSuitesResponseDto,
 } from '../../../domain/test-suite/create-test-suites';
-import { buildTestSuiteDto } from '../../../domain/test-suite/test-suite-dto';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -35,7 +38,8 @@ export default class CreateTestSuitesController extends BaseController {
     userAccountInfo: UserAccountInfo,
     jwt: string
   ): CreateTestSuitesAuthDto => {
-    if (!userAccountInfo.callerOrganizationId) throw new Error('Unauthorized - Caller organization id missing');
+    if (!userAccountInfo.callerOrganizationId)
+      throw new Error('Unauthorized - Caller organization id missing');
 
     return {
       callerOrganizationId: userAccountInfo.callerOrganizationId,
@@ -48,7 +52,10 @@ export default class CreateTestSuitesController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return CreateTestSuitesController.unauthorized(res, 'Unauthorized - auth-header missing');
+        return CreateTestSuitesController.unauthorized(
+          res,
+          'Unauthorized - auth-header missing'
+        );
 
       const jwt = authHeader.split(' ')[1];
 
@@ -80,13 +87,24 @@ export default class CreateTestSuitesController extends BaseController {
       if (!useCaseResult.value)
         throw new Error('Missing create test suite result value');
 
-      const resultValue = useCaseResult.value.map((el) =>
-        buildTestSuiteDto(el)
+      const resultValues = useCaseResult.value.map((el) => el.toDto());
+
+      await Promise.all(
+        resultValues.map(async (el) => {
+          await createCronJob(
+            el.id,
+            getFrequencyCronExpression(el.executionFrequency),
+            authDto.callerOrganizationId
+          );
+        })
       );
 
-      return CreateTestSuitesController.ok(res, resultValue, CodeHttp.CREATED);
+      return CreateTestSuitesController.ok(res, resultValues, CodeHttp.CREATED);
     } catch (error: unknown) {
-      return CreateTestSuitesController.fail(res, 'create test suites - Unknown error occured');
+      return CreateTestSuitesController.fail(
+        res,
+        'create test suites - Internal error occured'
+      );
     }
   }
 }

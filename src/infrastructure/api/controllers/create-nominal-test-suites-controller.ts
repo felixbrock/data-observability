@@ -7,7 +7,7 @@ import {
   CreateNominalTestSuitesRequestDto,
   CreateNominalTestSuitesResponseDto,
 } from '../../../domain/nominal-test-suite/create-nominal-test-suites';
-import { buildNominalTestSuiteDto } from '../../../domain/nominal-test-suite/nominal-test-suite-dto';
+import { createCronJob, getFrequencyCronExpression } from '../../../domain/services/cron-job';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -80,11 +80,21 @@ export default class CreateNominalTestSuitesController extends BaseController {
       if (!useCaseResult.value)
         throw new Error('Missing create test suite result value');
 
-      const resultValue = useCaseResult.value.map((el) =>
-        buildNominalTestSuiteDto(el)
+      const resultValues = useCaseResult.value.map((el) =>
+        el.toDto()
       );
 
-      return CreateNominalTestSuitesController.ok(res, resultValue, CodeHttp.CREATED);
+      await Promise.all(
+        resultValues.map(async (el) => {
+          await createCronJob(
+            el.id,
+            getFrequencyCronExpression(el.executionFrequency),
+            authDto.callerOrganizationId
+          );
+        })
+      );
+
+      return CreateNominalTestSuitesController.ok(res, resultValues, CodeHttp.CREATED);
     } catch (error: unknown) {
       return CreateNominalTestSuitesController.fail(res, 'create nominal test suites - Unknown error occured');
     }

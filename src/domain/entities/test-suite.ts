@@ -41,6 +41,16 @@ export interface TestSuiteProperties extends BaseAnomalyTestSuite {
   target: TestTarget;
 }
 
+export interface TestSuiteDto {
+  id: string;
+  activated: boolean;
+  type: TestType;
+  threshold: number;
+  executionFrequency: number;
+  target: TestTarget;
+  organizationId: string;
+}
+
 export class TestSuite implements BaseAnomalyTestSuite {
   #id: string;
 
@@ -119,4 +129,14 @@ export class TestSuite implements BaseAnomalyTestSuite {
       },
     });
   };
+
+  toDto = (): TestSuiteDto => ({
+    id: this.#id,
+    activated: this.#activated,
+    type: this.#type,
+    threshold: this.#threshold,
+    executionFrequency: this.#executionFrequency,
+    target: this.#target,
+    organizationId: this.#organizationId,
+  });
 }

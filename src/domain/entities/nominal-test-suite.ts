@@ -34,6 +34,15 @@ export interface NominalTestSuiteProperties extends BaseTestSuite {
   target: TestTarget;
 }
 
+export interface NominalTestSuiteDto {
+  id: string;
+  activated: boolean;
+  type: NominalTestType;
+  executionFrequency: number;
+  target: TestTarget;
+  organizationId: string;
+}
+
 export class NominalTestSuite implements BaseTestSuite {
   #id: string;
 
@@ -105,4 +114,13 @@ export class NominalTestSuite implements BaseTestSuite {
       },
     });
   };
+
+  toDto = (): NominalTestSuiteDto => ({
+    id: this.#id,
+    activated: this.#activated,
+    type: this.#type,
+    executionFrequency: this.#executionFrequency,
+    target: this.#target,
+    organizationId: this.#organizationId,
+  });
 }

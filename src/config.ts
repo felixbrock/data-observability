@@ -83,17 +83,26 @@ const getBaseUrlConfig = (): BaseUrlConfig => {
   return { testEngine, integrationService, accountService };
 };
 
+const getTestExecutionJobArn = (): string => {
+  const arn = process.env.TEST_SUITE_JOB_ARN;
+
+  if (!arn) throw new Error('Test execution job ARN not found');
+
+  return arn;
+};
+
 export const appConfig = {
   express: {
     mode: process.env.NODE_ENV || 'development',
     port: process.env.PORT ? parseInt(process.env.PORT, 10) : 3000,
-    apiRoot: process.env.API_ROOT || 'api',
+    apiRoot: 'api',
     citoDataOrganizationId: process.env.CITO_ORGANIZATION_ID || '',
   },
   cloud: {
     authEnvConfig: getAuthEnvConfig(),
     authSchedulerEnvConfig: getAuthSchedulerEnvConfig(),
     region: 'eu-central-1',
+    testExecutionJobArn: getTestExecutionJobArn(),
   },
   slack: getSlackConfig(),
   baseUrl: getBaseUrlConfig(),

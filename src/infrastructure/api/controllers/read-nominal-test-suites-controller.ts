@@ -1,6 +1,5 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
-import { buildNominalTestSuiteDto } from '../../../domain/nominal-test-suite/nominal-test-suite-dto';
 import {
   ReadNominalTestSuites,
   ReadNominalTestSuitesAuthDto,
@@ -91,7 +90,7 @@ export default class ReadNominalTestSuitesController extends BaseController {
       }
 
       const resultValue = useCaseResult.value
-        ? useCaseResult.value.map((element) => buildNominalTestSuiteDto(element))
+        ? useCaseResult.value.map((element) => element.toDto())
         : useCaseResult.value;
 
       return ReadNominalTestSuitesController.ok(res, resultValue, CodeHttp.OK);

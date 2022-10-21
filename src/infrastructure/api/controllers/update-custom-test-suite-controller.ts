@@ -1,6 +1,5 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
-import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateCustomTestSuite,
@@ -8,6 +7,10 @@ import {
   UpdateCustomTestSuiteRequestDto,
   UpdateCustomTestSuiteResponseDto,
 } from '../../../domain/custom-test-suite/update-custom-test-suite';
+import {
+  getFrequencyCronExpression,
+  patchCronJob,
+} from '../../../domain/services/cron-job';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -15,7 +18,6 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from '../../shared/base-controller';
-import { putCronJob } from './util';
 
 export default class UpdateCustomTestSuiteController extends BaseController {
   readonly #updateCustomTestSuite: UpdateCustomTestSuite;
@@ -83,29 +85,38 @@ export default class UpdateCustomTestSuiteController extends BaseController {
         await this.#updateCustomTestSuite.execute(requestDto, authDto);
 
       if (!useCaseResult.success) {
-        return UpdateCustomTestSuiteController.badRequest(
-          res,
-        
-        );
+        return UpdateCustomTestSuiteController.badRequest(res);
       }
 
       const resultValue = useCaseResult.value;
       if (!resultValue)
-        UpdateCustomTestSuiteController.fail(
+        return UpdateCustomTestSuiteController.fail(
           res,
           'Update failed. Internal error.'
         );
 
       if (
-        appConfig.express.mode === 'production' &&
-        (requestDto.cron && requestDto.activated !== undefined)
+        requestDto.cron ||
+        requestDto.frequency ||
+        requestDto.activated !== undefined
       ) {
-        await putCronJob(requestDto.id, requestDto.cron, requestDto.activated);
+        let cron: string | undefined;
+        if (requestDto.cron) cron = requestDto.cron;
+        else if (requestDto.frequency)
+          cron = getFrequencyCronExpression(requestDto.frequency);
+
+        await patchCronJob(requestDto.id, {
+          cron,
+          toBeActivated: requestDto.activated,
+        });
       }
 
       return UpdateCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      return UpdateCustomTestSuiteController.fail(res, 'update custom test suite - Unknown error occured');
+      return UpdateCustomTestSuiteController.fail(
+        res,
+        'update custom test suite - Unknown error occured'
+      );
     }
   }
 }

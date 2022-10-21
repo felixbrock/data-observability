@@ -1,6 +1,5 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
-import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateNominalTestSuites,
@@ -15,7 +14,7 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from '../../shared/base-controller';
-import { putCronJob } from './util';
+import { getFrequencyCronExpression, patchCronJob, } from '../../../domain/services/cron-job';
 
 export default class UpdateNominalTestSuitesController extends BaseController {
   readonly #updateNominalTestSuites: UpdateNominalTestSuites;
@@ -99,19 +98,21 @@ export default class UpdateNominalTestSuitesController extends BaseController {
           'Update of test suites failed. Internal error.'
         );
 
-      if (appConfig.express.mode !== 'production')
-        return UpdateNominalTestSuitesController.ok(
-          res,
-          resultValue,
-          CodeHttp.OK
+        await Promise.all(
+          requestDto.updateObjects.map(async (el) => {
+            if (el.cron || el.frequency || el.activated !== undefined) {
+              let cron: string | undefined;
+              if (el.cron) cron = el.cron;
+              else if (el.frequency)
+                cron = getFrequencyCronExpression(el.frequency);
+  
+              await patchCronJob(el.id, {
+                cron,
+                toBeActivated: el.activated,
+              });
+            }
+          })
         );
-
-      await Promise.all(
-        requestDto.updateObjects.map(async (obj) => {
-          if (obj.cron && obj.activated !== undefined)
-            await putCronJob(obj.id, obj.cron, obj.activated);
-        })
-      );
 
       return UpdateNominalTestSuitesController.ok(
         res,

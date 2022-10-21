@@ -7,7 +7,6 @@ import {
   TriggerNominalTestSuiteExecutionRequestDto,
   TriggerNominalTestSuiteExecutionResponseDto,
 } from '../../../domain/nominal-test-suite/trigger-nominal-test-suite-execution';
-import { buildNominalTestSuiteDto } from '../../../domain/nominal-test-suite/nominal-test-suite-dto';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
 
@@ -98,13 +97,9 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
         );
       }
 
-      const resultValue = useCaseResult.value
-        ? buildNominalTestSuiteDto(useCaseResult.value)
-        : useCaseResult.value;
-
       return TriggerNominalTestSuiteExecutionController.ok(
         res,
-        resultValue,
+        useCaseResult.value,
         CodeHttp.CREATED
       );
     } catch (error: unknown) {

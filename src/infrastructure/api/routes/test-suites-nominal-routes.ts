@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import app from '../../ioc-register';
-import ReadNominalTestSuitesController from '../controllers/read-test-suites-controller';
-import UpdateNominalTestSuitesController from '../controllers/update-test-suites-controller';
-import CreateNominalTestSuitesController from '../controllers/create-test-suites-controller';
+import ReadNominalTestSuitesController from '../controllers/read-nominal-test-suites-controller';
+import UpdateNominalTestSuitesController from '../controllers/update-nominal-test-suites-controller';
+import CreateNominalTestSuitesController from '../controllers/create-nominal-test-suites-controller';
 import TriggerNominalTestSuitesExecutionController from '../controllers/trigger-nominal-test-suites-execution-controller';
 
 const nominalTestSuitesRoutes = Router();

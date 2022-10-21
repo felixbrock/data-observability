@@ -7,7 +7,6 @@ import {
   TriggerTestSuiteExecutionRequestDto,
   TriggerTestSuiteExecutionResponseDto,
 } from '../../../domain/test-suite/trigger-test-suite-execution';
-import { buildTestSuiteDto } from '../../../domain/test-suite/test-suite-dto';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
 
@@ -94,13 +93,9 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
         );
       }
 
-      const resultValue = useCaseResult.value
-        ? buildTestSuiteDto(useCaseResult.value)
-        : useCaseResult.value;
-
       return TriggerTestSuiteExecutionController.ok(
         res,
-        resultValue,
+        useCaseResult.value,
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
