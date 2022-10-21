@@ -1,6 +1,4 @@
 import {
-  nominalColumnTestTypes,
-  nominalMatTestTypes,
   NominalTestType,
 } from '../entities/nominal-test-suite';
 import {
