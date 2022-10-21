@@ -33,8 +33,11 @@ export class SendNominalTestSlackAlert
     this.#integrationApiRepo = integrationApiRepo;
   }
 
-  #buildAlertMessageConfig = (alertDto: NominalTestAlertDto): AlertMessageConfig => ({
+  #buildAlertMessageConfig = (
+    alertDto: NominalTestAlertDto
+  ): AlertMessageConfig => ({
     alertId: alertDto.alertId,
+    testType: alertDto.testType,
     occuredOn: `${alertDto.detectedOn} (UTC)`,
     anomalyMessagePart: `Schema Change Alert`,
     detectedValuePart: `*Detected Schema Change:*\n${alertDto.schemaDiffs}`,

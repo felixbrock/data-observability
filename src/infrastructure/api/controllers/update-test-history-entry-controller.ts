@@ -27,7 +27,8 @@ export default class UpdateTestHistoryEntryController extends BaseController {
   }
 
   #buildRequestDto = (httpRequest: Request): UpdateTestHistoryEntryRequestDto => ({
-    id: httpRequest.params.alertId,
+    alertId: httpRequest.params.alertId,
+    testType: httpRequest.body.testType,
     userFeedbackIsAnomaly: httpRequest.body.userFeedbackIsAnomaly,
   });
 

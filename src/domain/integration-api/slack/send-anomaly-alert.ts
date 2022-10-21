@@ -33,8 +33,9 @@ export class SendAnomalySlackAlert
     this.#integrationApiRepo = integrationApiRepo;
   }
 
-  #buildAlertMessageConfig = (anomalyAlertDto: AnomalyAlertDto): AlertMessageConfig => ({
+  static #buildAlertMessageConfig = (anomalyAlertDto: AnomalyAlertDto): AlertMessageConfig => ({
     alertId: anomalyAlertDto.alertId,
+    testType: anomalyAlertDto.testType,
     occuredOn: `${anomalyAlertDto.detectedOn} (UTC)`,
     anomalyMessagePart: `Distribution Alert - ${anomalyAlertDto.deviation * 100}% Deviation`,
     detectedValuePart: `*Detected Value:*\n${anomalyAlertDto.value} (${
@@ -52,7 +53,7 @@ export class SendAnomalySlackAlert
     auth: SendAnomalySlackAlertAuthDto
   ): Promise<SendAnomalySlackAlertResponseDto> {
     try {
-      const messageConfig = this.#buildAlertMessageConfig(request.alertDto);
+      const messageConfig = SendAnomalySlackAlert.#buildAlertMessageConfig(request.alertDto);
 
       const sendAnomalySlackAlertResponse: SendAlertResultDto =
         await this.#integrationApiRepo.sendSlackAlert(

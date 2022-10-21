@@ -2,9 +2,12 @@ import IUseCase from '../../services/use-case';
 import Result from '../../value-types/transient-types/result';
 import { QuerySnowflake } from './query-snowflake';
 import CitoDataQuery from '../../services/cito-data-query';
+import { TestType } from '../../entities/test-suite';
+import { NominalTestType } from '../../entities/nominal-test-suite';
 
 export interface UpdateTestHistoryEntryRequestDto {
-  id: string;
+  alertId: string;
+  testType: TestType | NominalTestType;
   userFeedbackIsAnomaly: number;
 }
 
@@ -33,7 +36,7 @@ export class UpdateTestHistoryEntry
     auth: UpdateTestHistoryEntryAuthDto
   ): Promise<UpdateTestHistoryEntryResponseDto> {
     try {
-      const updateQuery = CitoDataQuery.getUpdateTestHistoryEntryQuery(request.id, request.userFeedbackIsAnomaly);
+      const updateQuery = CitoDataQuery.getUpdateTestHistoryEntryQuery(request.alertId, request.testType, request.userFeedbackIsAnomaly);
 
       const updateResult = await this.#querySnowflake.execute(
         { query: updateQuery },
@@ -43,12 +46,12 @@ export class UpdateTestHistoryEntry
       if (!updateResult.success) throw new Error(updateResult.error);
 
       if (!updateResult.value)
-        throw new Error(`Updating testHistoryEntry ${request.id} failed`);
+        throw new Error(`Updating testHistoryEntry ${request.alertId} failed`);
 
       // if (testHistoryEntry.organizationId !== auth.organizationId)
       //   throw new Error('Not authorized to perform action');
 
-      return Result.ok(request.id);
+      return Result.ok(request.alertId);
     } catch (error: unknown) {
       if (error instanceof Error && error.message) console.trace(error.message);
       else if (!(error instanceof Error) && error) console.trace(error);

@@ -1,3 +1,14 @@
+import {
+  nominalColumnTestTypes,
+  nominalMatTestTypes,
+  NominalTestType,
+} from '../entities/nominal-test-suite';
+import {
+  columnTestTypes,
+  matTestTypes,
+  TestType,
+} from '../entities/test-suite';
+
 export interface CustomTestSuiteUpdateDto {
   id: string;
   activated?: boolean;
@@ -57,7 +68,10 @@ export default class CitoDataQuery {
   from values ${values.join(', ')};
   `;
 
-  static getReadTestSuiteQuery = (ids: string[], tableName: CitoMaterializationName): string => `
+  static getReadTestSuiteQuery = (
+    ids: string[],
+    tableName: CitoMaterializationName
+  ): string => `
     select * from cito.observability.${tableName}
     where ${ids.map((el) => `id = '${el}'`).join(' or ')};
     `;
@@ -118,10 +132,18 @@ when matched then update set ${columnDefinitions
 
   static getUpdateTestHistoryEntryQuery = (
     alertId: string,
+    testType: TestType | NominalTestType,
     userFeedbackIsAnomaly: number
-  ): string => `
-  update cito.observability.test_history
+  ): string => {
+    const tableName: CitoMaterializationName =
+      testType in columnTestTypes || testType in matTestTypes
+        ? 'test_history'
+        : 'test_history_nominal';
+
+    return `
+  update cito.observability.${tableName}
   set user_feedback_is_anomaly = ${userFeedbackIsAnomaly}
   where alert_id = '${alertId}';
 `;
+  };
 }
