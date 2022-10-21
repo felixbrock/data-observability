@@ -105,6 +105,8 @@ export default class TriggerNominalTestSuitesExecutionController extends BaseCon
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
+      if (error instanceof Error && error.message) console.trace(error.message);
+      else if (!(error instanceof Error) && error) console.trace(error);
       return TriggerNominalTestSuitesExecutionController.fail(
         res,
         'trigger nominal test suites - Unknown error occured'

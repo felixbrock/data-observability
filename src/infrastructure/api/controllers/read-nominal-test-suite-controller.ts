@@ -88,6 +88,8 @@ export default class ReadNominalTestSuiteController extends BaseController {
 
       return ReadNominalTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
+      if (error instanceof Error && error.message) console.trace(error.message);
+      else if (!(error instanceof Error) && error) console.trace(error);
       return ReadNominalTestSuiteController.fail(res, 'read nominal test suite - Unknown error occured');
     }
   }

@@ -119,6 +119,8 @@ export default class CreateCustomTestSuiteController extends BaseController {
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
+      if (error instanceof Error && error.message) console.trace(error.message);
+      else if (!(error instanceof Error) && error) console.trace(error);
       return CreateCustomTestSuiteController.fail(
         res,
         'create custom test suite - unknown error occured'

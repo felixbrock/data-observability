@@ -107,6 +107,8 @@ export default class TriggerCustomTestSuitesExecutionController extends BaseCont
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
+      if (error instanceof Error && error.message) console.trace(error.message);
+      else if (!(error instanceof Error) && error) console.trace(error);
       return TriggerCustomTestSuitesExecutionController.fail(
         res,
         'trigger custom test suites execution - Unknown error occured'

@@ -5,6 +5,7 @@ import {
   createCronJob,
   getFrequencyCronExpression,
 } from '../../../domain/services/cron-job';
+
 import {
   CreateTestSuites,
   CreateTestSuitesAuthDto,
@@ -101,6 +102,8 @@ export default class CreateTestSuitesController extends BaseController {
 
       return CreateTestSuitesController.ok(res, resultValues, CodeHttp.CREATED);
     } catch (error: unknown) {
+      if (error instanceof Error && error.message) console.trace(error.message);
+      else if (!(error instanceof Error) && error) console.trace(error);
       return CreateTestSuitesController.fail(
         res,
         'create test suites - Internal error occured'
