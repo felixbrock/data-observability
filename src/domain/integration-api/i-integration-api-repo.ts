@@ -5,6 +5,7 @@ export interface AlertMessageConfig {
   anomalyMessagePart: string;
   occuredOn: string;
   alertId: string;
+  testType: string;
   summaryPart: string;
   expectedRangePart: string;
   detectedValuePart: string;
