@@ -108,7 +108,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
         );
 
       await createCronJob(
-        result.id,
+        {testSuiteId: result.id, testSuiteType: 'custom-test'},
         getFrequencyCronExpression(result.executionFrequency),
         authDto.callerOrganizationId
       );

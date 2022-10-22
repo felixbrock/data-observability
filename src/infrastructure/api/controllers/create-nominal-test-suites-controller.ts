@@ -7,7 +7,10 @@ import {
   CreateNominalTestSuitesRequestDto,
   CreateNominalTestSuitesResponseDto,
 } from '../../../domain/nominal-test-suite/create-nominal-test-suites';
-import { createCronJob, getFrequencyCronExpression } from '../../../domain/services/cron-job';
+import {
+  createCronJob,
+  getFrequencyCronExpression,
+} from '../../../domain/services/cron-job';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -21,13 +24,18 @@ export default class CreateNominalTestSuitesController extends BaseController {
 
   readonly #getAccounts: GetAccounts;
 
-  constructor(createNominalTestSuites: CreateNominalTestSuites, getAccounts: GetAccounts) {
+  constructor(
+    createNominalTestSuites: CreateNominalTestSuites,
+    getAccounts: GetAccounts
+  ) {
     super();
     this.#createNominalTestSuites = createNominalTestSuites;
     this.#getAccounts = getAccounts;
   }
 
-  #buildRequestDto = (httpRequest: Request): CreateNominalTestSuitesRequestDto => ({
+  #buildRequestDto = (
+    httpRequest: Request
+  ): CreateNominalTestSuitesRequestDto => ({
     createObjects: httpRequest.body.createObjects,
   });
 
@@ -35,7 +43,8 @@ export default class CreateNominalTestSuitesController extends BaseController {
     userAccountInfo: UserAccountInfo,
     jwt: string
   ): CreateNominalTestSuitesAuthDto => {
-    if (!userAccountInfo.callerOrganizationId) throw new Error('Unauthorized - Caller organization id missing');
+    if (!userAccountInfo.callerOrganizationId)
+      throw new Error('Unauthorized - Caller organization id missing');
 
     return {
       callerOrganizationId: userAccountInfo.callerOrganizationId,
@@ -48,7 +57,10 @@ export default class CreateNominalTestSuitesController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return CreateNominalTestSuitesController.unauthorized(res, 'Unauthorized - auth-header missing');
+        return CreateNominalTestSuitesController.unauthorized(
+          res,
+          'Unauthorized - auth-header missing'
+        );
 
       const jwt = authHeader.split(' ')[1];
 
@@ -66,7 +78,8 @@ export default class CreateNominalTestSuitesController extends BaseController {
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: CreateNominalTestSuitesRequestDto = this.#buildRequestDto(req);
+      const requestDto: CreateNominalTestSuitesRequestDto =
+        this.#buildRequestDto(req);
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
@@ -80,25 +93,30 @@ export default class CreateNominalTestSuitesController extends BaseController {
       if (!useCaseResult.value)
         throw new Error('Missing create test suite result value');
 
-      const resultValues = useCaseResult.value.map((el) =>
-        el.toDto()
-      );
+      const resultValues = useCaseResult.value.map((el) => el.toDto());
 
       await Promise.all(
         resultValues.map(async (el) => {
           await createCronJob(
-            el.id,
+            { testSuiteId: el.id, testSuiteType: 'nominal-test' },
             getFrequencyCronExpression(el.executionFrequency),
             authDto.callerOrganizationId
           );
         })
       );
 
-      return CreateNominalTestSuitesController.ok(res, resultValues, CodeHttp.CREATED);
+      return CreateNominalTestSuitesController.ok(
+        res,
+        resultValues,
+        CodeHttp.CREATED
+      );
     } catch (error: unknown) {
       if (error instanceof Error && error.message) console.trace(error.message);
       else if (!(error instanceof Error) && error) console.trace(error);
-      return CreateNominalTestSuitesController.fail(res, 'create nominal test suites - Unknown error occured');
+      return CreateNominalTestSuitesController.fail(
+        res,
+        'create nominal test suites - Unknown error occured'
+      );
     }
   }
 }

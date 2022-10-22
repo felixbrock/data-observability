@@ -93,7 +93,7 @@ export default class CreateTestSuitesController extends BaseController {
       await Promise.all(
         resultValues.map(async (el) => {
           await createCronJob(
-            el.id,
+            { testSuiteId: el.id, testSuiteType: 'test' },
             getFrequencyCronExpression(el.executionFrequency),
             authDto.callerOrganizationId
           );

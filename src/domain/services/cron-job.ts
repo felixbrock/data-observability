@@ -7,6 +7,8 @@ import {
 } from '@aws-sdk/client-eventbridge';
 import { appConfig } from '../../config';
 
+type TestSuiteType = 'test' | 'custom-test' | 'nominal-test';
+
 export const getFrequencyCronExpression = (frequency: number): string => {
   const currentDate = new Date();
   const currentMinutes = currentDate.getUTCMinutes();
@@ -34,7 +36,7 @@ export const getFrequencyCronExpression = (frequency: number): string => {
 };
 
 export const createCronJob = async (
-  testSuiteId: string,
+  testSuiteSpecs: { testSuiteId: string; testSuiteType: TestSuiteType },
   cron: string,
   organizationId: string
 ): Promise<void> => {
@@ -42,13 +44,13 @@ export const createCronJob = async (
     region: appConfig.cloud.region,
   });
 
-  const ruleName = `test-suite-${testSuiteId}`;
+  const ruleName = `test-suite-${testSuiteSpecs.testSuiteId}`;
 
   const putRuleInput: PutRuleCommandInput = {
     Name: ruleName,
     Description: `org-id: ${organizationId}`,
     Tags: [
-      { Key: 'test-suite-id', Value: testSuiteId },
+      { Key: 'test-suite-id', Value: testSuiteSpecs.testSuiteId },
       { Key: 'organization-id', Value: organizationId },
     ],
     ScheduleExpression: `cron(${cron})`,
@@ -69,7 +71,7 @@ export const createCronJob = async (
         Arn: appConfig.cloud.testExecutionJobArn,
         Id: 'test-execution-job',
         Input: JSON.stringify({
-          testSuiteId,
+          ...testSuiteSpecs
         }),
       },
     ],
@@ -82,7 +84,7 @@ export const createCronJob = async (
   if (putTargetsResponse.FailedEntryCount === 0) return;
 
   throw new Error(
-    `Unexpected error occurred while creating cron job (orgId: ${organizationId}, testSuiteId: ${testSuiteId})`
+    `Unexpected error occurred while creating cron job (orgId: ${organizationId}, testSuiteId: ${testSuiteSpecs.testSuiteId})`
   );
 };
 
