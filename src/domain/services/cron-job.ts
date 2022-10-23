@@ -35,6 +35,11 @@ export const getFrequencyCronExpression = (frequency: number): string => {
   }
 };
 
+/* 
+For AWS Eventbridge cron jobs to be working the lambda target needs corresponding permissions being defined:  
+aws lambda add-permission --function-name "test-suite-execution-job-production-app" --action 'lambda:InvokeFunction' --principal events.amazonaws.com --statement-id "test-suite-cron-rule-wildcard-policy"
+*/
+
 export const createCronJob = async (
   testSuiteSpecs: { testSuiteId: string; testSuiteType: TestSuiteType },
   cron: string,
