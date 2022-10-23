@@ -83,13 +83,6 @@ const getBaseUrlConfig = (): BaseUrlConfig => {
   return { testEngine, integrationService, accountService };
 };
 
-const getTestExecutionJobArn = (): string => {
-  const arn = process.env.TEST_SUITE_JOB_ARN;
-
-  if (!arn) throw new Error('Test execution job ARN not found');
-
-  return arn;
-};
 
 export const appConfig = {
   express: {
@@ -102,7 +95,7 @@ export const appConfig = {
     authEnvConfig: getAuthEnvConfig(),
     authSchedulerEnvConfig: getAuthSchedulerEnvConfig(),
     region: 'eu-central-1',
-    testExecutionJobArn: getTestExecutionJobArn(),
+    testExecutionJobArn: 'arn:aws:lambda:eu-central-1:966593446935:function:test-suite-execution-job-production-app',
   },
   slack: getSlackConfig(),
   baseUrl: getBaseUrlConfig(),
