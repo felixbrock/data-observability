@@ -32,7 +32,7 @@ const triggerCustomTestSuiteExecutionController = new TriggerCustomTestSuiteExec
   dbo
 );
 
-customTestSuiteRoutes.get('/:testSuiteId', (req, res) => {
+customTestSuiteRoutes.get('/:id', (req, res) => {
   readCustomTestSuiteController.execute(req, res);
 });
 
@@ -40,11 +40,11 @@ customTestSuiteRoutes.post('/', (req, res) => {
   createCustomTestSuiteController.execute(req, res);
 });
 
-customTestSuiteRoutes.patch('/:testSuiteId', (req, res) => {
+customTestSuiteRoutes.patch('/:id', (req, res) => {
   updateCustomTestSuiteController.execute(req, res);
 });
 
-customTestSuiteRoutes.post('/execute', (req, res) => {
+customTestSuiteRoutes.post('/:id/execute', (req, res) => {
   triggerCustomTestSuiteExecutionController.execute(req, res);
 });
 

@@ -3,12 +3,10 @@ import app from '../../ioc-register';
 import ReadNominalTestSuitesController from '../controllers/read-nominal-test-suites-controller';
 import UpdateNominalTestSuitesController from '../controllers/update-nominal-test-suites-controller';
 import CreateNominalTestSuitesController from '../controllers/create-nominal-test-suites-controller';
-import TriggerNominalTestSuitesExecutionController from '../controllers/trigger-nominal-test-suites-execution-controller';
 
 const nominalTestSuitesRoutes = Router();
 
 const getAccounts = app.resolve('getAccounts');
-const dbo = app.resolve('dbo');
 
 const readNominalTestSuitesController = new ReadNominalTestSuitesController(
   app.resolve('readNominalTestSuites'),
@@ -25,12 +23,6 @@ const updateNominalTestSuitesController = new UpdateNominalTestSuitesController(
   getAccounts
 );
 
-const triggerNominalTestSuitesExecutionController =
-  new TriggerNominalTestSuitesExecutionController(
-    app.resolve('triggerNominalTestSuitesExecution'),
-    getAccounts,
-    dbo
-  );
 
 nominalTestSuitesRoutes.get('/', (req, res) => {
   readNominalTestSuitesController.execute(req, res);
@@ -42,10 +34,6 @@ nominalTestSuitesRoutes.post('/', (req, res) => {
 
 nominalTestSuitesRoutes.patch('/', (req, res) => {
   updateNominalTestSuitesController.execute(req, res);
-});
-
-nominalTestSuitesRoutes.post('/execute', (req, res) => {
-  triggerNominalTestSuitesExecutionController.execute(req, res);
 });
 
 export default nominalTestSuitesRoutes;

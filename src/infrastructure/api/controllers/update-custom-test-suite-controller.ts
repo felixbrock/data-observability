@@ -36,7 +36,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
   #buildRequestDto = (
     httpRequest: Request
   ): UpdateCustomTestSuiteRequestDto => ({
-    id: httpRequest.params.customTestSuiteId,
+    id: httpRequest.params.id,
     activated: httpRequest.body.activated,
     threshold: httpRequest.body.threshold,
     frequency: httpRequest.body.frequency,

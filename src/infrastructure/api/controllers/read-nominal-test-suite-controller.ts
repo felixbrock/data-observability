@@ -20,17 +20,20 @@ export default class ReadNominalTestSuiteController extends BaseController {
 
   readonly #getAccounts: GetAccounts;
 
-  constructor(readNominalTestSuite: ReadNominalTestSuite, getAccounts: GetAccounts) {
+  constructor(
+    readNominalTestSuite: ReadNominalTestSuite,
+    getAccounts: GetAccounts
+  ) {
     super();
     this.#getAccounts = getAccounts;
     this.#readNominalTestSuite = readNominalTestSuite;
   }
 
   #buildRequestDto = (httpRequest: Request): ReadNominalTestSuiteRequestDto => {
-    const { testSuiteId } = httpRequest.params;
+    const { id } = httpRequest.params;
 
     return {
-      id: testSuiteId,
+      id,
     };
   };
 
@@ -69,7 +72,8 @@ export default class ReadNominalTestSuiteController extends BaseController {
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: ReadNominalTestSuiteRequestDto = this.#buildRequestDto(req);
+      const requestDto: ReadNominalTestSuiteRequestDto =
+        this.#buildRequestDto(req);
       const authDto: ReadNominalTestSuiteAuthDto = this.#buildAuthDto(
         jwt,
         getUserAccountInfoResult.value
@@ -90,7 +94,10 @@ export default class ReadNominalTestSuiteController extends BaseController {
     } catch (error: unknown) {
       if (error instanceof Error && error.message) console.trace(error.message);
       else if (!(error instanceof Error) && error) console.trace(error);
-      return ReadNominalTestSuiteController.fail(res, 'read nominal test suite - Unknown error occured');
+      return ReadNominalTestSuiteController.fail(
+        res,
+        'read nominal test suite - Unknown error occured'
+      );
     }
   }
 }

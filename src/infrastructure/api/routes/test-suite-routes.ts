@@ -20,11 +20,11 @@ const triggerTestSuiteExecutionController =
     dbo
   );
 
-testSuiteRoutes.get('/:testSuiteId', (req, res) => {
+testSuiteRoutes.get('/:id', (req, res) => {
   readTestSuiteController.execute(req, res);
 });
 
-testSuiteRoutes.post('/execute', (req, res) => {
+testSuiteRoutes.post('/:id/execute', (req, res) => {
   triggerTestSuiteExecutionController.execute(req, res);
 });
 

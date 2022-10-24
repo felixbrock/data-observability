@@ -36,7 +36,7 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
 
   #buildRequestDto = (
     httpRequest: Request
-  ): TriggerCustomTestSuiteExecutionRequestDto => ({ id: httpRequest.body.id });
+  ): TriggerCustomTestSuiteExecutionRequestDto => ({ id: httpRequest.params.id });
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,

@@ -17,7 +17,6 @@ import AnomalyTestResultRepo from './persistence/anomaly-test-result-repo';
 import { SendAnomalySlackAlert } from '../domain/integration-api/slack/send-anomaly-alert';
 import { SendNominalTestSlackAlert } from '../domain/integration-api/slack/send-nominal-test-alert';
 import { UpdateTestHistoryEntry } from '../domain/integration-api/snowflake/update-test-history-entry';
-import { TriggerTestSuitesExecution } from '../domain/test-suite/trigger-test-suites-execution';
 import { CreateCustomTestSuite } from '../domain/custom-test-suite/create-custom-test-suite';
 import { ReadCustomTestSuite } from '../domain/custom-test-suite/read-custom-test-suite';
 import { ReadCustomTestSuites } from '../domain/custom-test-suite/read-custom-test-suites';
@@ -30,8 +29,6 @@ import { ReadNominalTestSuites } from '../domain/nominal-test-suite/read-nominal
 import { TriggerNominalTestSuiteExecution } from '../domain/nominal-test-suite/trigger-nominal-test-suite-execution';
 import { UpdateNominalTestSuites } from '../domain/nominal-test-suite/update-nominal-test-suites';
 import { TriggerTestSuiteExecution } from '../domain/test-suite/trigger-test-suite-execution';
-import { TriggerNominalTestSuitesExecution } from '../domain/nominal-test-suite/trigger-nominal-test-suites-execution';
-import { TriggerCustomTestSuitesExecution } from '../domain/custom-test-suite/trigger-custom-test-suites-execution';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
@@ -58,10 +55,6 @@ iocRegister.register({
   triggerTestSuiteExecution: asClass(TriggerTestSuiteExecution),
   triggerNominalTestSuiteExecution: asClass(TriggerNominalTestSuiteExecution),
   triggerCustomTestSuiteExecution: asClass(TriggerCustomTestSuiteExecution),
-
-  triggerTestSuitesExecution: asClass(TriggerTestSuitesExecution),
-  triggerNominalTestSuitesExecution: asClass(TriggerNominalTestSuitesExecution),
-  triggerCustomTestSuitesExecution: asClass(TriggerCustomTestSuitesExecution),
 
   updateTestHistoryEntry: asClass(UpdateTestHistoryEntry),
   executeTest: asClass(ExecuteTest),
