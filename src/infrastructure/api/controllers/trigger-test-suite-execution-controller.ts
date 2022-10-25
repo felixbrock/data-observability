@@ -36,20 +36,19 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
 
   #buildRequestDto = (
     httpRequest: Request
-  ): TriggerTestSuiteExecutionRequestDto => ({ id: httpRequest.params.id });
+  ): TriggerTestSuiteExecutionRequestDto => ({
+    id: httpRequest.params.id,
+    targetOrganizationId: httpRequest.body.targetOrganizationId,
+  });
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): TriggerTestSuiteExecutionAuthDto => {
-    if (!userAccountInfo.callerOrganizationId)
-      throw new Error('tigger-test-execution - callerOrganizationId missing');
-
-    return {
-      jwt,
-      callerOrganizationId: userAccountInfo.callerOrganizationId,
-    };
-  };
+  ): TriggerTestSuiteExecutionAuthDto => ({
+    jwt,
+    callerOrganizationId: userAccountInfo.callerOrganizationId,
+    isSystemInternal: userAccountInfo.isSystemInternal,
+  });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -83,14 +82,14 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
       const useCaseResult: TriggerTestSuiteExecutionResponseDto =
-        await this.#triggerTestSuiteExecution.execute(requestDto, authDto,
+        await this.#triggerTestSuiteExecution.execute(
+          requestDto,
+          authDto,
           this.#dbo.dbConnection
-          );
+        );
 
       if (!useCaseResult.success) {
-        return TriggerTestSuiteExecutionController.badRequest(
-          res,
-        );
+        return TriggerTestSuiteExecutionController.badRequest(res);
       }
 
       return TriggerTestSuiteExecutionController.ok(

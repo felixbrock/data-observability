@@ -1,1 +1,6 @@
-export type SnowflakeQueryResultDto = {[key: string]: {[key:string]: any}[]}
+interface QueryResultElement {
+  [key: string]: any;
+}
+export interface SnowflakeQueryResultDto {
+  [key: string]: QueryResultElement[];
+}

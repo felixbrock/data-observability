@@ -15,13 +15,10 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
   #apiRoot = appConfig.express.apiRoot;
 
   querySnowflake = async (
-    query: string,
+    body: {query: string, targetOrganizationId?: string},
     jwt: string
   ): Promise<SnowflakeQueryResultDto> => {
     try {
-      const data = {
-        query,
-      };
 
       const config: AxiosRequestConfig = {
         headers: { Authorization: `Bearer ${jwt}` },
@@ -29,7 +26,7 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
 
       const response = await axios.post(
         `${this.#baseUrl}/${this.#apiRoot}/${this.#version}/snowflake/query`,
-        data,
+        body,
         config
       );
       const jsonResponse = response.data;

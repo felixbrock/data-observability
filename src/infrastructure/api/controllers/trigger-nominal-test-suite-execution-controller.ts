@@ -38,20 +38,17 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
     httpRequest: Request
   ): TriggerNominalTestSuiteExecutionRequestDto => ({
     id: httpRequest.params.id,
+    targetOrganizationId: httpRequest.body.targetOrganizationId,
   });
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): TriggerNominalTestSuiteExecutionAuthDto => {
-    if (!userAccountInfo.callerOrganizationId)
-      throw new Error('tigger-test-execution - callerOrganizationId missing');
-
-    return {
+  ): TriggerNominalTestSuiteExecutionAuthDto => ({
       jwt,
       callerOrganizationId: userAccountInfo.callerOrganizationId,
-    };
-  };
+      isSystemInternal: userAccountInfo.isSystemInternal,
+    });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -92,9 +89,7 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
         );
 
       if (!useCaseResult.success) {
-        return TriggerNominalTestSuiteExecutionController.badRequest(
-          res,
-        );
+        return TriggerNominalTestSuiteExecutionController.badRequest(res);
       }
 
       return TriggerNominalTestSuiteExecutionController.ok(

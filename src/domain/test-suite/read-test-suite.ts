@@ -6,11 +6,13 @@ import CitoDataQuery from '../services/cito-data-query';
 
 export interface ReadTestSuiteRequestDto {
   id: string;
+  targetOrganizationId?: string;
 }
 
 export interface ReadTestSuiteAuthDto {
   jwt: string;
-  callerOrganizationId: string;
+  callerOrganizationId?: string;
+  isSystemInternal: boolean;
 }
 
 export type ReadTestSuiteResponseDto = Result<TestSuite>;
@@ -33,13 +35,30 @@ export class ReadTestSuite
     request: ReadTestSuiteRequestDto,
     auth: ReadTestSuiteAuthDto
   ): Promise<ReadTestSuiteResponseDto> {
+    if (auth.isSystemInternal && !request.targetOrganizationId)
+      throw new Error('Target organization id missing');
+    if (!auth.isSystemInternal && !auth.callerOrganizationId)
+      throw new Error('Caller organization id missing');
+    if (!request.targetOrganizationId && !auth.callerOrganizationId)
+      throw new Error('No organization Id provided');
+
+    let organizationId;
+    if (auth.isSystemInternal && request.targetOrganizationId)
+      organizationId = request.targetOrganizationId;
+    else if (auth.callerOrganizationId)
+      organizationId = auth.callerOrganizationId;
+    else throw new Error('Unhandled organizationId allocation');
+
     try {
       // todo -replace
 
-      const query = CitoDataQuery.getReadTestSuiteQuery([request.id], 'test_suites');
+      const query = CitoDataQuery.getReadTestSuiteQuery(
+        [request.id],
+        'test_suites'
+      );
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
-        { query },
+        { query, targetOrganizationId: request.targetOrganizationId },
         { jwt: auth.jwt }
       );
 
@@ -51,7 +70,7 @@ export class ReadTestSuite
       if (!result)
         throw new Error(`TestSuite with id ${request.id} does not exist`);
 
-      const organizationResults = result[auth.callerOrganizationId];
+      const organizationResults = result[organizationId];
 
       if (organizationResults.length !== 1)
         throw new Error('No or multiple test suites found');

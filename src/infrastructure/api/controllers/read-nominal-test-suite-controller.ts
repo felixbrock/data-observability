@@ -34,20 +34,18 @@ export default class ReadNominalTestSuiteController extends BaseController {
 
     return {
       id,
+      targetOrganizationId: httpRequest.body.targetOrganizationId
     };
   };
 
   #buildAuthDto = (
     jwt: string,
     userAccountInfo: UserAccountInfo
-  ): ReadNominalTestSuiteAuthDto => {
-    if (!userAccountInfo.callerOrganizationId) throw new Error('Unauthorized');
-
-    return {
-      jwt,
-      callerOrganizationId: userAccountInfo.callerOrganizationId,
-    };
-  };
+  ): ReadNominalTestSuiteAuthDto => ({
+    jwt,
+    callerOrganizationId: userAccountInfo.callerOrganizationId,
+    isSystemInternal: userAccountInfo.isSystemInternal,
+  });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {

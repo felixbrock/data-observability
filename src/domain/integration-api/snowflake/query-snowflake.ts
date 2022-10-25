@@ -5,6 +5,7 @@ import { SnowflakeQueryResultDto } from './snowlake-query-result-dto';
 
 export interface QuerySnowflakeRequestDto {
   query: string;
+  targetOrganizationId?: string
 }
 
 export interface QuerySnowflakeAuthDto {
@@ -33,7 +34,7 @@ export class QuerySnowflake
   ): Promise<QuerySnowflakeResponseDto> {
     try {
       const querySnowflakeResponse: SnowflakeQueryResultDto =
-        await this.#integrationApiRepo.querySnowflake(request.query, auth.jwt);
+        await this.#integrationApiRepo.querySnowflake(request, auth.jwt);
 
       return Result.ok(querySnowflakeResponse);
     } catch (error: unknown) {

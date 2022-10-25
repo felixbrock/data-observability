@@ -36,20 +36,23 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
 
   #buildRequestDto = (
     httpRequest: Request
-  ): TriggerCustomTestSuiteExecutionRequestDto => ({ id: httpRequest.params.id });
+  ): TriggerCustomTestSuiteExecutionRequestDto => {
+    const { id } = httpRequest.params;
+
+    return {
+      id,
+      targetOrganizationId: httpRequest.body.targetOrganizationId,
+    };
+  };
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): TriggerCustomTestSuiteExecutionAuthDto => {
-    if (!userAccountInfo.callerOrganizationId)
-      throw new Error('tigger-test-execution - callerOrganizationId missing');
-
-    return {
-      jwt,
-      callerOrganizationId: userAccountInfo.callerOrganizationId,
-    };
-  };
+  ): TriggerCustomTestSuiteExecutionAuthDto => ({
+    jwt,
+    callerOrganizationId: userAccountInfo.callerOrganizationId,
+    isSystemInternal: userAccountInfo.isSystemInternal,
+  });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -90,9 +93,7 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
         );
 
       if (!useCaseResult.success) {
-        return TriggerCustomTestSuiteExecutionController.badRequest(
-          res,
-        );
+        return TriggerCustomTestSuiteExecutionController.badRequest(res);
       }
 
       return TriggerCustomTestSuiteExecutionController.ok(

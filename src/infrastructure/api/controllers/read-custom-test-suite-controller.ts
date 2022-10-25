@@ -34,20 +34,18 @@ export default class ReadCustomTestSuiteController extends BaseController {
 
     return {
       id,
+      targetOrganizationId: httpRequest.body.targetOrganizationId
     };
   };
 
   #buildAuthDto = (
     jwt: string,
     userAccountInfo: UserAccountInfo
-  ): ReadCustomTestSuiteAuthDto => {
-    if (!userAccountInfo.callerOrganizationId) throw new Error('Unauthorized');
-
-    return {
+  ): ReadCustomTestSuiteAuthDto => ({
       jwt,
       callerOrganizationId: userAccountInfo.callerOrganizationId,
-    };
-  };
+      isSystemInternal: userAccountInfo.isSystemInternal,
+    });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -83,9 +81,7 @@ export default class ReadCustomTestSuiteController extends BaseController {
         await this.#readCustomTestSuite.execute(requestDto, authDto);
 
       if (!useCaseResult.success) {
-        return ReadCustomTestSuiteController.badRequest(
-          res
-        );
+        return ReadCustomTestSuiteController.badRequest(res);
       }
 
       const result = useCaseResult.value;
@@ -99,7 +95,10 @@ export default class ReadCustomTestSuiteController extends BaseController {
     } catch (error: unknown) {
       if (error instanceof Error && error.message) console.trace(error.message);
       else if (!(error instanceof Error) && error) console.trace(error);
-      return ReadCustomTestSuiteController.fail(res, 'read custom test suite - Unknown error occured');
+      return ReadCustomTestSuiteController.fail(
+        res,
+        'read custom test suite - Unknown error occured'
+      );
     }
   }
 }

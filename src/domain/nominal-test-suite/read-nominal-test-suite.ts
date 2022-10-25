@@ -6,11 +6,13 @@ import CitoDataQuery from '../services/cito-data-query';
 
 export interface ReadNominalTestSuiteRequestDto {
   id: string;
+  targetOrganizationId?: string;
 }
 
 export interface ReadNominalTestSuiteAuthDto {
   jwt: string;
-  callerOrganizationId: string;
+  callerOrganizationId?: string;
+  isSystemInternal: boolean;
 }
 
 export type ReadNominalTestSuiteResponseDto = Result<NominalTestSuite>;
@@ -33,13 +35,30 @@ export class ReadNominalTestSuite
     request: ReadNominalTestSuiteRequestDto,
     auth: ReadNominalTestSuiteAuthDto
   ): Promise<ReadNominalTestSuiteResponseDto> {
+    if (auth.isSystemInternal && !request.targetOrganizationId)
+      throw new Error('Target organization id missing');
+    if (!auth.isSystemInternal && !auth.callerOrganizationId)
+      throw new Error('Caller organization id missing');
+    if (!request.targetOrganizationId && !auth.callerOrganizationId)
+      throw new Error('No organization Id provided');
+
+      let organizationId;
+      if (auth.isSystemInternal && request.targetOrganizationId)
+        organizationId = request.targetOrganizationId;
+      else if (auth.callerOrganizationId)
+        organizationId = auth.callerOrganizationId;
+      else throw new Error('Unhandled organizationId allocation');
+
     try {
       // todo -replace
 
-      const query = CitoDataQuery.getReadTestSuiteQuery([request.id], 'test_suites_nominal');
+      const query = CitoDataQuery.getReadTestSuiteQuery(
+        [request.id],
+        'test_suites_nominal'
+      );
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
-        { query },
+        { query, targetOrganizationId: request.targetOrganizationId },
         { jwt: auth.jwt }
       );
 
@@ -49,9 +68,11 @@ export class ReadNominalTestSuite
       const result = querySnowflakeResult.value;
 
       if (!result)
-        throw new Error(`NominalTestSuite with id ${request.id} does not exist`);
+        throw new Error(
+          `NominalTestSuite with id ${request.id} does not exist`
+        );
 
-      const organizationResults = result[auth.callerOrganizationId];
+      const organizationResults = result[organizationId];
 
       if (organizationResults.length !== 1)
         throw new Error('No or multiple test suites found');

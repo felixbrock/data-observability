@@ -6,11 +6,13 @@ import CitoDataQuery from '../services/cito-data-query';
 
 export interface ReadCustomTestSuiteRequestDto {
   id: string;
+  targetOrganizationId?: string;
 }
 
 export interface ReadCustomTestSuiteAuthDto {
   jwt: string;
-  callerOrganizationId: string;
+  callerOrganizationId?: string;
+  isSystemInternal: boolean;
 }
 
 export type ReadCustomTestSuiteResponseDto = Result<CustomTestSuiteDto>;
@@ -33,13 +35,31 @@ export class ReadCustomTestSuite
     request: ReadCustomTestSuiteRequestDto,
     auth: ReadCustomTestSuiteAuthDto
   ): Promise<ReadCustomTestSuiteResponseDto> {
+    if (auth.isSystemInternal && !request.targetOrganizationId)
+      throw new Error('Target organization id missing');
+    if (!auth.isSystemInternal && !auth.callerOrganizationId)
+      throw new Error('Caller organization id missing');
+    if (!request.targetOrganizationId && !auth.callerOrganizationId)
+      throw new Error('No organization Id provided');
+
+      let organizationId;
+      if (auth.isSystemInternal && request.targetOrganizationId)
+        organizationId = request.targetOrganizationId;
+      else if (auth.callerOrganizationId)
+        organizationId = auth.callerOrganizationId;
+      else throw new Error('Unhandled organizationId allocation');
+
+
     try {
       // todo -replace
 
-      const query = CitoDataQuery.getReadTestSuiteQuery([request.id], 'test_suites_custom');
+      const query = CitoDataQuery.getReadTestSuiteQuery(
+        [request.id],
+        'test_suites_custom'
+      );
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
-        { query },
+        { query, targetOrganizationId: request.targetOrganizationId },
         { jwt: auth.jwt }
       );
 
@@ -51,7 +71,7 @@ export class ReadCustomTestSuite
       if (!result)
         throw new Error(`CustomTestSuite with id ${request.id} does not exist`);
 
-      const organizationResults = result[auth.callerOrganizationId];
+      const organizationResults = result[organizationId];
 
       if (organizationResults.length !== 1)
         throw new Error('No or multiple custom test suites found');

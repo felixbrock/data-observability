@@ -7,11 +7,13 @@ import { DbConnection } from '../services/i-db';
 
 export interface TriggerTestSuiteExecutionRequestDto {
   id: string;
+  targetOrganizationId?: string;
 }
 
 export interface TriggerTestSuiteExecutionAuthDto {
   jwt: string;
-  callerOrganizationId: string;
+  callerOrganizationId?: string;
+  isSystemInternal: boolean;
 }
 
 export type TriggerTestSuiteExecutionResponseDto = Result<void>;
@@ -41,12 +43,23 @@ export class TriggerTestSuiteExecution
     auth: TriggerTestSuiteExecutionAuthDto,
     dbConnection: DbConnection
   ): Promise<TriggerTestSuiteExecutionResponseDto> {
+    if (auth.isSystemInternal && !request.targetOrganizationId)
+    throw new Error('Target organization id missing');
+  if (!auth.isSystemInternal && !auth.callerOrganizationId)
+    throw new Error('Caller organization id missing');
+  if (!request.targetOrganizationId && !auth.callerOrganizationId)
+    throw new Error('No organization Id provided');
+
     this.#dbConnection = dbConnection;
 
     try {
       const readTestSuiteResult = await this.#readTestSuite.execute(
-        { id: request.id },
-        { jwt: auth.jwt, callerOrganizationId: auth.callerOrganizationId }
+        { id: request.id, targetOrganizationId: request.targetOrganizationId },
+        {
+          jwt: auth.jwt,
+          callerOrganizationId: auth.callerOrganizationId,
+          isSystemInternal: auth.isSystemInternal,
+        }
       );
 
       if (!readTestSuiteResult.success)
@@ -60,6 +73,7 @@ export class TriggerTestSuiteExecution
         {
           testSuiteId: testSuite.id,
           testType: testSuite.type,
+          targetOrganizationId: request.targetOrganizationId
         },
         { jwt: auth.jwt },
         this.#dbConnection
