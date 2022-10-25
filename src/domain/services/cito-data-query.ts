@@ -1,6 +1,4 @@
-import {
-  NominalTestType,
-} from '../entities/nominal-test-suite';
+import { NominalTestType } from '../entities/nominal-test-suite';
 import {
   columnTestTypes,
   matTestTypes,
@@ -76,36 +74,12 @@ export default class CitoDataQuery {
 
   static getReadTestSuitesQuery = (
     tableName: CitoMaterializationName,
-    executionFrequency?: number,
-    activated?: boolean,
-    organizationId?: string
-  ): string => {
-    const selectClause = `select * from cito.observability.${tableName}`;
-
-    if (!executionFrequency && !activated && !organizationId)
-      return selectClause.concat(';');
-
-    let whereClause = 'where ';
-    if (activated)
-      whereClause = whereClause.concat(`activated = ${activated} `);
-    if (executionFrequency)
-      whereClause = whereClause.concat(
-        `${
-          activated ? 'and ' : ''
-        } execution_frequency = ${executionFrequency} `
-      );
-    if (organizationId)
-      whereClause = whereClause.concat(
-        `${
-          activated || executionFrequency ? 'and ' : ''
-        } $organization_id = '${organizationId}' `
-      );
-
-    return `
-    ${selectClause}
-    ${whereClause};
-    `;
-  };
+    namesOfFieldsToReturn: string[],
+    where?: string
+  ): string => `select ${
+      !namesOfFieldsToReturn.length ? '*' : namesOfFieldsToReturn.join(', ')
+    } from cito.observability.${tableName}
+    ${where ? `where ${where}` : ''}`;
 
   static getUpdateQuery = (
     materializationAddress: string,

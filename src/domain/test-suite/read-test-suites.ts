@@ -7,7 +7,6 @@ import Result from '../value-types/transient-types/result';
 
 export interface ReadTestSuitesRequestDto {
   activated?: boolean;
-  executionFrequency?: number;
 }
 
 export interface ReadTestSuitesAuthDto {
@@ -43,7 +42,7 @@ export class ReadTestSuites
     try {
       const query = CitoDataQuery.getReadTestSuitesQuery(
         'test_suites',
-        request.executionFrequency,
+        [],
         request.activated
       );
 
