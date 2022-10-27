@@ -5,6 +5,18 @@ import { ExecuteTest } from '../test-execution-api/execute-test';
 import { DbConnection } from '../services/i-db';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
+import { SnowflakeQueryResultDto } from '../integration-api/snowflake/snowlake-query-result-dto';
+
+interface TestSuiteRepresentation {
+  id: string;
+  type: string;
+  target: {
+    databaseName: string;
+    schemaName: string;
+    materializationName: string;
+  };
+  organizationId: string;
+}
 
 export type TriggerAutomaticExecutionRequestDto = null;
 
@@ -35,6 +47,48 @@ export class TriggerAutomaticExecution
     this.#executeTest = executeTest;
   }
 
+  #getTestSuiteRepresentations = (
+    queryResult: SnowflakeQueryResultDto
+  ): TestSuiteRepresentation => {
+    const representations = Object.keys(queryResult).map((key) => {
+      const organizationResult = queryResult[key];
+
+      const organizationTestSuites = organizationResult.map((element): TestSuiteRepresentation => {
+        const {
+          ID: id,
+          TEST_TYPE: type,
+          DATABASE_NAME: dbName,
+          SCHEMA_NAME: schemaName,
+          MATERIALIZATION_NAME: matName,
+          ORGANIZATION_ID: orgId,
+        } = element;
+        if (
+          typeof id !== 'string' ||
+          typeof type !== 'string' ||
+          typeof dbName !== 'string' ||
+          typeof schemaName !== 'string' ||
+          typeof matName !== 'string' ||
+          typeof orgId !== 'string'
+        )
+          throw new Error('Field type mismatch for retrieved test suites');
+
+        return {
+          id,
+          type,
+          target: {
+            databaseName: dbName,
+            schemaName,
+            materializationName: matName,
+          },
+          organizationId: orgId,
+        };
+      });
+      return organizationTestSuites;
+    });
+
+    return representations.map();
+  };
+
   async execute(
     request: TriggerAutomaticExecutionRequestDto,
     auth: TriggerAutomaticExecutionAuthDto,
@@ -47,7 +101,13 @@ export class TriggerAutomaticExecution
     try {
       const query = CitoDataQuery.getReadTestSuitesQuery(
         'test_suites',
-        ['id', 'test_type', 'database_name', 'schema_name', 'materialization_name'],
+        [
+          'id',
+          'test_type',
+          'database_name',
+          'schema_name',
+          'materialization_name',
+        ],
         'activated = true and execution_type = "automated"'
       );
 
@@ -63,41 +123,24 @@ export class TriggerAutomaticExecution
 
       if (!result) throw new Error(`No test suites found that match condition`);
 
-      const testSuiteRepresentations = Object.keys(result).map((key) => {
-        const organizationResult = result[key];
+      const testSuiteRepresentations =
+        this.#getTestSuiteRepresentations(result);
 
-        const organizationTestSuites = organizationResult.map((element) =>
-          ({
-            id: element.ID,
-            type: element.TEST_TYPE,
-            target: {
-              databaseName: element.DATABASE_NAME,
-              schemaName: element.SCHEMA_NAME,
-              materializationName: element.MATERIALIZATION_NAME,
-            },
-            organizationId: element.ORGANIZATION_ID,
-          })
+      const lastAlteredWhereCondition = org;
+
+      //   Get last altered
+
+      testSuiteRepresentations.map(async (testSuite) => {
+        this.#executeTest.execute(
+          {
+            testSuiteId: testSuite.id,
+            testType: testSuite.type,
+            targetOrganizationId: testSuite.organizationId,
+          },
+          { jwt: auth.jwt },
+          this.#dbConnection
         );
-
-        return organizationTestSuites;
       });
-
-
-    //   Get last altered
-
-
-      
-        testSuiteRepresentations.map(async (testSuite) => {
-          this.#executeTest.execute(
-            {
-              testSuiteId: testSuite.id,
-              testType: testSuite.type,
-              targetOrganizationId: testSuite.organizationId,
-            },
-            { jwt: auth.jwt },
-            this.#dbConnection
-          );
-        });
 
       const isString = (obj: unknown): obj is string => typeof obj === 'string';
 
