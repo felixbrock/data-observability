@@ -42,6 +42,8 @@ export class TriggerAutomaticExecution
 
   #dbConnection: DbConnection;
 
+  automaticExecutionFrequency = 5;
+
   constructor(querySnowflake: QuerySnowflake, executeTest: ExecuteTest) {
     this.#querySnowflake = querySnowflake;
     this.#executeTest = executeTest;
@@ -49,44 +51,105 @@ export class TriggerAutomaticExecution
 
   #getTestSuiteRepresentations = (
     queryResult: SnowflakeQueryResultDto
-  ): TestSuiteRepresentation => {
-    const representations = Object.keys(queryResult).map((key) => {
-      const organizationResult = queryResult[key];
+  ): TestSuiteRepresentation[][] => {
+    const representations = Object.keys(queryResult).map((orgId) => {
+      const organizationResult = queryResult[orgId];
 
-      const organizationTestSuites = organizationResult.map((element): TestSuiteRepresentation => {
-        const {
-          ID: id,
-          TEST_TYPE: type,
-          DATABASE_NAME: dbName,
-          SCHEMA_NAME: schemaName,
-          MATERIALIZATION_NAME: matName,
-          ORGANIZATION_ID: orgId,
-        } = element;
-        if (
-          typeof id !== 'string' ||
-          typeof type !== 'string' ||
-          typeof dbName !== 'string' ||
-          typeof schemaName !== 'string' ||
-          typeof matName !== 'string' ||
-          typeof orgId !== 'string'
-        )
-          throw new Error('Field type mismatch for retrieved test suites');
+      const organizationTestSuites = organizationResult.map(
+        (element): TestSuiteRepresentation => {
+          const {
+            ID: id,
+            TEST_TYPE: type,
+            DATABASE_NAME: dbName,
+            SCHEMA_NAME: schemaName,
+            MATERIALIZATION_NAME: matName,
+            ORGANIZATION_ID: organizationId,
+          } = element;
+          if (
+            typeof id !== 'string' ||
+            typeof type !== 'string' ||
+            typeof dbName !== 'string' ||
+            typeof schemaName !== 'string' ||
+            typeof matName !== 'string' ||
+            typeof organizationId !== 'string'
+          )
+            throw new Error('Field type mismatch for retrieved test suites');
 
-        return {
-          id,
-          type,
-          target: {
-            databaseName: dbName,
-            schemaName,
-            materializationName: matName,
-          },
-          organizationId: orgId,
-        };
-      });
+          return {
+            id,
+            type,
+            target: {
+              databaseName: dbName,
+              schemaName,
+              materializationName: matName,
+            },
+            organizationId,
+          };
+        }
+      );
+
+      if (!organizationTestSuites.length)
+        console.warn(`Organization with id ${orgId} has no tests defined`);
+
       return organizationTestSuites;
     });
 
-    return representations.map();
+    return representations;
+  };
+
+  #buildAlteredQuery = (
+    representations: TestSuiteRepresentation[]
+  ): string => {
+    const tableMatchingWhereElement = representations
+      .map(
+        (el) =>
+          `(
+                  table_catalog = "${el.target.databaseName}" 
+                  and table_schema = "${el.target.schemaName}" 
+                  and table_name = "${el.target.materializationName}"
+                )`
+      )
+      .join(' or ');
+
+    // todo - get last test execution time
+    const alteredWhereElement = `timediff(minute, last_altered, current_timestamp::timestamp_ntz) > ${this.automaticExecutionFrequency}`;
+
+    const whereStatement = `(${tableMatchingWhereElement}) and (${alteredWhereElement})`;
+
+    // select  ;
+  };
+
+  #queryAlteredTableInfo = async (representations: TestSuiteRepresentation[]) => {
+    
+
+  }
+
+  #handleDbGroupedRepresentations = async (representations: TestSuiteRepresentation[]): Promise<void> => {
+    const 
+    this.#getIdsOfChangedTables()
+  }
+
+  #groupByDb = (accumulation: {[key:string]: TestSuiteRepresentation[]}, representation: TestSuiteRepresentation) => {
+    const localAcc = accumulation;
+
+    const {databaseName} = representation.target;
+    if(databaseName in localAcc)
+      localAcc[databaseName].push(representation);
+    else
+      localAcc[databaseName] = [representation];
+
+    return localAcc;
+  }
+
+  #handleOrgTestSuiteRepresentations = async (
+    representations: TestSuiteRepresentation[]
+  ): Promise<void> => {
+    const representationsByDatabaseName = representations.reduce(this.#groupByDb, {});
+
+    const handleResults = await Promise.all(Object.keys(representationsByDatabaseName).map(async (key) => await this.#handleDbGroupedRepresentations(representationsByDatabaseName[key])));
+
+
+    
   };
 
   async execute(
@@ -126,7 +189,15 @@ export class TriggerAutomaticExecution
       const testSuiteRepresentations =
         this.#getTestSuiteRepresentations(result);
 
-      const lastAlteredWhereCondition = org;
+      /*
+        Do not await to avoid timeout issue
+      */
+      const triggeredTestExecutions = await Promise.all(
+        testSuiteRepresentations.map(
+          async (representationsPerOrg) =>
+            await this.#handleOrgTestSuiteRepresentations(representationsPerOrg)
+        )
+      );
 
       //   Get last altered
 
