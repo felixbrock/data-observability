@@ -1,4 +1,4 @@
-interface QueryResultElement {
+export interface QueryResultElement {
   [key: string]: any;
 }
 export interface SnowflakeQueryResultDto {

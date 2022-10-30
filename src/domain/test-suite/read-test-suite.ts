@@ -94,6 +94,8 @@ export class ReadTestSuite
             targetResourceId: organizationResults[0].TARGET_RESOURCE_ID,
           },
           organizationId: organizationResults[0].ORGANIZATION_ID,
+          cron: organizationResults[0].CRON,
+          executionType: organizationResults[0].EXECUTION_TYPE,
         })
       );
     } catch (error: unknown) {

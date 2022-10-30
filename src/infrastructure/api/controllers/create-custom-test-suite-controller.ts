@@ -48,6 +48,8 @@ export default class CreateCustomTestSuiteController extends BaseController {
     description: httpRequest.body.description,
     sqlLogic: httpRequest.body.sqlLogic,
     targetResourceIds: httpRequest.body.targetResourceIds,
+    cron: httpRequest.body.cron,
+    executionType: httpRequest.body.executionType,
   });
 
   #buildAuthDto = (
@@ -108,7 +110,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
         );
 
       await createCronJob(
-        {testSuiteId: result.id, testSuiteType: 'custom-test'},
+        { testSuiteId: result.id, testSuiteType: 'custom-test' },
         getFrequencyCronExpression(result.executionFrequency),
         authDto.callerOrganizationId
       );

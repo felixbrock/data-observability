@@ -6,7 +6,7 @@ import { DbConnection } from '../services/i-db';
 import { CreateAnomalyTestResult } from '../anomaly-test-result/create-anomaly-test-result';
 import { CreateNominalTestResult } from '../nominal-test-result/create-nominal-test-result';
 import { SendAnomalySlackAlert } from '../integration-api/slack/send-anomaly-alert';
-import { AnomalyAlertDto } from '../integration-api/slack/anomaly-alert-dto';
+import { AnomalyAlertDto as AnomalyTestAlertDto } from '../integration-api/slack/anomaly-alert-dto';
 import { SendNominalTestSlackAlert } from '../integration-api/slack/send-nominal-test-alert';
 import { NominalTestAlertDto } from '../integration-api/slack/nominal-test-alert-dto';
 import { NominalTestExecutionResultDto } from './nominal-test-execution-result-dto';
@@ -43,7 +43,7 @@ export class ExecuteTest
 
   readonly #createNominalTestResult: CreateNominalTestResult;
 
-  readonly #sendAnomalySlackAlert: SendAnomalySlackAlert;
+  readonly #sendAnomalyTestSlackAlert: SendAnomalySlackAlert;
 
   readonly #sendNominalTestSlackAlert: SendNominalTestSlackAlert;
 
@@ -59,7 +59,7 @@ export class ExecuteTest
     this.#testExecutionApiRepo = testExecutionApiRepo;
     this.#createAnomalyTestResult = createAnomalyTestResult;
     this.#createNominalTestResult = createNominalTestResult;
-    this.#sendAnomalySlackAlert = sendAnomalySlackAlert;
+    this.#sendAnomalyTestSlackAlert = sendAnomalySlackAlert;
     this.#sendNominalTestSlackAlert = sendNominalTestSlackAlert;
   }
 
@@ -97,15 +97,12 @@ export class ExecuteTest
     const createTestResultResult = await this.#createAnomalyTestResult.execute(
       {
         isWarmup: testExecutionResult.isWarmup,
-        executionFrequency: testExecutionResult.executionFrequency,
         executionId: testExecutionResult.executionId,
         testData,
         alertData: testExecutionResult.alertData
           ? { alertId: testExecutionResult.alertData.alertId }
           : undefined,
         testSuiteId: testExecutionResult.testSuiteId,
-        testType: testExecutionResult.testType,
-        threshold: testExecutionResult.threshold,
         targetResourceId: testExecutionResult.targetResourceId,
         targetOrganizationId: testExecutionResult.organizationId,
       },
@@ -128,7 +125,7 @@ export class ExecuteTest
         'Missing alert data. Previous checks indicated alert data'
       );
 
-    const alertDto: AnomalyAlertDto = {
+    const alertDto: AnomalyTestAlertDto = {
       alertId: testExecutionResult.alertData.alertId,
       testType: testExecutionResult.testType,
       detectedOn: testExecutionResult.testData.executedOn,
@@ -144,7 +141,7 @@ export class ExecuteTest
       resourceId: testExecutionResult.targetResourceId,
     };
 
-    const sendSlackAlertResult = await this.#sendAnomalySlackAlert.execute(
+    const sendSlackAlertResult = await this.#sendAnomalyTestSlackAlert.execute(
       { alertDto, targetOrganizationId: testExecutionResult.organizationId },
       { jwt: auth.jwt }
     );

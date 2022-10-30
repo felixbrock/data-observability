@@ -5,13 +5,9 @@ import sanitize from 'mongo-sanitize';
 
 import { IAnomalyTestResultRepo } from '../../domain/anomaly-test-result/i-anomaly-test-result-repo';
 import { AnomalyTestResult } from '../../domain/value-types/anomaly-test-result';
-import { TestType } from '../../domain/entities/test-suite';
 
 interface AnomalyTestResultPersistence {
   testSuiteId: string;
-  testType: TestType;
-  threshold: number;
-  executionFrequency: number;
   executionId: string;
   isWarmup: boolean;
   testData?: {

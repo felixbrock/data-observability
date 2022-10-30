@@ -13,6 +13,7 @@ export interface UpdateCustomTestSuiteRequestDto {
   description?: string;
   sqlLogic?: string;
   cron?: string;
+  executionType?: string;
 }
 
 export interface UpdateCustomTestSuiteAuthDto {
@@ -48,7 +49,8 @@ export class UpdateCustomTestSuite
         !request.description &&
         !request.name &&
         !request.sqlLogic &&
-        !request.targetResourceIds;
+        !request.targetResourceIds &&
+        !request.executionType;
       if (nothingToUpdate) return Result.ok(request.id);
 
       const readQuery = CitoDataQuery.getReadTestSuiteQuery([request.id], 'test_suites_custom');
@@ -80,10 +82,6 @@ export class UpdateCustomTestSuite
         columnDefinitions.push({ name: 'threshold' });
         updateValues.push(request.threshold);
       }
-      if (request.cron) {
-        columnDefinitions.push({ name: 'cron' });
-        updateValues.push(request.cron);
-      }
       if (request.description) {
         columnDefinitions.push({ name: 'description' });
         updateValues.push(request.description);
@@ -99,6 +97,14 @@ export class UpdateCustomTestSuite
       if (request.targetResourceIds) {
         columnDefinitions.push({ name: 'target_resource_ids' });
         updateValues.push(request.targetResourceIds);
+      }
+      if (request.cron) {
+        columnDefinitions.push({ name: 'cron' });
+        updateValues.push(request.cron);
+      }
+      if(request.executionType) {
+        columnDefinitions.push({name: 'execution_type'});
+        updateValues.push(request.executionType);
       }
 
       const values = [`(${updateValues.join(', ')})`];

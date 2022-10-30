@@ -10,6 +10,8 @@ export interface CreateCustomTestSuiteRequestDto {
   activated: boolean;
   threshold: number;
   executionFrequency: number;
+  cron?: string;
+  executionType: string;
   name: string;
   description: string;
   sqlLogic: string;
@@ -49,6 +51,8 @@ export class CreateCustomTestSuite
         sqlLogic: request.sqlLogic,
         activated: request.activated,
         executionFrequency: request.executionFrequency,
+        cron: request.cron,
+        executionType: request.executionType,
         organizationId: auth.callerOrganizationId,
         threshold: request.threshold,
         targetResourceIds: request.targetResourceIds,
@@ -65,6 +69,7 @@ export class CreateCustomTestSuite
         { name: 'target_resource_ids', selectType: 'parse_json' },
         { name: 'organization_id' },
         { name: 'cron' },
+        {name: 'execution_type'}
       ];
 
       const values = [
@@ -74,7 +79,7 @@ export class CreateCustomTestSuite
           customTestSuite.description
         }','${customTestSuite.sqlLogic}','[${customTestSuite.targetResourceIds
           .map((el) => `'${el}'`)
-          .join(',')}]','${customTestSuite.organizationId}',null)`,
+          .join(',')}]','${customTestSuite.organizationId}', ${customTestSuite.cron ? customTestSuite.cron: 'null'}, ${customTestSuite.executionType})`,
       ];
 
       const query = CitoDataQuery.getInsertQuery(

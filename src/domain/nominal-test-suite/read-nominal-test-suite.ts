@@ -42,12 +42,12 @@ export class ReadNominalTestSuite
     if (!request.targetOrganizationId && !auth.callerOrganizationId)
       throw new Error('No organization Id provided');
 
-      let organizationId;
-      if (auth.isSystemInternal && request.targetOrganizationId)
-        organizationId = request.targetOrganizationId;
-      else if (auth.callerOrganizationId)
-        organizationId = auth.callerOrganizationId;
-      else throw new Error('Unhandled organizationId allocation');
+    let organizationId;
+    if (auth.isSystemInternal && request.targetOrganizationId)
+      organizationId = request.targetOrganizationId;
+    else if (auth.callerOrganizationId)
+      organizationId = auth.callerOrganizationId;
+    else throw new Error('Unhandled organizationId allocation');
 
     try {
       // todo -replace
@@ -95,6 +95,8 @@ export class ReadNominalTestSuite
             targetResourceId: organizationResults[0].TARGET_RESOURCE_ID,
           },
           organizationId: organizationResults[0].ORGANIZATION_ID,
+          cron: organizationResults[0].CRON,
+          executionType: organizationResults[0].EXECUTION_TYPE,
         })
       );
     } catch (error: unknown) {

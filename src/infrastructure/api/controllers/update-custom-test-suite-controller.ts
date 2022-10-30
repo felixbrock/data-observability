@@ -45,6 +45,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
     description: httpRequest.body.description,
     sqlLogic: httpRequest.body.sqlLogic,
     cron: httpRequest.body.cron,
+    executionType: httpRequest.body.executionType,
   });
 
   #buildAuthDto = (jwt: string): UpdateCustomTestSuiteAuthDto => ({

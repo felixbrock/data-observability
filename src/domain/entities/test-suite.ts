@@ -1,4 +1,7 @@
-import { MaterializationType, parseMaterializationType } from '../value-types/materialization-type';
+import {
+  MaterializationType,
+  parseMaterializationType,
+} from '../value-types/materialization-type';
 import { BaseAnomalyTestSuite } from '../value-types/transient-types/base-test-suite';
 
 export interface TestTarget {
@@ -49,6 +52,8 @@ export interface TestSuiteDto {
   executionFrequency: number;
   target: TestTarget;
   organizationId: string;
+  cron?: string;
+  executionType: string;
 }
 
 export class TestSuite implements BaseAnomalyTestSuite {
@@ -65,6 +70,10 @@ export class TestSuite implements BaseAnomalyTestSuite {
   #threshold: number;
 
   #executionFrequency: number;
+
+  #cron?: string;
+
+  #executionType: string;
 
   get id(): string {
     return this.#id;
@@ -94,6 +103,14 @@ export class TestSuite implements BaseAnomalyTestSuite {
     return this.#executionFrequency;
   }
 
+  get cron(): string | undefined {
+    return this.#cron;
+  }
+
+  get executionType(): string {
+    return this.#executionType;
+  }
+
   private constructor(props: TestSuiteProperties) {
     this.#id = props.id;
     this.#organizationId = props.organizationId;
@@ -102,6 +119,8 @@ export class TestSuite implements BaseAnomalyTestSuite {
     this.#threshold = props.threshold;
     this.#executionFrequency = props.executionFrequency;
     this.#target = props.target;
+    this.#cron = props.cron;
+    this.#executionType = props.executionType;
   }
 
   static create = (props: TestSuiteProperties): TestSuite => {
@@ -110,6 +129,8 @@ export class TestSuite implements BaseAnomalyTestSuite {
     if (!remainingProps.id) throw new TypeError('TestSuite must have id');
     if (!remainingProps.organizationId)
       throw new TypeError('TestSuite must have organization id');
+    if (!remainingProps.executionType)
+      throw new TypeError('Test suite must have execution type');
     if (matTestTypes.includes(type) && target.columnName)
       throw new SyntaxError(
         'Column name provision only allowed for column level tests'
@@ -138,5 +159,7 @@ export class TestSuite implements BaseAnomalyTestSuite {
     executionFrequency: this.#executionFrequency,
     target: this.#target,
     organizationId: this.#organizationId,
+    cron: this.#cron,
+    executionType: this.#executionType,
   });
 }

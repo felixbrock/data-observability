@@ -27,7 +27,7 @@ export default class ReadTestSuitesController extends BaseController {
   }
 
   #buildRequestDto = (httpRequest: Request): ReadTestSuitesRequestDto => {
-    const { executionFrequency, activated } = httpRequest.query;
+    const { activated } = httpRequest.query;
 
     if (
       activated &&
@@ -40,7 +40,6 @@ export default class ReadTestSuitesController extends BaseController {
 
     return {
       activated: activated === 'true',
-      executionFrequency: Number(executionFrequency),
     };
   };
 
@@ -97,7 +96,10 @@ export default class ReadTestSuitesController extends BaseController {
     } catch (error: unknown) {
       if (error instanceof Error && error.message) console.trace(error.message);
       else if (!(error instanceof Error) && error) console.trace(error);
-      return ReadTestSuitesController.fail(res, 'read test suites - Unknown error occured');
+      return ReadTestSuitesController.fail(
+        res,
+        'read test suites - Unknown error occured'
+      );
     }
   }
 }

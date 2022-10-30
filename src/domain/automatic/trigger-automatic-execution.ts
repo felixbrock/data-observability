@@ -42,6 +42,8 @@ export class TriggerAutomaticExecution
 
   #dbConnection: DbConnection;
 
+  #jwt?: string;
+
   automaticExecutionFrequency = 5;
 
   constructor(querySnowflake: QuerySnowflake, executeTest: ExecuteTest) {
@@ -97,9 +99,10 @@ export class TriggerAutomaticExecution
     return representations;
   };
 
-  #buildAlteredQuery = (
-    representations: TestSuiteRepresentation[]
-  ): string => {
+  #buildAlteredQuery = (representations: TestSuiteRepresentation[]): string => {
+    if (!representations.length)
+      throw new Error('Provided representation property cannot be empty');
+
     const tableMatchingWhereElement = representations
       .map(
         (el) =>
@@ -116,40 +119,110 @@ export class TriggerAutomaticExecution
 
     const whereStatement = `(${tableMatchingWhereElement}) and (${alteredWhereElement})`;
 
-    // select  ;
+    return `select table_catalog, table_schema, table_name from ${representations}.information_schema.tables
+      where ${whereStatement};`;
   };
 
-  #queryAlteredTableInfo = async (representations: TestSuiteRepresentation[]) => {
-    
+  #queryAlteredTableInfo = async (
+    query: string,
+    targetOrganizationId: string
+  ): Promise<
+    { TABLE_CATALOG: string; TABLE_SCHEMA: string; TABLE_NAME: string }[]
+  > => {
+    if (!this.#jwt) throw new Error('Missing jwt');
 
-  }
+    const queryResult = await this.#querySnowflake.execute(
+      { query, targetOrganizationId },
+      { jwt: this.#jwt }
+    );
 
-  #handleDbGroupedRepresentations = async (representations: TestSuiteRepresentation[]): Promise<void> => {
-    const 
-    this.#getIdsOfChangedTables()
-  }
+    if (!queryResult.success) throw new Error(queryResult.error);
+    if (!queryResult.value)
+      throw new Error(
+        'Unexpected error when querying for altered table info - missing result value'
+      );
 
-  #groupByDb = (accumulation: {[key:string]: TestSuiteRepresentation[]}, representation: TestSuiteRepresentation) => {
+    const result = queryResult.value;
+
+    if (!(targetOrganizationId in result))
+      throw new Error(
+        `No query result for organization ${targetOrganizationId} returned`
+      );
+
+    return result[targetOrganizationId].map((el) => ({
+      TABLE_CATALOG: el.TABLE_CATALOG,
+      TABLE_SCHEMA: el.TABLE_SCHEMA,
+      TABLE_NAME: el.TABLE_NAME,
+    }));
+  };
+
+  #handleDbGroupedRepresentations = async (
+    representations: TestSuiteRepresentation[]
+  ): Promise<void> => {
+    const jwt = this.#jwt;
+    if (!jwt) throw new Error('Missing jwt');
+
+    const query = this.#buildAlteredQuery(representations);
+
+    const alteredMats = await this.#queryAlteredTableInfo(
+      query,
+      representations[0].organizationId
+    );
+
+    const testSuitesToTest = representations.filter(
+      (representation) =>
+        alteredMats.findIndex(
+          (el) =>
+            el.TABLE_CATALOG === representation.target.databaseName &&
+            el.TABLE_SCHEMA === representation.target.schemaName &&
+            el.TABLE_NAME === representation.target.materializationName
+        ) !== -1
+    );
+
+    /* 
+    Not awaited to avoid lambda function timeout
+    */
+    testSuitesToTest.forEach((el) =>
+      this.#executeTest.execute(
+        {
+          testSuiteId: el.id,
+          testType: el.type,
+          targetOrganizationId: el.organizationId,
+        },
+        { jwt },
+        this.#dbConnection
+      )
+    );
+  };
+
+  #groupByDb = (
+    accumulation: { [key: string]: TestSuiteRepresentation[] },
+    representation: TestSuiteRepresentation
+  ): { [key: string]: TestSuiteRepresentation[] } => {
     const localAcc = accumulation;
 
-    const {databaseName} = representation.target;
-    if(databaseName in localAcc)
-      localAcc[databaseName].push(representation);
-    else
-      localAcc[databaseName] = [representation];
+    const { databaseName } = representation.target;
+    if (databaseName in localAcc) localAcc[databaseName].push(representation);
+    else localAcc[databaseName] = [representation];
 
     return localAcc;
-  }
+  };
 
   #handleOrgTestSuiteRepresentations = async (
     representations: TestSuiteRepresentation[]
   ): Promise<void> => {
-    const representationsByDatabaseName = representations.reduce(this.#groupByDb, {});
+    const representationsByDatabaseName = representations.reduce(
+      this.#groupByDb,
+      {}
+    );
 
-    const handleResults = await Promise.all(Object.keys(representationsByDatabaseName).map(async (key) => await this.#handleDbGroupedRepresentations(representationsByDatabaseName[key])));
-
-
-    
+    await Promise.all(
+      Object.keys(representationsByDatabaseName).map(async (key) => {
+        await this.#handleDbGroupedRepresentations(
+          representationsByDatabaseName[key]
+        );
+      })
+    );
   };
 
   async execute(
@@ -158,6 +231,8 @@ export class TriggerAutomaticExecution
     dbConnection: DbConnection
   ): Promise<TriggerAutomaticExecutionResponseDto> {
     if (!auth.isSystemInternal) throw new Error('Unauthorized');
+
+    this.#jwt = auth.jwt;
 
     this.#dbConnection = dbConnection;
 
@@ -189,46 +264,12 @@ export class TriggerAutomaticExecution
       const testSuiteRepresentations =
         this.#getTestSuiteRepresentations(result);
 
-      /*
-        Do not await to avoid timeout issue
-      */
-      const triggeredTestExecutions = await Promise.all(
-        testSuiteRepresentations.map(
-          async (representationsPerOrg) =>
-            await this.#handleOrgTestSuiteRepresentations(representationsPerOrg)
-        )
-      );
-
-      //   Get last altered
-
-      testSuiteRepresentations.map(async (testSuite) => {
-        this.#executeTest.execute(
-          {
-            testSuiteId: testSuite.id,
-            testType: testSuite.type,
-            targetOrganizationId: testSuite.organizationId,
-          },
-          { jwt: auth.jwt },
-          this.#dbConnection
-        );
-      });
-
-      const isString = (obj: unknown): obj is string => typeof obj === 'string';
-
-      const failedExecutionErrorMessages = executionResults
-        .map((result) => {
-          if (!result.result.success)
-            return `Execution of test suite ${result.testSuiteId} for organization ${result.organizationId} failed with error msg: ${result.result.error}`;
-          return undefined;
+      await Promise.all(
+        testSuiteRepresentations.map(async (representationsPerOrg) => {
+          await this.#handleOrgTestSuiteRepresentations(representationsPerOrg);
         })
-        .filter(isString);
-
-      if (failedExecutionErrorMessages.length)
-        console.error(failedExecutionErrorMessages.join());
-
-      console.log(
-        `Finished execution of test suites with frequency ${request.frequency}`
       );
+
       return Result.ok();
     } catch (error: unknown) {
       if (error instanceof Error && error.message) console.trace(error.message);

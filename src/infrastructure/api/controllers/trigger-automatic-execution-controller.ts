@@ -6,7 +6,7 @@ import {
   TriggerAutomaticExecutionAuthDto,
   TriggerAutomaticExecutionRequestDto,
   TriggerAutomaticExecutionResponseDto,
-} from '../../../domain/test-suite/trigger-automatic-execution';
+} from '../../../domain/automatic/trigger-automatic-execution';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
 
@@ -33,7 +33,6 @@ export default class TriggerAutomaticExecutionController extends BaseController 
     this.#getAccounts = getAccounts;
     this.#dbo = dbo;
   }
-
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
@@ -75,8 +74,7 @@ export default class TriggerAutomaticExecutionController extends BaseController 
           'Unauthorized'
         );
 
-      const requestDto: TriggerAutomaticExecutionRequestDto =
-        null;
+      const requestDto: TriggerAutomaticExecutionRequestDto = null;
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 

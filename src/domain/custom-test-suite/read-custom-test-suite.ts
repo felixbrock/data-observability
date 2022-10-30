@@ -89,6 +89,8 @@ export class ReadCustomTestSuite
         sqlLogic: organizationResults[0].SQL_LOGIC,
         targetResourceIds: organizationResults[0].TARGET_RESOURCE_IDS,
         organizationId: organizationResults[0].ORGANIZATION_ID,
+        cron: organizationResults[0].CRON,
+        executionType: organizationResults[0].EXECUTION_TYPE
       });
     } catch (error: unknown) {
       if (error instanceof Error && error.message) console.trace(error.message);

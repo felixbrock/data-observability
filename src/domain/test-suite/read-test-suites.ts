@@ -43,7 +43,9 @@ export class ReadTestSuites
       const query = CitoDataQuery.getReadTestSuitesQuery(
         'test_suites',
         [],
-        request.activated
+        request.activated !== undefined
+          ? `activated = ${request.activated}`
+          : ''
       );
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
@@ -77,6 +79,8 @@ export class ReadTestSuites
               targetResourceId: element.TARGET_RESOURCE_ID,
             },
             organizationId: element.ORGANIZATION_ID,
+            cron: element.CRON,
+            executionType: element.EXECUTION_TYPE,
           })
         );
 

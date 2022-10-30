@@ -4,6 +4,7 @@ export interface BaseTestSuite{
   activated: boolean;
   executionFrequency: number;
   cron?: string;
+  executionType: string;
 }
 
 export interface BaseAnomalyTestSuite extends BaseTestSuite{

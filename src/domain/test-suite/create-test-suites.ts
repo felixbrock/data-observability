@@ -2,10 +2,7 @@
 import { ObjectId } from 'mongodb';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import {
-  TestSuite,
-  TestType,
-} from '../entities/test-suite';
+import { TestSuite, TestType } from '../entities/test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
 import { MaterializationType } from '../value-types/materialization-type';
@@ -21,6 +18,8 @@ interface CreateObject {
   materializationType: MaterializationType;
   columnName?: string;
   targetResourceId: string;
+  cron?: string;
+  executionType: string;
 }
 
 export interface CreateTestSuitesRequestDto {
@@ -69,6 +68,8 @@ export class CreateTestSuites
             targetResourceId: createObject.targetResourceId,
           },
           organizationId: auth.callerOrganizationId,
+          cron: createObject.cron,
+          executionType: createObject.executionType,
         })
       );
 
@@ -86,6 +87,7 @@ export class CreateTestSuites
         { name: 'target_resource_id' },
         { name: 'organization_id' },
         { name: 'cron' },
+        { name: 'execution_type' },
       ];
 
       const values = testSuites.map(
@@ -96,7 +98,9 @@ export class CreateTestSuites
             el.target.materializationName
           }','${el.target.materializationType}','${
             el.target.columnName ? el.target.columnName : null
-          }','${el.target.targetResourceId}','${el.organizationId}', null)`
+          }','${el.target.targetResourceId}','${el.organizationId}', ${
+            el.cron || 'null'
+          }, ${el.executionType})`
       );
 
       const query = CitoDataQuery.getInsertQuery(
@@ -104,7 +108,7 @@ export class CreateTestSuites
         columnDefinitions,
         values
       );
-     
+
       const querySnowflakeResult = await this.#querySnowflake.execute(
         { query },
         { jwt: auth.jwt }

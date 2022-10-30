@@ -5,11 +5,9 @@ import sanitize from 'mongo-sanitize';
 
 import { INominalTestResultRepo } from '../../domain/nominal-test-result/i-nominal-test-result-repo';
 import { NominalTestResult } from '../../domain/value-types/nominal-test-result';
-import { TestType } from '../../domain/entities/test-suite';
 
 interface NominalTestResultPersistence {
   testSuiteId: string;
-  testType: TestType;
   executionId: string;
   testData?: {
     executedOn: string;
@@ -36,17 +34,21 @@ export default class NominalTestResultRepo implements INominalTestResultRepo {
         .insertOne(await this.#toPersistence(sanitize(nominalTestResult)));
 
       if (!result.acknowledged)
-        throw new Error('NominalTestResult creation failed. Insert not acknowledged');
+        throw new Error(
+          'NominalTestResult creation failed. Insert not acknowledged'
+        );
 
       return result.insertedId.toHexString();
     } catch (error: unknown) {
-      if(error instanceof Error && error.message) console.trace(error.message); 
+      if (error instanceof Error && error.message) console.trace(error.message);
       else if (!(error instanceof Error) && error) console.trace(error);
       return Promise.reject(new Error(''));
     }
   };
 
-  #toPersistence = async (nominalTestResult: NominalTestResult): Promise<Document> => {
+  #toPersistence = async (
+    nominalTestResult: NominalTestResult
+  ): Promise<Document> => {
     const persistenceObject: NominalTestResultPersistence = {
       ...nominalTestResult,
     };

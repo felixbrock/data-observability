@@ -1,4 +1,7 @@
-import { CustomTestSuite, CustomTestSuiteDto } from '../entities/custom-test-suite';
+import {
+  CustomTestSuite,
+  CustomTestSuiteDto,
+} from '../entities/custom-test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
 import { DbConnection } from '../services/i-db';
@@ -43,8 +46,20 @@ export class ReadCustomTestSuites
     try {
       const query = CitoDataQuery.getReadTestSuitesQuery(
         'test_suites_custom',
-        request.executionFrequency,
-        request.activated
+        [],
+        `${
+          request.executionFrequency
+            ? `execution_frequency = ${request.executionFrequency}`
+            : ''
+        } ${
+          request.executionFrequency && request.activated !== undefined
+            ? 'and'
+            : ''
+        } ${
+          request.activated !== undefined
+            ? `activated = ${request.activated}`
+            : ''
+        }`
       );
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
@@ -73,6 +88,8 @@ export class ReadCustomTestSuites
             sqlLogic: element.SQL_LOGIC,
             targetResourceIds: element.TARGET_RESOURCE_IDS,
             organizationId: element.ORGANIZATION_ID,
+            cron: element.CRON,
+            executionType: element.EXECUTION_TYPE
           })
         );
 

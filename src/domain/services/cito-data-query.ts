@@ -15,6 +15,7 @@ export interface CustomTestSuiteUpdateDto {
   sqlLogic?: string;
   targetResourceIds?: string[];
   cron?: string;
+  executionType: string;
 }
 
 export const citoMaterializationNames = [

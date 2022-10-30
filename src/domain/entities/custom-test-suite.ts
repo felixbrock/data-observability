@@ -7,7 +7,9 @@ export const customTestTypes = [
 export type CustomTestType = typeof customTestTypes[number];
 
 export const parseCustomTestType = (testType: unknown): CustomTestType => {
-  const identifiedElement = customTestTypes.find((element) => element === testType);
+  const identifiedElement = customTestTypes.find(
+    (element) => element === testType
+  );
   if (identifiedElement) return identifiedElement;
   throw new Error('Provision of invalid type');
 };
@@ -42,6 +44,10 @@ export class CustomTestSuite implements CustomTestSuiteDto {
   #sqlLogic: string;
 
   #targetResourceIds: string[];
+
+  #cron?: string;
+
+  #executionType: string;
 
   get id(): string {
     return this.#id;
@@ -79,6 +85,14 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     return this.#targetResourceIds;
   }
 
+  get cron(): string | undefined {
+    return this.#cron;
+  }
+
+  get executionType(): string {
+    return this.#executionType;
+  }
+
   private constructor(props: CustomTestSuiteProperties) {
     this.#id = props.id;
     this.#organizationId = props.organizationId;
@@ -89,6 +103,8 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     this.#description = props.description;
     this.#sqlLogic = props.sqlLogic;
     this.#targetResourceIds = props.targetResourceIds;
+    this.#cron = props.cron;
+    this.#executionType = props.executionType;
   }
 
   static create = (props: CustomTestSuiteProperties): CustomTestSuite => {
@@ -100,8 +116,8 @@ export class CustomTestSuite implements CustomTestSuiteDto {
       throw new TypeError('CustomTestSuite must have description');
     if (!props.sqlLogic)
       throw new TypeError('CustomTestSuite must have sqlLogic');
-    if (!props.targetResourceIds)
-      throw new TypeError('CustomTestSuite must have targetResourceIds');
+    if (!props.executionType)
+      throw new TypeError('CustomTestSuite must have execution type');
 
     return new CustomTestSuite(props);
   };
@@ -116,5 +132,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     sqlLogic: this.#sqlLogic,
     targetResourceIds: this.#targetResourceIds,
     threshold: this.#threshold,
+    cron: this.#cron,
+    executionType: this.#executionType,
   });
 }

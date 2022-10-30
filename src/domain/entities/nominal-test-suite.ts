@@ -41,6 +41,8 @@ export interface NominalTestSuiteDto {
   executionFrequency: number;
   target: TestTarget;
   organizationId: string;
+  cron?: string;
+  executionType: string;
 }
 
 export class NominalTestSuite implements BaseTestSuite {
@@ -55,6 +57,10 @@ export class NominalTestSuite implements BaseTestSuite {
   #target: TestTarget;
 
   #executionFrequency: number;
+
+  #cron?: string;
+
+  #executionType: string;
 
   get id(): string {
     return this.#id;
@@ -80,6 +86,14 @@ export class NominalTestSuite implements BaseTestSuite {
     return this.#executionFrequency;
   }
 
+  get cron(): string | undefined {
+    return this.#cron;
+  }
+
+  get executionType(): string {
+    return this.#executionType;
+  }
+
   private constructor(props: NominalTestSuiteProperties) {
     this.#id = props.id;
     this.#organizationId = props.organizationId;
@@ -87,6 +101,8 @@ export class NominalTestSuite implements BaseTestSuite {
     this.#type = props.type;
     this.#executionFrequency = props.executionFrequency;
     this.#target = props.target;
+    this.#cron = props.cron;
+    this.#executionType = props.executionType;
   }
 
   static create = (props: NominalTestSuiteProperties): NominalTestSuite => {
@@ -95,6 +111,8 @@ export class NominalTestSuite implements BaseTestSuite {
     if (!remainingProps.id) throw new TypeError('TestSuite must have id');
     if (!remainingProps.organizationId)
       throw new TypeError('TestSuite must have organization id');
+    if (!remainingProps.executionType)
+      throw new TypeError('Test suite must have execution type');
     if (nominalMatTestTypes.includes(type) && target.columnName)
       throw new SyntaxError(
         'Column name provision only allowed for column level tests'
@@ -122,5 +140,7 @@ export class NominalTestSuite implements BaseTestSuite {
     executionFrequency: this.#executionFrequency,
     target: this.#target,
     organizationId: this.#organizationId,
+    cron: this.#cron,
+    executionType: this.#executionType,
   });
 }

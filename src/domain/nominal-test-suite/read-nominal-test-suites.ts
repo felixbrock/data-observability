@@ -43,8 +43,20 @@ export class ReadNominalTestSuites
     try {
       const query = CitoDataQuery.getReadTestSuitesQuery(
         'test_suites_nominal',
-        request.executionFrequency,
-        request.activated
+        [],
+        `${
+          request.executionFrequency
+            ? `execution_frequency = ${request.executionFrequency}`
+            : ''
+        } ${
+          request.executionFrequency && request.activated !== undefined
+            ? 'and'
+            : ''
+        } ${
+          request.activated !== undefined
+            ? `activated = ${request.activated}`
+            : ''
+        }`
       );
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
@@ -77,6 +89,8 @@ export class ReadNominalTestSuites
               targetResourceId: element.TARGET_RESOURCE_ID,
             },
             organizationId: element.ORGANIZATION_ID,
+            cron: element.CRON,
+          executionType: element.EXECUTION_TYPE,
           })
         );
 

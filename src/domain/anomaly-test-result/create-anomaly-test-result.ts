@@ -4,13 +4,9 @@ import IUseCase from '../services/use-case';
 import { AnomalyTestResult } from '../value-types/anomaly-test-result';
 import { DbConnection } from '../services/i-db';
 import { IAnomalyTestResultRepo } from './i-anomaly-test-result-repo';
-import { TestType } from '../entities/test-suite';
 
 export interface CreateAnomalyTestResultRequestDto {
   testSuiteId: string;
-  testType: TestType;
-  threshold: number;
-  executionFrequency: number;
   executionId: string;
   isWarmup: boolean;
   testData?: {

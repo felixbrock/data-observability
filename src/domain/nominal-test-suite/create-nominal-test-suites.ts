@@ -15,6 +15,8 @@ interface CreateObject {
   type: NominalTestType;
   threshold: number;
   executionFrequency: number;
+  cron?: string;
+  executionType: string;
   databaseName: string;
   schemaName: string;
   materializationName: string;
@@ -68,6 +70,8 @@ export class CreateNominalTestSuites
             targetResourceId: createObject.targetResourceId,
           },
           organizationId: auth.callerOrganizationId,
+          cron: createObject.cron,
+          executionType: createObject.executionType,
         })
       );
 
@@ -84,6 +88,7 @@ export class CreateNominalTestSuites
         { name: 'target_resource_id' },
         { name: 'organization_id' },
         { name: 'cron' },
+        { name: 'execution_type' },
       ];
 
       const values = nominalTestSuites.map(
@@ -94,7 +99,9 @@ export class CreateNominalTestSuites
             el.target.materializationType
           }','${el.target.columnName ? el.target.columnName : null}','${
             el.target.targetResourceId
-          }','${el.organizationId}', null)`
+          }','${el.organizationId}', ${el.cron ? el.cron : 'null'}, ${
+            el.executionType
+          })`
       );
 
       const query = CitoDataQuery.getInsertQuery(
