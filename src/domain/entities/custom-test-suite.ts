@@ -16,6 +16,7 @@ export const parseCustomTestType = (testType: unknown): CustomTestType => {
 };
 
 export interface CustomTestSuiteProperties extends BaseAnomalyTestSuite {
+  id: string;
   name: string;
   description: string;
   sqlLogic: string;
@@ -23,9 +24,7 @@ export interface CustomTestSuiteProperties extends BaseAnomalyTestSuite {
   // template?: TestTemplate
 }
 
-export interface CustomTestSuiteDto extends CustomTestSuiteProperties {
-  id: string;
-}
+export type CustomTestSuiteDto = CustomTestSuiteProperties;
 
 export class CustomTestSuite implements CustomTestSuiteDto {
   #id: string;

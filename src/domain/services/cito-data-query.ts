@@ -49,6 +49,8 @@ export interface ColumnDefinition {
   selectType?: string;
 }
 
+const automaticExecutionFrequency = 5;
+
 export default class CitoDataQuery {
   static getInsertQuery = (
     materializationAddress: string,
@@ -79,8 +81,8 @@ export default class CitoDataQuery {
     namesOfFieldsToReturn: string[],
     where?: string
   ): string => `select ${
-      !namesOfFieldsToReturn.length ? '*' : namesOfFieldsToReturn.join(', ')
-    } from cito.observability.${tableName}
+    !namesOfFieldsToReturn.length ? '*' : namesOfFieldsToReturn.join(', ')
+  } from cito.observability.${tableName}
     ${where ? `where ${where}` : ''}`;
 
   static getUpdateQuery = (
@@ -119,5 +121,25 @@ when matched then update set ${columnDefinitions
   set user_feedback_is_anomaly = ${userFeedbackIsAnomaly}
   where alert_id = '${alertId}';
 `;
+  };
+
+  static getWasAltered = (target: {
+    databaseName: string;
+    schemaName: string;
+    matName: string;
+  }): string => {
+    const tableMatchingWhereElement = `
+    table_catalog = "${target.databaseName}" 
+    and table_schema = "${target.schemaName}" 
+    and table_name = "${target.matName}"
+    `;
+
+    // todo - get last test execution time
+    const wasAltered = `timediff(minute, last_altered, current_timestamp::timestamp_ntz) < ${automaticExecutionFrequency}`;
+
+    const whereStatement = `${tableMatchingWhereElement}`;
+
+    return `select ${wasAltered} as was_altered from ${target.databaseName}.information_schema.tables
+      where ${whereStatement};`;
   };
 }
