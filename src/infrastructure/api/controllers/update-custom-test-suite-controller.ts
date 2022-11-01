@@ -8,6 +8,7 @@ import {
   UpdateCustomTestSuiteResponseDto,
 } from '../../../domain/custom-test-suite/update-custom-test-suite';
 import {
+  TargetInputPrototype,
   getAutomaticCronExpression,
   getFrequencyCronExpression,
   patchCronJob,
@@ -124,13 +125,14 @@ export default class UpdateCustomTestSuiteController extends BaseController {
         requestDto.activated !== undefined
       ) {
         let cron: string | undefined;
+        let testSuiteSpecs: TargetInputPrototype | {testSuiteId: string} = {testSuiteId: requestDto.id, testSuiteType.}
         if (requestDto.executionType === 'automatic')
           cron = getAutomaticCronExpression();
         else if (requestDto.cron) cron = requestDto.cron;
         else if (requestDto.frequency)
           cron = getFrequencyCronExpression(requestDto.frequency);
 
-        await patchCronJob(requestDto.id, {
+        await patchCronJob(, {
           cron,
           toBeActivated: requestDto.activated,
           executionType: requestDto.executionType,

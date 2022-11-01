@@ -110,7 +110,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
           'Custom test suite not created. Internal error.'
         );
 
-      let cron : string;
+      let cron: string;
       switch (result.executionType) {
         case 'automatic':
           cron = getAutomaticCronExpression();
@@ -119,7 +119,10 @@ export default class CreateCustomTestSuiteController extends BaseController {
           cron = getFrequencyCronExpression(result.executionFrequency);
           break;
         case 'individual':
-          if(!result.cron) throw new Error(`Created test suite ${result.id} misses cron value while holding execution type "individual"`);
+          if (!result.cron)
+            throw new Error(
+              `Created test suite ${result.id} misses cron value while holding execution type "individual"`
+            );
           cron = result.cron;
           break;
         default:
@@ -127,9 +130,12 @@ export default class CreateCustomTestSuiteController extends BaseController {
       }
 
       await createCronJob(
-        { testSuiteId: result.id, testSuiteType: 'custom-test' },
+        {
+          testSuiteId: result.id,
+          testSuiteType: 'custom-test',
+          executionType: result.executionType,
+        },
         cron,
-        result.executionType,
         authDto.callerOrganizationId
       );
 

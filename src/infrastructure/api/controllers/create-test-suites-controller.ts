@@ -113,9 +113,12 @@ export default class CreateTestSuitesController extends BaseController {
           }
 
           await createCronJob(
-            { testSuiteId: el.id, testSuiteType: 'test' },
+            {
+              testSuiteId: el.id,
+              testSuiteType: 'test',
+              executionType: el.executionType,
+            },
             cron,
-            el.executionType,
             authDto.callerOrganizationId
           );
         })

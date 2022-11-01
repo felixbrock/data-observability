@@ -42,6 +42,7 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
     return {
       id,
       targetOrganizationId: httpRequest.body.targetOrganizationId,
+      executionType: httpRequest.body.executionType,
     };
   };
 

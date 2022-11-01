@@ -39,6 +39,8 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
   ): TriggerNominalTestSuiteExecutionRequestDto => ({
     id: httpRequest.params.id,
     targetOrganizationId: httpRequest.body.targetOrganizationId,
+    executionType: httpRequest.body.executionType,
+
   });
 
   #buildAuthDto = (
