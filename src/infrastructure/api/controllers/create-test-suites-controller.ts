@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   createCronJob,
+  getAutomaticCronExpression,
   getFrequencyCronExpression,
 } from '../../../domain/services/cron-job';
 
@@ -92,9 +93,29 @@ export default class CreateTestSuitesController extends BaseController {
 
       await Promise.all(
         resultValues.map(async (el) => {
+          let cron: string;
+          switch (el.executionType) {
+            case 'automatic':
+              cron = getAutomaticCronExpression();
+              break;
+            case 'frequency':
+              cron = getFrequencyCronExpression(el.executionFrequency);
+              break;
+            case 'individual':
+              if (!el.cron)
+                throw new Error(
+                  `Created test suite ${el.id} misses cron value while holding execution type "individual"`
+                );
+              cron = el.cron;
+              break;
+            default:
+              throw new Error('Unhandled execution type');
+          }
+
           await createCronJob(
             { testSuiteId: el.id, testSuiteType: 'test' },
-            getFrequencyCronExpression(el.executionFrequency),
+            cron,
+            el.executionType,
             authDto.callerOrganizationId
           );
         })

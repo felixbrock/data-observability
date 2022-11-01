@@ -8,9 +8,11 @@ import {
   UpdateCustomTestSuiteResponseDto,
 } from '../../../domain/custom-test-suite/update-custom-test-suite';
 import {
+  getAutomaticCronExpression,
   getFrequencyCronExpression,
   patchCronJob,
 } from '../../../domain/services/cron-job';
+import { parseExecutionType } from '../../../domain/value-types/execution-type';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -35,18 +37,37 @@ export default class UpdateCustomTestSuiteController extends BaseController {
 
   #buildRequestDto = (
     httpRequest: Request
-  ): UpdateCustomTestSuiteRequestDto => ({
-    id: httpRequest.params.id,
-    activated: httpRequest.body.activated,
-    threshold: httpRequest.body.threshold,
-    frequency: httpRequest.body.frequency,
-    targetResourceIds: httpRequest.body.targetResourceIds,
-    name: httpRequest.body.name,
-    description: httpRequest.body.description,
-    sqlLogic: httpRequest.body.sqlLogic,
-    cron: httpRequest.body.cron,
-    executionType: httpRequest.body.executionType,
-  });
+  ): UpdateCustomTestSuiteRequestDto => {
+    const {
+      cron,
+      frequency,
+      executionType: rawExecutionType,
+      ...remainingBody
+    } = httpRequest.body;
+    const executionType = parseExecutionType(rawExecutionType);
+
+    if (cron && executionType !== 'individual')
+      throw new Error(
+        `Cron value provided, but execution type is ${executionType}`
+      );
+    if (frequency && executionType !== 'frequency')
+      throw new Error(
+        `Frequency value provided, but execution type is ${executionType}`
+      );
+
+    return {
+      id: httpRequest.params.id,
+      activated: remainingBody.activated,
+      threshold: remainingBody.threshold,
+      frequency,
+      targetResourceIds: remainingBody.targetResourceIds,
+      name: remainingBody.name,
+      description: remainingBody.description,
+      sqlLogic: remainingBody.sqlLogic,
+      cron,
+      executionType,
+    };
+  };
 
   #buildAuthDto = (jwt: string): UpdateCustomTestSuiteAuthDto => ({
     jwt,
@@ -99,16 +120,20 @@ export default class UpdateCustomTestSuiteController extends BaseController {
       if (
         requestDto.cron ||
         requestDto.frequency ||
+        requestDto.executionType ||
         requestDto.activated !== undefined
       ) {
         let cron: string | undefined;
-        if (requestDto.cron) cron = requestDto.cron;
+        if (requestDto.executionType === 'automatic')
+          cron = getAutomaticCronExpression();
+        else if (requestDto.cron) cron = requestDto.cron;
         else if (requestDto.frequency)
           cron = getFrequencyCronExpression(requestDto.frequency);
 
         await patchCronJob(requestDto.id, {
           cron,
           toBeActivated: requestDto.activated,
+          executionType: requestDto.executionType,
         });
       }
 

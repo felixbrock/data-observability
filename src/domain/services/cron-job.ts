@@ -4,10 +4,15 @@ import {
   PutRuleCommandInput,
   PutTargetsCommand,
   PutTargetsCommandInput,
+  TagResourceCommand,
+  TagResourceCommandInput,
 } from '@aws-sdk/client-eventbridge';
 import { appConfig } from '../../config';
+import { ExecutionType } from '../value-types/execution-type';
 
 type TestSuiteType = 'test' | 'custom-test' | 'nominal-test';
+
+export const getAutomaticCronExpression = (): string => `*/5 * * * ? *`;
 
 export const getFrequencyCronExpression = (frequency: number): string => {
   const currentDate = new Date();
@@ -41,8 +46,12 @@ aws lambda add-permission --function-name "test-suite-execution-job-production-a
 */
 
 export const createCronJob = async (
-  testSuiteSpecs: { testSuiteId: string; testSuiteType: TestSuiteType },
+  testSuiteSpecs: {
+    testSuiteId: string;
+    testSuiteType: TestSuiteType;
+  },
   cron: string,
+  executionType: ExecutionType,
   organizationId: string
 ): Promise<void> => {
   const eventBridgeClient = new EventBridgeClient({
@@ -57,6 +66,7 @@ export const createCronJob = async (
     Tags: [
       { Key: 'test-suite-id', Value: testSuiteSpecs.testSuiteId },
       { Key: 'organization-id', Value: organizationId },
+      { Key: 'execution-type', Value: executionType },
     ],
     ScheduleExpression: `cron(${cron})`,
     State: 'ENABLED',
@@ -76,7 +86,7 @@ export const createCronJob = async (
         Arn: appConfig.cloud.testExecutionJobArn,
         Id: 'test-execution-job',
         Input: JSON.stringify({
-          ...testSuiteSpecs
+          ...testSuiteSpecs,
         }),
       },
     ],
@@ -93,11 +103,26 @@ export const createCronJob = async (
   );
 };
 
+const tagRule = async (
+  client: EventBridgeClient,
+  arn: string,
+  tags: { Key: string; Value: string }[]
+): Promise<void> => {
+  const input: TagResourceCommandInput = {
+    ResourceARN: arn,
+    Tags: tags,
+  };
+
+  const tagResourceCommand = new TagResourceCommand(input);
+  await client.send(tagResourceCommand);
+};
+
 export const patchCronJob = async (
   testSuiteId: string,
   updateProps: {
     cron?: string;
     toBeActivated?: boolean;
+    executionType?: ExecutionType;
   }
 ): Promise<void> => {
   if (!updateProps.cron && updateProps.toBeActivated === undefined)
@@ -121,9 +146,14 @@ export const patchCronJob = async (
 
   const response = await eventBridgeClient.send(command);
 
-  if (response.RuleArn) return;
+  if (!response.RuleArn)
+    throw new Error(
+      `Unexpected error occured while updating cron job for test suite ${testSuiteId}`
+    );
 
-  throw new Error(
-    `Unexpected error occured while updating cron job for test suite ${testSuiteId}`
-  );
+  if (!updateProps.executionType) return;
+
+  await tagRule(eventBridgeClient, response.RuleArn, [
+    { Key: 'execution-type', Value: updateProps.executionType },
+  ]);
 };

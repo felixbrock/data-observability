@@ -5,13 +5,14 @@ import IUseCase from '../services/use-case';
 import { CustomTestSuite } from '../entities/custom-test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
+import { ExecutionType } from '../value-types/execution-type';
 
 export interface CreateCustomTestSuiteRequestDto {
   activated: boolean;
   threshold: number;
   executionFrequency: number;
   cron?: string;
-  executionType: string;
+  executionType: ExecutionType;
   name: string;
   description: string;
   sqlLogic: string;
@@ -79,7 +80,7 @@ export class CreateCustomTestSuite
           customTestSuite.description
         }','${customTestSuite.sqlLogic}','[${customTestSuite.targetResourceIds
           .map((el) => `'${el}'`)
-          .join(',')}]','${customTestSuite.organizationId}', ${customTestSuite.cron ? customTestSuite.cron: 'null'}, ${customTestSuite.executionType})`,
+          .join(',')}]','${customTestSuite.organizationId}', ${customTestSuite.cron ? customTestSuite.cron: 'null'}, '${customTestSuite.executionType}')`,
       ];
 
       const query = CitoDataQuery.getInsertQuery(

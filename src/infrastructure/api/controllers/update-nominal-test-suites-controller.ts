@@ -14,7 +14,11 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from '../../shared/base-controller';
-import { getFrequencyCronExpression, patchCronJob, } from '../../../domain/services/cron-job';
+import {
+  getAutomaticCronExpression,
+  getFrequencyCronExpression,
+  patchCronJob,
+} from '../../../domain/services/cron-job';
 
 export default class UpdateNominalTestSuitesController extends BaseController {
   readonly #updateNominalTestSuites: UpdateNominalTestSuites;
@@ -98,21 +102,26 @@ export default class UpdateNominalTestSuitesController extends BaseController {
           'Update of test suites failed. Internal error.'
         );
 
-        await Promise.all(
-          requestDto.updateObjects.map(async (el) => {
-            if (el.cron || el.frequency || el.activated !== undefined) {
-              let cron: string | undefined;
-              if (el.cron) cron = el.cron;
-              else if (el.frequency)
-                cron = getFrequencyCronExpression(el.frequency);
-  
-              await patchCronJob(el.id, {
-                cron,
-                toBeActivated: el.activated,
-              });
-            }
-          })
-        );
+      await Promise.all(
+        requestDto.updateObjects.map(async (el) => {
+          const { id, cron, frequency, executionType, activated } = el;
+
+          if (cron || frequency || executionType || activated !== undefined) {
+            let localCron: string | undefined;
+            if (executionType === 'automatic')
+              localCron = getAutomaticCronExpression();
+            else if (cron) localCron = cron;
+            else if (frequency)
+              localCron = getFrequencyCronExpression(frequency);
+
+            await patchCronJob(id, {
+              cron: localCron,
+              toBeActivated: activated,
+              executionType,
+            });
+          }
+        })
+      );
 
       return UpdateNominalTestSuitesController.ok(
         res,

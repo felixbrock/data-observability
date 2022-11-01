@@ -2,6 +2,7 @@ import IUseCase from '../services/use-case';
 import Result from '../value-types/transient-types/result';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
+import { ExecutionType } from '../value-types/execution-type';
 
 export interface UpdateCustomTestSuiteRequestDto {
   id: string;
@@ -13,7 +14,7 @@ export interface UpdateCustomTestSuiteRequestDto {
   description?: string;
   sqlLogic?: string;
   cron?: string;
-  executionType?: string;
+  executionType?: ExecutionType;
 }
 
 export interface UpdateCustomTestSuiteAuthDto {

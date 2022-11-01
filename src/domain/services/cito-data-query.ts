@@ -4,6 +4,7 @@ import {
   matTestTypes,
   TestType,
 } from '../entities/test-suite';
+import { ExecutionType } from '../value-types/execution-type';
 
 export interface CustomTestSuiteUpdateDto {
   id: string;
@@ -15,7 +16,7 @@ export interface CustomTestSuiteUpdateDto {
   sqlLogic?: string;
   targetResourceIds?: string[];
   cron?: string;
-  executionType: string;
+  executionType: ExecutionType;
 }
 
 export const citoMaterializationNames = [

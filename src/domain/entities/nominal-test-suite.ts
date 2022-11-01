@@ -1,3 +1,4 @@
+import { ExecutionType } from '../value-types/execution-type';
 import {
   MaterializationType,
   parseMaterializationType,
@@ -42,7 +43,7 @@ export interface NominalTestSuiteDto {
   target: TestTarget;
   organizationId: string;
   cron?: string;
-  executionType: string;
+  executionType: ExecutionType;
 }
 
 export class NominalTestSuite implements BaseTestSuite {
@@ -60,7 +61,7 @@ export class NominalTestSuite implements BaseTestSuite {
 
   #cron?: string;
 
-  #executionType: string;
+  #executionType: ExecutionType;
 
   get id(): string {
     return this.#id;
@@ -90,7 +91,7 @@ export class NominalTestSuite implements BaseTestSuite {
     return this.#cron;
   }
 
-  get executionType(): string {
+  get executionType(): ExecutionType {
     return this.#executionType;
   }
 

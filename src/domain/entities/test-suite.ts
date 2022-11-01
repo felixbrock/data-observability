@@ -1,3 +1,4 @@
+import { ExecutionType } from '../value-types/execution-type';
 import {
   MaterializationType,
   parseMaterializationType,
@@ -53,7 +54,7 @@ export interface TestSuiteDto {
   target: TestTarget;
   organizationId: string;
   cron?: string;
-  executionType: string;
+  executionType: ExecutionType;
 }
 
 export class TestSuite implements BaseAnomalyTestSuite {
@@ -73,7 +74,7 @@ export class TestSuite implements BaseAnomalyTestSuite {
 
   #cron?: string;
 
-  #executionType: string;
+  #executionType: ExecutionType;
 
   get id(): string {
     return this.#id;
@@ -107,7 +108,7 @@ export class TestSuite implements BaseAnomalyTestSuite {
     return this.#cron;
   }
 
-  get executionType(): string {
+  get executionType(): ExecutionType {
     return this.#executionType;
   }
 

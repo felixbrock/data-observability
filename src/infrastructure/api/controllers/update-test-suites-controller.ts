@@ -15,6 +15,7 @@ import {
   UserAccountInfo,
 } from '../../shared/base-controller';
 import {
+  getAutomaticCronExpression,
   getFrequencyCronExpression,
   patchCronJob,
 } from '../../../domain/services/cron-job';
@@ -91,15 +92,20 @@ export default class UpdateTestSuitesController extends BaseController {
 
       await Promise.all(
         requestDto.updateObjects.map(async (el) => {
-          if (el.cron || el.frequency || el.activated !== undefined) {
-            let cron: string | undefined;
-            if (el.cron) cron = el.cron;
-            else if (el.frequency)
-              cron = getFrequencyCronExpression(el.frequency);
+          const { id, cron, frequency, executionType, activated } = el;
 
-            await patchCronJob(el.id, {
-              cron,
-              toBeActivated: el.activated,
+          if (cron || frequency || executionType || activated !== undefined) {
+            let localCron: string | undefined;
+            if (executionType === 'automatic')
+              localCron = getAutomaticCronExpression();
+            else if (cron) localCron = cron;
+            else if (frequency)
+              localCron = getFrequencyCronExpression(frequency);
+
+            await patchCronJob(id, {
+              cron: localCron,
+              toBeActivated: activated,
+              executionType,
             });
           }
         })

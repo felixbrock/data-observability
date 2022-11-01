@@ -1,3 +1,4 @@
+import { ExecutionType } from '../value-types/execution-type';
 import { BaseAnomalyTestSuite } from '../value-types/transient-types/base-test-suite';
 
 export const customTestTypes = [
@@ -47,7 +48,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   #cron?: string;
 
-  #executionType: string;
+  #executionType: ExecutionType;
 
   get id(): string {
     return this.#id;
@@ -89,7 +90,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     return this.#cron;
   }
 
-  get executionType(): string {
+  get executionType(): ExecutionType {
     return this.#executionType;
   }
 

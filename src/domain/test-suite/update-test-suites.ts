@@ -3,6 +3,7 @@ import Result from '../value-types/transient-types/result';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
 import { SnowflakeQueryResultDto } from '../integration-api/snowflake/snowlake-query-result-dto';
+import { ExecutionType } from '../value-types/execution-type';
 
 interface UpdateObject {
   id: string;
@@ -10,6 +11,7 @@ interface UpdateObject {
   threshold?: number;
   frequency?: number;
   cron?: string;
+  executionType?: ExecutionType;
 }
 
 export interface UpdateTestSuitesRequestDto {
@@ -45,6 +47,7 @@ export class UpdateTestSuites
       const nothingToUpdate =
         request.updateObjects[0].activated === undefined &&
         !request.updateObjects[0].frequency &&
+        !request.updateObjects[0].executionType &&
         !request.updateObjects[0].cron &&
         !request.updateObjects[0].threshold;
       if (!request.updateObjects.length || nothingToUpdate) return Result.ok();
@@ -79,6 +82,8 @@ export class UpdateTestSuites
         columnDefinitions.push({ name: 'activated' });
       if (request.updateObjects[0].frequency)
         columnDefinitions.push({ name: 'execution_frequency' });
+      if (request.updateObjects[0].executionType)
+        columnDefinitions.push({ name: 'execution_type' });
       if (request.updateObjects[0].threshold)
         columnDefinitions.push({ name: 'threshold' });
       if (request.updateObjects[0].cron)
@@ -90,6 +95,7 @@ export class UpdateTestSuites
         if (el.activated !== undefined) updateValues.push(el.activated);
         if (el.threshold) updateValues.push(el.threshold);
         if (el.frequency) updateValues.push(el.frequency);
+        if (el.executionType) updateValues.push(el.executionType);
         if (el.cron) updateValues.push(el.cron);
 
         return `(${updateValues.join(', ')})`;

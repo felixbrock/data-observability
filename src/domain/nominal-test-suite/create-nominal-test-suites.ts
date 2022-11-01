@@ -9,6 +9,7 @@ import {
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
 import { MaterializationType } from '../value-types/materialization-type';
+import { ExecutionType } from '../value-types/execution-type';
 
 interface CreateObject {
   activated: boolean;
@@ -16,7 +17,7 @@ interface CreateObject {
   threshold: number;
   executionFrequency: number;
   cron?: string;
-  executionType: string;
+  executionType: ExecutionType;
   databaseName: string;
   schemaName: string;
   materializationName: string;
@@ -99,9 +100,9 @@ export class CreateNominalTestSuites
             el.target.materializationType
           }','${el.target.columnName ? el.target.columnName : null}','${
             el.target.targetResourceId
-          }','${el.organizationId}', ${el.cron ? el.cron : 'null'}, ${
+          }','${el.organizationId}', ${el.cron ? el.cron : 'null'}, '${
             el.executionType
-          })`
+          }')`
       );
 
       const query = CitoDataQuery.getInsertQuery(

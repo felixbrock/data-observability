@@ -9,6 +9,7 @@ import {
 } from '../../../domain/custom-test-suite/create-custom-test-suite';
 import {
   createCronJob,
+  getAutomaticCronExpression,
   getFrequencyCronExpression,
 } from '../../../domain/services/cron-job';
 import Result from '../../../domain/value-types/transient-types/result';
@@ -109,9 +110,26 @@ export default class CreateCustomTestSuiteController extends BaseController {
           'Custom test suite not created. Internal error.'
         );
 
+      let cron : string;
+      switch (result.executionType) {
+        case 'automatic':
+          cron = getAutomaticCronExpression();
+          break;
+        case 'frequency':
+          cron = getFrequencyCronExpression(result.executionFrequency);
+          break;
+        case 'individual':
+          if(!result.cron) throw new Error(`Created test suite ${result.id} misses cron value while holding execution type "individual"`);
+          cron = result.cron;
+          break;
+        default:
+          throw new Error('Unhandled execution type');
+      }
+
       await createCronJob(
         { testSuiteId: result.id, testSuiteType: 'custom-test' },
-        getFrequencyCronExpression(result.executionFrequency),
+        cron,
+        result.executionType,
         authDto.callerOrganizationId
       );
 
