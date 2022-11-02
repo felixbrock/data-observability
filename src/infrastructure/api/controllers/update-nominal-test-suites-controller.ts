@@ -18,6 +18,7 @@ import {
   getAutomaticCronExpression,
   getFrequencyCronExpression,
   patchCronJob,
+  patchTarget,
 } from '../../../domain/services/cron-job';
 
 export default class UpdateNominalTestSuitesController extends BaseController {
@@ -117,8 +118,12 @@ export default class UpdateNominalTestSuitesController extends BaseController {
             await patchCronJob(id, {
               cron: localCron,
               toBeActivated: activated,
-              executionType,
             });
+
+            if (executionType)
+              await patchTarget(id, {
+                executionType,
+              });
           }
         })
       );

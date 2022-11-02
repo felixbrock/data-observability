@@ -112,15 +112,10 @@ export default class CreateTestSuitesController extends BaseController {
               throw new Error('Unhandled execution type');
           }
 
-          await createCronJob(
-            {
-              testSuiteId: el.id,
-              testSuiteType: 'test',
-              executionType: el.executionType,
-            },
-            cron,
-            authDto.callerOrganizationId
-          );
+          await createCronJob(cron, el.id, authDto.callerOrganizationId, {
+            testSuiteType: 'test',
+            executionType: el.executionType,
+          });
         })
       );
 

@@ -7,7 +7,10 @@ import {
   PutTargetsCommandInput,
 } from '@aws-sdk/client-eventbridge';
 import { appConfig } from '../../config';
-import { ExecutionType } from '../value-types/execution-type';
+import {
+  ExecutionType,
+  parseExecutionType,
+} from '../value-types/execution-type';
 
 export const testSuiteTypes = ['test', 'custom-test', 'nominal-test'] as const;
 
@@ -58,13 +61,9 @@ export interface CreateCronTargetInputPrototype
   testSuiteType: TestSuiteType;
 }
 
-export interface UpdateCronTargetInputPrototype
-  extends BaseTargetInputPrototype {
-  testSuiteId: string;
-  targetOrganizationId: string;
-}
+export type UpdateCronTargetInputPrototype = BaseTargetInputPrototype;
 
-interface TargetInputProps extends BaseTargetInputPrototype {
+interface TargetInput extends BaseTargetInputPrototype {
   testSuiteType: TestSuiteType;
   testSuiteId: string;
   targetOrganizationId: string;
@@ -80,7 +79,7 @@ aws lambda add-permission --function-name "test-suite-execution-job-production-a
 const putTarget = async (
   client: EventBridgeClient,
   ruleName: string,
-  targetInputProps: TargetInputProps
+  targetInput: TargetInput
 ): Promise<void> => {
   const putTargetsInput: PutTargetsCommandInput = {
     Rule: ruleName,
@@ -89,7 +88,7 @@ const putTarget = async (
         Arn: appConfig.cloud.testExecutionJobArn,
         Id: 'test-execution-job',
         Input: JSON.stringify({
-          ...targetInputProps,
+          ...targetInput,
         }),
       },
     ],
@@ -101,7 +100,7 @@ const putTarget = async (
 
   if (putTargetsResponse.FailedEntryCount !== 0)
     throw new Error(
-      `Unexpected error occurred while creating cron job ( testSuiteId: ${targetInputProps.testSuiteId})`
+      `Unexpected error occurred while creating cron job ( testSuiteId: ${targetInput.testSuiteId})`
     );
 };
 
@@ -144,10 +143,10 @@ export const createCronJob = async (
   });
 };
 
-const getTestSuiteType = async (
+const getCurrentTargetInput = async (
   client: EventBridgeClient,
   ruleName: string
-): Promise<TestSuiteType> => {
+): Promise<TargetInput> => {
   const command = new ListTargetsByRuleCommand({
     Rule: ruleName,
   });
@@ -166,11 +165,17 @@ const getTestSuiteType = async (
 
   const input = JSON.parse(targetMatch.Input);
 
-  const { testSuiteType } = input;
+  const { testSuiteType, executionType, targetOrganizationId, testSuiteId } =
+    input;
 
   if (!testSuiteType) throw new Error('Target input is missing testSuiteType');
 
-  return parseTestSuiteType(testSuiteType);
+  return {
+    testSuiteType: parseTestSuiteType(testSuiteType),
+    executionType: parseExecutionType(executionType),
+    targetOrganizationId,
+    testSuiteId,
+  };
 };
 
 export const patchCronJob = async (
@@ -209,18 +214,22 @@ export const patchCronJob = async (
 };
 
 export const patchTarget = async (
+  testSuiteId: string,
   targetInputPrototype: UpdateCronTargetInputPrototype
 ): Promise<void> => {
   const eventBridgeClient = new EventBridgeClient({
     region: appConfig.cloud.region,
   });
 
-  const ruleName = `${rulePrefix}-${targetInputPrototype.testSuiteId}`;
+  const ruleName = `${rulePrefix}-${testSuiteId}`;
 
-  const testSuiteType = await getTestSuiteType(eventBridgeClient, ruleName);
+  const currentTargetInput = await getCurrentTargetInput(
+    eventBridgeClient,
+    ruleName
+  );
 
   await putTarget(eventBridgeClient, ruleName, {
-    testSuiteType,
-    ...targetInputPrototype,
+    ...currentTargetInput,
+    ...targetInputPrototype
   });
 };

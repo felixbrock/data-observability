@@ -56,7 +56,7 @@ export class ReadNominalTestSuites
           request.activated !== undefined
             ? `activated = ${request.activated}`
             : ''
-        }`
+        }`.replace(/\s/g, '') || undefined
       );
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
@@ -74,24 +74,25 @@ export class ReadNominalTestSuites
       const nominalTestSuites = Object.keys(result).map((key) => {
         const organizationResult = result[key];
 
-        const organizationNominalTestSuites = organizationResult.map((element) =>
-          NominalTestSuite.create({
-            id: element.ID,
-            type: element.TEST_TYPE,
-            activated: element.ACTIVATED,
-            executionFrequency: element.EXECUTION_FREQUENCY,
-            target: {
-              databaseName: element.DATABASE_NAME,
-              schemaName: element.SCHEMA_NAME,
-              materializationName: element.MATERIALIZATION_NAME,
-              materializationType: element.MATERIALIZATION_TYPE,
-              columnName: element.COLUMN_NAME,
-              targetResourceId: element.TARGET_RESOURCE_ID,
-            },
-            organizationId: element.ORGANIZATION_ID,
-            cron: element.CRON,
-          executionType: element.EXECUTION_TYPE,
-          })
+        const organizationNominalTestSuites = organizationResult.map(
+          (element) =>
+            NominalTestSuite.create({
+              id: element.ID,
+              type: element.TEST_TYPE,
+              activated: element.ACTIVATED,
+              executionFrequency: element.EXECUTION_FREQUENCY,
+              target: {
+                databaseName: element.DATABASE_NAME,
+                schemaName: element.SCHEMA_NAME,
+                materializationName: element.MATERIALIZATION_NAME,
+                materializationType: element.MATERIALIZATION_TYPE,
+                columnName: element.COLUMN_NAME,
+                targetResourceId: element.TARGET_RESOURCE_ID,
+              },
+              organizationId: element.ORGANIZATION_ID,
+              cron: element.CRON,
+              executionType: element.EXECUTION_TYPE,
+            })
         );
 
         return organizationNominalTestSuites;

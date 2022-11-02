@@ -45,7 +45,7 @@ export class ReadTestSuites
         [],
         request.activated !== undefined
           ? `activated = ${request.activated}`
-          : ''
+          : undefined
       );
 
       const querySnowflakeResult = await this.#querySnowflake.execute(

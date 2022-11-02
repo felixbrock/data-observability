@@ -117,11 +117,10 @@ export default class CreateNominalTestSuitesController extends BaseController {
               throw new Error('Unhandled execution type');
           }
 
-          await createCronJob(
-          { testSuiteId: el.id, testSuiteType: 'nominal-test' , executionType: el.executionType,},
-            cron,
-            authDto.callerOrganizationId
-          );
+          await createCronJob(cron, el.id, authDto.callerOrganizationId, {
+            testSuiteType: 'nominal-test',
+            executionType: el.executionType,
+          });
         })
       );
 

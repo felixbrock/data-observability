@@ -39,7 +39,7 @@ export default class ReadNominalTestSuitesController extends BaseController {
       );
 
     return {
-      activated: activated === 'true',
+      activated: activated ? activated === 'true' : undefined,
       executionFrequency: Number(executionFrequency),
     };
   };

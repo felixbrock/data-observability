@@ -42,7 +42,7 @@ export default class ReadCustomTestSuitesController extends BaseController {
       );
 
     return {
-      activated: activated === 'true',
+      activated: activated ? activated === 'true' : undefined,
       executionFrequency: Number(executionFrequency),
     };
   };

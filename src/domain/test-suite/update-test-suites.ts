@@ -95,8 +95,8 @@ export class UpdateTestSuites
         if (el.activated !== undefined) updateValues.push(el.activated);
         if (el.threshold) updateValues.push(el.threshold);
         if (el.frequency) updateValues.push(el.frequency);
-        if (el.executionType) updateValues.push(el.executionType);
-        if (el.cron) updateValues.push(el.cron);
+        if (el.executionType) updateValues.push(`'${el.executionType}'`);
+        if (el.cron) updateValues.push(`'${el.cron}'`);
 
         return `(${updateValues.join(', ')})`;
       });

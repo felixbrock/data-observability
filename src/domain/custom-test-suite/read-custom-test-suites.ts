@@ -59,7 +59,7 @@ export class ReadCustomTestSuites
           request.activated !== undefined
             ? `activated = ${request.activated}`
             : ''
-        }`
+        }`.replace(/\s/g, '') || undefined
       );
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
@@ -89,7 +89,7 @@ export class ReadCustomTestSuites
             targetResourceIds: element.TARGET_RESOURCE_IDS,
             organizationId: element.ORGANIZATION_ID,
             cron: element.CRON,
-            executionType: element.EXECUTION_TYPE
+            executionType: element.EXECUTION_TYPE,
           })
         );
 

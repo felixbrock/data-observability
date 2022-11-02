@@ -130,13 +130,13 @@ export default class CreateCustomTestSuiteController extends BaseController {
       }
 
       await createCronJob(
+        cron,
+        result.id,
+        authDto.callerOrganizationId,
         {
-          testSuiteId: result.id,
           testSuiteType: 'custom-test',
           executionType: result.executionType,
         },
-        cron,
-        authDto.callerOrganizationId
       );
 
       return CreateCustomTestSuiteController.ok(
