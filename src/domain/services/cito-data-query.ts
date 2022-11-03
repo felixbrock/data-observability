@@ -129,9 +129,9 @@ when matched then update set ${columnDefinitions
     matName: string;
   }): string => {
     const tableMatchingWhereElement = `
-    table_catalog = "${target.databaseName}" 
-    and table_schema = "${target.schemaName}" 
-    and table_name = "${target.matName}"
+    table_catalog = '${target.databaseName}' 
+    and table_schema = '${target.schemaName}' 
+    and table_name = '${target.matName}'
     `;
 
     // todo - get last test execution time
