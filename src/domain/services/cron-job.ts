@@ -1,4 +1,6 @@
 import {
+  DisableRuleCommand,
+  EnableRuleCommand,
   EventBridgeClient,
   ListTargetsByRuleCommand,
   PutRuleCommand,
@@ -182,10 +184,9 @@ export const patchCronJob = async (
   testSuiteId: string,
   updateProps: {
     cron?: string;
-    toBeActivated?: boolean;
   }
 ): Promise<void> => {
-  if (!updateProps.cron && updateProps.toBeActivated === undefined)
+  if (!updateProps.cron)
     throw new Error(`No input provided for updating cron job`);
 
   const eventBridgeClient = new EventBridgeClient({
@@ -200,9 +201,6 @@ export const patchCronJob = async (
   if (updateProps.cron)
     commandInput.ScheduleExpression = `cron(${updateProps.cron})`;
 
-  if (updateProps.toBeActivated !== undefined)
-    commandInput.State = updateProps.toBeActivated ? 'ENABLED' : 'DISABLED';
-
   const command = new PutRuleCommand(commandInput);
 
   const response = await eventBridgeClient.send(command);
@@ -211,6 +209,24 @@ export const patchCronJob = async (
     throw new Error(
       `Unexpected error occured while updating cron job for test suite ${testSuiteId}`
     );
+};
+
+export const updateCronJobState = async (
+  testSuiteId: string,
+  toBeActivated: boolean
+): Promise<void> => {
+  const client = new EventBridgeClient({
+    region: appConfig.cloud.region,
+  });
+
+  const ruleName = `${rulePrefix}-${testSuiteId}`;
+  const input = { Name: ruleName };
+
+  const command = toBeActivated
+    ? new EnableRuleCommand(input)
+    : new DisableRuleCommand(input);
+
+  await client.send(command);
 };
 
 export const patchTarget = async (
@@ -230,6 +246,6 @@ export const patchTarget = async (
 
   await putTarget(eventBridgeClient, ruleName, {
     ...currentTargetInput,
-    ...targetInputPrototype
+    ...targetInputPrototype,
   });
 };

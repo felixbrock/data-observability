@@ -12,6 +12,7 @@ import {
   getFrequencyCronExpression,
   patchCronJob,
   patchTarget,
+  updateCronJobState,
 } from '../../../domain/services/cron-job';
 import { parseExecutionType } from '../../../domain/value-types/execution-type';
 import Result from '../../../domain/value-types/transient-types/result';
@@ -121,8 +122,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
       if (
         requestDto.cron ||
         requestDto.frequency ||
-        requestDto.executionType ||
-        requestDto.activated !== undefined
+        requestDto.executionType 
       ) {
         let cron: string | undefined;
         if (requestDto.executionType === 'automatic')
@@ -133,7 +133,6 @@ export default class UpdateCustomTestSuiteController extends BaseController {
 
         await patchCronJob(requestDto.id, {
           cron,
-          toBeActivated: requestDto.activated,
         });
 
         if (requestDto.executionType)
@@ -141,6 +140,9 @@ export default class UpdateCustomTestSuiteController extends BaseController {
             executionType: requestDto.executionType,
           });
       }
+
+      if (requestDto.activated !== undefined) await updateCronJobState(requestDto.id, requestDto.activated);
+
 
       return UpdateCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

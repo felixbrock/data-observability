@@ -19,6 +19,7 @@ import {
   getFrequencyCronExpression,
   patchCronJob,
   patchTarget,
+  updateCronJobState,
 } from '../../../domain/services/cron-job';
 
 export default class UpdateNominalTestSuitesController extends BaseController {
@@ -107,7 +108,7 @@ export default class UpdateNominalTestSuitesController extends BaseController {
         requestDto.updateObjects.map(async (el) => {
           const { id, cron, frequency, executionType, activated } = el;
 
-          if (cron || frequency || executionType || activated !== undefined) {
+          if (cron || frequency || executionType) {
             let localCron: string | undefined;
             if (executionType === 'automatic')
               localCron = getAutomaticCronExpression();
@@ -117,7 +118,6 @@ export default class UpdateNominalTestSuitesController extends BaseController {
 
             await patchCronJob(id, {
               cron: localCron,
-              toBeActivated: activated,
             });
 
             if (executionType)
@@ -125,6 +125,8 @@ export default class UpdateNominalTestSuitesController extends BaseController {
                 executionType,
               });
           }
+
+          if (activated !== undefined) await updateCronJobState(id, activated);
         })
       );
 
