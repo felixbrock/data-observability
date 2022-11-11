@@ -100,7 +100,7 @@ export class CreateNominalTestSuites
             el.target.materializationType
           }','${el.target.columnName ? el.target.columnName : null}','${
             el.target.targetResourceId
-          }','${el.organizationId}', ${el.cron ? el.cron : 'null'}, '${
+          }','${el.organizationId}', ${el.cron ? el.cron : null}, '${
             el.executionType
           }')`
       );

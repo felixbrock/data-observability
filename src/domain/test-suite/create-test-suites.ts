@@ -100,7 +100,7 @@ export class CreateTestSuites
           }','${el.target.materializationType}','${
             el.target.columnName ? el.target.columnName : null
           }','${el.target.targetResourceId}','${el.organizationId}', ${
-            el.cron || 'null'
+            el.cron || null
           }, '${el.executionType}')`
       );
 

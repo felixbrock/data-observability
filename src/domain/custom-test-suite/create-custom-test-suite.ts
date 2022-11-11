@@ -80,7 +80,7 @@ export class CreateCustomTestSuite
           customTestSuite.description
         }','${customTestSuite.sqlLogic}','[${customTestSuite.targetResourceIds
           .map((el) => `'${el}'`)
-          .join(',')}]','${customTestSuite.organizationId}', ${customTestSuite.cron ? customTestSuite.cron: 'null'}, '${customTestSuite.executionType}')`,
+          .join(',')}]','${customTestSuite.organizationId}', ${customTestSuite.cron ? customTestSuite.cron: null}, '${customTestSuite.executionType}')`,
       ];
 
       const query = CitoDataQuery.getInsertQuery(
