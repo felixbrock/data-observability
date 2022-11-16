@@ -1,8 +1,11 @@
 import IUseCase from '../services/use-case';
 import Result from '../value-types/transient-types/result';
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
 import { ExecutionType } from '../value-types/execution-type';
+import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
+import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
+import { QuerySnowflake } from '../snowflake-api/query-snowflake';
+import GeneralAuth from '../services/general-auth';
 
 export interface UpdateCustomTestSuiteRequestDto {
   id: string;
@@ -15,11 +18,10 @@ export interface UpdateCustomTestSuiteRequestDto {
   sqlLogic?: string;
   cron?: string;
   executionType?: ExecutionType;
+  profile?: SnowflakeProfileDto;
 }
 
-export interface UpdateCustomTestSuiteAuthDto {
-  jwt: string;
-}
+export type UpdateCustomTestSuiteAuthDto = GeneralAuth;
 
 export type UpdateCustomTestSuiteResponseDto = Result<string>;
 
@@ -33,9 +35,31 @@ export class UpdateCustomTestSuite
 {
   readonly #querySnowflake: QuerySnowflake;
 
-  constructor(querySnowflake: QuerySnowflake) {
+  readonly #getSnowflakeProfile: GetSnowflakeProfile;
+
+  constructor(querySnowflake: QuerySnowflake, getSnowflakeProfile: GetSnowflakeProfile) {
     this.#querySnowflake = querySnowflake;
+    this.#getSnowflakeProfile = getSnowflakeProfile;
   }
+
+  #getProfile = async (
+    jwt: string,
+    targetOrgId?: string
+  ): Promise<SnowflakeProfileDto> => {
+    const readSnowflakeProfileResult = await this.#getSnowflakeProfile.execute(
+      { targetOrgId },
+      {
+        jwt,
+      }
+    );
+
+    if (!readSnowflakeProfileResult.success)
+      throw new Error(readSnowflakeProfileResult.error);
+    if (!readSnowflakeProfileResult.value)
+      throw new Error('SnowflakeProfile does not exist');
+
+    return readSnowflakeProfileResult.value;
+  };
 
   async execute(
     request: UpdateCustomTestSuiteRequestDto,
@@ -54,18 +78,20 @@ export class UpdateCustomTestSuite
         !request.executionType;
       if (nothingToUpdate) return Result.ok(request.id);
 
-      const readQuery = CitoDataQuery.getReadTestSuiteQuery([request.id], 'test_suites_custom');
+      const profile = request.profile || (await this.#getProfile(auth.jwt));
+
+      const readQueryText = CitoDataQuery.getReadTestSuiteQuery([request.id], 'test_suites_custom');
 
       const readResult = await this.#querySnowflake.execute(
-        { query: readQuery },
-        { jwt: auth.jwt }
+        { queryText: readQueryText, binds: [], profile },
+        auth
       );
 
       if (!readResult.success) throw new Error(readResult.error);
 
       if (!readResult.value)
         throw new Error(`Error when running snowflake query`);
-      if (!readResult.value[Object.keys(readResult.value)[0]].length)
+      if (!readResult.value.length)
         throw new Error('Test suite id not found');
 
       const columnDefinitions: ColumnDefinition[] = [{ name: 'id' }];
@@ -110,15 +136,16 @@ export class UpdateCustomTestSuite
 
       const values = [`(${updateValues.join(', ')})`];
 
-      const updateQuery = CitoDataQuery.getUpdateQuery(
+      const updateQueryText = CitoDataQuery.getUpdateQuery(
         'cito.observability.test_suites_custom',
         columnDefinitions,
         values
       );
 
+      
       const updateResult = await this.#querySnowflake.execute(
-        { query: updateQuery },
-        { jwt: auth.jwt }
+        { queryText: updateQueryText, binds: [], profile },
+        auth
       );
 
       if (!updateResult.success) throw new Error(updateResult.error);

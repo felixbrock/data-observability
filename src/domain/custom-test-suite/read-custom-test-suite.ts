@@ -1,12 +1,15 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { CustomTestSuiteDto } from '../entities/custom-test-suite';
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
+import { QuerySnowflake } from '../snowflake-api/query-snowflake';
+import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
+import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
 
 export interface ReadCustomTestSuiteRequestDto {
   id: string;
   targetOrgId?: string;
+  profile? : SnowflakeProfileDto;
 }
 
 export interface ReadCustomTestSuiteAuthDto {
@@ -27,8 +30,11 @@ export class ReadCustomTestSuite
 {
   readonly #querySnowflake: QuerySnowflake;
 
-  constructor(querySnowflake: QuerySnowflake) {
+  readonly #getSnowflakeProfile: GetSnowflakeProfile;
+
+  constructor(querySnowflake: QuerySnowflake, getSnowflakeProfile: GetSnowflakeProfile) {
     this.#querySnowflake = querySnowflake;
+    this.#getSnowflakeProfile = getSnowflakeProfile;
   }
 
   async execute(
@@ -53,13 +59,13 @@ export class ReadCustomTestSuite
     try {
       // todo -replace
 
-      const query = CitoDataQuery.getReadTestSuiteQuery(
+      const queryText = CitoDataQuery.getReadTestSuiteQuery(
         [request.id],
         'test_suites_custom'
       );
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
-        { query, targetOrgId: request.targetOrgId },
+        { queryText, targetOrgId: request.targetOrgId },
         { jwt: auth.jwt }
       );
 

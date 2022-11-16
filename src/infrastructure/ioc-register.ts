@@ -16,7 +16,7 @@ import { ExecuteTest } from '../domain/test-execution-api/execute-test';
 import AnomalyTestResultRepo from './persistence/anomaly-test-result-repo';
 import { SendAnomalySlackAlert } from '../domain/integration-api/slack/send-anomaly-alert';
 import { SendNominalTestSlackAlert } from '../domain/integration-api/slack/send-nominal-test-alert';
-import { UpdateTestHistoryEntry } from '../domain/integration-api/snowflake/update-test-history-entry';
+import { UpdateTestHistoryEntry } from '../domain/snowflake-api/update-test-history-entry';
 import { CreateCustomTestSuite } from '../domain/custom-test-suite/create-custom-test-suite';
 import { ReadCustomTestSuite } from '../domain/custom-test-suite/read-custom-test-suite';
 import { ReadCustomTestSuites } from '../domain/custom-test-suite/read-custom-test-suites';

@@ -4,14 +4,16 @@ import IUseCase from '../services/use-case';
 import { ReadCustomTestSuite } from './read-custom-test-suite';
 import { ExecuteTest } from '../test-execution-api/execute-test';
 import { DbConnection } from '../services/i-db';
-import CitoDataQuery from '../services/cito-data-query';
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import { ExecutionType } from '../value-types/execution-type';
+import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
+import { QuerySnowflake } from '../snowflake-api/query-snowflake';
+import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
 
 export interface TriggerCustomTestSuiteExecutionRequestDto {
   id: string;
   targetOrgId?: string;
   executionType: ExecutionType;
+  profile?: SnowflakeProfileDto;
 }
 
 export interface TriggerCustomTestSuiteExecutionAuthDto {
@@ -37,54 +39,58 @@ export class TriggerCustomTestSuiteExecution
 
   readonly #querySnowflake: QuerySnowflake;
 
+  readonly #getSnowflakeProfile: GetSnowflakeProfile;
+
   #dbConnection: DbConnection;
 
   constructor(
     readCustomTestSuite: ReadCustomTestSuite,
     executeTest: ExecuteTest,
-    querySnowflake: QuerySnowflake
+    querySnowflake: QuerySnowflake,
+    getSnowflakeProfile: GetSnowflakeProfile
   ) {
     this.#readCustomTestSuite = readCustomTestSuite;
     this.#executeTest = executeTest;
     this.#querySnowflake = querySnowflake;
+    this.#getSnowflakeProfile = getSnowflakeProfile;
   }
 
-  #wasAltered = async (
-    props: {
-      databaseName: string;
-      schemaName: string;
-      matName: string;
-      targetOrgId: string;
-    },
-    jwt: string
-  ): Promise<boolean> => {
-    const { databaseName, schemaName, matName, targetOrgId } = props;
+  // #wasAltered = async (
+  //   props: {
+  //     databaseName: string;
+  //     schemaName: string;
+  //     matName: string;
+  //     targetOrgId: string;
+  //   },
+  //   jwt: string
+  // ): Promise<boolean> => {
+  //   const { databaseName, schemaName, matName, targetOrgId } = props;
 
-    const query = CitoDataQuery.getWasAltered({
-      databaseName,
-      schemaName,
-      matName,
-    });
+  //   const query = CitoDataQuery.getWasAltered({
+  //     databaseName,
+  //     schemaName,
+  //     matName,
+  //   });
 
-    const querySnowflakeResult = await this.#querySnowflake.execute(
-      { query, targetOrgId },
-      { jwt }
-    );
+  //   const querySnowflakeResult = await this.#querySnowflake.execute(
+  //     { query, targetOrgId },
+  //     { jwt }
+  //   );
 
-    if (!querySnowflakeResult.success)
-      throw new Error(querySnowflakeResult.error);
+  //   if (!querySnowflakeResult.success)
+  //     throw new Error(querySnowflakeResult.error);
 
-    const result = querySnowflakeResult.value;
+  //   const result = querySnowflakeResult.value;
 
-    if (!result) throw new Error(`"Was altered" query failed`);
+  //   if (!result) throw new Error(`"Was altered" query failed`);
 
-    const organizationResults = result[targetOrgId];
+  //   const organizationResults = result[targetOrgId];
 
-    if (organizationResults.length !== 1)
-      throw new Error('No or multiple test suites found');
+  //   if (organizationResults.length !== 1)
+  //     throw new Error('No or multiple test suites found');
 
-    return organizationResults[0].WAS_ALTERED;
-  };
+  //   return organizationResults[0].WAS_ALTERED;
+  // };
 
   async execute(
     request: TriggerCustomTestSuiteExecutionRequestDto,

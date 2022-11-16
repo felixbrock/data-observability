@@ -1,18 +1,22 @@
-import IUseCase from '../../services/use-case';
-import Result from '../../value-types/transient-types/result';
+import IUseCase from '../services/use-case';
+import Result from '../value-types/transient-types/result';
+import CitoDataQuery from '../services/cito-data-query';
+import { TestType } from '../entities/test-suite';
+import { NominalTestType } from '../entities/nominal-test-suite';
 import { QuerySnowflake } from './query-snowflake';
-import CitoDataQuery from '../../services/cito-data-query';
-import { TestType } from '../../entities/test-suite';
-import { NominalTestType } from '../../entities/nominal-test-suite';
+import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
 
 export interface UpdateTestHistoryEntryRequestDto {
   alertId: string;
   testType: TestType | NominalTestType;
   userFeedbackIsAnomaly: number;
+  profile: SnowflakeProfileDto;
 }
 
 export interface UpdateTestHistoryEntryAuthDto {
   jwt: string;
+  isSystemInternal: boolean;
+  callerOrgId: string;
 }
 
 export type UpdateTestHistoryEntryResponseDto = Result<string>;
@@ -36,11 +40,15 @@ export class UpdateTestHistoryEntry
     auth: UpdateTestHistoryEntryAuthDto
   ): Promise<UpdateTestHistoryEntryResponseDto> {
     try {
-      const updateQuery = CitoDataQuery.getUpdateTestHistoryEntryQuery(request.alertId, request.testType, request.userFeedbackIsAnomaly);
+      const updateQueryText = CitoDataQuery.getUpdateTestHistoryEntryQuery(
+        request.alertId,
+        request.testType,
+        request.userFeedbackIsAnomaly
+      );
 
       const updateResult = await this.#querySnowflake.execute(
-        { query: updateQuery },
-        { jwt: auth.jwt }
+        { queryText: updateQueryText, binds: [], profile: request.profile },
+        auth
       );
 
       if (!updateResult.success) throw new Error(updateResult.error);

@@ -14,31 +14,6 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
 
   #apiRoot = appConfig.express.apiRoot;
 
-  querySnowflake = async (
-    body: {query: string, targetOrgId?: string},
-    jwt: string
-  ): Promise<SnowflakeQueryResultDto> => {
-    try {
-
-      const config: AxiosRequestConfig = {
-        headers: { Authorization: `Bearer ${jwt}` },
-      };
-
-      const response = await axios.post(
-        `${this.#baseUrl}/${this.#apiRoot}/${this.#version}/snowflake/query`,
-        body,
-        config
-      );
-      const jsonResponse = response.data;
-      if (response.status === 201) return jsonResponse;
-      throw new Error(jsonResponse.message);
-    } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
-      return Promise.reject(new Error(''));
-    }
-  };
-
   sendSlackAlert = async (
     messageConfig: AlertMessageConfig,
     targetOrgId: string,
@@ -66,6 +41,31 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
       if (error instanceof Error && error.message) console.trace(error.message);
       else if (!(error instanceof Error) && error) console.trace(error);
       return Promise.reject(new Error(''));
+    }
+  };
+
+  getSnowflakeProfile = async (
+    jwt: string,
+    targetOrgId?: string
+  ): Promise<SnowflakeProfileDto> => {
+    try {
+
+      const config: AxiosRequestConfig = {
+        headers: { Authorization: `Bearer ${jwt}` },
+        params: targetOrgId ? new URLSearchParams({targetOrgId}): undefined
+      };
+
+      const response = await axios.get(
+        `${appConfig.baseUrl.integrationService}/api/v1/snowflake/profile`,
+        config
+      );
+      const jsonResponse = response.data;
+      if (response.status === 200) return jsonResponse;
+      throw new Error(jsonResponse.message);
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message) console.trace(error.message);
+      else if (!(error instanceof Error) && error) console.trace(error);
+      return Promise.reject(new Error());
     }
   };
 }

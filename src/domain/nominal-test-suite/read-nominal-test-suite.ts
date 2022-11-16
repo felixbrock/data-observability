@@ -1,12 +1,13 @@
 import Result from '../value-types/transient-types/result';
-import IUseCase from '../services/use-case';
 import { NominalTestSuite } from '../entities/nominal-test-suite';
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
+import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
+import SfQueryUseCase from '../services/sf-query-use-case';
 
 export interface ReadNominalTestSuiteRequestDto {
   id: string;
   targetOrgId?: string;
+  profile?: SnowflakeProfileDto;
 }
 
 export interface ReadNominalTestSuiteAuthDto {
@@ -17,19 +18,11 @@ export interface ReadNominalTestSuiteAuthDto {
 
 export type ReadNominalTestSuiteResponseDto = Result<NominalTestSuite>;
 
-export class ReadNominalTestSuite
-  implements
-    IUseCase<
-      ReadNominalTestSuiteRequestDto,
-      ReadNominalTestSuiteResponseDto,
-      ReadNominalTestSuiteAuthDto
-    >
-{
-  readonly #querySnowflake: QuerySnowflake;
-
-  constructor(querySnowflake: QuerySnowflake) {
-    this.#querySnowflake = querySnowflake;
-  }
+export class ReadNominalTestSuite extends SfQueryUseCase<
+  ReadNominalTestSuiteRequestDto,
+  ReadNominalTestSuiteResponseDto,
+  ReadNominalTestSuiteAuthDto
+> {
 
   async execute(
     request: ReadNominalTestSuiteRequestDto,
@@ -45,20 +38,19 @@ export class ReadNominalTestSuite
     let organizationId;
     if (auth.isSystemInternal && request.targetOrgId)
       organizationId = request.targetOrgId;
-    else if (auth.callerOrgId)
-      organizationId = auth.callerOrgId;
+    else if (auth.callerOrgId) organizationId = auth.callerOrgId;
     else throw new Error('Unhandled organizationId allocation');
 
     try {
       // todo -replace
 
-      const query = CitoDataQuery.getReadTestSuiteQuery(
+      const queryText = CitoDataQuery.getReadTestSuiteQuery(
         [request.id],
         'test_suites_nominal'
       );
 
-      const querySnowflakeResult = await this.#querySnowflake.execute(
-        { query, targetOrgId: request.targetOrgId },
+      const querySnowflakeResult = await this.querySf(
+        { queryText, targetOrgId: request.targetOrgId },
         { jwt: auth.jwt }
       );
 

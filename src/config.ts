@@ -97,6 +97,10 @@ export const appConfig = {
     region: 'eu-central-1',
     testExecutionJobArn: 'arn:aws:lambda:eu-central-1:966593446935:function:test-suite-execution-job-production-app',
   },
+  snowflake: {
+    applicationName:
+      process.env.SNOWFLAKE_APPLICATION_NAME || 'snowflake-connector',
+  },
   slack: getSlackConfig(),
   baseUrl: getBaseUrlConfig(),
   mongodb: getMongodbConfig(),

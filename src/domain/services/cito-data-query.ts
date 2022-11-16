@@ -135,7 +135,7 @@ when matched then update set ${columnDefinitions
     `;
 
     // todo - get last test execution time
-    const wasAltered = `timediff(minute, last_altered, current_timestamp::timestamp_ntz) < ${automaticExecutionFrequency}`;
+    const wasAltered = `timediff(minute, last_altered, sysdate()) < ${automaticExecutionFrequency}`;
 
     const whereStatement = `${tableMatchingWhereElement}`;
 

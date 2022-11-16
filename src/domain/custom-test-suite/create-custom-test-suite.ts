@@ -3,9 +3,11 @@ import { ObjectId } from 'mongodb';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { CustomTestSuite } from '../entities/custom-test-suite';
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
 import { ExecutionType } from '../value-types/execution-type';
+import { QuerySnowflake } from '../snowflake-api/query-snowflake';
+import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
+import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
 
 export interface CreateCustomTestSuiteRequestDto {
   activated: boolean;
@@ -17,11 +19,13 @@ export interface CreateCustomTestSuiteRequestDto {
   description: string;
   sqlLogic: string;
   targetResourceIds: string[];
+  profile?: SnowflakeProfileDto;
 }
 
 export interface CreateCustomTestSuiteAuthDto {
   jwt: string;
   callerOrgId: string;
+  isSystemInternal: boolean;
 }
 
 export type CreateCustomTestSuiteResponseDto = Result<CustomTestSuite>;
@@ -36,9 +40,34 @@ export class CreateCustomTestSuite
 {
   readonly #querySnowflake: QuerySnowflake;
 
-  constructor(querySnowflake: QuerySnowflake) {
+  readonly #getSnowflakeProfile: GetSnowflakeProfile;
+
+  constructor(
+    querySnowflake: QuerySnowflake,
+    getSnowflakeProfile: GetSnowflakeProfile
+  ) {
     this.#querySnowflake = querySnowflake;
+    this.#getSnowflakeProfile = getSnowflakeProfile;
   }
+
+  #getProfile = async (
+    jwt: string,
+    targetOrgId?: string
+  ): Promise<SnowflakeProfileDto> => {
+    const readSnowflakeProfileResult = await this.#getSnowflakeProfile.execute(
+      { targetOrgId },
+      {
+        jwt,
+      }
+    );
+
+    if (!readSnowflakeProfileResult.success)
+      throw new Error(readSnowflakeProfileResult.error);
+    if (!readSnowflakeProfileResult.value)
+      throw new Error('SnowflakeProfile does not exist');
+
+    return readSnowflakeProfileResult.value;
+  };
 
   async execute(
     request: CreateCustomTestSuiteRequestDto,
@@ -70,7 +99,7 @@ export class CreateCustomTestSuite
         { name: 'target_resource_ids', selectType: 'parse_json' },
         { name: 'organization_id' },
         { name: 'cron' },
-        {name: 'execution_type'}
+        { name: 'execution_type' },
       ];
 
       const values = [
@@ -80,18 +109,22 @@ export class CreateCustomTestSuite
           customTestSuite.description
         }','${customTestSuite.sqlLogic}','[${customTestSuite.targetResourceIds
           .map((el) => `'${el}'`)
-          .join(',')}]','${customTestSuite.organizationId}', ${customTestSuite.cron ? customTestSuite.cron: null}, '${customTestSuite.executionType}')`,
+          .join(',')}]','${customTestSuite.organizationId}', ${
+          customTestSuite.cron ? customTestSuite.cron : null
+        }, '${customTestSuite.executionType}')`,
       ];
 
-      const query = CitoDataQuery.getInsertQuery(
+      const profile = request.profile || (await this.#getProfile(auth.jwt));
+
+      const queryText = CitoDataQuery.getInsertQuery(
         'cito.observability.test_suites_custom',
         columnDefinitions,
         values
       );
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
-        { query },
-        { jwt: auth.jwt }
+        { queryText, binds: [], profile },
+        auth
       );
 
       if (!querySnowflakeResult.success)
