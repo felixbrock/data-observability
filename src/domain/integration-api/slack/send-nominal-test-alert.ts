@@ -10,7 +10,7 @@ import { appConfig } from '../../../config';
 
 export type SendNominalTestSlackAlertRequestDto = {
   alertDto: NominalTestAlertDto;
-  targetOrganizationId: string;
+  targetOrgId: string;
 };
 
 export interface SendNominalTestSlackAlertAuthDto {
@@ -58,7 +58,7 @@ export class SendNominalTestSlackAlert
       const sendSlackAlertResponse: SendAlertResultDto =
         await this.#integrationApiRepo.sendSlackAlert(
           messageConfig,
-          request.targetOrganizationId,
+          request.targetOrgId,
           auth.jwt
         );
 

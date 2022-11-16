@@ -13,7 +13,7 @@ export interface ReadNominalTestSuitesRequestDto {
 export interface ReadNominalTestSuitesAuthDto {
   jwt: string;
   isSystemInternal: boolean;
-  callerOrganizationId?: string;
+  callerOrgId?: string;
 }
 
 export type ReadNominalTestSuitesResponseDto = Result<NominalTestSuite[]>;
@@ -37,7 +37,7 @@ export class ReadNominalTestSuites
     request: ReadNominalTestSuitesRequestDto,
     auth: ReadNominalTestSuitesAuthDto
   ): Promise<ReadNominalTestSuitesResponseDto> {
-    if (!auth.isSystemInternal && !auth.callerOrganizationId)
+    if (!auth.isSystemInternal && !auth.callerOrgId)
       throw new Error('Not authorized to perform operation');
 
     try {

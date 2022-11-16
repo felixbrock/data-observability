@@ -68,7 +68,7 @@ export type UpdateCronTargetInputPrototype = BaseTargetInputPrototype;
 interface TargetInput extends BaseTargetInputPrototype {
   testSuiteType: TestSuiteType;
   testSuiteId: string;
-  targetOrganizationId: string;
+  targetOrgId: string;
 }
 
 const rulePrefix = 'test-suite';
@@ -140,7 +140,7 @@ export const createCronJob = async (
 
   await putTarget(eventBridgeClient, ruleName, {
     testSuiteId,
-    targetOrganizationId: organizationId,
+    targetOrgId: organizationId,
     ...targetInputPrototype,
   });
 };
@@ -167,7 +167,7 @@ const getCurrentTargetInput = async (
 
   const input = JSON.parse(targetMatch.Input);
 
-  const { testSuiteType, executionType, targetOrganizationId, testSuiteId } =
+  const { testSuiteType, executionType, targetOrgId, testSuiteId } =
     input;
 
   if (!testSuiteType) throw new Error('Target input is missing testSuiteType');
@@ -175,7 +175,7 @@ const getCurrentTargetInput = async (
   return {
     testSuiteType: parseTestSuiteType(testSuiteType),
     executionType: parseExecutionType(executionType),
-    targetOrganizationId,
+    targetOrgId,
     testSuiteId,
   };
 };

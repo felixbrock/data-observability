@@ -38,7 +38,7 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
     httpRequest: Request
   ): TriggerNominalTestSuiteExecutionRequestDto => ({
     id: httpRequest.params.id,
-    targetOrganizationId: httpRequest.body.targetOrganizationId,
+    targetOrgId: httpRequest.body.targetOrgId,
     executionType: httpRequest.body.executionType,
 
   });
@@ -48,7 +48,7 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
     jwt: string
   ): TriggerNominalTestSuiteExecutionAuthDto => ({
       jwt,
-      callerOrganizationId: userAccountInfo.callerOrganizationId,
+      callerOrgId: userAccountInfo.callerOrgId,
       isSystemInternal: userAccountInfo.isSystemInternal,
     });
 

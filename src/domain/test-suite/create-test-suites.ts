@@ -29,7 +29,7 @@ export interface CreateTestSuitesRequestDto {
 
 export interface CreateTestSuitesAuthDto {
   jwt: string;
-  callerOrganizationId: string;
+  callerOrgId: string;
 }
 
 export type CreateTestSuitesResponseDto = Result<TestSuite[]>;
@@ -68,7 +68,7 @@ export class CreateTestSuites
             columnName: createObject.columnName,
             targetResourceId: createObject.targetResourceId,
           },
-          organizationId: auth.callerOrganizationId,
+          organizationId: auth.callerOrgId,
           cron: createObject.cron,
           executionType: createObject.executionType,
         })

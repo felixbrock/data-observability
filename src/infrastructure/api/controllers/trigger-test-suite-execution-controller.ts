@@ -38,7 +38,7 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
     httpRequest: Request
   ): TriggerTestSuiteExecutionRequestDto => ({
     id: httpRequest.params.id,
-    targetOrganizationId: httpRequest.body.targetOrganizationId,
+    targetOrgId: httpRequest.body.targetOrgId,
     executionType: httpRequest.body.executionType
   });
 
@@ -47,7 +47,7 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
     jwt: string
   ): TriggerTestSuiteExecutionAuthDto => ({
     jwt,
-    callerOrganizationId: userAccountInfo.callerOrganizationId,
+    callerOrgId: userAccountInfo.callerOrgId,
     isSystemInternal: userAccountInfo.isSystemInternal,
   });
 

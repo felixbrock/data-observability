@@ -21,7 +21,7 @@ export interface CreateCustomTestSuiteRequestDto {
 
 export interface CreateCustomTestSuiteAuthDto {
   jwt: string;
-  callerOrganizationId: string;
+  callerOrgId: string;
 }
 
 export type CreateCustomTestSuiteResponseDto = Result<CustomTestSuite>;
@@ -54,7 +54,7 @@ export class CreateCustomTestSuite
         executionFrequency: request.executionFrequency,
         cron: request.cron,
         executionType: request.executionType,
-        organizationId: auth.callerOrganizationId,
+        organizationId: auth.callerOrgId,
         threshold: request.threshold,
         targetResourceIds: request.targetResourceIds,
       });

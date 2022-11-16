@@ -10,7 +10,7 @@ import { appConfig } from '../../../config';
 
 export type SendAnomalySlackAlertRequestDto = {
   alertDto: AnomalyAlertDto;
-  targetOrganizationId: string;
+  targetOrgId: string;
 };
 
 export interface SendAnomalySlackAlertAuthDto {
@@ -58,7 +58,7 @@ export class SendAnomalySlackAlert
       const sendAnomalySlackAlertResponse: SendAlertResultDto =
         await this.#integrationApiRepo.sendSlackAlert(
           messageConfig,
-          request.targetOrganizationId,
+          request.targetOrgId,
           auth.jwt
         );
 

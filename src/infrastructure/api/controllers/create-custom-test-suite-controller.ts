@@ -57,10 +57,10 @@ export default class CreateCustomTestSuiteController extends BaseController {
     userAccountInfo: UserAccountInfo,
     jwt: string
   ): CreateCustomTestSuiteAuthDto => {
-    if (!userAccountInfo.callerOrganizationId) throw new Error('Unauthorized');
+    if (!userAccountInfo.callerOrgId) throw new Error('Unauthorized');
 
     return {
-      callerOrganizationId: userAccountInfo.callerOrganizationId,
+      callerOrgId: userAccountInfo.callerOrgId,
       jwt,
     };
   };
@@ -132,7 +132,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
       await createCronJob(
         cron,
         result.id,
-        authDto.callerOrganizationId,
+        authDto.callerOrgId,
         {
           testSuiteType: 'custom-test',
           executionType: result.executionType,

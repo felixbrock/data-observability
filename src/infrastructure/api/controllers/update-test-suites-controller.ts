@@ -41,11 +41,11 @@ export default class UpdateTestSuitesController extends BaseController {
     jwt: string,
     userAccountInfo: UserAccountInfo
   ): UpdateTestSuitesAuthDto => {
-    if (!userAccountInfo.callerOrganizationId)
-      throw new Error('callerOrganizationId missing');
+    if (!userAccountInfo.callerOrgId)
+      throw new Error('callerOrgId missing');
     return {
       jwt,
-      callerOrganizationId: userAccountInfo.callerOrganizationId,
+      callerOrgId: userAccountInfo.callerOrgId,
     };
   };
 

@@ -19,7 +19,7 @@ export interface CreateAnomalyTestResultRequestDto {
     alertId: string;
   };
   targetResourceId: string;
-  targetOrganizationId: string;
+  targetOrgId: string;
 }
 
 export type CreateAnomalyTestResultAuthDto = null;
@@ -53,7 +53,7 @@ export class CreateAnomalyTestResult
 
       const anomalyTestResult: AnomalyTestResult = {
         ...request,
-        organizationId: request.targetOrganizationId,
+        organizationId: request.targetOrgId,
       };
 
       await this.#anomalyTestResultRepo.insertOne(anomalyTestResult, this.#dbConnection);

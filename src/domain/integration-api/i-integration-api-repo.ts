@@ -11,10 +11,10 @@ export interface AlertMessageConfig {
   detectedValuePart: string;
 }
 export interface IIntegrationApiRepo {
-  querySnowflake(body: {query: string, targetOrganizationId?: string}, jwt: string): Promise<SnowflakeQueryResultDto>;
+  querySnowflake(body: {query: string, targetOrgId?: string}, jwt: string): Promise<SnowflakeQueryResultDto>;
   sendSlackAlert(
     messageConfig: AlertMessageConfig,
-    targetOrganizationId: string,
+    targetOrgId: string,
     jwt: string
   ): Promise<SendAlertResultDto>;
 }

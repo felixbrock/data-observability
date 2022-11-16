@@ -5,7 +5,7 @@ import { SnowflakeQueryResultDto } from './snowlake-query-result-dto';
 
 export interface QuerySnowflakeRequestDto {
   query: string;
-  targetOrganizationId?: string
+  targetOrgId?: string
 }
 
 export interface QuerySnowflakeAuthDto {

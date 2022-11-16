@@ -44,11 +44,11 @@ export default class CreateNominalTestSuitesController extends BaseController {
     userAccountInfo: UserAccountInfo,
     jwt: string
   ): CreateNominalTestSuitesAuthDto => {
-    if (!userAccountInfo.callerOrganizationId)
+    if (!userAccountInfo.callerOrgId)
       throw new Error('Unauthorized - Caller organization id missing');
 
     return {
-      callerOrganizationId: userAccountInfo.callerOrganizationId,
+      callerOrgId: userAccountInfo.callerOrgId,
       jwt,
     };
   };
@@ -117,7 +117,7 @@ export default class CreateNominalTestSuitesController extends BaseController {
               throw new Error('Unhandled execution type');
           }
 
-          await createCronJob(cron, el.id, authDto.callerOrganizationId, {
+          await createCronJob(cron, el.id, authDto.callerOrgId, {
             testSuiteType: 'nominal-test',
             executionType: el.executionType,
           });

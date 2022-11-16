@@ -32,7 +32,7 @@ export interface CreateNominalTestSuitesRequestDto {
 
 export interface CreateNominalTestSuitesAuthDto {
   jwt: string;
-  callerOrganizationId: string;
+  callerOrgId: string;
 }
 
 export type CreateNominalTestSuitesResponseDto = Result<NominalTestSuite[]>;
@@ -70,7 +70,7 @@ export class CreateNominalTestSuites
             columnName: createObject.columnName,
             targetResourceId: createObject.targetResourceId,
           },
-          organizationId: auth.callerOrganizationId,
+          organizationId: auth.callerOrgId,
           cron: createObject.cron,
           executionType: createObject.executionType,
         })

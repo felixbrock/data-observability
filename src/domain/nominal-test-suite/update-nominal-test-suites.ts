@@ -19,7 +19,7 @@ export interface UpdateNominalTestSuitesRequestDto {
 }
 
 export interface UpdateNominalTestSuitesAuthDto {
-  callerOrganizationId: string;
+  callerOrgId: string;
   jwt: string;
 }
 

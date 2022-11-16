@@ -50,7 +50,7 @@ export default class ReadNominalTestSuitesController extends BaseController {
   ): ReadNominalTestSuitesAuthDto => ({
     jwt,
     isSystemInternal: userAccountInfo.isSystemInternal,
-    callerOrganizationId: userAccountInfo.callerOrganizationId,
+    callerOrgId: userAccountInfo.callerOrgId,
   });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {

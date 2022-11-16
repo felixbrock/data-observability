@@ -6,12 +6,12 @@ import CitoDataQuery from '../services/cito-data-query';
 
 export interface ReadCustomTestSuiteRequestDto {
   id: string;
-  targetOrganizationId?: string;
+  targetOrgId?: string;
 }
 
 export interface ReadCustomTestSuiteAuthDto {
   jwt: string;
-  callerOrganizationId?: string;
+  callerOrgId?: string;
   isSystemInternal: boolean;
 }
 
@@ -35,18 +35,18 @@ export class ReadCustomTestSuite
     request: ReadCustomTestSuiteRequestDto,
     auth: ReadCustomTestSuiteAuthDto
   ): Promise<ReadCustomTestSuiteResponseDto> {
-    if (auth.isSystemInternal && !request.targetOrganizationId)
+    if (auth.isSystemInternal && !request.targetOrgId)
       throw new Error('Target organization id missing');
-    if (!auth.isSystemInternal && !auth.callerOrganizationId)
+    if (!auth.isSystemInternal && !auth.callerOrgId)
       throw new Error('Caller organization id missing');
-    if (!request.targetOrganizationId && !auth.callerOrganizationId)
+    if (!request.targetOrgId && !auth.callerOrgId)
       throw new Error('No organization Id provided');
 
       let organizationId;
-      if (auth.isSystemInternal && request.targetOrganizationId)
-        organizationId = request.targetOrganizationId;
-      else if (auth.callerOrganizationId)
-        organizationId = auth.callerOrganizationId;
+      if (auth.isSystemInternal && request.targetOrgId)
+        organizationId = request.targetOrgId;
+      else if (auth.callerOrgId)
+        organizationId = auth.callerOrgId;
       else throw new Error('Unhandled organizationId allocation');
 
 
@@ -59,7 +59,7 @@ export class ReadCustomTestSuite
       );
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
-        { query, targetOrganizationId: request.targetOrganizationId },
+        { query, targetOrgId: request.targetOrgId },
         { jwt: auth.jwt }
       );
 

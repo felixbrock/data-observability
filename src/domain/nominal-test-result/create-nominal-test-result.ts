@@ -19,7 +19,7 @@ export interface CreateNominalTestTestResultRequestDto {
     alertId: string;
   };
   targetResourceId: string;
-  targetOrganizationId: string;
+  targetOrgId: string;
 }
 
 export type CreateNominalTestResultAuthDto = null;
@@ -53,7 +53,7 @@ export class CreateNominalTestResult
 
       const nominalTestResult: NominalTestResult = {
         ...request,
-        organizationId: request.targetOrganizationId,
+        organizationId: request.targetOrgId,
       };
 
       await this.#nominalTestResultRepo.insertOne(nominalTestResult, this.#dbConnection);

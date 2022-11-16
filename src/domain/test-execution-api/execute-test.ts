@@ -17,7 +17,7 @@ import { CustomTestType } from '../entities/custom-test-suite';
 export interface ExecuteTestRequestDto {
   testSuiteId: string;
   testType: TestType | NominalTestType | CustomTestType;
-  targetOrganizationId?: string;
+  targetOrgId?: string;
 }
 
 export interface ExecuteTestAuthDto {
@@ -76,7 +76,7 @@ export class ExecuteTest
         testSuiteId: testExecutionResult.testSuiteId,
         testType: testExecutionResult.testType,
         targetResourceId: testExecutionResult.targetResourceId,
-        targetOrganizationId: testExecutionResult.organizationId,
+        targetOrgId: testExecutionResult.organizationId,
       },
       null,
       this.#dbConnection
@@ -104,7 +104,7 @@ export class ExecuteTest
           : undefined,
         testSuiteId: testExecutionResult.testSuiteId,
         targetResourceId: testExecutionResult.targetResourceId,
-        targetOrganizationId: testExecutionResult.organizationId,
+        targetOrgId: testExecutionResult.organizationId,
       },
       null,
       this.#dbConnection
@@ -142,7 +142,7 @@ export class ExecuteTest
     };
 
     const sendSlackAlertResult = await this.#sendAnomalyTestSlackAlert.execute(
-      { alertDto, targetOrganizationId: testExecutionResult.organizationId },
+      { alertDto, targetOrgId: testExecutionResult.organizationId },
       { jwt: auth.jwt }
     );
 
@@ -176,7 +176,7 @@ export class ExecuteTest
     };
 
     const sendSlackAlertResult = await this.#sendNominalTestSlackAlert.execute(
-      { alertDto, targetOrganizationId: testExecutionResult.organizationId },
+      { alertDto, targetOrgId: testExecutionResult.organizationId },
       { jwt: auth.jwt }
     );
 
@@ -198,7 +198,7 @@ export class ExecuteTest
         request.testSuiteId,
         request.testType,
         auth.jwt,
-        request.targetOrganizationId
+        request.targetOrgId
       );
 
       if (

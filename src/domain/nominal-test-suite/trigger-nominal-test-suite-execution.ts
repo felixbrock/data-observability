@@ -10,13 +10,13 @@ import { ExecutionType } from '../value-types/execution-type';
 
 export interface TriggerNominalTestSuiteExecutionRequestDto {
   id: string;
-  targetOrganizationId?: string;
+  targetOrgId?: string;
   executionType: ExecutionType;
 }
 
 export interface TriggerNominalTestSuiteExecutionAuthDto {
   jwt: string;
-  callerOrganizationId?: string;
+  callerOrgId?: string;
   isSystemInternal: boolean;
 }
 
@@ -54,11 +54,11 @@ export class TriggerNominalTestSuiteExecution
       databaseName: string;
       schemaName: string;
       matName: string;
-      targetOrganizationId: string;
+      targetOrgId: string;
     },
     jwt: string
   ): Promise<boolean> => {
-    const { databaseName, schemaName, matName, targetOrganizationId } = props;
+    const { databaseName, schemaName, matName, targetOrgId } = props;
 
     const query = CitoDataQuery.getWasAltered({
       databaseName,
@@ -67,7 +67,7 @@ export class TriggerNominalTestSuiteExecution
     });
 
     const querySnowflakeResult = await this.#querySnowflake.execute(
-      { query, targetOrganizationId },
+      { query, targetOrgId },
       { jwt }
     );
 
@@ -78,7 +78,7 @@ export class TriggerNominalTestSuiteExecution
 
     if (!result) throw new Error(`"Was altered" query failed`);
 
-    const organizationResults = result[targetOrganizationId];
+    const organizationResults = result[targetOrgId];
 
     if (organizationResults.length !== 1)
       throw new Error('No or multiple test suites found');
@@ -91,15 +91,15 @@ export class TriggerNominalTestSuiteExecution
     auth: TriggerNominalTestSuiteExecutionAuthDto,
     dbConnection: DbConnection
   ): Promise<TriggerNominalTestSuiteExecutionResponseDto> {
-    if (auth.isSystemInternal && !request.targetOrganizationId)
+    if (auth.isSystemInternal && !request.targetOrgId)
       throw new Error('Target organization id missing');
-    if (!auth.isSystemInternal && !auth.callerOrganizationId)
+    if (!auth.isSystemInternal && !auth.callerOrgId)
       throw new Error('Caller organization id missing');
-    if (!request.targetOrganizationId && !auth.callerOrganizationId)
+    if (!request.targetOrgId && !auth.callerOrgId)
       throw new Error('No organization Id provided');
-    if (request.executionType === 'automatic' && !request.targetOrganizationId)
+    if (request.executionType === 'automatic' && !request.targetOrgId)
       throw new Error(
-        'When automatically executing test suite targetOrganizationId needs to be provided'
+        'When automatically executing test suite targetOrgId needs to be provided'
       );
 
     this.#dbConnection = dbConnection;
@@ -109,11 +109,11 @@ export class TriggerNominalTestSuiteExecution
         await this.#readNominalTestSuite.execute(
           {
             id: request.id,
-            targetOrganizationId: request.targetOrganizationId,
+            targetOrgId: request.targetOrgId,
           },
           {
             jwt: auth.jwt,
-            callerOrganizationId: auth.callerOrganizationId,
+            callerOrgId: auth.callerOrgId,
             isSystemInternal: auth.isSystemInternal,
           }
         );
@@ -126,14 +126,14 @@ export class TriggerNominalTestSuiteExecution
       const nominalTestSuite = readNominalTestSuiteResult.value;
 
       if (request.executionType === 'automatic') {
-        if (!request.targetOrganizationId)
-          throw new Error('TargetorganizationId missing');
+        if (!request.targetOrgId)
+          throw new Error('targetOrgId missing');
         const wasAltered = !this.#wasAltered(
           {
             databaseName: nominalTestSuite.target.databaseName,
             schemaName: nominalTestSuite.target.schemaName,
             matName: nominalTestSuite.target.materializationName,
-            targetOrganizationId: request.targetOrganizationId,
+            targetOrgId: request.targetOrgId,
           },
           auth.jwt
         );
@@ -144,7 +144,7 @@ export class TriggerNominalTestSuiteExecution
         {
           testSuiteId: nominalTestSuite.id,
           testType: nominalTestSuite.type,
-          targetOrganizationId: request.targetOrganizationId,
+          targetOrgId: request.targetOrgId,
         },
         { jwt: auth.jwt },
         this.#dbConnection

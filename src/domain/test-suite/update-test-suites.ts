@@ -19,7 +19,7 @@ export interface UpdateTestSuitesRequestDto {
 }
 
 export interface UpdateTestSuitesAuthDto {
-  callerOrganizationId: string;
+  callerOrgId: string;
   jwt: string;
 }
 

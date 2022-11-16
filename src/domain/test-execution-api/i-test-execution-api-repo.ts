@@ -6,6 +6,6 @@ export interface ITestExecutionApiRepo {
     testSuiteId: string,
     testType: string,
     jwt: string,
-    targetOrganizationId?: string,
+    targetOrgId?: string,
   ): Promise<AnomalyTestExecutionResultDto | NominalTestExecutionResultDto>;
 }

@@ -31,7 +31,7 @@ export default class ReadTestSuiteController extends BaseController {
 
     return {
       id,
-      targetOrganizationId: httpRequest.body.targetOrganizationId
+      targetOrgId: httpRequest.body.targetOrgId
     };
   };
 
@@ -40,7 +40,7 @@ export default class ReadTestSuiteController extends BaseController {
     userAccountInfo: UserAccountInfo
   ): ReadTestSuiteAuthDto => ({
       jwt,
-      callerOrganizationId: userAccountInfo.callerOrganizationId,
+      callerOrgId: userAccountInfo.callerOrgId,
       isSystemInternal: userAccountInfo.isSystemInternal,
     });
 

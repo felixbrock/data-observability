@@ -15,7 +15,7 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
   #apiRoot = appConfig.express.apiRoot;
 
   querySnowflake = async (
-    body: {query: string, targetOrganizationId?: string},
+    body: {query: string, targetOrgId?: string},
     jwt: string
   ): Promise<SnowflakeQueryResultDto> => {
     try {
@@ -41,13 +41,13 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
 
   sendSlackAlert = async (
     messageConfig: AlertMessageConfig,
-    targetOrganizationId: string,
+    targetOrgId: string,
     jwt: string
   ): Promise<SendAlertResultDto> => {
     try {
       const data = {
         messageConfig,
-        targetOrganizationId,
+        targetOrgId,
       };
 
       const config: AxiosRequestConfig = {
