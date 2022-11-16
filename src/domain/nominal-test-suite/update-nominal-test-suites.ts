@@ -1,7 +1,7 @@
 import IUseCase from '../services/use-case';
 import Result from '../value-types/transient-types/result';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
-import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
+
 import { SnowflakeQueryResultDto } from '../integration-api/snowflake/snowlake-query-result-dto';
 import { ExecutionType } from '../value-types/execution-type';
 import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';

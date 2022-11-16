@@ -6,7 +6,7 @@ import {
   NominalTestSuite,
   NominalTestType,
 } from '../entities/nominal-test-suite';
-import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
+
 import { MaterializationType } from '../value-types/materialization-type';
 import { ExecutionType } from '../value-types/execution-type';
 import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';

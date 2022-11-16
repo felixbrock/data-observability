@@ -4,10 +4,10 @@ import IUseCase from '../services/use-case';
 import { ReadTestSuite } from './read-test-suite';
 import { ExecuteTest } from '../test-execution-api/execute-test';
 import { DbConnection } from '../services/i-db';
-import CitoDataQuery from '../services/cito-data-query';
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
+
 import { ExecutionType } from '../value-types/execution-type';
 import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
+import BaseSfQueryUseCase from '../services/base-sf-query-use-case';
 
 export interface TriggerTestSuiteExecutionRequestDto {
   id: string;
@@ -24,12 +24,10 @@ export interface TriggerTestSuiteExecutionAuthDto {
 export type TriggerTestSuiteExecutionResponseDto = Result<void>;
 
 export class TriggerTestSuiteExecution
-  implements
-    IUseCase<
+  extends BaseSfQueryUseCase<
       TriggerTestSuiteExecutionRequestDto,
       TriggerTestSuiteExecutionResponseDto,
-      TriggerTestSuiteExecutionAuthDto,
-      DbConnection
+      TriggerTestSuiteExecutionAuthDto
     >
 {
   readonly #readTestSuite: ReadTestSuite;

@@ -2,7 +2,7 @@ import { NominalTestSuite } from '../entities/nominal-test-suite';
 import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
 import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
-import CitoDataQuery from '../services/cito-data-query';
+
 import { DbConnection } from '../services/i-db';
 import IUseCase from '../services/use-case';
 import Result from '../value-types/transient-types/result';

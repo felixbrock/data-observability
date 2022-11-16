@@ -2,7 +2,7 @@ import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { TestSuite } from '../entities/test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
-import CitoDataQuery from '../services/cito-data-query';
+
 import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
 
 export interface ReadTestSuiteRequestDto {

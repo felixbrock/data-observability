@@ -15,7 +15,7 @@ export const parseCustomTestType = (testType: unknown): CustomTestType => {
   throw new Error('Provision of invalid type');
 };
 
-export interface CustomTestSuiteProperties extends BaseAnomalyTestSuite {
+export interface CustomTestSuiteProps extends BaseAnomalyTestSuite {
   id: string;
   name: string;
   description: string;
@@ -24,7 +24,7 @@ export interface CustomTestSuiteProperties extends BaseAnomalyTestSuite {
   // template?: TestTemplate
 }
 
-export type CustomTestSuiteDto = CustomTestSuiteProperties;
+export type CustomTestSuiteDto = CustomTestSuiteProps;
 
 export class CustomTestSuite implements CustomTestSuiteDto {
   #id: string;
@@ -93,7 +93,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     return this.#executionType;
   }
 
-  private constructor(props: CustomTestSuiteProperties) {
+  private constructor(props: CustomTestSuiteProps) {
     this.#id = props.id;
     this.#organizationId = props.organizationId;
     this.#activated = props.activated;
@@ -107,7 +107,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     this.#executionType = props.executionType;
   }
 
-  static create = (props: CustomTestSuiteProperties): CustomTestSuite => {
+  static create = (props: CustomTestSuiteProps): CustomTestSuite => {
     if (!props.id) throw new TypeError('CustomTestSuite must have id');
     if (!props.organizationId)
       throw new TypeError('CustomTestSuite must have organization id');

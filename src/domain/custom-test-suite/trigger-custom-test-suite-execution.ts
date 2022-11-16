@@ -1,13 +1,13 @@
 // todo - clean architecture violation
 import Result from '../value-types/transient-types/result';
-import IUseCase from '../services/use-case';
 import { ReadCustomTestSuite } from './read-custom-test-suite';
 import { ExecuteTest } from '../test-execution-api/execute-test';
 import { DbConnection } from '../services/i-db';
 import { ExecutionType } from '../value-types/execution-type';
-import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
-import { QuerySnowflake } from '../snowflake-api/query-snowflake';
 import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
+import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
+import BaseAuth from '../services/base-auth';
+import IUseCase from '../services/use-case';
 
 export interface TriggerCustomTestSuiteExecutionRequestDto {
   id: string;
@@ -16,43 +16,32 @@ export interface TriggerCustomTestSuiteExecutionRequestDto {
   profile?: SnowflakeProfileDto;
 }
 
-export interface TriggerCustomTestSuiteExecutionAuthDto {
-  jwt: string;
-  callerOrgId?: string;
-  isSystemInternal: boolean;
-}
+export type TriggerCustomTestSuiteExecutionAuthDto = BaseAuth;
 
 export type TriggerCustomTestSuiteExecutionResponseDto = Result<void>;
 
-export class TriggerCustomTestSuiteExecution
-  implements
-    IUseCase<
-      TriggerCustomTestSuiteExecutionRequestDto,
-      TriggerCustomTestSuiteExecutionResponseDto,
-      TriggerCustomTestSuiteExecutionAuthDto,
-      DbConnection
-    >
-{
+export class TriggerCustomTestSuiteExecution implements IUseCase<
+  TriggerCustomTestSuiteExecutionRequestDto,
+  TriggerCustomTestSuiteExecutionResponseDto,
+  TriggerCustomTestSuiteExecutionAuthDto,
+  DbConnection
+> {
+  readonly #repo: ICustomTestSuiteRepo;
+
   readonly #readCustomTestSuite: ReadCustomTestSuite;
 
   readonly #executeTest: ExecuteTest;
 
-  readonly #querySnowflake: QuerySnowflake;
-
-  readonly #getSnowflakeProfile: GetSnowflakeProfile;
-
   #dbConnection: DbConnection;
 
   constructor(
+    repo: ICustomTestSuiteRepo,
     readCustomTestSuite: ReadCustomTestSuite,
-    executeTest: ExecuteTest,
-    querySnowflake: QuerySnowflake,
-    getSnowflakeProfile: GetSnowflakeProfile
+    executeTest: ExecuteTest
   ) {
+    this.#repo = repo;
     this.#readCustomTestSuite = readCustomTestSuite;
     this.#executeTest = executeTest;
-    this.#querySnowflake = querySnowflake;
-    this.#getSnowflakeProfile = getSnowflakeProfile;
   }
 
   // #wasAltered = async (
@@ -113,11 +102,7 @@ export class TriggerCustomTestSuiteExecution
     try {
       const readCustomTestSuiteResult = await this.#readCustomTestSuite.execute(
         { id: request.id, targetOrgId: request.targetOrgId },
-        {
-          jwt: auth.jwt,
-          callerOrgId: auth.callerOrgId,
-          isSystemInternal: auth.isSystemInternal,
-        }
+        auth
       );
 
       if (!readCustomTestSuiteResult.success)

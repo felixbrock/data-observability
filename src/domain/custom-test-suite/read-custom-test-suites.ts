@@ -1,39 +1,34 @@
 import {
-  CustomTestSuite,
   CustomTestSuiteDto,
 } from '../entities/custom-test-suite';
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
-import CitoDataQuery from '../services/cito-data-query';
-import { DbConnection } from '../services/i-db';
-import IUseCase from '../services/use-case';
+import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
+import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
+import BaseAuth from '../services/base-auth';
+import BaseSfQueryUseCase from '../services/base-sf-query-use-case';
+
 import Result from '../value-types/transient-types/result';
+import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
 
 export interface ReadCustomTestSuitesRequestDto {
   activated?: boolean;
   executionFrequency?: number;
+  profile?: SnowflakeProfileDto;
 }
 
-export interface ReadCustomTestSuitesAuthDto {
-  jwt: string;
-  isSystemInternal: boolean;
-  callerOrgId?: string;
-}
+export type ReadCustomTestSuitesAuthDto = BaseAuth;
 
 export type ReadCustomTestSuitesResponseDto = Result<CustomTestSuiteDto[]>;
 
-export class ReadCustomTestSuites
-  implements
-    IUseCase<
-      ReadCustomTestSuitesRequestDto,
-      ReadCustomTestSuitesResponseDto,
-      ReadCustomTestSuitesAuthDto,
-      DbConnection
-    >
-{
-  readonly #querySnowflake: QuerySnowflake;
+export class ReadCustomTestSuites extends BaseSfQueryUseCase<
+  ReadCustomTestSuitesRequestDto,
+  ReadCustomTestSuitesResponseDto,
+  ReadCustomTestSuitesAuthDto
+> {
+  readonly #repo: ICustomTestSuiteRepo;
 
-  constructor(querySnowflake: QuerySnowflake) {
-    this.#querySnowflake = querySnowflake;
+  constructor(getProfile: GetSnowflakeProfile, repo: ICustomTestSuiteRepo) {
+    super(getProfile);
+    this.#repo = repo;
   }
 
   async execute(
@@ -44,62 +39,18 @@ export class ReadCustomTestSuites
       throw new Error('Not authorized to perform operation');
 
     try {
-      const query = CitoDataQuery.getReadTestSuitesQuery(
-        'test_suites_custom',
-        [],
-        `${
-          request.executionFrequency
-            ? `execution_frequency = ${request.executionFrequency}`
-            : ''
-        } ${
-          request.executionFrequency && request.activated !== undefined
-            ? 'and'
-            : ''
-        } ${
-          request.activated !== undefined
-            ? `activated = ${request.activated}`
-            : ''
-        }`.replace(/\s/g, '') || undefined
+      const profile = request.profile || (await this.getProfile(auth.jwt));
+
+      const testSuites = await this.#repo.findBy(
+        {
+          activated: request.activated,
+          executionFrequency: request.executionFrequency,
+        },
+        profile,
+        auth
       );
 
-      const querySnowflakeResult = await this.#querySnowflake.execute(
-        { query },
-        { jwt: auth.jwt }
-      );
-
-      if (!querySnowflakeResult.success)
-        throw new Error(querySnowflakeResult.error);
-
-      const result = querySnowflakeResult.value;
-
-      if (!result) throw new Error(`No test suites found that match condition`);
-
-      const customTestSuites = Object.keys(result).map((key) => {
-        const organizationResult = result[key];
-
-        const organizationCustomTestSuites = organizationResult.map((element) =>
-          CustomTestSuite.create({
-            id: element.ID,
-            activated: element.ACTIVATED,
-            executionFrequency: element.EXECUTION_FREQUENCY,
-            threshold: element.THRESHOLD,
-            name: element.NAME,
-            description: element.DESCRIPTION,
-            sqlLogic: element.SQL_LOGIC,
-            targetResourceIds: element.TARGET_RESOURCE_IDS,
-            organizationId: element.ORGANIZATION_ID,
-            cron: element.CRON,
-            executionType: element.EXECUTION_TYPE,
-          })
-        );
-
-        return organizationCustomTestSuites;
-      });
-
-      // if (customTestSuite.organizationId !== auth.organizationId)
-      //   throw new Error('Not authorized to perform action');
-
-      return Result.ok(customTestSuites.flat());
+      return Result.ok(testSuites);
     } catch (error: unknown) {
       if (error instanceof Error && error.message) console.trace(error.message);
       else if (!(error instanceof Error) && error) console.trace(error);

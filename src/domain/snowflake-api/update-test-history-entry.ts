@@ -1,6 +1,6 @@
 import IUseCase from '../services/use-case';
 import Result from '../value-types/transient-types/result';
-import CitoDataQuery from '../services/cito-data-query';
+
 import { TestType } from '../entities/test-suite';
 import { NominalTestType } from '../entities/nominal-test-suite';
 import { QuerySnowflake } from './query-snowflake';

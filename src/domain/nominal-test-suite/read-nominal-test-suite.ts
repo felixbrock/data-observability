@@ -1,8 +1,8 @@
 import Result from '../value-types/transient-types/result';
 import { NominalTestSuite } from '../entities/nominal-test-suite';
-import CitoDataQuery from '../services/cito-data-query';
+
 import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
-import SfQueryUseCase from '../services/sf-query-use-case';
+import BaseSfQueryUseCase from '../services/base-sf-query-use-case';
 
 export interface ReadNominalTestSuiteRequestDto {
   id: string;
@@ -18,7 +18,7 @@ export interface ReadNominalTestSuiteAuthDto {
 
 export type ReadNominalTestSuiteResponseDto = Result<NominalTestSuite>;
 
-export class ReadNominalTestSuite extends SfQueryUseCase<
+export class ReadNominalTestSuite extends BaseSfQueryUseCase<
   ReadNominalTestSuiteRequestDto,
   ReadNominalTestSuiteResponseDto,
   ReadNominalTestSuiteAuthDto
