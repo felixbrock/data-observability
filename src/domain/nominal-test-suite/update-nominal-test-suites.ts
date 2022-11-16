@@ -4,6 +4,7 @@ import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
 import { SnowflakeQueryResultDto } from '../integration-api/snowflake/snowlake-query-result-dto';
 import { ExecutionType } from '../value-types/execution-type';
+import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
 
 interface UpdateObject {
   id: string;
@@ -35,9 +36,31 @@ export class UpdateNominalTestSuites
 {
   readonly #querySnowflake: QuerySnowflake;
 
-  constructor(querySnowflake: QuerySnowflake) {
+  readonly #getSnowflakeProfile: GetSnowflakeProfile;
+
+  constructor(querySnowflake: QuerySnowflake, getSnowflakeProfile: GetSnowflakeProfile) {
     this.#querySnowflake = querySnowflake;
+    this.#getSnowflakeProfile = getSnowflakeProfile;
   }
+
+  #getProfile = async (
+    jwt: string,
+    targetOrgId?: string
+  ): Promise<SnowflakeProfileDto> => {
+    const readSnowflakeProfileResult = await this.#getSnowflakeProfile.execute(
+      { targetOrgId },
+      {
+        jwt,
+      }
+    );
+
+    if (!readSnowflakeProfileResult.success)
+      throw new Error(readSnowflakeProfileResult.error);
+    if (!readSnowflakeProfileResult.value)
+      throw new Error('SnowflakeProfile does not exist');
+
+    return readSnowflakeProfileResult.value;
+  };
 
   async execute(
     request: UpdateNominalTestSuitesRequestDto,

@@ -1,4 +1,5 @@
 import { TestSuite } from '../entities/test-suite';
+import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
 import { DbConnection } from '../services/i-db';
@@ -28,9 +29,34 @@ export class ReadTestSuites
 {
   readonly #querySnowflake: QuerySnowflake;
 
-  constructor(querySnowflake: QuerySnowflake) {
+  readonly #getSnowflakeProfile: GetSnowflakeProfile;
+
+  constructor(
+    querySnowflake: QuerySnowflake,
+    getSnowflakeProfile: GetSnowflakeProfile
+  ) {
     this.#querySnowflake = querySnowflake;
+    this.#getSnowflakeProfile = getSnowflakeProfile;
   }
+
+  #getProfile = async (
+    jwt: string,
+    targetOrgId?: string
+  ): Promise<SnowflakeProfileDto> => {
+    const readSnowflakeProfileResult = await this.#getSnowflakeProfile.execute(
+      { targetOrgId },
+      {
+        jwt,
+      }
+    );
+
+    if (!readSnowflakeProfileResult.success)
+      throw new Error(readSnowflakeProfileResult.error);
+    if (!readSnowflakeProfileResult.value)
+      throw new Error('SnowflakeProfile does not exist');
+
+    return readSnowflakeProfileResult.value;
+  };
 
   async execute(
     request: ReadTestSuitesRequestDto,

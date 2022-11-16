@@ -6,10 +6,12 @@ import {
   NominalTestSuite,
   NominalTestType,
 } from '../entities/nominal-test-suite';
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
 import { MaterializationType } from '../value-types/materialization-type';
 import { ExecutionType } from '../value-types/execution-type';
+import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
+import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
+import { QuerySnowflake } from '../snowflake-api/query-snowflake';
 
 interface CreateObject {
   activated: boolean;
@@ -24,6 +26,7 @@ interface CreateObject {
   materializationType: MaterializationType;
   columnName?: string;
   targetResourceId: string;
+  profile?: SnowflakeProfileDto;
 }
 
 export interface CreateNominalTestSuitesRequestDto {
@@ -47,9 +50,31 @@ export class CreateNominalTestSuites
 {
   readonly #querySnowflake: QuerySnowflake;
 
-  constructor(querySnowflake: QuerySnowflake) {
+  readonly #getSnowflakeProfile: GetSnowflakeProfile;
+
+  constructor(querySnowflake: QuerySnowflake, getSnowflakeProfile: GetSnowflakeProfile) {
     this.#querySnowflake = querySnowflake;
+    this.#getSnowflakeProfile = getSnowflakeProfile;
   }
+
+  #getProfile = async (
+    jwt: string,
+    targetOrgId?: string
+  ): Promise<SnowflakeProfileDto> => {
+    const readSnowflakeProfileResult = await this.#getSnowflakeProfile.execute(
+      { targetOrgId },
+      {
+        jwt,
+      }
+    );
+
+    if (!readSnowflakeProfileResult.success)
+      throw new Error(readSnowflakeProfileResult.error);
+    if (!readSnowflakeProfileResult.value)
+      throw new Error('SnowflakeProfile does not exist');
+
+    return readSnowflakeProfileResult.value;
+  };
 
   async execute(
     request: CreateNominalTestSuitesRequestDto,
@@ -110,6 +135,9 @@ export class CreateNominalTestSuites
         columnDefinitions,
         values
       );
+
+      const profile = request.profile || (await this.#getProfile(auth.jwt));
+
 
       const querySnowflakeResult = await this.#querySnowflake.execute(
         { query },

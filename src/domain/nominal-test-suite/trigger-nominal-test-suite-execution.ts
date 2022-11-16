@@ -7,6 +7,7 @@ import { DbConnection } from '../services/i-db';
 import CitoDataQuery from '../services/cito-data-query';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import { ExecutionType } from '../value-types/execution-type';
+import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
 
 export interface TriggerNominalTestSuiteExecutionRequestDto {
   id: string;
@@ -37,16 +38,20 @@ export class TriggerNominalTestSuiteExecution
 
   readonly #querySnowflake: QuerySnowflake;
 
+  readonly #getSnowflakeProfile: GetSnowflakeProfile
+
   #dbConnection: DbConnection;
 
   constructor(
     readNominalTestSuite: ReadNominalTestSuite,
     executeTest: ExecuteTest,
-    querySnowflake: QuerySnowflake
+    querySnowflake: QuerySnowflake,
+    getSnowflakeProfile: GetSnowflakeProfile
   ) {
     this.#readNominalTestSuite = readNominalTestSuite;
     this.#executeTest = executeTest;
     this.#querySnowflake = querySnowflake;
+    this.#getSnowflakeProfile = getSnowflakeProfile;
   }
 
   #wasAltered = async (
@@ -85,7 +90,24 @@ export class TriggerNominalTestSuiteExecution
 
     return organizationResults[0].WAS_ALTERED;
   };
+  #getProfile = async (
+    jwt: string,
+    targetOrgId?: string
+  ): Promise<SnowflakeProfileDto> => {
+    const readSnowflakeProfileResult = await this.#getSnowflakeProfile.execute(
+      { targetOrgId },
+      {
+        jwt,
+      }
+    );
 
+    if (!readSnowflakeProfileResult.success)
+      throw new Error(readSnowflakeProfileResult.error);
+    if (!readSnowflakeProfileResult.value)
+      throw new Error('SnowflakeProfile does not exist');
+
+    return readSnowflakeProfileResult.value;
+  };
   async execute(
     request: TriggerNominalTestSuiteExecutionRequestDto,
     auth: TriggerNominalTestSuiteExecutionAuthDto,

@@ -3,6 +3,7 @@ import IUseCase from '../services/use-case';
 import { TestSuite } from '../entities/test-suite';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
+import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
 
 export interface ReadTestSuiteRequestDto {
   id: string;
@@ -27,9 +28,34 @@ export class ReadTestSuite
 {
   readonly #querySnowflake: QuerySnowflake;
 
-  constructor(querySnowflake: QuerySnowflake) {
+  readonly #getSnowflakeProfile: GetSnowflakeProfile;
+
+  constructor(
+    querySnowflake: QuerySnowflake,
+    getSnowflakeProfile: GetSnowflakeProfile
+  ) {
     this.#querySnowflake = querySnowflake;
+    this.#getSnowflakeProfile = getSnowflakeProfile;
   }
+
+  #getProfile = async (
+    jwt: string,
+    targetOrgId?: string
+  ): Promise<SnowflakeProfileDto> => {
+    const readSnowflakeProfileResult = await this.#getSnowflakeProfile.execute(
+      { targetOrgId },
+      {
+        jwt,
+      }
+    );
+
+    if (!readSnowflakeProfileResult.success)
+      throw new Error(readSnowflakeProfileResult.error);
+    if (!readSnowflakeProfileResult.value)
+      throw new Error('SnowflakeProfile does not exist');
+
+    return readSnowflakeProfileResult.value;
+  };
 
   async execute(
     request: ReadTestSuiteRequestDto,
@@ -45,8 +71,7 @@ export class ReadTestSuite
     let organizationId;
     if (auth.isSystemInternal && request.targetOrgId)
       organizationId = request.targetOrgId;
-    else if (auth.callerOrgId)
-      organizationId = auth.callerOrgId;
+    else if (auth.callerOrgId) organizationId = auth.callerOrgId;
     else throw new Error('Unhandled organizationId allocation');
 
     try {

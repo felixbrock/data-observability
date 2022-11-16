@@ -1,4 +1,6 @@
 import { NominalTestSuite } from '../entities/nominal-test-suite';
+import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
+import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
 import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import CitoDataQuery from '../services/cito-data-query';
 import { DbConnection } from '../services/i-db';
@@ -8,6 +10,7 @@ import Result from '../value-types/transient-types/result';
 export interface ReadNominalTestSuitesRequestDto {
   activated?: boolean;
   executionFrequency?: number;
+  profile?: SnowflakeProfileDto;
 }
 
 export interface ReadNominalTestSuitesAuthDto {
@@ -29,10 +32,30 @@ export class ReadNominalTestSuites
 {
   readonly #querySnowflake: QuerySnowflake;
 
-  constructor(querySnowflake: QuerySnowflake) {
-    this.#querySnowflake = querySnowflake;
-  }
+  readonly #getSnowflakeProfile: GetSnowflakeProfile;
 
+  constructor(querySnowflake: QuerySnowflake, getSnowflakeProfile: GetSnowflakeProfile) {
+    this.#querySnowflake = querySnowflake;
+    this.#getSnowflakeProfile  = getSnowflakeProfile;
+  }
+  #getProfile = async (
+    jwt: string,
+    targetOrgId?: string
+  ): Promise<SnowflakeProfileDto> => {
+    const readSnowflakeProfileResult = await this.#getSnowflakeProfile.execute(
+      { targetOrgId },
+      {
+        jwt,
+      }
+    );
+
+    if (!readSnowflakeProfileResult.success)
+      throw new Error(readSnowflakeProfileResult.error);
+    if (!readSnowflakeProfileResult.value)
+      throw new Error('SnowflakeProfile does not exist');
+
+    return readSnowflakeProfileResult.value;
+  };
   async execute(
     request: ReadNominalTestSuitesRequestDto,
     auth: ReadNominalTestSuitesAuthDto
