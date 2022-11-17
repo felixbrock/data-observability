@@ -27,6 +27,12 @@ export interface IBaseServiceRepo<Entity, QueryDto, UpdateDto> {
     auth: Auth,
     targetOrgId?: string
   ): Promise<string>;
+  insertMany(   
+    entities: Entity[],
+    profile: SnowflakeProfileDto,
+    auth: BaseAuth,
+    targetOrgId?: string
+  ): Promise<string[]>;
   updateOne(
     id: string,
     updateDto: UpdateDto,

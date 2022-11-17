@@ -6,7 +6,11 @@ export default abstract class BaseSfQueryUseCase<ReqDto, ResDto, AuthDto>
   implements IUseCase<ReqDto, ResDto, AuthDto>
 {
   readonly #getSnowflakeProfile: GetSnowflakeProfile;
-
+  AcccountId: ${
+    request.profile.accountId
+  } \nOrganizationId: ${
+    request.profile.organizationId
+  } \n 
 
   constructor(
     getSnowflakeProfile: GetSnowflakeProfile

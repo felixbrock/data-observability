@@ -37,13 +37,13 @@ export class CreateCustomTestSuite
     >
 {
 
-  readonly #customTestSuiteRepo:  ICustomTestSuiteRepo;
+  readonly #repo:  ICustomTestSuiteRepo;
 
   constructor(
-    getSnowflakeProfile: GetSnowflakeProfile, customTestSuiteRepo: ICustomTestSuiteRepo
+    getSnowflakeProfile: GetSnowflakeProfile, repo: ICustomTestSuiteRepo
   ) {
     super(getSnowflakeProfile);
-    this.#customTestSuiteRepo = customTestSuiteRepo;
+    this.#repo = repo;
   }
 
   async execute(
@@ -67,7 +67,7 @@ export class CreateCustomTestSuite
 
       const profile = request.profile || (await this.getProfile(auth.jwt));
 
-      await this.#customTestSuiteRepo.insertOne(customTestSuite, profile, auth);
+      await this.#repo.insertOne(customTestSuite, profile, auth);
 
       return Result.ok(customTestSuite);
     } catch (error: unknown) {

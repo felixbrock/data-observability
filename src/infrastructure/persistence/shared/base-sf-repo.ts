@@ -1,6 +1,6 @@
 import { IBaseServiceRepo } from '../../../domain/services/i-base-service-repo';
 import { SnowflakeProfileDto } from '../../../domain/integration-api/i-integration-api-repo';
-import baseAuth from '../../../domain/services/base-auth';
+import BaseAuth from '../../../domain/services/base-auth';
 import { SnowflakeEntity } from '../../../domain/snowflake-api/i-snowflake-api-repo';
 import { QuerySnowflake } from '../../../domain/snowflake-api/query-snowflake';
 import {
@@ -36,7 +36,7 @@ export default abstract class BaseSfRepo<
   findOne = async (
     id: string,
     profile: SnowflakeProfileDto,
-    auth: baseAuth,
+    auth: BaseAuth,
     targetOrgId?: string
   ): Promise<Entity | null> => {
     try {
@@ -72,7 +72,7 @@ export default abstract class BaseSfRepo<
   findBy = async (
     queryDto: QueryDto,
     profile: SnowflakeProfileDto,
-    auth: baseAuth,
+    auth: BaseAuth,
     targetOrgId?: string
   ): Promise<Entity[]> => {
     try {
@@ -99,7 +99,7 @@ export default abstract class BaseSfRepo<
 
   all = async (
     profile: SnowflakeProfileDto,
-    auth: baseAuth,
+    auth: BaseAuth,
     targetOrgId?: string
   ): Promise<Entity[]> => {
     try {
@@ -126,7 +126,7 @@ export default abstract class BaseSfRepo<
   insertOne = async (
     entity: Entity,
     profile: SnowflakeProfileDto,
-    auth: baseAuth,
+    auth: BaseAuth,
     targetOrgId?: string
   ): Promise<string> => {
     try {
@@ -154,6 +154,39 @@ export default abstract class BaseSfRepo<
     }
   };
 
+  insertMany = async (
+    entities: Entity[],
+    profile: SnowflakeProfileDto,
+    auth: BaseAuth,
+    targetOrgId?: string
+  ): Promise<string[]> => {
+    try {
+      const binds = entities.map((entity) =>
+        this.getBinds(entity)
+      );
+
+      const row = `(${this.colDefinitions.map(() => '?').join(', ')})`;
+
+      const queryText = getInsertQueryText(this.matName, this.colDefinitions, [
+        row,
+      ]);
+
+      const result = await this.querySnowflake.execute(
+        { queryText, targetOrgId, binds, profile },
+        auth
+      );
+
+      if (!result.success) throw new Error(result.error);
+      if (!result.value) throw new Error('Missing sf query value');
+
+      return entities.map((el) => el.id);
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message) console.trace(error.message);
+      else if (!(error instanceof Error) && error) console.trace(error);
+      return Promise.reject(new Error());
+    }
+  };
+
   getDefinition = (name: string): ColumnDefinition => {
     const def = this.colDefinitions.find((el) => el.name === name);
     if (!def) throw new Error('Missing col definition');
@@ -170,7 +203,7 @@ export default abstract class BaseSfRepo<
     id: string,
     updateDto: UpdateDto,
     profile: SnowflakeProfileDto,
-    auth: baseAuth,
+    auth: BaseAuth,
     targetOrgId?: string
   ): Promise<string> => {
     try {

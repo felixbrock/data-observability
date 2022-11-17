@@ -1,12 +1,9 @@
 import {
-  CustomTestSuiteUpdateDto,
-  CustomTestSuiteQueryDto,
-  ICustomTestSuiteRepo,
-} from '../../domain/custom-test-suite/i-custom-test-suite-repo';
-import {
-  CustomTestSuite,
-  CustomTestSuiteProps,
-} from '../../domain/entities/custom-test-suite';
+  TestSuiteUpdateDto,
+  TestSuiteQueryDto,
+  ITestSuiteRepo,
+} from '../../domain/test-suite/i-test-suite-repo';
+import { TestSuite, TestSuiteProps } from '../../domain/entities/test-suite';
 import {
   ColumnDefinition,
   getUpdateQueryText,
@@ -17,16 +14,16 @@ import { SnowflakeEntity } from '../../domain/snowflake-api/i-snowflake-api-repo
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
 
-export default class CustomTestSuiteRepo
+export default class TestSuiteRepo
   extends BaseSfRepo<
-    CustomTestSuite,
-    CustomTestSuiteProps,
-    CustomTestSuiteQueryDto,
-    CustomTestSuiteUpdateDto
+    TestSuite,
+    TestSuiteProps,
+    TestSuiteQueryDto,
+    TestSuiteUpdateDto
   >
-  implements ICustomTestSuiteRepo
+  implements ITestSuiteRepo
 {
-  readonly matName = 'test_suites_custom';
+  readonly matName = 'test_suites';
 
   readonly colDefinitions: ColumnDefinition[] = [
     { name: 'id', nullable: true },
@@ -47,7 +44,7 @@ export default class CustomTestSuiteRepo
     super(querySnowflake);
   }
 
-  buildEntityProps = (sfEntity: SnowflakeEntity): CustomTestSuiteProps => {
+  buildEntityProps = (sfEntity: SnowflakeEntity): TestSuiteProps => {
     const {
       ID: id,
       ACTIVATED: activated,
@@ -63,23 +60,20 @@ export default class CustomTestSuiteRepo
     } = sfEntity;
 
     if (
-      !CustomTestSuiteRepo.isOptionalOfType<string>(id, 'string') ||
-      !CustomTestSuiteRepo.isOptionalOfType<boolean>(activated, 'boolean') ||
-      !CustomTestSuiteRepo.isOptionalOfType<number>(threshold, 'number') ||
-      !CustomTestSuiteRepo.isOptionalOfType<number>(
-        executionFrequency,
-        'number'
-      ) ||
-      !CustomTestSuiteRepo.isOptionalOfType<string>(name, 'string') ||
-      !CustomTestSuiteRepo.isOptionalOfType<string>(description, 'string') ||
-      !CustomTestSuiteRepo.isOptionalOfType<string>(sqlLogic, 'string') ||
-      !CustomTestSuiteRepo.isStringArray(targetResourceIds) ||
-      !CustomTestSuiteRepo.isOptionalOfType<string>(organizationId, 'string') ||
-      !CustomTestSuiteRepo.isOptionalOfType<string>(cron, 'string') ||
-      !CustomTestSuiteRepo.isOptionalOfType<string>(executionType, 'string')
+      !TestSuiteRepo.isOptionalOfType<string>(id, 'string') ||
+      !TestSuiteRepo.isOptionalOfType<boolean>(activated, 'boolean') ||
+      !TestSuiteRepo.isOptionalOfType<number>(threshold, 'number') ||
+      !TestSuiteRepo.isOptionalOfType<number>(executionFrequency, 'number') ||
+      !TestSuiteRepo.isOptionalOfType<string>(name, 'string') ||
+      !TestSuiteRepo.isOptionalOfType<string>(description, 'string') ||
+      !TestSuiteRepo.isOptionalOfType<string>(sqlLogic, 'string') ||
+      !TestSuiteRepo.isStringArray(targetResourceIds) ||
+      !TestSuiteRepo.isOptionalOfType<string>(organizationId, 'string') ||
+      !TestSuiteRepo.isOptionalOfType<string>(cron, 'string') ||
+      !TestSuiteRepo.isOptionalOfType<string>(executionType, 'string')
     )
       throw new Error(
-        'Retrieved unexpected custom test suite field types from persistence'
+        'Retrieved unexpected  test suite field types from persistence'
       );
 
     return {
@@ -97,7 +91,7 @@ export default class CustomTestSuiteRepo
     };
   };
 
-  buildFindByQuery = (queryDto: CustomTestSuiteQueryDto): Query => {
+  buildFindByQuery = (queryDto: TestSuiteQueryDto): Query => {
     const binds: (string | number)[] = [];
     let whereClause = '';
 
@@ -120,7 +114,7 @@ export default class CustomTestSuiteRepo
     return { text, binds };
   };
 
-  getBinds = (entity: CustomTestSuite): (string | number)[] => [
+  getBinds = (entity: TestSuite): (string | number)[] => [
     entity.id,
     entity.activated.toString(),
     entity.threshold,
@@ -134,10 +128,7 @@ export default class CustomTestSuiteRepo
     entity.executionType,
   ];
 
-  buildUpdateQuery = (
-    id: string,
-    updateDto: CustomTestSuiteUpdateDto
-  ): Query => {
+  buildUpdateQuery = (id: string, updateDto: TestSuiteUpdateDto): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
     const binds = [id];
 
@@ -185,7 +176,6 @@ export default class CustomTestSuiteRepo
     return { text, binds, colDefinitions };
   };
 
-  toEntity = (
-    customtestsuiteProperties: CustomTestSuiteProps
-  ): CustomTestSuite => CustomTestSuite.create(customtestsuiteProperties);
+  toEntity = (testsuiteProperties: TestSuiteProps): TestSuite =>
+    TestSuite.create(testsuiteProperties);
 }

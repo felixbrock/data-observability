@@ -1,13 +1,15 @@
 // todo - clean architecture violation
 import { ObjectId } from 'mongodb';
 import Result from '../value-types/transient-types/result';
-import IUseCase from '../services/use-case';
 import { TestSuite, TestType } from '../entities/test-suite';
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 
 import { MaterializationType } from '../value-types/materialization-type';
 import { ExecutionType } from '../value-types/execution-type';
 import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
+import BaseSfQueryUseCase from '../services/base-sf-query-use-case';
+import { ITestSuiteRepo } from './test-suite-repo';
+import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
+import BaseAuth from '../services/base-auth';
 
 interface CreateObject {
   activated: boolean;
@@ -26,79 +28,70 @@ interface CreateObject {
 
 export interface CreateTestSuitesRequestDto {
   createObjects: CreateObject[];
+  profile?: SnowflakeProfileDto;
 }
 
-export interface CreateTestSuitesAuthDto {
-  jwt: string;
+export interface CreateTestSuitesAuthDto extends Omit<BaseAuth, 'callerOrgId'>{
   callerOrgId: string;
-}
+};
 
 export type CreateTestSuitesResponseDto = Result<TestSuite[]>;
 
 export class CreateTestSuites
-  implements
-    IUseCase<
+  extends BaseSfQueryUseCase<
       CreateTestSuitesRequestDto,
       CreateTestSuitesResponseDto,
       CreateTestSuitesAuthDto
     >
 {
-  readonly #querySnowflake: QuerySnowflake;
 
-  readonly #getSnowflakeProfile: GetSnowflakeProfile;
+  readonly #repo:  ITestSuiteRepo;
 
   constructor(
-    querySnowflake: QuerySnowflake,
-    getSnowflakeProfile: GetSnowflakeProfile
+    getSnowflakeProfile: GetSnowflakeProfile, repo: ITestSuiteRepo
   ) {
-    this.#querySnowflake = querySnowflake;
-    this.#getSnowflakeProfile = getSnowflakeProfile;
+    super(getSnowflakeProfile);
+    this.#repo = repo;
   }
-
-  #getProfile = async (
-    jwt: string,
-    targetOrgId?: string
-  ): Promise<SnowflakeProfileDto> => {
-    const readSnowflakeProfileResult = await this.#getSnowflakeProfile.execute(
-      { targetOrgId },
-      {
-        jwt,
-      }
-    );
-
-    if (!readSnowflakeProfileResult.success)
-      throw new Error(readSnowflakeProfileResult.error);
-    if (!readSnowflakeProfileResult.value)
-      throw new Error('SnowflakeProfile does not exist');
-
-    return readSnowflakeProfileResult.value;
-  };
 
   async execute(
     request: CreateTestSuitesRequestDto,
     auth: CreateTestSuitesAuthDto
   ): Promise<CreateTestSuitesResponseDto> {
     try {
-      const testSuites = request.createObjects.map((createObject) =>
+      const testSuites = request.createObjects.map((el) =>
         TestSuite.create({
           id: new ObjectId().toHexString(),
-          activated: createObject.activated,
-          type: createObject.type,
-          threshold: createObject.threshold,
-          executionFrequency: createObject.executionFrequency,
+          activated: el.activated,
+          type: el.type,
+          threshold: el.threshold,
+          executionFrequency: el.executionFrequency,
           target: {
-            databaseName: createObject.databaseName,
-            schemaName: createObject.schemaName,
-            materializationName: createObject.materializationName,
-            materializationType: createObject.materializationType,
-            columnName: createObject.columnName,
-            targetResourceId: createObject.targetResourceId,
+            databaseName: el.databaseName,
+            schemaName: el.schemaName,
+            materializationName: el.materializationName,
+            materializationType: el.materializationType,
+            columnName: el.columnName,
+            targetResourceId: el.targetResourceId,
           },
-          organizationId: auth.callerOrgId,
-          cron: createObject.cron,
-          executionType: createObject.executionType,
+          organizationId: auth.callerOrgId  ,
+          cron: el.cron,
+          executionType: el.executionType,
         })
       );
+
+      const profile = request.profile || (await this.getProfile(auth.jwt));
+
+      await this.#repo.insertMany(testSuites, profile, auth);
+
+      return Result.ok(testSuites);
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message) console.trace(error.message);
+      else if (!(error instanceof Error) && error) console.trace(error);
+      return Result.fail('');
+    }
+  }
+}
 
       const columnDefinitions: ColumnDefinition[] = [
         { name: 'id' },
