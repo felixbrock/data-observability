@@ -4,7 +4,7 @@ import { ExecutionType } from '../value-types/execution-type';
 import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
 import BaseAuth from '../services/base-auth';
 import BaseSfQueryUseCase from '../services/base-sf-query-use-case';
-import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
+import { ICustomTestSuiteRepo } from '../services/i-base-service-repo';
 import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
 
 export interface UpdateCustomTestSuiteRequestDto {

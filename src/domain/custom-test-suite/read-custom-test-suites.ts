@@ -7,7 +7,7 @@ import BaseAuth from '../services/base-auth';
 import BaseSfQueryUseCase from '../services/base-sf-query-use-case';
 
 import Result from '../value-types/transient-types/result';
-import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
+import { ICustomTestSuiteRepo } from '../services/i-base-service-repo';
 
 export interface ReadCustomTestSuitesRequestDto {
   activated?: boolean;

@@ -8,7 +8,7 @@ export interface ColumnDefinition {
 
 export const relationPath = 'cito.observability';
 
-export const getInsertQuery = (
+export const getInsertQueryText = (
   matName: string,
   columnDefinitions: ColumnDefinition[],
   rows: unknown[]
@@ -27,7 +27,7 @@ export const getInsertQuery = (
       from values ${rows.join(', ')};
       `;
 
-export const getUpdateQuery = (
+export const getUpdateQueryText = (
   matName: string,
   colNames: ColumnDefinition[],
   rows: string[]

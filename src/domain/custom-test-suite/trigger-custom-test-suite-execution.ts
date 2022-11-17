@@ -5,7 +5,7 @@ import { ExecuteTest } from '../test-execution-api/execute-test';
 import { DbConnection } from '../services/i-db';
 import { ExecutionType } from '../value-types/execution-type';
 import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
-import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
+import { ICustomTestSuiteRepo } from '../services/i-base-service-repo';
 import BaseAuth from '../services/base-auth';
 import IUseCase from '../services/use-case';
 

@@ -1,12 +1,12 @@
 // todo - clean architecture violation
 import { ObjectId } from 'mongodb';
 import Result from '../value-types/transient-types/result';
-import { CustomTestSuite } from '../entities/custom-test-suite';
+import { CustomTestSuite} from '../entities/custom-test-suite';
 import { ExecutionType } from '../value-types/execution-type';
 import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
 import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
-import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
 import BaseSfQueryUseCase from '../services/base-sf-query-use-case';
+import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
 
 export interface CreateCustomTestSuiteRequestDto {
   entityProps: {activated: boolean;

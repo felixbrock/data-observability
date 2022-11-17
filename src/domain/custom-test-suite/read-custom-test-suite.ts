@@ -5,7 +5,7 @@ import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
 import BaseSfQueryUseCase from '../services/base-sf-query-use-case';
 import BaseAuth from '../services/base-auth';
 import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
-import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
+import { ICustomTestSuiteRepo } from '../services/i-base-service-repo';
 
 export interface ReadCustomTestSuiteRequestDto {
   id: string;

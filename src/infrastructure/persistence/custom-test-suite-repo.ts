@@ -1,8 +1,7 @@
 import {
-  Auth,
-  ICustomTestSuiteRepo,
   CustomTestSuiteUpdateDto,
   CustomTestSuiteQueryDto,
+  ICustomTestSuiteRepo,
 } from '../../domain/custom-test-suite/i-custom-test-suite-repo';
 import {
   CustomTestSuite,
@@ -10,18 +9,21 @@ import {
 } from '../../domain/entities/custom-test-suite';
 import {
   ColumnDefinition,
-  getInsertQuery,
-  getUpdateQuery,
+  getUpdateQueryText,
   relationPath,
 } from './shared/query';
 import { QuerySnowflake } from '../../domain/snowflake-api/query-snowflake';
 import { SnowflakeEntity } from '../../domain/snowflake-api/i-snowflake-api-repo';
-import { SnowflakeProfileDto } from '../../domain/integration-api/i-integration-api-repo';
-import BaseSfRepo from './shared/base-sf-repo';
+import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
 
 export default class CustomTestSuiteRepo
-  extends BaseSfRepo<CustomTestSuite, CustomTestSuiteProps>
+  extends BaseSfRepo<
+    CustomTestSuite,
+    CustomTestSuiteProps,
+    CustomTestSuiteQueryDto,
+    CustomTestSuiteUpdateDto
+  >
   implements ICustomTestSuiteRepo
 {
   readonly matName = 'test_suite_custom';
@@ -95,107 +97,27 @@ export default class CustomTestSuiteRepo
     };
   };
 
-  findOne = async (
-    id: string,
-    profile: SnowflakeProfileDto,
-    auth: Auth,
-    targetOrgId?: string
-  ): Promise<CustomTestSuite | null> => {
-    try {
-      const queryText = `select * from ${relationPath}.${this.matName}
-       where id = ?;`;
+  buildFindByQuery = (queryDto: CustomTestSuiteQueryDto): Query => {
+    const binds: (string | number)[] = [];
+    let whereClause = '';
 
-      // using binds to tell snowflake to escape params to avoid sql injection attack
-      const binds: (string | number)[] = [id];
-
-      const result = await this.querySnowflake.execute(
-        { queryText, targetOrgId, binds, profile },
-        auth
-      );
-
-      if (!result.success) throw new Error(result.error);
-      if (!result.value) throw new Error('Missing sf query value');
-      if (result.value.length > 1)
-        throw new Error(`Multiple customtestsuite entities with id found`);
-
-      return !result.value.length
-        ? null
-        : this.toEntity(this.buildEntityProps(result.value[0]));
-    } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
-      return Promise.reject(new Error());
+    if (queryDto.activated !== undefined) {
+      binds.push(queryDto.activated.toString());
+      const whereCondition = 'activated = ?';
+      whereClause = whereCondition;
     }
-  };
-
-  findBy = async (
-    queryDto: CustomTestSuiteQueryDto,
-    profile: SnowflakeProfileDto,
-    auth: Auth,
-    targetOrgId?: string
-  ): Promise<CustomTestSuite[]> => {
-    try {
-      if (!Object.keys(queryDto).length)
-        return await this.all(profile, auth, targetOrgId);
-
-      // using binds to tell snowflake to escape params to avoid sql injection attack
-      const binds: (string | number)[] = [];
-      let whereClause = '';
-
-      if (queryDto.activated !== undefined) {
-        binds.push(queryDto.activated.toString());
-        const whereCondition = 'activated = ?';
-        whereClause = whereCondition;
-      }
-      if (queryDto.executionFrequency) {
-        binds.push(queryDto.executionFrequency);
-        const whereCondition = 'execution_frequency = ?';
-        whereClause = whereClause
-          ? whereClause.concat(`and ${whereCondition} `)
-          : whereCondition;
-      }
-
-      const queryText = `select * from ${relationPath}.${this.matName}
-          where  ${whereClause};`;
-
-      const result = await this.querySnowflake.execute(
-        { queryText, targetOrgId, binds, profile },
-        auth
-      );
-
-      if (!result.success) throw new Error(result.error);
-      if (!result.value) throw new Error('Missing sf query value');
-
-      return result.value.map((el) => this.toEntity(this.buildEntityProps(el)));
-    } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
-      return Promise.reject(new Error());
+    if (queryDto.executionFrequency) {
+      binds.push(queryDto.executionFrequency);
+      const whereCondition = 'execution_frequency = ?';
+      whereClause = whereClause
+        ? whereClause.concat(`and ${whereCondition} `)
+        : whereCondition;
     }
-  };
 
-  all = async (
-    profile: SnowflakeProfileDto,
-    auth: Auth,
-    targetOrgId?: string
-  ): Promise<CustomTestSuite[]> => {
-    try {
-      const queryText = `select * from ${relationPath}.${this.matName};`;
+    const text = `select * from ${relationPath}.${this.matName}
+        where  ${whereClause};`;
 
-      const result = await this.querySnowflake.execute(
-        { queryText, targetOrgId, binds: [], profile },
-        auth
-      );
-
-      if (!result.success) throw new Error(result.error);
-      if (!result.value) throw new Error('Missing sf query value');
-
-      return result.value.map((el) => this.toEntity(this.buildEntityProps(el)));
-    } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
-      return Promise.reject(new Error());
-    }
+    return { text, binds };
   };
 
   getBinds = (entity: CustomTestSuite): (string | number)[] => [
@@ -212,110 +134,55 @@ export default class CustomTestSuiteRepo
     entity.executionType,
   ];
 
-  insertOne = async (
-    entity: CustomTestSuite,
-    profile: SnowflakeProfileDto,
-    auth: Auth,
-    targetOrgId?: string
-  ): Promise<string> => {
-    try {
-      const binds = this.getBinds(entity);
-
-      const row = `(${binds.map(() => '?').join(', ')})`;
-
-      const queryText = getInsertQuery(this.matName, this.colDefinitions, [
-        row,
-      ]);
-
-      const result = await this.querySnowflake.execute(
-        { queryText, targetOrgId, binds, profile },
-        auth
-      );
-
-      if (!result.success) throw new Error(result.error);
-      if (!result.value) throw new Error('Missing sf query value');
-
-      return entity.id;
-    } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
-      return Promise.reject(new Error());
-    }
-  };
-
-  #getDefinition = (name: string): ColumnDefinition => {
-    const def = this.colDefinitions.find((el) => el.name === name);
-    if (!def) throw new Error('Missing col definition');
-
-    return def;
-  };
-
-  updateOne = async (
+  buildUpdateQuery = (
     id: string,
-    updateDto: CustomTestSuiteUpdateDto,
-    profile: SnowflakeProfileDto,
-    auth: Auth,
-    targetOrgId?: string
-  ): Promise<string> => {
-    try {
-      const colDefinitions: ColumnDefinition[] = [this.#getDefinition('id')];
-      const binds = [id];
+    updateDto: CustomTestSuiteUpdateDto
+  ): Query => {
+    const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
+    const binds = [id];
 
-      if (updateDto.activated !== undefined) {
-        colDefinitions.push(this.#getDefinition('activated'));
-        binds.push(updateDto.activated.toString());
-      }
-      if (updateDto.threshold) {
-        colDefinitions.push(this.#getDefinition('threshold'));
-        binds.push(updateDto.threshold.toString());
-      }
-      if (updateDto.frequency) {
-        colDefinitions.push(this.#getDefinition('execution_frequency'));
-        binds.push(updateDto.frequency.toString());
-      }
-      if (updateDto.name) {
-        colDefinitions.push(this.#getDefinition('name'));
-        binds.push(updateDto.name.toString());
-      }
-      if (updateDto.description) {
-        colDefinitions.push(this.#getDefinition('description'));
-        binds.push(updateDto.description.toString());
-      }
-      if (updateDto.sqlLogic) {
-        colDefinitions.push(this.#getDefinition('sql_logic'));
-        binds.push(updateDto.sqlLogic.toString());
-      }
-      if (updateDto.targetResourceIds) {
-        colDefinitions.push(this.#getDefinition('target_resource_ids'));
-        binds.push(updateDto.targetResourceIds.toString());
-      }
-      if (updateDto.cron) {
-        colDefinitions.push(this.#getDefinition('cron'));
-        binds.push(updateDto.cron.toString());
-      }
-      if (updateDto.executionType) {
-        colDefinitions.push(this.#getDefinition('execution_type'));
-        binds.push(updateDto.executionType.toString());
-      }
-
-      const queryText = getUpdateQuery(this.matName, colDefinitions, [
-        `(${binds.map(() => '?').join(', ')})`,
-      ]);
-
-      const result = await this.querySnowflake.execute(
-        { queryText, targetOrgId, binds, profile },
-        auth
-      );
-
-      if (!result.success) throw new Error(result.error);
-      if (!result.value) throw new Error('Missing sf query value');
-
-      return id;
-    } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
-      return Promise.reject(new Error());
+    if (updateDto.activated !== undefined) {
+      colDefinitions.push(this.getDefinition('activated'));
+      binds.push(updateDto.activated.toString());
     }
+    if (updateDto.threshold) {
+      colDefinitions.push(this.getDefinition('threshold'));
+      binds.push(updateDto.threshold.toString());
+    }
+    if (updateDto.frequency) {
+      colDefinitions.push(this.getDefinition('execution_frequency'));
+      binds.push(updateDto.frequency.toString());
+    }
+    if (updateDto.name) {
+      colDefinitions.push(this.getDefinition('name'));
+      binds.push(updateDto.name.toString());
+    }
+    if (updateDto.description) {
+      colDefinitions.push(this.getDefinition('description'));
+      binds.push(updateDto.description.toString());
+    }
+    if (updateDto.sqlLogic) {
+      colDefinitions.push(this.getDefinition('sql_logic'));
+      binds.push(updateDto.sqlLogic.toString());
+    }
+    if (updateDto.targetResourceIds) {
+      colDefinitions.push(this.getDefinition('target_resource_ids'));
+      binds.push(updateDto.targetResourceIds.toString());
+    }
+    if (updateDto.cron) {
+      colDefinitions.push(this.getDefinition('cron'));
+      binds.push(updateDto.cron.toString());
+    }
+    if (updateDto.executionType) {
+      colDefinitions.push(this.getDefinition('execution_type'));
+      binds.push(updateDto.executionType.toString());
+    }
+
+    const text = getUpdateQueryText(this.matName, colDefinitions, [
+      `(${binds.map(() => '?').join(', ')})`,
+    ]);
+
+    return { text, binds, colDefinitions };
   };
 
   toEntity = (
