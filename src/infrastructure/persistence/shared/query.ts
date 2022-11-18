@@ -1,3 +1,5 @@
+import { appConfig } from "../../../config";
+
 type SelectType = 'parse_json';
 
 export interface ColumnDefinition {
@@ -6,7 +8,7 @@ export interface ColumnDefinition {
   nullable: boolean;
 }
 
-export const relationPath = 'cito.observability';
+export const relationPath = `${appConfig.snowflake.databaseName}.${appConfig.snowflake.schemaName}`;
 
 export const getInsertQueryText = (
   matName: string,

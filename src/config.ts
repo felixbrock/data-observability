@@ -83,7 +83,6 @@ const getBaseUrlConfig = (): BaseUrlConfig => {
   return { testEngine, integrationService, accountService };
 };
 
-
 export const appConfig = {
   express: {
     mode: process.env.NODE_ENV || 'development',
@@ -95,11 +94,14 @@ export const appConfig = {
     authEnvConfig: getAuthEnvConfig(),
     authSchedulerEnvConfig: getAuthSchedulerEnvConfig(),
     region: 'eu-central-1',
-    testExecutionJobArn: 'arn:aws:lambda:eu-central-1:966593446935:function:test-suite-execution-job-production-app',
+    testExecutionJobArn:
+      'arn:aws:lambda:eu-central-1:966593446935:function:test-suite-execution-job-production-app',
   },
   snowflake: {
     applicationName:
       process.env.SNOWFLAKE_APPLICATION_NAME || 'snowflake-connector',
+    schemaName: 'lineage',
+    databaseName: 'cito',
   },
   slack: getSlackConfig(),
   baseUrl: getBaseUrlConfig(),
