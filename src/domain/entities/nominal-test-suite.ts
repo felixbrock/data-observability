@@ -30,7 +30,7 @@ export const parseNominalTestType = (testType: unknown): NominalTestType => {
   throw new Error('Provision of invalid type');
 };
 
-export interface NominalTestSuiteProperties extends BaseTestSuite {
+export interface NominalTestSuiteProps extends BaseTestSuite {
   type: NominalTestType;
   target: TestTarget;
 }
@@ -95,7 +95,7 @@ export class NominalTestSuite implements BaseTestSuite {
     return this.#executionType;
   }
 
-  private constructor(props: NominalTestSuiteProperties) {
+  private constructor(props: NominalTestSuiteProps) {
     this.#id = props.id;
     this.#organizationId = props.organizationId;
     this.#activated = props.activated;
@@ -106,7 +106,7 @@ export class NominalTestSuite implements BaseTestSuite {
     this.#executionType = props.executionType;
   }
 
-  static create = (props: NominalTestSuiteProperties): NominalTestSuite => {
+  static create = (props: NominalTestSuiteProps): NominalTestSuite => {
     const { type, target, ...remainingProps } = props;
 
     if (!remainingProps.id) throw new TypeError('TestSuite must have id');

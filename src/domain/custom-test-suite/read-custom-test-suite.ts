@@ -1,56 +1,41 @@
 import Result from '../value-types/transient-types/result';
 import { CustomTestSuiteDto } from '../entities/custom-test-suite';
-
-import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
-import BaseSfQueryUseCase from '../services/base-sf-query-use-case';
 import BaseAuth from '../services/base-auth';
-import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
-import { ICustomTestSuiteRepo } from '../services/i-base-service-repo';
+import IUseCase from '../services/use-case';
+import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
+import CustomTestSuiteRepo from '../../infrastructure/persistence/custom-test-suite-repo';
+import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 
 export interface ReadCustomTestSuiteRequestDto {
   id: string;
-  targetOrgId?: string;
-  profile?: SnowflakeProfileDto;
 }
 
 export type ReadCustomTestSuiteAuthDto = BaseAuth;
 
 export type ReadCustomTestSuiteResponseDto = Result<CustomTestSuiteDto | null>;
 
-export class ReadCustomTestSuite extends BaseSfQueryUseCase<
-  ReadCustomTestSuiteRequestDto,
-  ReadCustomTestSuiteResponseDto,
-  ReadCustomTestSuiteAuthDto
-> {
+export class ReadCustomTestSuite
+  implements
+    IUseCase<
+      ReadCustomTestSuiteRequestDto,
+      ReadCustomTestSuiteResponseDto,
+      ReadCustomTestSuiteAuthDto,
+      IConnectionPool
+    >
+{
   readonly #repo: ICustomTestSuiteRepo;
 
-  constructor(getProfile: GetSnowflakeProfile, repo: ICustomTestSuiteRepo) {
-    super(getProfile);
-    this.#repo = repo;
+  constructor(customTestSuiteRepo: CustomTestSuiteRepo) {
+    this.#repo = customTestSuiteRepo;
   }
 
   async execute(
     request: ReadCustomTestSuiteRequestDto,
-    auth: ReadCustomTestSuiteAuthDto
+    auth: ReadCustomTestSuiteAuthDto,
+    connPool: IConnectionPool
   ): Promise<ReadCustomTestSuiteResponseDto> {
-    if (auth.isSystemInternal && !request.targetOrgId)
-      throw new Error('Target organization id missing');
-    if (!auth.isSystemInternal && !auth.callerOrgId)
-      throw new Error('Caller organization id missing');
-    if (!request.targetOrgId && !auth.callerOrgId)
-      throw new Error('No organization Id provided');
-
     try {
-      const profile =
-        request.profile ||
-        (await this.getProfile(auth.jwt, request.targetOrgId));
-
-      const testSuite = await this.#repo.findOne(
-        request.id,
-        profile,
-        auth,
-        request.targetOrgId
-      );
+      const testSuite = await this.#repo.findOne(request.id, auth, connPool);
 
       return Result.ok(testSuite);
     } catch (error: unknown) {

@@ -1,12 +1,11 @@
-// todo - clean architecture violation
-import { ObjectId } from 'mongodb';
+import { v4 as uuidv4 } from 'uuid';
 import Result from '../value-types/transient-types/result';
 import { CustomTestSuite} from '../entities/custom-test-suite';
 import { ExecutionType } from '../value-types/execution-type';
-import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
-import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
-import BaseSfQueryUseCase from '../services/base-sf-query-use-case';
 import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
+import IUseCase from '../services/use-case';
+import CustomTestSuiteRepo from '../../infrastructure/persistence/custom-test-suite-repo';
+import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 
 export interface CreateCustomTestSuiteRequestDto {
   entityProps: {activated: boolean;
@@ -18,7 +17,6 @@ export interface CreateCustomTestSuiteRequestDto {
   description: string;
   sqlLogic: string;
   targetResourceIds: string[];}
-  profile?: SnowflakeProfileDto;
 }
 
 export interface CreateCustomTestSuiteAuthDto {
@@ -30,29 +28,30 @@ export interface CreateCustomTestSuiteAuthDto {
 export type CreateCustomTestSuiteResponseDto = Result<CustomTestSuite>;
 
 export class CreateCustomTestSuite
-  extends BaseSfQueryUseCase<
+  implements IUseCase<
       CreateCustomTestSuiteRequestDto,
       CreateCustomTestSuiteResponseDto,
-      CreateCustomTestSuiteAuthDto
+      CreateCustomTestSuiteAuthDto,
+      IConnectionPool
     >
 {
 
   readonly #repo:  ICustomTestSuiteRepo;
 
   constructor(
-    getSnowflakeProfile: GetSnowflakeProfile, repo: ICustomTestSuiteRepo
+    customTestSuiteRepo: CustomTestSuiteRepo
   ) {
-    super(getSnowflakeProfile);
-    this.#repo = repo;
+    this.#repo = customTestSuiteRepo;
   }
 
   async execute(
     request: CreateCustomTestSuiteRequestDto,
-    auth: CreateCustomTestSuiteAuthDto
+    auth: CreateCustomTestSuiteAuthDto,
+    connPool: IConnectionPool
   ): Promise<CreateCustomTestSuiteResponseDto> {
     try {
       const customTestSuite = CustomTestSuite.create({
-        id: new ObjectId().toHexString(),
+        id: uuidv4(),
         name: request.entityProps.name,
         description: request.entityProps.description,
         sqlLogic: request.entityProps.sqlLogic,
@@ -65,9 +64,7 @@ export class CreateCustomTestSuite
         targetResourceIds: request.entityProps.targetResourceIds,
       });
 
-      const profile = request.profile || (await this.getProfile(auth.jwt));
-
-      await this.#repo.insertOne(customTestSuite, profile, auth);
+      await this.#repo.insertOne(customTestSuite, auth, connPool);
 
       return Result.ok(customTestSuite);
     } catch (error: unknown) {

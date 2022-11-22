@@ -1,4 +1,4 @@
-import { parseTestType, TestSuite, TestSuiteProps } from '../../domain/entities/test-suite';
+import { NominalTestSuite, NominalTestSuiteProps, parseNominalTestType } from '../../domain/entities/nominal-test-suite';
 import {
   ColumnDefinition,
   getUpdateQueryText,
@@ -9,28 +9,27 @@ import { Binds, SnowflakeEntity } from '../../domain/snowflake-api/i-snowflake-a
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
 import {
-  ITestSuiteRepo,
-  TestSuiteQueryDto,
-  TestSuiteUpdateDto,
-} from '../../domain/test-suite/i-test-suite-repo';
+  INominalTestSuiteRepo,
+  NominalTestSuiteQueryDto,
+  NominalTestSuiteUpdateDto,
+} from '../../domain/nominal-test-suite/i-nominal-test-suite-repo';
 import { parseMaterializationType } from '../../domain/value-types/materialization-type';
 
-export default class TestSuiteRepo
+export default class NominalTestSuiteRepo
   extends BaseSfRepo<
-    TestSuite,
-    TestSuiteProps,
-    TestSuiteQueryDto,
-    TestSuiteUpdateDto
+    NominalTestSuite,
+    NominalTestSuiteProps,
+    NominalTestSuiteQueryDto,
+    NominalTestSuiteUpdateDto
   >
-  implements ITestSuiteRepo
+  implements INominalTestSuiteRepo
 {
-  readonly matName = 'test_suites';
+  readonly matName = 'test_suites_nominal';
 
   readonly colDefinitions: ColumnDefinition[] = [
     { name: 'id', nullable: true },
     { name: 'test_type', nullable: true },
     { name: 'activated', nullable: true },
-    { name: 'threshold', nullable: true },
     { name: 'execution_frequency', nullable: true },
     { name: 'database_name', nullable: true },
     { name: 'schema_name', nullable: true },
@@ -48,12 +47,11 @@ export default class TestSuiteRepo
     super(querySnowflake);
   }
 
-  buildEntityProps = (sfEntity: SnowflakeEntity): TestSuiteProps => {
+  buildEntityProps = (sfEntity: SnowflakeEntity): NominalTestSuiteProps => {
     const {
       ID: id,
       TEST_TYPE: type,
       ACTIVATED: activated,
-      THRESHOLD: threshold,
       EXECUTION_FREQUENCY: executionFrequency,
       DATABASE_NAME: databaseName,
       SCHEMA_NAME: schemaName,
@@ -67,29 +65,27 @@ export default class TestSuiteRepo
     } = sfEntity;
 
     if (
-      !TestSuiteRepo.isOptionalOfType<string>(id, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(type, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<boolean>(activated, 'boolean') ||
-      !TestSuiteRepo.isOptionalOfType<number>(threshold, 'number') ||
-      !TestSuiteRepo.isOptionalOfType<number>(executionFrequency, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(databaseName, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(schemaName, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(materializationName, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(materializationType, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(targetResourceId, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(organizationId, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(cron, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(executionType, 'string')
+      !NominalTestSuiteRepo.isOptionalOfType<string>(id, 'string') ||
+      !NominalTestSuiteRepo.isOptionalOfType<string>(type, 'string') ||
+      !NominalTestSuiteRepo.isOptionalOfType<boolean>(activated, 'boolean') ||
+      !NominalTestSuiteRepo.isOptionalOfType<number>(executionFrequency, 'string') ||
+      !NominalTestSuiteRepo.isOptionalOfType<string>(databaseName, 'string') ||
+      !NominalTestSuiteRepo.isOptionalOfType<string>(schemaName, 'string') ||
+      !NominalTestSuiteRepo.isOptionalOfType<string>(materializationName, 'string') ||
+      !NominalTestSuiteRepo.isOptionalOfType<string>(materializationType, 'string') ||
+      !NominalTestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
+      !NominalTestSuiteRepo.isOptionalOfType<string>(targetResourceId, 'string') ||
+      !NominalTestSuiteRepo.isOptionalOfType<string>(organizationId, 'string') ||
+      !NominalTestSuiteRepo.isOptionalOfType<string>(cron, 'string') ||
+      !NominalTestSuiteRepo.isOptionalOfType<string>(executionType, 'string')
     )
       throw new Error(
-        'Retrieved unexpected  test suite field types from persistence'
+        'Retrieved unexpected nominal test suite field types from persistence'
       );
 
     return {
       id,
       activated,
-      threshold,
       executionFrequency,
       target: {
         databaseName,
@@ -99,18 +95,17 @@ export default class TestSuiteRepo
         targetResourceId,
         columnName,
       },
-      type: parseTestType(type),
+      type: parseNominalTestType(type),
       organizationId,
       cron,
       executionType: parseExecutionType(executionType),
     };
   };
 
-  getBinds = (entity: TestSuite): (string | number)[] => [
+  getBinds = (entity: NominalTestSuite): (string | number)[] => [
     entity.id,
     entity.type,
     entity.activated.toString(),
-    entity.threshold,
     entity.executionFrequency,
     entity.target.databaseName,
     entity.target.schemaName,
@@ -123,7 +118,7 @@ export default class TestSuiteRepo
     entity.executionType,
   ];
 
-  buildFindByQuery = (queryDto: TestSuiteQueryDto): Query => {
+  buildFindByQuery = (queryDto: NominalTestSuiteQueryDto): Query => {
     const binds: (string | number)[] = [];
     let whereClause = '';
 
@@ -146,17 +141,13 @@ export default class TestSuiteRepo
     return { text, binds };
   };
 
-  buildUpdateQuery = (id: string, updateDto: TestSuiteUpdateDto): Query => {
+  buildUpdateQuery = (id: string, updateDto: NominalTestSuiteUpdateDto): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
     const binds : Binds = [id];
 
     if (updateDto.activated !== undefined) {
       colDefinitions.push(this.getDefinition('activated'));
       binds.push(updateDto.activated.toString());
-    }
-    if (updateDto.threshold) {
-      colDefinitions.push(this.getDefinition('threshold'));
-      binds.push(updateDto.threshold);
     }
     if (updateDto.frequency) {
       colDefinitions.push(this.getDefinition('execution_frequency'));
@@ -178,6 +169,6 @@ export default class TestSuiteRepo
     return { text, binds, colDefinitions };
   };
 
-  toEntity = (testsuiteProperties: TestSuiteProps): TestSuite =>
-    TestSuite.create(testsuiteProperties);
+  toEntity = (nominaltestsuiteProperties: NominalTestSuiteProps): NominalTestSuite =>
+    NominalTestSuite.create(nominaltestsuiteProperties);
 }

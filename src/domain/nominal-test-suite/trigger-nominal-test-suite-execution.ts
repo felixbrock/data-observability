@@ -1,13 +1,12 @@
-// todo - clean architecture violation
-import Result from '../value-types/transient-types/result';
+import BaseAuth from '../services/base-auth';
+import { IDb } from '../services/i-db';
 import IUseCase from '../services/use-case';
-import { ReadNominalTestSuite } from './read-nominal-test-suite';
+import { Binds, IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
+import { QuerySnowflake } from '../snowflake-api/query-snowflake';
 import { ExecuteTest } from '../test-execution-api/execute-test';
-import { DbConnection } from '../services/i-db';
-
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import { ExecutionType } from '../value-types/execution-type';
-import { GetSnowflakeProfile } from '../integration-api/get-snowflake-profile';
+import Result from '../value-types/transient-types/result';
+import { ReadNominalTestSuite } from './read-nominal-test-suite';
 
 export interface TriggerNominalTestSuiteExecutionRequestDto {
   id: string;
@@ -15,11 +14,7 @@ export interface TriggerNominalTestSuiteExecutionRequestDto {
   executionType: ExecutionType;
 }
 
-export interface TriggerNominalTestSuiteExecutionAuthDto {
-  jwt: string;
-  callerOrgId?: string;
-  isSystemInternal: boolean;
-}
+export type TriggerNominalTestSuiteExecutionAuthDto = BaseAuth;
 
 export type TriggerNominalTestSuiteExecutionResponseDto = Result<void>;
 
@@ -29,29 +24,23 @@ export class TriggerNominalTestSuiteExecution
       TriggerNominalTestSuiteExecutionRequestDto,
       TriggerNominalTestSuiteExecutionResponseDto,
       TriggerNominalTestSuiteExecutionAuthDto,
-      DbConnection
+      IDb
     >
 {
   readonly #readNominalTestSuite: ReadNominalTestSuite;
 
-  readonly #executeTest: ExecuteTest;
-
   readonly #querySnowflake: QuerySnowflake;
 
-  readonly #getSnowflakeProfile: GetSnowflakeProfile
-
-  #dbConnection: DbConnection;
+  readonly #executeTest: ExecuteTest;
 
   constructor(
     readNominalTestSuite: ReadNominalTestSuite,
-    executeTest: ExecuteTest,
     querySnowflake: QuerySnowflake,
-    getSnowflakeProfile: GetSnowflakeProfile
+    executeTest: ExecuteTest
   ) {
     this.#readNominalTestSuite = readNominalTestSuite;
-    this.#executeTest = executeTest;
     this.#querySnowflake = querySnowflake;
-    this.#getSnowflakeProfile = getSnowflakeProfile;
+    this.#executeTest = executeTest;
   }
 
   #wasAltered = async (
@@ -59,59 +48,48 @@ export class TriggerNominalTestSuiteExecution
       databaseName: string;
       schemaName: string;
       matName: string;
-      targetOrgId: string;
     },
-    jwt: string
+    auth: BaseAuth,
+    connPool: IConnectionPool
   ): Promise<boolean> => {
-    const { databaseName, schemaName, matName, targetOrgId } = props;
+    const { databaseName, schemaName, matName } = props;
 
-    const query = CitoDataQuery.getWasAltered({
-      databaseName,
-      schemaName,
-      matName,
-    });
+    const automaticExecutionFrequency = 5;
+
+    // todo - get last test execution time
+    const wasAlteredClause = `timediff(minute, convert_timezone('UTC', last_altered)::timestamp_ntz, sysdate()) < ${automaticExecutionFrequency}`;
+
+    const binds: Binds = [databaseName, schemaName, matName];
+
+    const queryText = `select ${wasAlteredClause} as was_altered from ${databaseName}.information_schema.tables
+        where table_catalog = ? and table_schema = ? and table_name = ?;`;
 
     const querySnowflakeResult = await this.#querySnowflake.execute(
-      { query, targetOrgId },
-      { jwt }
+      { queryText, binds },
+      auth,
+      connPool
     );
 
     if (!querySnowflakeResult.success)
       throw new Error(querySnowflakeResult.error);
 
     const result = querySnowflakeResult.value;
-
     if (!result) throw new Error(`"Was altered" query failed`);
 
-    const organizationResults = result[targetOrgId];
+    if (result.length !== 1)
+      throw new Error('No or multiple was altered results received found');
 
-    if (organizationResults.length !== 1)
-      throw new Error('No or multiple test suites found');
+    const wasAltered = result[0].WAS_ALTERED;
+    if (typeof wasAltered !== 'boolean')
+      throw new Error('Received non-bool was altered val');
 
-    return organizationResults[0].WAS_ALTERED;
+    return wasAltered;
   };
-  #getProfile = async (
-    jwt: string,
-    targetOrgId?: string
-  ): Promise<SnowflakeProfileDto> => {
-    const readSnowflakeProfileResult = await this.#getSnowflakeProfile.execute(
-      { targetOrgId },
-      {
-        jwt,
-      }
-    );
 
-    if (!readSnowflakeProfileResult.success)
-      throw new Error(readSnowflakeProfileResult.error);
-    if (!readSnowflakeProfileResult.value)
-      throw new Error('SnowflakeProfile does not exist');
-
-    return readSnowflakeProfileResult.value;
-  };
   async execute(
     request: TriggerNominalTestSuiteExecutionRequestDto,
     auth: TriggerNominalTestSuiteExecutionAuthDto,
-    dbConnection: DbConnection
+    db: IDb
   ): Promise<TriggerNominalTestSuiteExecutionResponseDto> {
     if (auth.isSystemInternal && !request.targetOrgId)
       throw new Error('Target organization id missing');
@@ -124,52 +102,41 @@ export class TriggerNominalTestSuiteExecution
         'When automatically executing test suite targetOrgId needs to be provided'
       );
 
-    this.#dbConnection = dbConnection;
-
     try {
-      const readNominalTestSuiteResult =
-        await this.#readNominalTestSuite.execute(
-          {
-            id: request.id,
-            targetOrgId: request.targetOrgId,
-          },
-          {
-            jwt: auth.jwt,
-            callerOrgId: auth.callerOrgId,
-            isSystemInternal: auth.isSystemInternal,
-          }
-        );
+      const readTestSuiteResult = await this.#readNominalTestSuite.execute(
+        { id: request.id },
+        auth,
+        db.sfConnPool
+      );
 
-      if (!readNominalTestSuiteResult.success)
-        throw new Error(readNominalTestSuiteResult.error);
-      if (!readNominalTestSuiteResult.value)
-        throw new Error('Reading nominal test suite failed');
+      if (!readTestSuiteResult.success)
+        throw new Error(readTestSuiteResult.error);
+      if (!readTestSuiteResult.value)
+        throw new Error('Reading test suite failed');
 
-      const nominalTestSuite = readNominalTestSuiteResult.value;
+      const testSuite = readTestSuiteResult.value;
 
       if (request.executionType === 'automatic') {
-        if (!request.targetOrgId)
-          throw new Error('targetOrgId missing');
         const wasAltered = !this.#wasAltered(
           {
-            databaseName: nominalTestSuite.target.databaseName,
-            schemaName: nominalTestSuite.target.schemaName,
-            matName: nominalTestSuite.target.materializationName,
-            targetOrgId: request.targetOrgId,
+            databaseName: testSuite.target.databaseName,
+            schemaName: testSuite.target.schemaName,
+            matName: testSuite.target.materializationName,
           },
-          auth.jwt
+          auth,
+          db.sfConnPool
         );
         if (!wasAltered) return Result.ok();
       }
 
       const executeTestResult = await this.#executeTest.execute(
         {
-          testSuiteId: nominalTestSuite.id,
-          testType: nominalTestSuite.type,
+          testSuiteId: testSuite.id,
+          testType: testSuite.type,
           targetOrgId: request.targetOrgId,
         },
         { jwt: auth.jwt },
-        this.#dbConnection
+        db.mongoConn
       );
 
       if (!executeTestResult.success) throw new Error(executeTestResult.error);

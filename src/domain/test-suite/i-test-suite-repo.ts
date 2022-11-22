@@ -1,5 +1,5 @@
 import { TestSuite } from '../entities/test-suite';
-import { IBaseServiceRepo } from '../services/i-base-service-repo';
+import { IServiceRepo } from '../services/i-service-repo';
 import { ExecutionType } from '../value-types/execution-type';
 
 export interface TestSuiteUpdateDto {
@@ -12,9 +12,10 @@ export interface TestSuiteUpdateDto {
 
 export interface TestSuiteQueryDto {
   activated?: boolean;
+  ids?: string[];
 }
 
-export type ITestSuiteRepo = IBaseServiceRepo<
+export type ITestSuiteRepo = IServiceRepo<
   TestSuite,
   TestSuiteQueryDto,
   TestSuiteUpdateDto

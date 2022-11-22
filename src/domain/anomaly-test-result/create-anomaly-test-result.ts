@@ -2,7 +2,7 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { AnomalyTestResult } from '../value-types/anomaly-test-result';
-import { DbConnection } from '../services/i-db';
+import { IDbConnection } from '../services/i-db';
 import { IAnomalyTestResultRepo } from './i-anomaly-test-result-repo';
 
 export interface CreateAnomalyTestResultRequestDto {
@@ -32,12 +32,12 @@ export class CreateAnomalyTestResult
       CreateAnomalyTestResultRequestDto,
       CreateAnomalyTestResultResponseDto,
       CreateAnomalyTestResultAuthDto,
-      DbConnection
+      IDbConnection
     >
 {
   readonly #anomalyTestResultRepo: IAnomalyTestResultRepo;
 
-  #dbConnection: DbConnection;
+  #dbConnection: IDbConnection;
 
   constructor(anomalyTestResultRepo: IAnomalyTestResultRepo) {
     this.#anomalyTestResultRepo = anomalyTestResultRepo;
@@ -46,7 +46,7 @@ export class CreateAnomalyTestResult
   async execute(
     request: CreateAnomalyTestResultRequestDto,
     auth: CreateAnomalyTestResultAuthDto,
-    dbConnection: DbConnection
+    dbConnection: IDbConnection
   ): Promise<CreateAnomalyTestResultResponseDto> {
     try {
       this.#dbConnection = dbConnection;

@@ -2,10 +2,8 @@
 import Result from '../value-types/transient-types/result';
 import { ReadCustomTestSuite } from './read-custom-test-suite';
 import { ExecuteTest } from '../test-execution-api/execute-test';
-import { DbConnection } from '../services/i-db';
+import { IDb} from '../services/i-db';
 import { ExecutionType } from '../value-types/execution-type';
-import { SnowflakeProfileDto } from '../integration-api/i-integration-api-repo';
-import { ICustomTestSuiteRepo } from '../services/i-base-service-repo';
 import BaseAuth from '../services/base-auth';
 import IUseCase from '../services/use-case';
 
@@ -13,7 +11,6 @@ export interface TriggerCustomTestSuiteExecutionRequestDto {
   id: string;
   targetOrgId?: string;
   executionType: ExecutionType;
-  profile?: SnowflakeProfileDto;
 }
 
 export type TriggerCustomTestSuiteExecutionAuthDto = BaseAuth;
@@ -24,22 +21,16 @@ export class TriggerCustomTestSuiteExecution implements IUseCase<
   TriggerCustomTestSuiteExecutionRequestDto,
   TriggerCustomTestSuiteExecutionResponseDto,
   TriggerCustomTestSuiteExecutionAuthDto,
-  DbConnection
+  IDb
 > {
-  readonly #repo: ICustomTestSuiteRepo;
-
   readonly #readCustomTestSuite: ReadCustomTestSuite;
 
   readonly #executeTest: ExecuteTest;
 
-  #dbConnection: DbConnection;
-
   constructor(
-    repo: ICustomTestSuiteRepo,
     readCustomTestSuite: ReadCustomTestSuite,
     executeTest: ExecuteTest
   ) {
-    this.#repo = repo;
     this.#readCustomTestSuite = readCustomTestSuite;
     this.#executeTest = executeTest;
   }
@@ -84,7 +75,7 @@ export class TriggerCustomTestSuiteExecution implements IUseCase<
   async execute(
     request: TriggerCustomTestSuiteExecutionRequestDto,
     auth: TriggerCustomTestSuiteExecutionAuthDto,
-    dbConnection: DbConnection
+    db: IDb
   ): Promise<TriggerCustomTestSuiteExecutionResponseDto> {
     if (auth.isSystemInternal && !request.targetOrgId)
       throw new Error('Target organization id missing');
@@ -97,12 +88,10 @@ export class TriggerCustomTestSuiteExecution implements IUseCase<
         'When automatically executing test suite targetOrgId needs to be provided'
       );
 
-    this.#dbConnection = dbConnection;
-
     try {
       const readCustomTestSuiteResult = await this.#readCustomTestSuite.execute(
-        { id: request.id, targetOrgId: request.targetOrgId },
-        auth
+        { id: request.id},
+        auth, db.sfConnPool
       );
 
       if (!readCustomTestSuiteResult.success)
@@ -135,7 +124,7 @@ export class TriggerCustomTestSuiteExecution implements IUseCase<
           targetOrgId: request.targetOrgId,
         },
         { jwt: auth.jwt },
-        this.#dbConnection
+        db.mongoConn
       );
 
       if (!executeTestResult.success) throw new Error(executeTestResult.error);

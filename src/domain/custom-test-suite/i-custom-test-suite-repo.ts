@@ -1,5 +1,5 @@
 import { CustomTestSuite} from "../entities/custom-test-suite";
-import { IBaseServiceRepo } from "../services/i-base-service-repo";
+import { IServiceRepo } from "../services/i-service-repo";
 import { ExecutionType } from "../value-types/execution-type";
 
 export interface CustomTestSuiteUpdateDto {
@@ -19,4 +19,4 @@ export interface CustomTestSuiteUpdateDto {
     executionFrequency?: number;
   }
 
-export type ICustomTestSuiteRepo =  IBaseServiceRepo<CustomTestSuite, CustomTestSuiteQueryDto, CustomTestSuiteUpdateDto>; 
+export type ICustomTestSuiteRepo =  IServiceRepo<CustomTestSuite, CustomTestSuiteQueryDto, CustomTestSuiteUpdateDto>; 

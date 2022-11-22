@@ -13,7 +13,7 @@ import {
   relationPath,
 } from './shared/query';
 import { QuerySnowflake } from '../../domain/snowflake-api/query-snowflake';
-import { SnowflakeEntity } from '../../domain/snowflake-api/i-snowflake-api-repo';
+import { Binds, SnowflakeEntity } from '../../domain/snowflake-api/i-snowflake-api-repo';
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
 
@@ -115,7 +115,7 @@ export default class CustomTestSuiteRepo
     }
 
     const text = `select * from ${relationPath}.${this.matName}
-        where  ${whereClause};`;
+    ${whereClause ? 'where' : ''}  ${whereClause};`;
 
     return { text, binds };
   };
@@ -139,7 +139,7 @@ export default class CustomTestSuiteRepo
     updateDto: CustomTestSuiteUpdateDto
   ): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
-    const binds = [id];
+    const binds: Binds = [id];
 
     if (updateDto.activated !== undefined) {
       colDefinitions.push(this.getDefinition('activated'));
@@ -147,35 +147,35 @@ export default class CustomTestSuiteRepo
     }
     if (updateDto.threshold) {
       colDefinitions.push(this.getDefinition('threshold'));
-      binds.push(updateDto.threshold.toString());
+      binds.push(updateDto.threshold);
     }
     if (updateDto.frequency) {
       colDefinitions.push(this.getDefinition('execution_frequency'));
-      binds.push(updateDto.frequency.toString());
+      binds.push(updateDto.frequency);
     }
     if (updateDto.name) {
       colDefinitions.push(this.getDefinition('name'));
-      binds.push(updateDto.name.toString());
+      binds.push(updateDto.name);
     }
     if (updateDto.description) {
       colDefinitions.push(this.getDefinition('description'));
-      binds.push(updateDto.description.toString());
+      binds.push(updateDto.description);
     }
     if (updateDto.sqlLogic) {
       colDefinitions.push(this.getDefinition('sql_logic'));
-      binds.push(updateDto.sqlLogic.toString());
+      binds.push(updateDto.sqlLogic);
     }
     if (updateDto.targetResourceIds) {
       colDefinitions.push(this.getDefinition('target_resource_ids'));
-      binds.push(updateDto.targetResourceIds.toString());
+      binds.push(JSON.stringify(updateDto.targetResourceIds));
     }
     if (updateDto.cron) {
       colDefinitions.push(this.getDefinition('cron'));
-      binds.push(updateDto.cron.toString());
+      binds.push(updateDto.cron);
     }
     if (updateDto.executionType) {
       colDefinitions.push(this.getDefinition('execution_type'));
-      binds.push(updateDto.executionType.toString());
+      binds.push(updateDto.executionType);
     }
 
     const text = getUpdateQueryText(this.matName, colDefinitions, [

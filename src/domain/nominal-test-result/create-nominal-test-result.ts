@@ -2,7 +2,7 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { NominalTestResult } from '../value-types/nominal-test-result';
-import { DbConnection } from '../services/i-db';
+import { IDbConnection } from '../services/i-db';
 import { INominalTestResultRepo } from './i-nominal-test-result-repo';
 import { TestType } from '../entities/test-suite';
 
@@ -32,12 +32,12 @@ export class CreateNominalTestResult
       CreateNominalTestTestResultRequestDto,
       CreateNominalTestResultResponseDto,
       CreateNominalTestResultAuthDto,
-      DbConnection
+      IDbConnection
     >
 {
   readonly #nominalTestResultRepo: INominalTestResultRepo;
 
-  #dbConnection: DbConnection;
+  #dbConnection: IDbConnection;
 
   constructor(nominalTestResultRepo: INominalTestResultRepo) {
     this.#nominalTestResultRepo = nominalTestResultRepo;
@@ -46,7 +46,7 @@ export class CreateNominalTestResult
   async execute(
     request: CreateNominalTestTestResultRequestDto,
     auth: CreateNominalTestResultAuthDto,
-    dbConnection: DbConnection
+    dbConnection: IDbConnection
   ): Promise<CreateNominalTestResultResponseDto> {
     try {
       this.#dbConnection = dbConnection;
