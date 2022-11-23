@@ -21,8 +21,6 @@ import {
 export default class TriggerNominalTestSuiteExecutionController extends BaseController {
   readonly #triggerNominalTestSuiteExecution: TriggerNominalTestSuiteExecution;
 
-  
-
   readonly #dbo: Dbo;
 
   constructor(
@@ -42,17 +40,16 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
     id: httpRequest.params.id,
     targetOrgId: httpRequest.body.targetOrgId,
     executionType: httpRequest.body.executionType,
-
   });
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
   ): TriggerNominalTestSuiteExecutionAuthDto => ({
-      jwt,
-      callerOrgId: userAccountInfo.callerOrgId,
-      isSystemInternal: userAccountInfo.isSystemInternal,
-    });
+    jwt,
+    callerOrgId: userAccountInfo.callerOrgId,
+    isSystemInternal: userAccountInfo.isSystemInternal,
+  });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -67,9 +64,7 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await this.getUserAccountInfo(
-          jwt,
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return TriggerNominalTestSuiteExecutionController.unauthorized(
@@ -90,15 +85,15 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
         await this.#triggerNominalTestSuiteExecution.execute(
           requestDto,
           authDto,
-          {mongoConn: this.#dbo.dbConnection, sfConnPool: connPool}
+          { mongoConn: this.#dbo.dbConnection, sfConnPool: connPool }
         );
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return TriggerNominalTestSuiteExecutionController.badRequest(res);
       }
-
-      await connPool.drain();
-      await connPool.clear();
 
       return TriggerNominalTestSuiteExecutionController.ok(
         res,

@@ -20,12 +20,11 @@ import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowfla
 export default class ReadTestSuitesController extends BaseController {
   readonly #readTestSuites: ReadTestSuites;
 
-  
-
-  constructor(readTestSuites: ReadTestSuites,
+  constructor(
+    readTestSuites: ReadTestSuites,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
-    ) {
+  ) {
     super(getAccounts, getSnowflakeProfile);
     this.#readTestSuites = readTestSuites;
   }
@@ -66,9 +65,7 @@ export default class ReadTestSuitesController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await this.getUserAccountInfo(
-          jwt,
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return ReadTestSuitesController.unauthorized(
@@ -86,9 +83,11 @@ export default class ReadTestSuitesController extends BaseController {
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-
       const useCaseResult: ReadTestSuitesResponseDto =
         await this.#readTestSuites.execute(requestDto, authDto, connPool);
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return ReadTestSuitesController.badRequest(res);
@@ -97,9 +96,6 @@ export default class ReadTestSuitesController extends BaseController {
       const resultValue = useCaseResult.value
         ? useCaseResult.value.map((el) => el.toDto())
         : useCaseResult.value;
-
-        await connPool.drain();
-        await connPool.clear();
 
       return ReadTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

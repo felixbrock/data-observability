@@ -20,11 +20,11 @@ import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowfla
 export default class ReadTestSuiteController extends BaseController {
   readonly #readTestSuite: ReadTestSuite;
 
-  
-
-  constructor(readTestSuite: ReadTestSuite,
+  constructor(
+    readTestSuite: ReadTestSuite,
     getAccounts: GetAccounts,
-    getSnowflakeProfile: GetSnowflakeProfile) {
+    getSnowflakeProfile: GetSnowflakeProfile
+  ) {
     super(getAccounts, getSnowflakeProfile);
     this.#readTestSuite = readTestSuite;
   }
@@ -41,10 +41,10 @@ export default class ReadTestSuiteController extends BaseController {
     jwt: string,
     userAccountInfo: UserAccountInfo
   ): ReadTestSuiteAuthDto => ({
-      jwt,
-      callerOrgId: userAccountInfo.callerOrgId,
-      isSystemInternal: userAccountInfo.isSystemInternal,
-    });
+    jwt,
+    callerOrgId: userAccountInfo.callerOrgId,
+    isSystemInternal: userAccountInfo.isSystemInternal,
+  });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -56,9 +56,7 @@ export default class ReadTestSuiteController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await this.getUserAccountInfo(
-          jwt,
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return ReadTestSuiteController.unauthorized(
@@ -76,9 +74,11 @@ export default class ReadTestSuiteController extends BaseController {
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-
       const useCaseResult: ReadTestSuiteResponseDto =
         await this.#readTestSuite.execute(requestDto, authDto, connPool);
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return ReadTestSuiteController.badRequest(res);
@@ -87,9 +87,6 @@ export default class ReadTestSuiteController extends BaseController {
       const resultValue = useCaseResult.value
         ? useCaseResult.value.toDto()
         : useCaseResult.value;
-
-        await connPool.drain();
-        await connPool.clear();
 
       return ReadTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

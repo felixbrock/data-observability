@@ -1,6 +1,8 @@
 // TODO: Violation of control flow. DI for express instead
+import { EventBridgeClient } from '@aws-sdk/client-eventbridge';
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
+import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
@@ -67,9 +69,7 @@ export default class CreateNominalTestSuitesController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await this.getUserAccountInfo(
-          jwt,
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return CreateNominalTestSuitesController.unauthorized(
@@ -87,7 +87,14 @@ export default class CreateNominalTestSuitesController extends BaseController {
       const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: CreateNominalTestSuitesResponseDto =
-        await this.#createNominalTestSuites.execute(requestDto, authDto, connPool);
+        await this.#createNominalTestSuites.execute(
+          requestDto,
+          authDto,
+          connPool
+        );
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return CreateNominalTestSuitesController.badRequest(res);
@@ -97,6 +104,10 @@ export default class CreateNominalTestSuitesController extends BaseController {
         throw new Error('Missing create test suite result value');
 
       const resultValues = useCaseResult.value.map((el) => el.toDto());
+
+      const eventBridgeClient = new EventBridgeClient({
+        region: appConfig.cloud.region,
+      });
 
       await Promise.all(
         resultValues.map(async (el) => {
@@ -122,12 +133,11 @@ export default class CreateNominalTestSuitesController extends BaseController {
           await createCronJob(cron, el.id, authDto.callerOrgId, {
             testSuiteType: 'nominal-test',
             executionType: el.executionType,
-          });
+          }, eventBridgeClient);
         })
       );
 
-      await connPool.drain();
-      await connPool.clear();
+      eventBridgeClient.destroy();
 
       return CreateNominalTestSuitesController.ok(
         res,

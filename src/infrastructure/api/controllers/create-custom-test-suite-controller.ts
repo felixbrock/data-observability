@@ -1,6 +1,8 @@
 // TODO: Violation of control flow. DI for express instead
+import { EventBridgeClient } from '@aws-sdk/client-eventbridge';
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
+import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   CreateCustomTestSuite,
@@ -102,6 +104,9 @@ export default class CreateCustomTestSuiteController extends BaseController {
           connPool
         );
 
+        await connPool.drain();
+        await connPool.clear();
+
       if (!useCaseResult.success) {
         return CreateCustomTestSuiteController.badRequest(res);
       }
@@ -132,13 +137,16 @@ export default class CreateCustomTestSuiteController extends BaseController {
           throw new Error('Unhandled execution type');
       }
 
+      const eventBridgeClient = new EventBridgeClient({
+        region: appConfig.cloud.region,
+      });
+
       await createCronJob(cron, result.id, authDto.callerOrgId, {
         testSuiteType: 'custom-test',
         executionType: result.executionType,
-      });
+      }, eventBridgeClient);
 
-      await connPool.drain();
-      await connPool.clear();
+      eventBridgeClient.destroy();
 
       return CreateCustomTestSuiteController.ok(
         res,

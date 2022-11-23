@@ -1,6 +1,8 @@
 // TODO: Violation of control flow. DI for express instead
+import { EventBridgeClient } from '@aws-sdk/client-eventbridge';
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
+import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
@@ -26,11 +28,12 @@ import {
 export default class CreateTestSuitesController extends BaseController {
   readonly #createTestSuites: CreateTestSuites;
 
-  constructor(createTestSuites: CreateTestSuites,
+  constructor(
+    createTestSuites: CreateTestSuites,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
-    ) {
-      super(getAccounts, getSnowflakeProfile);
+  ) {
+    super(getAccounts, getSnowflakeProfile);
 
     this.#createTestSuites = createTestSuites;
   }
@@ -66,9 +69,7 @@ export default class CreateTestSuitesController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await this.getUserAccountInfo(
-          jwt
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return CreateTestSuitesController.unauthorized(
@@ -84,9 +85,11 @@ export default class CreateTestSuitesController extends BaseController {
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-
       const useCaseResult: CreateTestSuitesResponseDto =
         await this.#createTestSuites.execute(requestDto, authDto, connPool);
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return CreateTestSuitesController.badRequest(res);
@@ -96,6 +99,10 @@ export default class CreateTestSuitesController extends BaseController {
         throw new Error('Missing create test suite result value');
 
       const resultValues = useCaseResult.value.map((el) => el.toDto());
+
+      const eventBridgeClient = new EventBridgeClient({
+        region: appConfig.cloud.region,
+      });
 
       await Promise.all(
         resultValues.map(async (el) => {
@@ -121,12 +128,11 @@ export default class CreateTestSuitesController extends BaseController {
           await createCronJob(cron, el.id, authDto.callerOrgId, {
             testSuiteType: 'test',
             executionType: el.executionType,
-          });
+          }, eventBridgeClient);
         })
       );
 
-      await connPool.drain();
-      await connPool.clear();
+      eventBridgeClient.destroy();
 
       return CreateTestSuitesController.ok(res, resultValues, CodeHttp.CREATED);
     } catch (error: unknown) {

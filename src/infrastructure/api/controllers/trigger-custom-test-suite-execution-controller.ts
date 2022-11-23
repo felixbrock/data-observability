@@ -68,9 +68,7 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await this.getUserAccountInfo(
-          jwt,
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return TriggerCustomTestSuiteExecutionController.unauthorized(
@@ -87,20 +85,19 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-
       const useCaseResult: TriggerCustomTestSuiteExecutionResponseDto =
         await this.#triggerCustomTestSuiteExecution.execute(
           requestDto,
           authDto,
-          {mongoConn: this.#dbo.dbConnection, sfConnPool: connPool}
+          { mongoConn: this.#dbo.dbConnection, sfConnPool: connPool }
         );
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return TriggerCustomTestSuiteExecutionController.badRequest(res);
       }
-
-      await connPool.drain();
-      await connPool.clear();
 
       return TriggerCustomTestSuiteExecutionController.ok(
         res,

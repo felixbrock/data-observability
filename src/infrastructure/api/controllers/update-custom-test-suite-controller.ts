@@ -1,6 +1,8 @@
 // TODO: Violation of control flow. DI for express instead
+import { EventBridgeClient } from '@aws-sdk/client-eventbridge';
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
+import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateCustomTestSuite,
@@ -125,6 +127,9 @@ export default class UpdateCustomTestSuiteController extends BaseController {
           connPool
         );
 
+      await connPool.drain();
+      await connPool.clear();
+
       if (!useCaseResult.success) {
         return UpdateCustomTestSuiteController.badRequest(res);
       }
@@ -136,34 +141,47 @@ export default class UpdateCustomTestSuiteController extends BaseController {
           'Update failed. Internal error.'
         );
 
-      if (requestDto)
-        if (
-          requestDto.props.cron ||
-          requestDto.props.frequency ||
-          requestDto.props.executionType
-        ) {
-          let cron: string | undefined;
-          if (requestDto.props.executionType === 'automatic')
-            cron = getAutomaticCronExpression();
-          else if (requestDto.props.cron) cron = requestDto.props.cron;
-          else if (requestDto.props.frequency)
-            cron = getFrequencyCronExpression(requestDto.props.frequency);
+      if (
+        requestDto.props.cron ||
+        requestDto.props.frequency ||
+        requestDto.props.executionType
+      ) {
+        let cron: string | undefined;
+        if (requestDto.props.executionType === 'automatic')
+          cron = getAutomaticCronExpression();
+        else if (requestDto.props.cron) cron = requestDto.props.cron;
+        else if (requestDto.props.frequency)
+          cron = getFrequencyCronExpression(requestDto.props.frequency);
 
-          await patchCronJob(requestDto.id, {
+        const eventBridgeClient = new EventBridgeClient({
+          region: appConfig.cloud.region,
+        });
+
+        await patchCronJob(
+          requestDto.id,
+          {
             cron,
-          });
+          },
+          eventBridgeClient
+        );
 
-          if (requestDto.props.executionType)
-            await patchTarget(requestDto.id, {
+        if (requestDto.props.executionType)
+          await patchTarget(
+            requestDto.id,
+            {
               executionType: requestDto.props.executionType,
-            });
-        }
+            },
+            eventBridgeClient
+          );
+        if (requestDto.props.activated !== undefined)
+          await updateCronJobState(
+            requestDto.id,
+            requestDto.props.activated,
+            eventBridgeClient
+          );
 
-      if (requestDto.props.activated !== undefined)
-        await updateCronJobState(requestDto.id, requestDto.props.activated);
-
-      await connPool.drain();
-      await connPool.clear();
+        eventBridgeClient.destroy();
+      }
 
       return UpdateCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

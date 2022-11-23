@@ -1,6 +1,7 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
+import { EventBridgeClient } from '@aws-sdk/client-eventbridge';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateTestSuites,
@@ -23,16 +24,16 @@ import {
   updateCronJobState,
 } from '../../../domain/services/cron-job';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
+import { appConfig } from '../../../config';
 
 export default class UpdateTestSuitesController extends BaseController {
   readonly #updateTestSuites: UpdateTestSuites;
 
-  
-
-  constructor(updateTestSuites: UpdateTestSuites, 
+  constructor(
+    updateTestSuites: UpdateTestSuites,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
-    ) {
+  ) {
     super(getAccounts, getSnowflakeProfile);
     this.#updateTestSuites = updateTestSuites;
   }
@@ -45,8 +46,7 @@ export default class UpdateTestSuitesController extends BaseController {
     jwt: string,
     userAccountInfo: UserAccountInfo
   ): UpdateTestSuitesAuthDto => {
-    if (!userAccountInfo.callerOrgId)
-      throw new Error('callerOrgId missing');
+    if (!userAccountInfo.callerOrgId) throw new Error('callerOrgId missing');
     return {
       jwt,
       isSystemInternal: userAccountInfo.isSystemInternal,
@@ -64,9 +64,7 @@ export default class UpdateTestSuitesController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await this.getUserAccountInfo(
-          jwt,
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return UpdateTestSuitesController.unauthorized(
@@ -84,9 +82,11 @@ export default class UpdateTestSuitesController extends BaseController {
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-
       const useCaseResult: UpdateTestSuitesResponseDto =
         await this.#updateTestSuites.execute(requestDto, authDto, connPool);
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return UpdateTestSuitesController.badRequest(res, useCaseResult.error);
@@ -99,10 +99,14 @@ export default class UpdateTestSuitesController extends BaseController {
           'Update of test suites failed. Internal error.'
         );
 
+        const eventBridgeClient = new EventBridgeClient({
+          region: appConfig.cloud.region,
+        });
+
       await Promise.all(
         requestDto.updateObjects.map(async (el) => {
           const { id } = el;
-          const {cron, frequency, executionType, activated } = el.props;
+          const { cron, frequency, executionType, activated } = el.props;
 
           if (cron || frequency || executionType) {
             let localCron: string | undefined;
@@ -114,20 +118,19 @@ export default class UpdateTestSuitesController extends BaseController {
 
             await patchCronJob(id, {
               cron: localCron,
-            });
+            }, eventBridgeClient);
 
             if (executionType)
               await patchTarget(id, {
                 executionType,
-              });
+              }, eventBridgeClient);
           }
 
-          if (activated !== undefined) await updateCronJobState(id, activated);
+          if (activated !== undefined) await updateCronJobState(id, activated, eventBridgeClient);
         })
       );
 
-      await connPool.drain();
-      await connPool.clear();
+      eventBridgeClient.destroy();
 
       return UpdateTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

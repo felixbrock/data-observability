@@ -56,9 +56,7 @@ export default class ReadCustomTestSuiteController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await this.getUserAccountInfo(
-          jwt,
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return ReadCustomTestSuiteController.unauthorized(
@@ -80,6 +78,9 @@ export default class ReadCustomTestSuiteController extends BaseController {
       const useCaseResult: ReadCustomTestSuiteResponseDto =
         await this.#readCustomTestSuite.execute(requestDto, authDto, connPool);
 
+      await connPool.drain();
+      await connPool.clear();
+
       if (!useCaseResult.success) {
         return ReadCustomTestSuiteController.badRequest(res);
       }
@@ -90,9 +91,6 @@ export default class ReadCustomTestSuiteController extends BaseController {
           res,
           'Custom test suite not created. Internal error.'
         );
-
-      await connPool.drain();
-      await connPool.clear();
 
       return ReadCustomTestSuiteController.ok(res, result, CodeHttp.OK);
     } catch (error: unknown) {

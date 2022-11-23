@@ -20,18 +20,19 @@ import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowfla
 export default class ReadNominalTestSuitesController extends BaseController {
   readonly #readNominalTestSuites: ReadNominalTestSuites;
 
-  
-
-  constructor(readNominalTestSuites: ReadNominalTestSuites,
+  constructor(
+    readNominalTestSuites: ReadNominalTestSuites,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
-    ) {
+  ) {
     super(getAccounts, getSnowflakeProfile);
     this.#readNominalTestSuites = readNominalTestSuites;
   }
 
-  #buildRequestDto = (httpRequest: Request): ReadNominalTestSuitesRequestDto => {
-    const {activated } = httpRequest.query;
+  #buildRequestDto = (
+    httpRequest: Request
+  ): ReadNominalTestSuitesRequestDto => {
+    const { activated } = httpRequest.query;
 
     if (
       activated &&
@@ -61,14 +62,15 @@ export default class ReadNominalTestSuitesController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return ReadNominalTestSuitesController.unauthorized(res, 'Unauthorized');
+        return ReadNominalTestSuitesController.unauthorized(
+          res,
+          'Unauthorized'
+        );
 
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await this.getUserAccountInfo(
-          jwt,
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return ReadNominalTestSuitesController.unauthorized(
@@ -78,7 +80,8 @@ export default class ReadNominalTestSuitesController extends BaseController {
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: ReadNominalTestSuitesRequestDto = this.#buildRequestDto(req);
+      const requestDto: ReadNominalTestSuitesRequestDto =
+        this.#buildRequestDto(req);
       const authDto: ReadNominalTestSuitesAuthDto = this.#buildAuthDto(
         jwt,
         getUserAccountInfoResult.value
@@ -86,9 +89,15 @@ export default class ReadNominalTestSuitesController extends BaseController {
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-
       const useCaseResult: ReadNominalTestSuitesResponseDto =
-        await this.#readNominalTestSuites.execute(requestDto, authDto, connPool);
+        await this.#readNominalTestSuites.execute(
+          requestDto,
+          authDto,
+          connPool
+        );
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return ReadNominalTestSuitesController.badRequest(res);
@@ -98,14 +107,14 @@ export default class ReadNominalTestSuitesController extends BaseController {
         ? useCaseResult.value.map((element) => element.toDto())
         : useCaseResult.value;
 
-        await connPool.drain();
-        await connPool.clear();
-
       return ReadNominalTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error && error.message) console.error(error.stack);
       else if (!(error instanceof Error) && error) console.trace(error);
-      return ReadNominalTestSuitesController.fail(res, 'read nominal test suites - Unknown error occured');
+      return ReadNominalTestSuitesController.fail(
+        res,
+        'read nominal test suites - Unknown error occured'
+      );
     }
   }
 }

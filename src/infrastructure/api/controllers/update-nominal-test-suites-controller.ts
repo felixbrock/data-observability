@@ -1,6 +1,7 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
+import { EventBridgeClient } from '@aws-sdk/client-eventbridge';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateNominalTestSuites,
@@ -23,6 +24,7 @@ import {
   updateCronJobState,
 } from '../../../domain/services/cron-job';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
+import { appConfig } from '../../../config';
 
 export default class UpdateNominalTestSuitesController extends BaseController {
   readonly #updateNominalTestSuites: UpdateNominalTestSuites;
@@ -93,6 +95,9 @@ export default class UpdateNominalTestSuitesController extends BaseController {
           connPool
         );
 
+      await connPool.drain();
+      await connPool.clear();
+
       if (!useCaseResult.success) {
         return UpdateNominalTestSuitesController.badRequest(
           res,
@@ -107,6 +112,10 @@ export default class UpdateNominalTestSuitesController extends BaseController {
           'Update of test suites failed. Internal error.'
         );
 
+      const eventBridgeClient = new EventBridgeClient({
+        region: appConfig.cloud.region,
+      });
+
       await Promise.all(
         requestDto.updateObjects.map(async (el) => {
           const { id } = el;
@@ -120,22 +129,30 @@ export default class UpdateNominalTestSuitesController extends BaseController {
             else if (frequency)
               localCron = getFrequencyCronExpression(frequency);
 
-            await patchCronJob(id, {
-              cron: localCron,
-            });
+            await patchCronJob(
+              id,
+              {
+                cron: localCron,
+              },
+              eventBridgeClient
+            );
 
             if (executionType)
-              await patchTarget(id, {
-                executionType,
-              });
+              await patchTarget(
+                id,
+                {
+                  executionType,
+                },
+                eventBridgeClient
+              );
           }
 
-          if (activated !== undefined) await updateCronJobState(id, activated);
+          if (activated !== undefined)
+            await updateCronJobState(id, activated, eventBridgeClient);
         })
       );
 
-      await connPool.drain();
-      await connPool.clear();
+      eventBridgeClient.destroy();
 
       return UpdateNominalTestSuitesController.ok(
         res,

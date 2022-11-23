@@ -88,14 +88,14 @@ export default class UpdateTestHistoryEntryController extends BaseController {
           connPool
         );
 
+      await connPool.drain();
+      await connPool.clear();
+
       if (!useCaseResult.success) {
         return UpdateTestHistoryEntryController.badRequest(res);
       }
 
       const resultValue = useCaseResult.value;
-
-      await connPool.drain();
-      await connPool.clear();
 
       return UpdateTestHistoryEntryController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

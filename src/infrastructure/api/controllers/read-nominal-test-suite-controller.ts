@@ -78,6 +78,9 @@ export default class ReadNominalTestSuiteController extends BaseController {
       const useCaseResult: ReadNominalTestSuiteResponseDto =
         await this.#readNominalTestSuite.execute(requestDto, authDto, connPool);
 
+      await connPool.drain();
+      await connPool.clear();
+
       if (!useCaseResult.success) {
         return ReadNominalTestSuiteController.badRequest(res);
       }
@@ -85,9 +88,6 @@ export default class ReadNominalTestSuiteController extends BaseController {
       const resultValue = useCaseResult.value
         ? useCaseResult.value.toDto()
         : useCaseResult.value;
-
-      await connPool.drain();
-      await connPool.clear();
 
       return ReadNominalTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

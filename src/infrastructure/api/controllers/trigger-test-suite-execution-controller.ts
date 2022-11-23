@@ -87,12 +87,12 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
           sfConnPool: connPool,
         });
 
+      await connPool.drain();
+      await connPool.clear();
+
       if (!useCaseResult.success) {
         return TriggerTestSuiteExecutionController.badRequest(res);
       }
-
-      await connPool.drain();
-      await connPool.clear();
 
       return TriggerTestSuiteExecutionController.ok(
         res,
