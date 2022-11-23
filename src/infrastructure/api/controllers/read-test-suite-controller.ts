@@ -1,5 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
 import {
   ReadTestSuite,
   ReadTestSuiteAuthDto,
@@ -11,18 +12,20 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 import Result from '../../../domain/value-types/transient-types/result';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
 export default class ReadTestSuiteController extends BaseController {
   readonly #readTestSuite: ReadTestSuite;
 
-  readonly #getAccounts: GetAccounts;
+  
 
-  constructor(readTestSuite: ReadTestSuite, getAccounts: GetAccounts) {
-    super();
-    this.#getAccounts = getAccounts;
+  constructor(readTestSuite: ReadTestSuite,
+    getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile) {
+    super(getAccounts, getSnowflakeProfile);
     this.#readTestSuite = readTestSuite;
   }
 
@@ -31,7 +34,6 @@ export default class ReadTestSuiteController extends BaseController {
 
     return {
       id,
-      targetOrgId: httpRequest.body.targetOrgId
     };
   };
 
@@ -54,9 +56,8 @@ export default class ReadTestSuiteController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await ReadTestSuiteController.getUserAccountInfo(
+        await this.getUserAccountInfo(
           jwt,
-          this.#getAccounts
         );
 
       if (!getUserAccountInfoResult.success)
@@ -73,8 +74,11 @@ export default class ReadTestSuiteController extends BaseController {
         getUserAccountInfoResult.value
       );
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
+
       const useCaseResult: ReadTestSuiteResponseDto =
-        await this.#readTestSuite.execute(requestDto, authDto);
+        await this.#readTestSuite.execute(requestDto, authDto, connPool);
 
       if (!useCaseResult.success) {
         return ReadTestSuiteController.badRequest(res);
@@ -83,6 +87,9 @@ export default class ReadTestSuiteController extends BaseController {
       const resultValue = useCaseResult.value
         ? useCaseResult.value.toDto()
         : useCaseResult.value;
+
+        await connPool.drain();
+        await connPool.clear();
 
       return ReadTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

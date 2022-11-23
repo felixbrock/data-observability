@@ -1,8 +1,8 @@
 import axios, { AxiosRequestConfig } from 'axios';
-import { SnowflakeQueryResultDto } from '../../domain/integration-api/snowflake/snowlake-query-result-dto';
 import {
   AlertMessageConfig,
   IIntegrationApiRepo,
+  SnowflakeProfileDto,
 } from '../../domain/integration-api/i-integration-api-repo';
 import { SendAlertResultDto } from '../../domain/integration-api/slack/send-alert-result-dto';
 import { appConfig } from '../../config';

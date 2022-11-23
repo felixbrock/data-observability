@@ -1,5 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   CreateCustomTestSuite,
@@ -7,50 +8,46 @@ import {
   CreateCustomTestSuiteRequestDto,
   CreateCustomTestSuiteResponseDto,
 } from '../../../domain/custom-test-suite/create-custom-test-suite';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
   createCronJob,
   getAutomaticCronExpression,
   getFrequencyCronExpression,
 } from '../../../domain/services/cron-job';
 import Result from '../../../domain/value-types/transient-types/result';
-import Dbo from '../../persistence/db/mongo-db';
 
 import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 
 export default class CreateCustomTestSuiteController extends BaseController {
   readonly #createCustomTestSuite: CreateCustomTestSuite;
 
-  readonly #getAccounts: GetAccounts;
-
-  readonly #dbo: Dbo;
-
   constructor(
     createCustomTestSuite: CreateCustomTestSuite,
     getAccounts: GetAccounts,
-    dbo: Dbo
+    getSnowflakeProfile: GetSnowflakeProfile
   ) {
-    super();
+    super(getAccounts, getSnowflakeProfile);
     this.#createCustomTestSuite = createCustomTestSuite;
-    this.#getAccounts = getAccounts;
-    this.#dbo = dbo;
   }
 
   #buildRequestDto = (
     httpRequest: Request
   ): CreateCustomTestSuiteRequestDto => ({
-    activated: httpRequest.body.activated,
-    threshold: httpRequest.body.threshold,
-    executionFrequency: httpRequest.body.executionFrequency,
-    name: httpRequest.body.name,
-    description: httpRequest.body.description,
-    sqlLogic: httpRequest.body.sqlLogic,
-    targetResourceIds: httpRequest.body.targetResourceIds,
-    cron: httpRequest.body.cron,
-    executionType: httpRequest.body.executionType,
+    entityProps: {
+      activated: httpRequest.body.activated,
+      threshold: httpRequest.body.threshold,
+      executionFrequency: httpRequest.body.executionFrequency,
+      name: httpRequest.body.name,
+      description: httpRequest.body.description,
+      sqlLogic: httpRequest.body.sqlLogic,
+      targetResourceIds: httpRequest.body.targetResourceIds,
+      cron: httpRequest.body.cron,
+      executionType: httpRequest.body.executionType,
+    },
   });
 
   #buildAuthDto = (
@@ -61,7 +58,8 @@ export default class CreateCustomTestSuiteController extends BaseController {
 
     return {
       callerOrgId: userAccountInfo.callerOrgId,
-      jwt,
+      isSystemInternal: userAccountInfo.isSystemInternal,
+      jwt
     };
   };
 
@@ -78,9 +76,8 @@ export default class CreateCustomTestSuiteController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await CreateCustomTestSuiteController.getUserAccountInfo(
+        await this.getUserAccountInfo(
           jwt,
-          this.#getAccounts
         );
 
       if (!getUserAccountInfoResult.success)
@@ -96,8 +93,14 @@ export default class CreateCustomTestSuiteController extends BaseController {
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
       const useCaseResult: CreateCustomTestSuiteResponseDto =
-        await this.#createCustomTestSuite.execute(requestDto, authDto);
+        await this.#createCustomTestSuite.execute(
+          requestDto,
+          authDto,
+          connPool
+        );
 
       if (!useCaseResult.success) {
         return CreateCustomTestSuiteController.badRequest(res);
@@ -129,15 +132,13 @@ export default class CreateCustomTestSuiteController extends BaseController {
           throw new Error('Unhandled execution type');
       }
 
-      await createCronJob(
-        cron,
-        result.id,
-        authDto.callerOrgId,
-        {
-          testSuiteType: 'custom-test',
-          executionType: result.executionType,
-        },
-      );
+      await createCronJob(cron, result.id, authDto.callerOrgId, {
+        testSuiteType: 'custom-test',
+        executionType: result.executionType,
+      });
+
+      await connPool.drain();
+      await connPool.clear();
 
       return CreateCustomTestSuiteController.ok(
         res,

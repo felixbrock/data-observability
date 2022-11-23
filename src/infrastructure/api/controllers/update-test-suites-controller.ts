@@ -1,5 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateTestSuites,
@@ -13,7 +14,7 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 import {
   getAutomaticCronExpression,
   getFrequencyCronExpression,
@@ -21,15 +22,18 @@ import {
   patchTarget,
   updateCronJobState,
 } from '../../../domain/services/cron-job';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
 export default class UpdateTestSuitesController extends BaseController {
   readonly #updateTestSuites: UpdateTestSuites;
 
-  readonly #getAccounts: GetAccounts;
+  
 
-  constructor(updateTestSuites: UpdateTestSuites, getAccounts: GetAccounts) {
-    super();
-    this.#getAccounts = getAccounts;
+  constructor(updateTestSuites: UpdateTestSuites, 
+    getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile
+    ) {
+    super(getAccounts, getSnowflakeProfile);
     this.#updateTestSuites = updateTestSuites;
   }
 
@@ -45,6 +49,7 @@ export default class UpdateTestSuitesController extends BaseController {
       throw new Error('callerOrgId missing');
     return {
       jwt,
+      isSystemInternal: userAccountInfo.isSystemInternal,
       callerOrgId: userAccountInfo.callerOrgId,
     };
   };
@@ -59,9 +64,8 @@ export default class UpdateTestSuitesController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await UpdateTestSuitesController.getUserAccountInfo(
+        await this.getUserAccountInfo(
           jwt,
-          this.#getAccounts
         );
 
       if (!getUserAccountInfoResult.success)
@@ -78,8 +82,11 @@ export default class UpdateTestSuitesController extends BaseController {
         getUserAccountInfoResult.value
       );
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
+
       const useCaseResult: UpdateTestSuitesResponseDto =
-        await this.#updateTestSuites.execute(requestDto, authDto);
+        await this.#updateTestSuites.execute(requestDto, authDto, connPool);
 
       if (!useCaseResult.success) {
         return UpdateTestSuitesController.badRequest(res, useCaseResult.error);
@@ -94,7 +101,8 @@ export default class UpdateTestSuitesController extends BaseController {
 
       await Promise.all(
         requestDto.updateObjects.map(async (el) => {
-          const { id, cron, frequency, executionType, activated } = el;
+          const { id } = el;
+          const {cron, frequency, executionType, activated } = el.props;
 
           if (cron || frequency || executionType) {
             let localCron: string | undefined;
@@ -117,6 +125,9 @@ export default class UpdateTestSuitesController extends BaseController {
           if (activated !== undefined) await updateCronJobState(id, activated);
         })
       );
+
+      await connPool.drain();
+      await connPool.clear();
 
       return UpdateTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

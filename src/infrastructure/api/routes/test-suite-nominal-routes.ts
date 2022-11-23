@@ -6,16 +6,19 @@ import TriggerNominalTestSuiteExecutionController from '../controllers/trigger-n
 const nominalTestSuiteRoutes = Router();
 
 const getAccounts = app.resolve('getAccounts');
+const getSnowflakeProfile = app.resolve('getSnowflakeProfile');
 const dbo = app.resolve('dbo');
 
 const readNominalTestSuiteController = new ReadNominalTestSuiteController(
   app.resolve('readNominalTestSuite'),
   getAccounts,
+  getSnowflakeProfile
 );
 
 const triggerNominalTestSuiteExecutionController = new TriggerNominalTestSuiteExecutionController(
   app.resolve('triggerNominalTestSuiteExecution'),
   getAccounts,
+  getSnowflakeProfile,
   dbo
 );
 

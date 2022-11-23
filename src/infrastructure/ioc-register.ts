@@ -8,7 +8,6 @@ import { ReadTestSuites } from '../domain/test-suite/read-test-suites';
 import { ReadTestSuite } from '../domain/test-suite/read-test-suite';
 import { UpdateTestSuites } from '../domain/test-suite/update-test-suites';
 import TestExecutionRepo from './persistence/test-execution-api-repo';
-import { QuerySnowflake } from '../domain/integration-api/snowflake/query-snowflake';
 import IntegrationApiRepo from './persistence/integration-api-repo';
 import { CreateAnomalyTestResult } from '../domain/anomaly-test-result/create-anomaly-test-result';
 import { CreateNominalTestResult } from '../domain/nominal-test-result/create-nominal-test-result';
@@ -29,6 +28,12 @@ import { ReadNominalTestSuites } from '../domain/nominal-test-suite/read-nominal
 import { TriggerNominalTestSuiteExecution } from '../domain/nominal-test-suite/trigger-nominal-test-suite-execution';
 import { UpdateNominalTestSuites } from '../domain/nominal-test-suite/update-nominal-test-suites';
 import { TriggerTestSuiteExecution } from '../domain/test-suite/trigger-test-suite-execution';
+import { QuerySnowflake } from '../domain/snowflake-api/query-snowflake';
+import { GetSnowflakeProfile } from '../domain/integration-api/get-snowflake-profile';
+import CustomTestSuiteRepo from './persistence/custom-test-suite-repo';
+import NominalTestSuiteRepo from './persistence/nominal-test-suite-repo';
+import TestSuiteRepo from './persistence/test-suite-repo';
+import SnowflakeApiRepo from './persistence/snowflake-api-repo';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
@@ -61,12 +66,17 @@ iocRegister.register({
 
   getAccounts: asClass(GetAccounts),
   querySnowflake: asClass(QuerySnowflake),
+  getSnowflakeProfile: asClass(GetSnowflakeProfile),
   sendAnomalySlackAlert: asClass(SendAnomalySlackAlert),
   sendNominalTestSlackAlert: asClass(SendNominalTestSlackAlert),
 
   anomalyTestResultRepo: asClass(AnomalyTestResultRepo),
   nominalTestResultRepo: asClass(NominalTestResultRepo),
+  customTestSuiteRepo: asClass(CustomTestSuiteRepo),
+  nominalTestSuiteRepo: asClass(NominalTestSuiteRepo),
+  testSuiteRepo: asClass(TestSuiteRepo),
 
+  snowflakeApiRepo: asClass(SnowflakeApiRepo),
   accountApiRepo: asClass(AccountApiRepo),
   integrationApiRepo: asClass(IntegrationApiRepo),
   testExecutionApiRepo: asClass(TestExecutionRepo),

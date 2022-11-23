@@ -1,6 +1,8 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
   TriggerNominalTestSuiteExecution,
   TriggerNominalTestSuiteExecutionAuthDto,
@@ -14,23 +16,23 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 
 export default class TriggerNominalTestSuiteExecutionController extends BaseController {
   readonly #triggerNominalTestSuiteExecution: TriggerNominalTestSuiteExecution;
 
-  readonly #getAccounts: GetAccounts;
+  
 
   readonly #dbo: Dbo;
 
   constructor(
     triggerNominalTestSuiteExecution: TriggerNominalTestSuiteExecution,
     getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile,
     dbo: Dbo
   ) {
-    super();
+    super(getAccounts, getSnowflakeProfile);
     this.#triggerNominalTestSuiteExecution = triggerNominalTestSuiteExecution;
-    this.#getAccounts = getAccounts;
     this.#dbo = dbo;
   }
 
@@ -65,9 +67,8 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await TriggerNominalTestSuiteExecutionController.getUserAccountInfo(
+        await this.getUserAccountInfo(
           jwt,
-          this.#getAccounts
         );
 
       if (!getUserAccountInfoResult.success)
@@ -83,16 +84,21 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
       const useCaseResult: TriggerNominalTestSuiteExecutionResponseDto =
         await this.#triggerNominalTestSuiteExecution.execute(
           requestDto,
           authDto,
-          this.#dbo.dbConnection
+          {mongoConn: this.#dbo.dbConnection, sfConnPool: connPool}
         );
 
       if (!useCaseResult.success) {
         return TriggerNominalTestSuiteExecutionController.badRequest(res);
       }
+
+      await connPool.drain();
+      await connPool.clear();
 
       return TriggerNominalTestSuiteExecutionController.ok(
         res,

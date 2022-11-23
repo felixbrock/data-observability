@@ -1,5 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
 import {
   ReadCustomTestSuite,
   ReadCustomTestSuiteAuthDto,
@@ -11,21 +12,20 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 import Result from '../../../domain/value-types/transient-types/result';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
 export default class ReadCustomTestSuiteController extends BaseController {
   readonly #readCustomTestSuite: ReadCustomTestSuite;
 
-  readonly #getAccounts: GetAccounts;
-
   constructor(
     readCustomTestSuite: ReadCustomTestSuite,
-    getAccounts: GetAccounts
+    getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile
   ) {
-    super();
-    this.#getAccounts = getAccounts;
+    super(getAccounts, getSnowflakeProfile);
     this.#readCustomTestSuite = readCustomTestSuite;
   }
 
@@ -34,7 +34,6 @@ export default class ReadCustomTestSuiteController extends BaseController {
 
     return {
       id,
-      targetOrgId: httpRequest.body.targetOrgId
     };
   };
 
@@ -42,10 +41,10 @@ export default class ReadCustomTestSuiteController extends BaseController {
     jwt: string,
     userAccountInfo: UserAccountInfo
   ): ReadCustomTestSuiteAuthDto => ({
-      jwt,
-      callerOrgId: userAccountInfo.callerOrgId,
-      isSystemInternal: userAccountInfo.isSystemInternal,
-    });
+    jwt,
+    callerOrgId: userAccountInfo.callerOrgId,
+    isSystemInternal: userAccountInfo.isSystemInternal,
+  });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -57,9 +56,8 @@ export default class ReadCustomTestSuiteController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await ReadCustomTestSuiteController.getUserAccountInfo(
+        await this.getUserAccountInfo(
           jwt,
-          this.#getAccounts
         );
 
       if (!getUserAccountInfoResult.success)
@@ -77,8 +75,10 @@ export default class ReadCustomTestSuiteController extends BaseController {
         getUserAccountInfoResult.value
       );
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
       const useCaseResult: ReadCustomTestSuiteResponseDto =
-        await this.#readCustomTestSuite.execute(requestDto, authDto);
+        await this.#readCustomTestSuite.execute(requestDto, authDto, connPool);
 
       if (!useCaseResult.success) {
         return ReadCustomTestSuiteController.badRequest(res);
@@ -90,6 +90,9 @@ export default class ReadCustomTestSuiteController extends BaseController {
           res,
           'Custom test suite not created. Internal error.'
         );
+
+      await connPool.drain();
+      await connPool.clear();
 
       return ReadCustomTestSuiteController.ok(res, result, CodeHttp.OK);
     } catch (error: unknown) {

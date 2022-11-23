@@ -1,6 +1,8 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
   CreateNominalTestSuites,
   CreateNominalTestSuitesAuthDto,
@@ -18,20 +20,18 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 
 export default class CreateNominalTestSuitesController extends BaseController {
   readonly #createNominalTestSuites: CreateNominalTestSuites;
 
-  readonly #getAccounts: GetAccounts;
-
   constructor(
     createNominalTestSuites: CreateNominalTestSuites,
-    getAccounts: GetAccounts
+    getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile
   ) {
-    super();
+    super(getAccounts, getSnowflakeProfile);
     this.#createNominalTestSuites = createNominalTestSuites;
-    this.#getAccounts = getAccounts;
   }
 
   #buildRequestDto = (
@@ -49,6 +49,7 @@ export default class CreateNominalTestSuitesController extends BaseController {
 
     return {
       callerOrgId: userAccountInfo.callerOrgId,
+      isSystemInternal: userAccountInfo.isSystemInternal,
       jwt,
     };
   };
@@ -66,9 +67,8 @@ export default class CreateNominalTestSuitesController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await CreateNominalTestSuitesController.getUserAccountInfo(
+        await this.getUserAccountInfo(
           jwt,
-          this.#getAccounts
         );
 
       if (!getUserAccountInfoResult.success)
@@ -84,8 +84,10 @@ export default class CreateNominalTestSuitesController extends BaseController {
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
       const useCaseResult: CreateNominalTestSuitesResponseDto =
-        await this.#createNominalTestSuites.execute(requestDto, authDto);
+        await this.#createNominalTestSuites.execute(requestDto, authDto, connPool);
 
       if (!useCaseResult.success) {
         return CreateNominalTestSuitesController.badRequest(res);
@@ -123,6 +125,9 @@ export default class CreateNominalTestSuitesController extends BaseController {
           });
         })
       );
+
+      await connPool.drain();
+      await connPool.clear();
 
       return CreateNominalTestSuitesController.ok(
         res,

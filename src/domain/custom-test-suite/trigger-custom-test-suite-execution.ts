@@ -6,6 +6,8 @@ import { IDb} from '../services/i-db';
 import { ExecutionType } from '../value-types/execution-type';
 import BaseAuth from '../services/base-auth';
 import IUseCase from '../services/use-case';
+import BaseTriggerTestSuiteExecution from '../services/base-trigger-test-suite-execution';
+import { QuerySnowflake } from '../snowflake-api/query-snowflake';
 
 export interface TriggerCustomTestSuiteExecutionRequestDto {
   id: string;
@@ -17,7 +19,7 @@ export type TriggerCustomTestSuiteExecutionAuthDto = BaseAuth;
 
 export type TriggerCustomTestSuiteExecutionResponseDto = Result<void>;
 
-export class TriggerCustomTestSuiteExecution implements IUseCase<
+export class TriggerCustomTestSuiteExecution extends BaseTriggerTestSuiteExecution implements IUseCase<
   TriggerCustomTestSuiteExecutionRequestDto,
   TriggerCustomTestSuiteExecutionResponseDto,
   TriggerCustomTestSuiteExecutionAuthDto,
@@ -29,48 +31,13 @@ export class TriggerCustomTestSuiteExecution implements IUseCase<
 
   constructor(
     readCustomTestSuite: ReadCustomTestSuite,
+    querySnowflake: QuerySnowflake,
     executeTest: ExecuteTest
   ) {
+    super(querySnowflake);
     this.#readCustomTestSuite = readCustomTestSuite;
     this.#executeTest = executeTest;
   }
-
-  // #wasAltered = async (
-  //   props: {
-  //     databaseName: string;
-  //     schemaName: string;
-  //     matName: string;
-  //     targetOrgId: string;
-  //   },
-  //   jwt: string
-  // ): Promise<boolean> => {
-  //   const { databaseName, schemaName, matName, targetOrgId } = props;
-
-  //   const query = CitoDataQuery.getWasAltered({
-  //     databaseName,
-  //     schemaName,
-  //     matName,
-  //   });
-
-  //   const querySnowflakeResult = await this.#querySnowflake.execute(
-  //     { query, targetOrgId },
-  //     { jwt }
-  //   );
-
-  //   if (!querySnowflakeResult.success)
-  //     throw new Error(querySnowflakeResult.error);
-
-  //   const result = querySnowflakeResult.value;
-
-  //   if (!result) throw new Error(`"Was altered" query failed`);
-
-  //   const organizationResults = result[targetOrgId];
-
-  //   if (organizationResults.length !== 1)
-  //     throw new Error('No or multiple test suites found');
-
-  //   return organizationResults[0].WAS_ALTERED;
-  // };
 
   async execute(
     request: TriggerCustomTestSuiteExecutionRequestDto,
@@ -103,18 +70,6 @@ export class TriggerCustomTestSuiteExecution implements IUseCase<
 
       if (request.executionType === 'automatic') {
         throw new Error('Not implemented yet');
-        // if (!request.targetOrgId)
-        //   throw new Error('targetOrgId missing');
-        // const wasAltered = !this.#wasAltered(
-        //   {
-        //     databaseName: customTestSuite.target.databaseName,
-        //     schemaName: customTestSuite.target.schemaName,
-        //     matName: customTestSuite.target.materializationName,
-        //     targetOrgId: request.targetOrgId,
-        //   },
-        //   auth.jwt
-        // );
-        // if (!wasAltered) return Result.ok();
       }
 
       const executeTestResult = await this.#executeTest.execute(

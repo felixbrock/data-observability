@@ -8,7 +8,8 @@ const getAccounts = app.resolve('getAccounts');
 
 const updateTestHistoryEntryController = new UpdateTestHistoryEntryController(
   app.resolve('updateTestHistoryEntry'),
-  getAccounts
+  getAccounts,
+  app.resolve('getSnowflakeProfile')
 );
 
 testDataRoutes.patch('/history/:alertId', (req, res) => {

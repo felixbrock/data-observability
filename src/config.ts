@@ -31,8 +31,8 @@ interface AuthEnvConfig {
 }
 
 const getAuthEnvConfig = (): AuthEnvConfig => {
-  const userPoolId = process.env.USER_POOL_ID;
-  const userPoolWebClientId = process.env.USER_POOL_WEB_CLIENT_ID;
+  const userPoolId = process.env.COGNITO_USER_POOL_ID;
+  const userPoolWebClientId = process.env.COGNITO_USER_POOL_WEB_CLIENT_ID;
 
   if (!userPoolId || !userPoolWebClientId)
     throw new Error('missing auth env values');
@@ -83,6 +83,14 @@ const getBaseUrlConfig = (): BaseUrlConfig => {
   return { testEngine, integrationService, accountService };
 };
 
+const getCognitoUserPoolId = (): string => {
+  const userPoolId = process.env.COGNITO_USER_POOL_ID;
+
+  if(!userPoolId) throw new Error('Missing user pool id');
+
+  return userPoolId;
+};
+
 export const appConfig = {
   express: {
     mode: process.env.NODE_ENV || 'development',
@@ -93,6 +101,7 @@ export const appConfig = {
   cloud: {
     authEnvConfig: getAuthEnvConfig(),
     authSchedulerEnvConfig: getAuthSchedulerEnvConfig(),
+    userPoolId: getCognitoUserPoolId(),
     region: 'eu-central-1',
     testExecutionJobArn:
       'arn:aws:lambda:eu-central-1:966593446935:function:test-suite-execution-job-production-app',

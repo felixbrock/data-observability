@@ -1,4 +1,4 @@
-import { TestSuiteDto } from '../entities/test-suite';
+import { TestSuite } from '../entities/test-suite';
 import BaseAuth from '../services/base-auth';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
@@ -12,7 +12,7 @@ export interface ReadTestSuitesRequestDto {
 
 export type ReadTestSuitesAuthDto = BaseAuth;
 
-export type ReadTestSuitesResponseDto = Result<TestSuiteDto[]>;
+export type ReadTestSuitesResponseDto = Result<TestSuite[]>;
 
 export class ReadTestSuites
   implements

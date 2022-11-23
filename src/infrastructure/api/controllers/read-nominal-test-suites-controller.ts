@@ -1,5 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
 import {
   ReadNominalTestSuites,
   ReadNominalTestSuitesAuthDto,
@@ -11,23 +12,26 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import Result from '../../../domain/value-types/transient-types/result';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
 export default class ReadNominalTestSuitesController extends BaseController {
   readonly #readNominalTestSuites: ReadNominalTestSuites;
 
-  readonly #getAccounts: GetAccounts;
+  
 
-  constructor(readNominalTestSuites: ReadNominalTestSuites, getAccounts: GetAccounts) {
-    super();
+  constructor(readNominalTestSuites: ReadNominalTestSuites,
+    getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile
+    ) {
+    super(getAccounts, getSnowflakeProfile);
     this.#readNominalTestSuites = readNominalTestSuites;
-    this.#getAccounts = getAccounts;
   }
 
   #buildRequestDto = (httpRequest: Request): ReadNominalTestSuitesRequestDto => {
-    const { executionFrequency, activated } = httpRequest.query;
+    const {activated } = httpRequest.query;
 
     if (
       activated &&
@@ -40,7 +44,6 @@ export default class ReadNominalTestSuitesController extends BaseController {
 
     return {
       activated: activated ? activated === 'true' : undefined,
-      executionFrequency: Number(executionFrequency),
     };
   };
 
@@ -63,9 +66,8 @@ export default class ReadNominalTestSuitesController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await ReadNominalTestSuitesController.getUserAccountInfo(
+        await this.getUserAccountInfo(
           jwt,
-          this.#getAccounts
         );
 
       if (!getUserAccountInfoResult.success)
@@ -82,8 +84,11 @@ export default class ReadNominalTestSuitesController extends BaseController {
         getUserAccountInfoResult.value
       );
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
+
       const useCaseResult: ReadNominalTestSuitesResponseDto =
-        await this.#readNominalTestSuites.execute(requestDto, authDto);
+        await this.#readNominalTestSuites.execute(requestDto, authDto, connPool);
 
       if (!useCaseResult.success) {
         return ReadNominalTestSuitesController.badRequest(res);
@@ -92,6 +97,9 @@ export default class ReadNominalTestSuitesController extends BaseController {
       const resultValue = useCaseResult.value
         ? useCaseResult.value.map((element) => element.toDto())
         : useCaseResult.value;
+
+        await connPool.drain();
+        await connPool.clear();
 
       return ReadNominalTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

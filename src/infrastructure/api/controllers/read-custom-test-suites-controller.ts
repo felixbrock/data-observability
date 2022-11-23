@@ -1,5 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
 import {
   ReadCustomTestSuites,
   ReadCustomTestSuitesAuthDto,
@@ -11,22 +12,23 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import Result from '../../../domain/value-types/transient-types/result';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
 export default class ReadCustomTestSuitesController extends BaseController {
   readonly #readCustomTestSuites: ReadCustomTestSuites;
 
-  readonly #getAccounts: GetAccounts;
+  
 
   constructor(
     readCustomTestSuites: ReadCustomTestSuites,
-    getAccounts: GetAccounts
+    getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile
   ) {
-    super();
+    super(getAccounts, getSnowflakeProfile);
     this.#readCustomTestSuites = readCustomTestSuites;
-    this.#getAccounts = getAccounts;
   }
 
   #buildRequestDto = (httpRequest: Request): ReadCustomTestSuitesRequestDto => {
@@ -66,9 +68,8 @@ export default class ReadCustomTestSuitesController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await ReadCustomTestSuitesController.getUserAccountInfo(
+        await this.getUserAccountInfo(
           jwt,
-          this.#getAccounts
         );
 
       if (!getUserAccountInfoResult.success)
@@ -86,8 +87,11 @@ export default class ReadCustomTestSuitesController extends BaseController {
         getUserAccountInfoResult.value
       );
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
+
       const useCaseResult: ReadCustomTestSuitesResponseDto =
-        await this.#readCustomTestSuites.execute(requestDto, authDto);
+        await this.#readCustomTestSuites.execute(requestDto, authDto, connPool);
 
       if (!useCaseResult.success) {
         return ReadCustomTestSuitesController.badRequest(
@@ -101,6 +105,9 @@ export default class ReadCustomTestSuitesController extends BaseController {
           res,
           'Readin custom tests failed. Internal error.'
         );
+
+        await connPool.drain();
+        await connPool.clear();
 
       return ReadCustomTestSuitesController.ok(
         res,

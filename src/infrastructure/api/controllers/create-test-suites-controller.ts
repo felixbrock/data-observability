@@ -1,6 +1,8 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
   createCronJob,
   getAutomaticCronExpression,
@@ -19,17 +21,18 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 
 export default class CreateTestSuitesController extends BaseController {
   readonly #createTestSuites: CreateTestSuites;
 
-  readonly #getAccounts: GetAccounts;
+  constructor(createTestSuites: CreateTestSuites,
+    getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile
+    ) {
+      super(getAccounts, getSnowflakeProfile);
 
-  constructor(createTestSuites: CreateTestSuites, getAccounts: GetAccounts) {
-    super();
     this.#createTestSuites = createTestSuites;
-    this.#getAccounts = getAccounts;
   }
 
   #buildRequestDto = (httpRequest: Request): CreateTestSuitesRequestDto => ({
@@ -45,6 +48,7 @@ export default class CreateTestSuitesController extends BaseController {
 
     return {
       callerOrgId: userAccountInfo.callerOrgId,
+      isSystemInternal: userAccountInfo.isSystemInternal,
       jwt,
     };
   };
@@ -62,9 +66,8 @@ export default class CreateTestSuitesController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await CreateTestSuitesController.getUserAccountInfo(
-          jwt,
-          this.#getAccounts
+        await this.getUserAccountInfo(
+          jwt
         );
 
       if (!getUserAccountInfoResult.success)
@@ -79,8 +82,11 @@ export default class CreateTestSuitesController extends BaseController {
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
+
       const useCaseResult: CreateTestSuitesResponseDto =
-        await this.#createTestSuites.execute(requestDto, authDto);
+        await this.#createTestSuites.execute(requestDto, authDto, connPool);
 
       if (!useCaseResult.success) {
         return CreateTestSuitesController.badRequest(res);
@@ -118,6 +124,9 @@ export default class CreateTestSuitesController extends BaseController {
           });
         })
       );
+
+      await connPool.drain();
+      await connPool.clear();
 
       return CreateTestSuitesController.ok(res, resultValues, CodeHttp.CREATED);
     } catch (error: unknown) {
