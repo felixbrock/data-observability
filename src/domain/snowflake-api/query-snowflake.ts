@@ -43,25 +43,9 @@ export class QuerySnowflake implements IUseCase<
         connPool
       );
 
-      const stringifiedBinds = JSON.stringify(request.binds);
-
-      if (!queryResult.success) {
-        const queryResultBaseMsg = `Binds: ${stringifiedBinds.substring(
-          0,
-          1000
-        )}${stringifiedBinds.length > 1000 ? '...' : ''}
-          \n${request.queryText.substring(0, 1000)}${
-          request.queryText.length > 1000 ? '...' : ''
-        }`;
-
-        throw new Error(
-          `Sf query failed \n${queryResultBaseMsg} \nError msg: ${queryResult.error}`
-        );
-      }
-
-      return Result.ok(queryResult.value);
+      return Result.ok(queryResult);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
+      if (error instanceof Error && error.message) console.error(error.stack);
       else if (!(error instanceof Error) && error) console.trace(error);
       return Result.fail('');
     }

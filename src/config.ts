@@ -109,7 +109,7 @@ export const appConfig = {
   snowflake: {
     applicationName:
       process.env.SNOWFLAKE_APPLICATION_NAME || 'snowflake-connector',
-    schemaName: 'lineage',
+    schemaName: 'observability',
     databaseName: 'cito',
   },
   slack: getSlackConfig(),

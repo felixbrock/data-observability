@@ -1,4 +1,4 @@
-import { appConfig } from "../../../config";
+import { appConfig } from '../../../config';
 
 type SelectType = 'parse_json';
 
@@ -23,7 +23,7 @@ export const getInsertQueryText = (
           const value = el.selectType
             ? `${el.selectType}($${index + 1})`
             : `$${index + 1}`;
-          return el.nullable ? `nullif(${value}, 'null')` : value;
+          return el.nullable ? `nullif(${value}::string, 'null')` : value;
         })
         .join(', ')}
       from values ${rows.join(', ')};
@@ -41,7 +41,9 @@ export const getUpdateQueryText = (
             const value = el.selectType
               ? `${el.selectType}($${index + 1})`
               : `$${index + 1}`;
-            return el.nullable ? `nullif(${value}, 'null') as ${el.name}` : `${value} as ${el.name}`;
+            return el.nullable
+              ? `nullif(${value}::string, 'null') as ${el.name}`
+              : `${value} as ${el.name}`;
           })
           .join(', ')}
         from values ${rows.join(', ')}) as source

@@ -1,40 +1,58 @@
-import {Pool} from 'generic-pool';
+import { Pool } from 'generic-pool';
 import { Connection, Statement } from 'snowflake-sdk';
 import {
   Binds,
   ISnowflakeApiRepo,
   SnowflakeQueryResult,
 } from '../../domain/snowflake-api/i-snowflake-api-repo';
-import Result from '../../domain/value-types/transient-types/result';
-import handleStreamError from './db/snowflake';
 
 export default class SnowflakeApiRepo implements ISnowflakeApiRepo {
+  #getResultBaseMsg = (
+    stringifiedBinds: string,
+    queryText: string
+  ): string => `Binds: ${stringifiedBinds.substring(0, 1000)}${
+    stringifiedBinds.length > 1000 ? '...' : ''
+  }
+    \n${queryText.substring(0, 1000)}${queryText.length > 1000 ? '...' : ''}`;
+
   runQuery = async (
     queryText: string,
     binds: Binds,
     connectionPool: Pool<Connection>
-  ): Promise<Result<SnowflakeQueryResult>> =>
-    new Promise((resolve) => {
+  ): Promise<SnowflakeQueryResult> =>
+    new Promise((resolve, reject) => {
       const results: SnowflakeQueryResult = [];
 
       const exit = (): void => {
-        resolve(Result.ok(results));
+        resolve(results);
       };
 
       const complete = (error: any, stmt: Statement): void => {
-        if (error)
-          console.error(
-            `Failed to execute statement ${stmt.getStatementId()} due to the following error: ${
-              error.message
-            }`
+        if (error) {
+          reject(
+            new Error(
+              `Failed to execute statement ${stmt.getStatementId()} due to the following error: ${
+                error.message
+              } \n${this.#getResultBaseMsg(JSON.stringify(binds), queryText)}`
+            )
           );
+        }
 
         const stream = stmt.streamRows();
 
         stream.on('data', (row: any) => {
           if (row) results.push(row);
         });
-        stream.on('error', handleStreamError);
+        stream.on('error', (err: Error): void => {
+          reject(
+            new Error(
+              `Streaming of Snowflake query failed. Error: ${err}\n${this.#getResultBaseMsg(
+                JSON.stringify(binds),
+                queryText
+              )}`
+            )
+          );
+        });
         stream.on('end', exit);
       };
       try {
@@ -46,10 +64,9 @@ export default class SnowflakeApiRepo implements ISnowflakeApiRepo {
           });
         });
       } catch (error: unknown) {
-        if (error instanceof Error && error.message)
-          console.trace(error.message);
-        else if (!(error instanceof Error) && error) console.trace(error);
-        resolve(Result.fail(''));
+        if (error instanceof Error) reject(error);
+        if (typeof error === 'string') reject(new Error(error));
+        throw new Error('Sf query not properly handled');
       }
     });
 }

@@ -1,5 +1,3 @@
-import Result from '../value-types/transient-types/result';
-
 export interface SnowflakeEntity {
   [key: string]: unknown;
 }
@@ -21,5 +19,5 @@ export interface ISnowflakeApiRepo {
     queryText: string,
     binds: Binds,
     connectionPool: IConnectionPool
-  ): Promise<Result<SnowflakeQueryResult>>;
+  ): Promise<SnowflakeQueryResult>;
 }

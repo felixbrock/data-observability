@@ -71,7 +71,7 @@ export default class TestSuiteRepo
       !TestSuiteRepo.isOptionalOfType<string>(type, 'string') ||
       !TestSuiteRepo.isOptionalOfType<boolean>(activated, 'boolean') ||
       !TestSuiteRepo.isOptionalOfType<number>(threshold, 'number') ||
-      !TestSuiteRepo.isOptionalOfType<number>(executionFrequency, 'string') ||
+      !TestSuiteRepo.isOptionalOfType<number>(executionFrequency, 'number') ||
       !TestSuiteRepo.isOptionalOfType<string>(databaseName, 'string') ||
       !TestSuiteRepo.isOptionalOfType<string>(schemaName, 'string') ||
       !TestSuiteRepo.isOptionalOfType<string>(materializationName, 'string') ||
@@ -83,7 +83,7 @@ export default class TestSuiteRepo
       !TestSuiteRepo.isOptionalOfType<string>(executionType, 'string')
     )
       throw new Error(
-        'Retrieved unexpected  test suite field types from persistence'
+        'Retrieved unexpected test suite field types from persistence'
       );
 
     return {

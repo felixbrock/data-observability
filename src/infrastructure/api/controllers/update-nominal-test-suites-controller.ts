@@ -143,7 +143,7 @@ export default class UpdateNominalTestSuitesController extends BaseController {
         CodeHttp.OK
       );
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
+      if (error instanceof Error && error.message) console.error(error.stack);
       else if (!(error instanceof Error) && error) console.trace(error);
       return UpdateNominalTestSuitesController.fail(
         res,

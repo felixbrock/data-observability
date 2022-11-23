@@ -68,7 +68,7 @@ export default class NominalTestSuiteRepo
       !NominalTestSuiteRepo.isOptionalOfType<string>(id, 'string') ||
       !NominalTestSuiteRepo.isOptionalOfType<string>(type, 'string') ||
       !NominalTestSuiteRepo.isOptionalOfType<boolean>(activated, 'boolean') ||
-      !NominalTestSuiteRepo.isOptionalOfType<number>(executionFrequency, 'string') ||
+      !NominalTestSuiteRepo.isOptionalOfType<number>(executionFrequency, 'number') ||
       !NominalTestSuiteRepo.isOptionalOfType<string>(databaseName, 'string') ||
       !NominalTestSuiteRepo.isOptionalOfType<string>(schemaName, 'string') ||
       !NominalTestSuiteRepo.isOptionalOfType<string>(materializationName, 'string') ||

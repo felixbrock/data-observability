@@ -99,7 +99,7 @@ export default class UpdateTestHistoryEntryController extends BaseController {
 
       return UpdateTestHistoryEntryController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
+      if (error instanceof Error && error.message) console.error(error.stack);
       else if (!(error instanceof Error) && error) console.trace(error);
       return UpdateTestHistoryEntryController.fail(
         res,
