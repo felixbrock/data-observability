@@ -1,3 +1,8 @@
+import {
+  SchedulerClient,
+  CreateScheduleCommand,
+  CreateScheduleCommandInput,
+} from '@aws-sdk/client-scheduler';
 import { appConfig } from '../../config';
 import {
   ExecutionType,
@@ -69,7 +74,7 @@ aws lambda add-permission --function-name "test-suite-execution-job-production-a
 */
 
 // const putTarget = async (
-//   client: EventBridgeClient,
+//   client: SchedulerClient,
 //   ruleName: string,
 //   targetInput: TargetInput
 // ): Promise<void> => {
@@ -101,35 +106,39 @@ aws lambda add-permission --function-name "test-suite-execution-job-production-a
 export const createCronJob = async (
   cron: string,
   testSuiteId: string,
-  organizationId: string,
+  orgId: string,
   targetInputPrototype: CreateCronTargetInputPrototype,
-  client: EventBridgeClient
+  client: SchedulerClient
 ): Promise<void> => {
   if (!targetInputPrototype.testSuiteType) throw new Error();
 
-  const ruleName = `${rulePrefix}-${testSuiteId}`;
+  const scheduleName = `${rulePrefix}-${testSuiteId}`;
 
-  const putRuleInput: PutRuleCommandInput = {
-    Name: ruleName,
-    Description: `org-id: ${organizationId}`,
-    Tags: [
-      { Key: 'test-suite-id', Value: testSuiteId },
-      { Key: 'organization-id', Value: organizationId },
-    ],
+  const commandInput: CreateScheduleCommandInput = {
+    Name: scheduleName,
+    GroupName: orgId,
     ScheduleExpression: `cron(${cron})`,
     State: 'ENABLED',
+    Target: {
+      Arn: appConfig.cloud.testExecutionJobArn,
+      RoleArn: appConfig.cloud.roleTestExecutionJobArn,
+      Input: JSON.stringify({
+        testSuiteId,
+        targetOrgId: orgId,
+        ...targetInputPrototype,
+      }),
+    },
   };
 
-  const putRuleCommand = new PutRuleCommand(putRuleInput);
+  const command = new CreateScheduleCommand(commandInput);
 
-  const putRuleResponse = await client.send(putRuleCommand);
+  const res = await client.send(command);
 
-  if (!putRuleResponse.RuleArn)
-    throw new Error('Rule ARN for cron rule not returned');
+  if (!res.RuleArn) throw new Error('Rule ARN for cron rule not returned');
 
-  await putTarget(client, ruleName, {
+  await putTarget(client, scheduleName, {
     testSuiteId,
-    targetOrgId: organizationId,
+    targetOrgId: orgId,
     ...targetInputPrototype,
   });
 };
@@ -137,9 +146,8 @@ export const createCronJob = async (
 export const updateCronJobState = async (
   testSuiteId: string,
   toBeActivated: boolean,
-  client: EventBridgeClient
+  client: SchedulerClient
 ): Promise<void> => {
-
   const ruleName = `${rulePrefix}-${testSuiteId}`;
   const input = { Name: ruleName };
 
@@ -151,7 +159,7 @@ export const updateCronJobState = async (
 };
 
 // const getCurrentTargetInput = async (
-//   client: EventBridgeClient,
+//   client: SchedulerClient,
 //   ruleName: string
 // ): Promise<TargetInput> => {
 //   const command = new ListTargetsByRuleCommand({
@@ -189,7 +197,7 @@ export const updateCronJobState = async (
 //   updateProps: {
 //     cron?: string;
 //   },
-//   client:EventBridgeClient
+//   client:SchedulerClient
 // ): Promise<void> => {
 //   if (!updateProps.cron)
 //     throw new Error(`No input provided for updating cron job`);
@@ -215,9 +223,9 @@ export const updateCronJobState = async (
 // export const patchTarget = async (
 //   testSuiteId: string,
 //   targetInputPrototype: UpdateCronTargetInputPrototype,
-//   client : EventBridgeClient
+//   client : SchedulerClient
 // ): Promise<void> => {
-  
+
 //   const ruleName = `${rulePrefix}-${testSuiteId}`;
 
 //   const currentTargetInput = await getCurrentTargetInput(

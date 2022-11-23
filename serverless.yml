@@ -14,18 +14,18 @@ provider:
       statements:
         - Effect: Allow
           Action: 
-            - "events:PutEvents"
-            - "events:PutRule"
-            - "events:PutTargets"
-            - "events:DeleteRule"
-            - "events:RemoveTargets"
-            - "events:DisableRule"
-            - "events:EnableRule"
-            - "events:TagResource"
-            - "events:UntagResource"
-            - "events:DescribeRule"
-            - "events:ListTargetsByRule"
-            - "events:ListTagsForResource"
+            - "schedule:ListSchedules"
+            - "schedule:GetSchedule"
+            - "schedule:CreateSchedule"
+            - "schedule:UpdateSchedule"
+            - "schedule:DeleteSchedule"
+            - "scheduler:ListScheduleGroups"
+            - "scheduler:GetScheduleGroup"
+            - "scheduler:CreateScheduleGroup"
+            - "scheduler:DeleteScheduleGroup"
+            - "scheduler:ListTagsForResource"
+            - "scheduler:TagResource"
+            - "scheduler:UntagResource"
           Resource: '*'
 functions:
   app:
