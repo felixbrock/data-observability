@@ -1,5 +1,5 @@
 // TODO: Violation of control flow. DI for express instead
-import { EventBridgeClient } from '@aws-sdk/client-eventbridge';
+import { SchedulerClient } from '@aws-sdk/client-scheduler';
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
 import { appConfig } from '../../../config';
@@ -12,10 +12,10 @@ import {
   CreateNominalTestSuitesResponseDto,
 } from '../../../domain/nominal-test-suite/create-nominal-test-suites';
 import {
-  createCronJob,
+  createSchedule,
   getAutomaticCronExpression,
   getFrequencyCronExpression,
-} from '../../../domain/services/cron-job';
+} from '../../../domain/services/schedule';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -105,7 +105,7 @@ export default class CreateNominalTestSuitesController extends BaseController {
 
       const resultValues = useCaseResult.value.map((el) => el.toDto());
 
-      const eventBridgeClient = new EventBridgeClient({
+      const schedulerClient = new SchedulerClient({
         region: appConfig.cloud.region,
       });
 
@@ -130,14 +130,14 @@ export default class CreateNominalTestSuitesController extends BaseController {
               throw new Error('Unhandled execution type');
           }
 
-          await createCronJob(cron, el.id, authDto.callerOrgId, {
+          await createSchedule(cron, el.id, authDto.callerOrgId, {
             testSuiteType: 'nominal-test',
             executionType: el.executionType,
-          }, eventBridgeClient);
+          }, schedulerClient);
         })
       );
 
-      eventBridgeClient.destroy();
+      schedulerClient.destroy();
 
       return CreateNominalTestSuitesController.ok(
         res,

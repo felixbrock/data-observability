@@ -1,7 +1,7 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
-import { EventBridgeClient } from '@aws-sdk/client-eventbridge';
+import { SchedulerClient } from '@aws-sdk/client-scheduler';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateTestSuites,
@@ -22,7 +22,7 @@ import {
   patchCronJob,
   patchTarget,
   updateCronJobState,
-} from '../../../domain/services/cron-job';
+} from '../../../domain/services/schedule';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import { appConfig } from '../../../config';
 

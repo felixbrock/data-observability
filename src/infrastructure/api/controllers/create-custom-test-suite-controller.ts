@@ -1,5 +1,5 @@
 // TODO: Violation of control flow. DI for express instead
-import { EventBridgeClient } from '@aws-sdk/client-eventbridge';
+import { SchedulerClient } from '@aws-sdk/client-scheduler';
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
 import { appConfig } from '../../../config';
@@ -12,10 +12,10 @@ import {
 } from '../../../domain/custom-test-suite/create-custom-test-suite';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
-  createCronJob,
+  createSchedule,
   getAutomaticCronExpression,
   getFrequencyCronExpression,
-} from '../../../domain/services/cron-job';
+} from '../../../domain/services/schedule';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -61,7 +61,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
     return {
       callerOrgId: userAccountInfo.callerOrgId,
       isSystemInternal: userAccountInfo.isSystemInternal,
-      jwt
+      jwt,
     };
   };
 
@@ -78,9 +78,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await this.getUserAccountInfo(
-          jwt,
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return CreateCustomTestSuiteController.unauthorized(
@@ -104,8 +102,8 @@ export default class CreateCustomTestSuiteController extends BaseController {
           connPool
         );
 
-        await connPool.drain();
-        await connPool.clear();
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return CreateCustomTestSuiteController.badRequest(res);
@@ -137,16 +135,22 @@ export default class CreateCustomTestSuiteController extends BaseController {
           throw new Error('Unhandled execution type');
       }
 
-      const eventBridgeClient = new EventBridgeClient({
+      const schedulerClient = new SchedulerClient({
         region: appConfig.cloud.region,
       });
 
-      await createCronJob(cron, result.id, authDto.callerOrgId, {
-        testSuiteType: 'custom-test',
-        executionType: result.executionType,
-      }, eventBridgeClient);
+      await createSchedule(
+        cron,
+        result.id,
+        authDto.callerOrgId,
+        {
+          testSuiteType: 'custom-test',
+          executionType: result.executionType,
+        },
+        schedulerClient
+      );
 
-      eventBridgeClient.destroy();
+      schedulerClient.destroy();
 
       return CreateCustomTestSuiteController.ok(
         res,

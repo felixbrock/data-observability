@@ -86,7 +86,7 @@ const getBaseUrlConfig = (): BaseUrlConfig => {
 const getCognitoUserPoolId = (): string => {
   const userPoolId = process.env.COGNITO_USER_POOL_ID;
 
-  if(!userPoolId) throw new Error('Missing user pool id');
+  if (!userPoolId) throw new Error('Missing user pool id');
 
   return userPoolId;
 };
@@ -105,6 +105,8 @@ export const appConfig = {
     region: 'eu-central-1',
     testExecutionJobArn:
       'arn:aws:lambda:eu-central-1:966593446935:function:test-suite-execution-job-production-app',
+    testExecutionJobRoleArn:
+      'arn:aws:iam::966593446935:role/observability-service-production-eu-central-1-lambdaRole',
   },
   snowflake: {
     applicationName:

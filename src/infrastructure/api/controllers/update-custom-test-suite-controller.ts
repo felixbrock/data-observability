@@ -1,5 +1,5 @@
 // TODO: Violation of control flow. DI for express instead
-import { EventBridgeClient } from '@aws-sdk/client-eventbridge';
+import { SchedulerClient } from '@aws-sdk/client-scheduler';
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
 import { appConfig } from '../../../config';
@@ -14,10 +14,8 @@ import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowfla
 import {
   getAutomaticCronExpression,
   getFrequencyCronExpression,
-  patchCronJob,
-  patchTarget,
-  updateCronJobState,
-} from '../../../domain/services/cron-job';
+  updateSchedule
+} from '../../../domain/services/schedule';
 import { parseExecutionType } from '../../../domain/value-types/execution-type';
 import Result from '../../../domain/value-types/transient-types/result';
 
@@ -153,16 +151,16 @@ export default class UpdateCustomTestSuiteController extends BaseController {
         else if (requestDto.props.frequency)
           cron = getFrequencyCronExpression(requestDto.props.frequency);
 
-        const eventBridgeClient = new EventBridgeClient({
-          region: appConfig.cloud.region,
-        });
+          const schedulerClient = new SchedulerClient({
+            region: appConfig.cloud.region,
+          });
 
-        await patchCronJob(
+        await updateSchedule(
           requestDto.id,
           {
             cron,
           },
-          eventBridgeClient
+          schedulerClient
         );
 
         if (requestDto.props.executionType)
