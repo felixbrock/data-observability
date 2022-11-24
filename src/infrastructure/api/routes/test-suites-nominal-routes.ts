@@ -7,22 +7,25 @@ import CreateNominalTestSuitesController from '../controllers/create-nominal-tes
 const nominalTestSuitesRoutes = Router();
 
 const getAccounts = app.resolve('getAccounts');
+const getSnowflakeProfile = app.resolve('getSnowflakeProfile');
 
 const readNominalTestSuitesController = new ReadNominalTestSuitesController(
   app.resolve('readNominalTestSuites'),
-  getAccounts
+  getAccounts,
+  getSnowflakeProfile
 );
 
 const createNominalTestSuitesController = new CreateNominalTestSuitesController(
   app.resolve('createNominalTestSuites'),
-  getAccounts
+  getAccounts,
+  getSnowflakeProfile
 );
 
 const updateNominalTestSuitesController = new UpdateNominalTestSuitesController(
   app.resolve('updateNominalTestSuites'),
-  getAccounts
+  getAccounts,
+  getSnowflakeProfile
 );
-
 
 nominalTestSuitesRoutes.get('/', (req, res) => {
   readNominalTestSuitesController.execute(req, res);

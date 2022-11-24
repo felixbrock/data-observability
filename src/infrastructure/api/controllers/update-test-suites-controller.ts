@@ -1,5 +1,7 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
+import { SchedulerClient } from '@aws-sdk/client-scheduler';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateTestSuites,
@@ -13,23 +15,25 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 import {
   getAutomaticCronExpression,
   getFrequencyCronExpression,
-  patchCronJob,
-  patchTarget,
-  updateCronJobState,
-} from '../../../domain/services/cron-job';
+  ScheduleUpdateProps,
+  updateSchedule,
+} from '../../../domain/services/schedule';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
+import { appConfig } from '../../../config';
 
 export default class UpdateTestSuitesController extends BaseController {
   readonly #updateTestSuites: UpdateTestSuites;
 
-  readonly #getAccounts: GetAccounts;
-
-  constructor(updateTestSuites: UpdateTestSuites, getAccounts: GetAccounts) {
-    super();
-    this.#getAccounts = getAccounts;
+  constructor(
+    updateTestSuites: UpdateTestSuites,
+    getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile
+  ) {
+    super(getAccounts, getSnowflakeProfile);
     this.#updateTestSuites = updateTestSuites;
   }
 
@@ -41,10 +45,10 @@ export default class UpdateTestSuitesController extends BaseController {
     jwt: string,
     userAccountInfo: UserAccountInfo
   ): UpdateTestSuitesAuthDto => {
-    if (!userAccountInfo.callerOrgId)
-      throw new Error('callerOrgId missing');
+    if (!userAccountInfo.callerOrgId) throw new Error('callerOrgId missing');
     return {
       jwt,
+      isSystemInternal: userAccountInfo.isSystemInternal,
       callerOrgId: userAccountInfo.callerOrgId,
     };
   };
@@ -59,10 +63,7 @@ export default class UpdateTestSuitesController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await UpdateTestSuitesController.getUserAccountInfo(
-          jwt,
-          this.#getAccounts
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return UpdateTestSuitesController.unauthorized(
@@ -78,8 +79,13 @@ export default class UpdateTestSuitesController extends BaseController {
         getUserAccountInfoResult.value
       );
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
       const useCaseResult: UpdateTestSuitesResponseDto =
-        await this.#updateTestSuites.execute(requestDto, authDto);
+        await this.#updateTestSuites.execute(requestDto, authDto, connPool);
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return UpdateTestSuitesController.badRequest(res, useCaseResult.error);
@@ -92,36 +98,43 @@ export default class UpdateTestSuitesController extends BaseController {
           'Update of test suites failed. Internal error.'
         );
 
+      const schedulerClient = new SchedulerClient({
+        region: appConfig.cloud.region,
+      });
+
       await Promise.all(
         requestDto.updateObjects.map(async (el) => {
-          const { id, cron, frequency, executionType, activated } = el;
+          const { id } = el;
+          const { cron, frequency, executionType, activated } = el.props;
 
-          if (cron || frequency || executionType) {
-            let localCron: string | undefined;
-            if (executionType === 'automatic')
-              localCron = getAutomaticCronExpression();
-            else if (cron) localCron = cron;
-            else if (frequency)
-              localCron = getFrequencyCronExpression(frequency);
+          const updateProps: ScheduleUpdateProps = {};
 
-            await patchCronJob(id, {
-              cron: localCron,
-            });
+          if (executionType === 'automatic')
+            updateProps.cron = getAutomaticCronExpression();
+          else if (cron) updateProps.cron = cron;
+          else if (frequency)
+            updateProps.cron = getFrequencyCronExpression(frequency);
+          if (activated !== undefined) updateProps.toBeActivated = activated;
+          if (executionType)
+            updateProps.target = updateProps.target
+              ? {
+                  ...updateProps.target,
+                  executionType,
+                }
+              : { executionType };
 
-            if (executionType)
-              await patchTarget(id, {
-                executionType,
-              });
-          }
+          if (!Object.keys(updateProps).length) return;
 
-          if (activated !== undefined) await updateCronJobState(id, activated);
+          await updateSchedule(id, authDto.callerOrgId, updateProps, schedulerClient);
         })
       );
 
+      schedulerClient.destroy();
+
       return UpdateTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return UpdateTestSuitesController.fail(
         res,
         'update test suites - Unknown error occured'

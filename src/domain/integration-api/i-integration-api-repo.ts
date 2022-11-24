@@ -1,5 +1,13 @@
 import { SendAlertResultDto } from './slack/send-alert-result-dto';
-import { SnowflakeQueryResultDto } from './snowflake/snowlake-query-result-dto';
+
+export interface SnowflakeProfileDto {
+  id: string;
+  accountId: string;
+  username: string;
+  password: string;
+  organizationId: string;
+  warehouseName: string;
+}
 
 export interface AlertMessageConfig {
   anomalyMessagePart: string;
@@ -11,10 +19,13 @@ export interface AlertMessageConfig {
   detectedValuePart: string;
 }
 export interface IIntegrationApiRepo {
-  querySnowflake(body: {query: string, targetOrgId?: string}, jwt: string): Promise<SnowflakeQueryResultDto>;
   sendSlackAlert(
     messageConfig: AlertMessageConfig,
     targetOrgId: string,
     jwt: string
   ): Promise<SendAlertResultDto>;
+  getSnowflakeProfile(
+    jwt: string,
+    targetOrgId?: string
+  ): Promise<SnowflakeProfileDto>;
 }

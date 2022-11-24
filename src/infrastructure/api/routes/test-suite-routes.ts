@@ -6,17 +6,20 @@ import TriggerTestSuiteExecutionController from '../controllers/trigger-test-sui
 const testSuiteRoutes = Router();
 
 const getAccounts = app.resolve('getAccounts');
+const getSnowflakeProfile = app.resolve('getSnowflakeProfile');
 const dbo = app.resolve('dbo');
 
 const readTestSuiteController = new ReadTestSuiteController(
   app.resolve('readTestSuite'),
-  getAccounts
+  getAccounts,
+  getSnowflakeProfile
 );
 
 const triggerTestSuiteExecutionController =
   new TriggerTestSuiteExecutionController(
     app.resolve('triggerTestSuiteExecution'),
     getAccounts,
+    getSnowflakeProfile,
     dbo
   );
 

@@ -8,29 +8,34 @@ import UpdateCustomTestSuiteController from '../controllers/update-custom-test-s
 const customTestSuiteRoutes = Router();
 
 const getAccounts = app.resolve('getAccounts');
+const getSnowflakeProfile = app.resolve('getSnowflakeProfile');
 const dbo = app.resolve('dbo');
 
 const readCustomTestSuiteController = new ReadCustomTestSuiteController(
   app.resolve('readCustomTestSuite'),
   getAccounts,
+  getSnowflakeProfile
 );
 
 const createCustomTestSuiteController = new CreateCustomTestSuiteController(
   app.resolve('createCustomTestSuite'),
   getAccounts,
-  dbo
+  getSnowflakeProfile,
 );
 
 const updateCustomTestSuiteController = new UpdateCustomTestSuiteController(
   app.resolve('updateCustomTestSuite'),
-  getAccounts
+  getAccounts,
+  getSnowflakeProfile
 );
 
-const triggerCustomTestSuiteExecutionController = new TriggerCustomTestSuiteExecutionController(
-  app.resolve('triggerCustomTestSuiteExecution'),
-  getAccounts,
-  dbo
-);
+const triggerCustomTestSuiteExecutionController =
+  new TriggerCustomTestSuiteExecutionController(
+    app.resolve('triggerCustomTestSuiteExecution'),
+    getAccounts,
+    getSnowflakeProfile,
+    dbo
+  );
 
 customTestSuiteRoutes.get('/:id', (req, res) => {
   readCustomTestSuiteController.execute(req, res);

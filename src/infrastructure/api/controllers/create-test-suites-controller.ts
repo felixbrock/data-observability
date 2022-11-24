@@ -1,11 +1,16 @@
 // TODO: Violation of control flow. DI for express instead
+import { SchedulerClient } from '@aws-sdk/client-scheduler';
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
+import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
-  createCronJob,
+  createSchedule,
   getAutomaticCronExpression,
   getFrequencyCronExpression,
-} from '../../../domain/services/cron-job';
+  groupExists,
+} from '../../../domain/services/schedule';
 
 import {
   CreateTestSuites,
@@ -19,17 +24,19 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 
 export default class CreateTestSuitesController extends BaseController {
   readonly #createTestSuites: CreateTestSuites;
 
-  readonly #getAccounts: GetAccounts;
+  constructor(
+    createTestSuites: CreateTestSuites,
+    getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile
+  ) {
+    super(getAccounts, getSnowflakeProfile);
 
-  constructor(createTestSuites: CreateTestSuites, getAccounts: GetAccounts) {
-    super();
     this.#createTestSuites = createTestSuites;
-    this.#getAccounts = getAccounts;
   }
 
   #buildRequestDto = (httpRequest: Request): CreateTestSuitesRequestDto => ({
@@ -45,6 +52,7 @@ export default class CreateTestSuitesController extends BaseController {
 
     return {
       callerOrgId: userAccountInfo.callerOrgId,
+      isSystemInternal: userAccountInfo.isSystemInternal,
       jwt,
     };
   };
@@ -62,10 +70,7 @@ export default class CreateTestSuitesController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await CreateTestSuitesController.getUserAccountInfo(
-          jwt,
-          this.#getAccounts
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return CreateTestSuitesController.unauthorized(
@@ -79,8 +84,13 @@ export default class CreateTestSuitesController extends BaseController {
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
       const useCaseResult: CreateTestSuitesResponseDto =
-        await this.#createTestSuites.execute(requestDto, authDto);
+        await this.#createTestSuites.execute(requestDto, authDto, connPool);
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return CreateTestSuitesController.badRequest(res);
@@ -90,6 +100,15 @@ export default class CreateTestSuitesController extends BaseController {
         throw new Error('Missing create test suite result value');
 
       const resultValues = useCaseResult.value.map((el) => el.toDto());
+
+      const schedulerClient = new SchedulerClient({
+        region: appConfig.cloud.region,
+      });
+
+      const scheduleGroupExists = await groupExists(
+        authDto.callerOrgId,
+        schedulerClient
+      );
 
       await Promise.all(
         resultValues.map(async (el) => {
@@ -112,17 +131,26 @@ export default class CreateTestSuitesController extends BaseController {
               throw new Error('Unhandled execution type');
           }
 
-          await createCronJob(cron, el.id, authDto.callerOrgId, {
-            testSuiteType: 'test',
-            executionType: el.executionType,
-          });
+          await createSchedule(
+            cron,
+            el.id,
+            authDto.callerOrgId,
+            {
+              testSuiteType: 'test',
+              executionType: el.executionType,
+            },
+            scheduleGroupExists,
+            schedulerClient
+          );
         })
       );
 
+      schedulerClient.destroy();
+
       return CreateTestSuitesController.ok(res, resultValues, CodeHttp.CREATED);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return CreateTestSuitesController.fail(
         res,
         'create test suites - Internal error occured'

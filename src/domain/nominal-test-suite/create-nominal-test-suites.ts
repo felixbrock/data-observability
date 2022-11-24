@@ -1,20 +1,20 @@
-// todo - clean architecture violation
-import { ObjectId } from 'mongodb';
-import Result from '../value-types/transient-types/result';
-import IUseCase from '../services/use-case';
+import { v4 as uuidv4 } from 'uuid';
+import NominalTestSuiteRepo from '../../infrastructure/persistence/nominal-test-suite-repo';
 import {
   NominalTestSuite,
   NominalTestType,
 } from '../entities/nominal-test-suite';
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
-import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
-import { MaterializationType } from '../value-types/materialization-type';
+import BaseAuth from '../services/base-auth';
+import IUseCase from '../services/use-case';
+import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { ExecutionType } from '../value-types/execution-type';
+import { MaterializationType } from '../value-types/materialization-type';
+import Result from '../value-types/transient-types/result';
+import { INominalTestSuiteRepo } from './i-nominal-test-suite-repo';
 
 interface CreateObject {
   activated: boolean;
   type: NominalTestType;
-  threshold: number;
   executionFrequency: number;
   cron?: string;
   executionType: ExecutionType;
@@ -30,8 +30,8 @@ export interface CreateNominalTestSuitesRequestDto {
   createObjects: CreateObject[];
 }
 
-export interface CreateNominalTestSuitesAuthDto {
-  jwt: string;
+export interface CreateNominalTestSuitesAuthDto
+  extends Omit<BaseAuth, 'callerOrgId'> {
   callerOrgId: string;
 }
 
@@ -42,23 +42,26 @@ export class CreateNominalTestSuites
     IUseCase<
       CreateNominalTestSuitesRequestDto,
       CreateNominalTestSuitesResponseDto,
-      CreateNominalTestSuitesAuthDto
+      CreateNominalTestSuitesAuthDto,
+      IConnectionPool
     >
 {
-  readonly #querySnowflake: QuerySnowflake;
+  readonly #repo: INominalTestSuiteRepo;
 
-  constructor(querySnowflake: QuerySnowflake) {
-    this.#querySnowflake = querySnowflake;
+  constructor(nominalTestSuiteRepo: NominalTestSuiteRepo) {
+    this.#repo = nominalTestSuiteRepo;
   }
 
   async execute(
     request: CreateNominalTestSuitesRequestDto,
-    auth: CreateNominalTestSuitesAuthDto
+    auth: CreateNominalTestSuitesAuthDto,
+
+    connPool: IConnectionPool
   ): Promise<CreateNominalTestSuitesResponseDto> {
     try {
-      const nominalTestSuites = request.createObjects.map((createObject) =>
+      const testSuites = request.createObjects.map((createObject) =>
         NominalTestSuite.create({
-          id: new ObjectId().toHexString(),
+          id: uuidv4(),
           activated: createObject.activated,
           type: createObject.type,
           executionFrequency: createObject.executionFrequency,
@@ -76,53 +79,12 @@ export class CreateNominalTestSuites
         })
       );
 
-      const columnDefinitions: ColumnDefinition[] = [
-        { name: 'id' },
-        { name: 'test_type' },
-        { name: 'activated' },
-        { name: 'execution_frequency' },
-        { name: 'database_name' },
-        { name: 'schema_name' },
-        { name: 'materialization_name' },
-        { name: 'materialization_type' },
-        { name: 'column_name' },
-        { name: 'target_resource_id' },
-        { name: 'organization_id' },
-        { name: 'cron' },
-        { name: 'execution_type' },
-      ];
+      await this.#repo.insertMany(testSuites, auth, connPool);
 
-      const values = nominalTestSuites.map(
-        (el) =>
-          `('${el.id}','${el.type}',${el.activated},${el.executionFrequency},'${
-            el.target.databaseName
-          }','${el.target.schemaName}','${el.target.materializationName}','${
-            el.target.materializationType
-          }','${el.target.columnName ? el.target.columnName : null}','${
-            el.target.targetResourceId
-          }','${el.organizationId}', ${el.cron ? el.cron : null}, '${
-            el.executionType
-          }')`
-      );
-
-      const query = CitoDataQuery.getInsertQuery(
-        'cito.observability.test_suites_nominal',
-        columnDefinitions,
-        values
-      );
-
-      const querySnowflakeResult = await this.#querySnowflake.execute(
-        { query },
-        { jwt: auth.jwt }
-      );
-
-      if (!querySnowflakeResult.success)
-        throw new Error(querySnowflakeResult.error);
-
-      return Result.ok(nominalTestSuites);
+      return Result.ok(testSuites);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return Result.fail('');
     }
   }

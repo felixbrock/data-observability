@@ -1,5 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
 import {
   ReadNominalTestSuite,
   ReadNominalTestSuiteAuthDto,
@@ -11,21 +12,20 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 import Result from '../../../domain/value-types/transient-types/result';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
 export default class ReadNominalTestSuiteController extends BaseController {
   readonly #readNominalTestSuite: ReadNominalTestSuite;
 
-  readonly #getAccounts: GetAccounts;
-
   constructor(
     readNominalTestSuite: ReadNominalTestSuite,
-    getAccounts: GetAccounts
+    getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile
   ) {
-    super();
-    this.#getAccounts = getAccounts;
+    super(getAccounts, getSnowflakeProfile);
     this.#readNominalTestSuite = readNominalTestSuite;
   }
 
@@ -34,7 +34,6 @@ export default class ReadNominalTestSuiteController extends BaseController {
 
     return {
       id,
-      targetOrgId: httpRequest.body.targetOrgId
     };
   };
 
@@ -57,10 +56,7 @@ export default class ReadNominalTestSuiteController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await ReadNominalTestSuiteController.getUserAccountInfo(
-          jwt,
-          this.#getAccounts
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return ReadNominalTestSuiteController.unauthorized(
@@ -77,8 +73,13 @@ export default class ReadNominalTestSuiteController extends BaseController {
         getUserAccountInfoResult.value
       );
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
       const useCaseResult: ReadNominalTestSuiteResponseDto =
-        await this.#readNominalTestSuite.execute(requestDto, authDto);
+        await this.#readNominalTestSuite.execute(requestDto, authDto, connPool);
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return ReadNominalTestSuiteController.badRequest(res);
@@ -90,8 +91,8 @@ export default class ReadNominalTestSuiteController extends BaseController {
 
       return ReadNominalTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return ReadNominalTestSuiteController.fail(
         res,
         'read nominal test suite - Unknown error occured'

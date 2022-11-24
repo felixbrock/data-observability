@@ -1,5 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
 import {
   ReadTestSuites,
   ReadTestSuitesAuthDto,
@@ -11,19 +12,21 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import Result from '../../../domain/value-types/transient-types/result';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
 export default class ReadTestSuitesController extends BaseController {
   readonly #readTestSuites: ReadTestSuites;
 
-  readonly #getAccounts: GetAccounts;
-
-  constructor(readTestSuites: ReadTestSuites, getAccounts: GetAccounts) {
-    super();
+  constructor(
+    readTestSuites: ReadTestSuites,
+    getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile
+  ) {
+    super(getAccounts, getSnowflakeProfile);
     this.#readTestSuites = readTestSuites;
-    this.#getAccounts = getAccounts;
   }
 
   #buildRequestDto = (httpRequest: Request): ReadTestSuitesRequestDto => {
@@ -62,10 +65,7 @@ export default class ReadTestSuitesController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await ReadTestSuitesController.getUserAccountInfo(
-          jwt,
-          this.#getAccounts
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return ReadTestSuitesController.unauthorized(
@@ -81,8 +81,13 @@ export default class ReadTestSuitesController extends BaseController {
         getUserAccountInfoResult.value
       );
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
       const useCaseResult: ReadTestSuitesResponseDto =
-        await this.#readTestSuites.execute(requestDto, authDto);
+        await this.#readTestSuites.execute(requestDto, authDto, connPool);
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return ReadTestSuitesController.badRequest(res);
@@ -94,8 +99,8 @@ export default class ReadTestSuitesController extends BaseController {
 
       return ReadTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return ReadTestSuitesController.fail(
         res,
         'read test suites - Unknown error occured'

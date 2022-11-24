@@ -1,6 +1,8 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
   TriggerNominalTestSuiteExecution,
   TriggerNominalTestSuiteExecutionAuthDto,
@@ -14,23 +16,21 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 
 export default class TriggerNominalTestSuiteExecutionController extends BaseController {
   readonly #triggerNominalTestSuiteExecution: TriggerNominalTestSuiteExecution;
-
-  readonly #getAccounts: GetAccounts;
 
   readonly #dbo: Dbo;
 
   constructor(
     triggerNominalTestSuiteExecution: TriggerNominalTestSuiteExecution,
     getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile,
     dbo: Dbo
   ) {
-    super();
+    super(getAccounts, getSnowflakeProfile);
     this.#triggerNominalTestSuiteExecution = triggerNominalTestSuiteExecution;
-    this.#getAccounts = getAccounts;
     this.#dbo = dbo;
   }
 
@@ -40,17 +40,16 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
     id: httpRequest.params.id,
     targetOrgId: httpRequest.body.targetOrgId,
     executionType: httpRequest.body.executionType,
-
   });
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
   ): TriggerNominalTestSuiteExecutionAuthDto => ({
-      jwt,
-      callerOrgId: userAccountInfo.callerOrgId,
-      isSystemInternal: userAccountInfo.isSystemInternal,
-    });
+    jwt,
+    callerOrgId: userAccountInfo.callerOrgId,
+    isSystemInternal: userAccountInfo.isSystemInternal,
+  });
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -65,10 +64,7 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await TriggerNominalTestSuiteExecutionController.getUserAccountInfo(
-          jwt,
-          this.#getAccounts
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return TriggerNominalTestSuiteExecutionController.unauthorized(
@@ -83,12 +79,17 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
       const useCaseResult: TriggerNominalTestSuiteExecutionResponseDto =
         await this.#triggerNominalTestSuiteExecution.execute(
           requestDto,
           authDto,
-          this.#dbo.dbConnection
+          { mongoConn: this.#dbo.dbConnection, sfConnPool: connPool }
         );
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return TriggerNominalTestSuiteExecutionController.badRequest(res);
@@ -100,8 +101,8 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return TriggerNominalTestSuiteExecutionController.fail(
         res,
         'trigger nominal test suite - Unknown error occured'

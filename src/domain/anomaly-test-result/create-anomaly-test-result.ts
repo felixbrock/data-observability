@@ -2,7 +2,7 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { AnomalyTestResult } from '../value-types/anomaly-test-result';
-import { DbConnection } from '../services/i-db';
+import { IDbConnection } from '../services/i-db';
 import { IAnomalyTestResultRepo } from './i-anomaly-test-result-repo';
 
 export interface CreateAnomalyTestResultRequestDto {
@@ -32,12 +32,12 @@ export class CreateAnomalyTestResult
       CreateAnomalyTestResultRequestDto,
       CreateAnomalyTestResultResponseDto,
       CreateAnomalyTestResultAuthDto,
-      DbConnection
+      IDbConnection
     >
 {
   readonly #anomalyTestResultRepo: IAnomalyTestResultRepo;
 
-  #dbConnection: DbConnection;
+  #dbConnection: IDbConnection;
 
   constructor(anomalyTestResultRepo: IAnomalyTestResultRepo) {
     this.#anomalyTestResultRepo = anomalyTestResultRepo;
@@ -46,7 +46,7 @@ export class CreateAnomalyTestResult
   async execute(
     request: CreateAnomalyTestResultRequestDto,
     auth: CreateAnomalyTestResultAuthDto,
-    dbConnection: DbConnection
+    dbConnection: IDbConnection
   ): Promise<CreateAnomalyTestResultResponseDto> {
     try {
       this.#dbConnection = dbConnection;
@@ -60,8 +60,8 @@ export class CreateAnomalyTestResult
 
       return Result.ok(anomalyTestResult);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return Result.fail('');
     }
   }

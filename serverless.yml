@@ -9,24 +9,6 @@ provider:
   timeout: 30
   memorySize: 256
   architecture: arm64
-  iam:
-    role:
-      statements:
-        - Effect: Allow
-          Action: 
-            - "events:PutEvents"
-            - "events:PutRule"
-            - "events:PutTargets"
-            - "events:DeleteRule"
-            - "events:RemoveTargets"
-            - "events:DisableRule"
-            - "events:EnableRule"
-            - "events:TagResource"
-            - "events:UntagResource"
-            - "events:DescribeRule"
-            - "events:ListTargetsByRule"
-            - "events:ListTagsForResource"
-          Resource: '*'
 functions:
   app:
     handler: dist/lambda.handler

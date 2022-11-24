@@ -1,12 +1,16 @@
 import { Request, Response } from 'express';
 import jsonwebtoken from 'jsonwebtoken';
 import jwksClient from 'jwks-rsa';
-import { appConfig } from '../../config';
+import { appConfig } from '../../../../config';
 import {
   GetAccounts,
   GetAccountsResponseDto,
-} from '../../domain/account-api/get-accounts';
-import Result from '../../domain/value-types/transient-types/result';
+} from '../../../../domain/account-api/get-accounts';
+import { GetSnowflakeProfile } from '../../../../domain/integration-api/get-snowflake-profile';
+import { SnowflakeProfileDto } from '../../../../domain/integration-api/i-integration-api-repo';
+import { DbOptions } from '../../../../domain/services/i-db';
+import { IConnectionPool } from '../../../../domain/snowflake-api/i-snowflake-api-repo';
+import Result from '../../../../domain/value-types/transient-types/result';
 
 export enum CodeHttp {
   OK = 200,
@@ -27,6 +31,15 @@ export interface UserAccountInfo {
 }
 
 export abstract class BaseController {
+  readonly #getSnowflakeProfile: GetSnowflakeProfile;
+
+  readonly #getAccounts: GetAccounts;
+
+  constructor(getAccounts: GetAccounts, getSnowflakeProfile: GetSnowflakeProfile) {
+    this.#getAccounts = getAccounts;
+    this.#getSnowflakeProfile = getSnowflakeProfile;
+  }
+
   static jsonResponse(res: Response, code: number, message: string): Response {
     return res.status(code).json({ message });
   }
@@ -39,15 +52,56 @@ export abstract class BaseController {
     }
   }
 
-  static async getUserAccountInfo(
+  #getProfile = async (
     jwt: string,
-    getAccounts: GetAccounts
+    targetOrgId?: string
+  ): Promise<SnowflakeProfileDto> => {
+    const readSnowflakeProfileResult = await this.#getSnowflakeProfile.execute(
+      { targetOrgId },
+      {
+        jwt,
+      }
+    );
+
+    if (!readSnowflakeProfileResult.success)
+      throw new Error(readSnowflakeProfileResult.error);
+    if (!readSnowflakeProfileResult.value)
+      throw new Error('SnowflakeProfile does not exist');
+
+    return readSnowflakeProfileResult.value;
+  };
+
+  protected createConnectionPool = async (
+    jwt: string,
+    createPool: (
+      options: DbOptions,
+      poolOptions: { min: number; max: number }
+    ) => IConnectionPool,
+    targetOrgId?: string
+  ): Promise<IConnectionPool> => {
+    const profile = await this.#getProfile(jwt, targetOrgId);
+
+    const options: DbOptions = {
+      account: profile.accountId,
+      password: profile.password,
+      username: profile.username,
+      warehouse: profile.warehouseName,
+    };
+
+    return createPool(options, {
+      max: 10,
+      min: 0,
+    });
+  };
+
+  protected async getUserAccountInfo(
+    jwt: string,
   ): Promise<Result<UserAccountInfo>> {
     if (!jwt) return Result.fail('Unauthorized');
 
     try {
       const client = jwksClient({
-        jwksUri: `https://cognito-idp.${appConfig.cloud.region}.amazonaws.com/${appConfig.cloud.authEnvConfig.userPoolId}/.well-known/jwks.json`,
+        jwksUri: `https://cognito-idp.${appConfig.cloud.region}.amazonaws.com/${appConfig.cloud.userPoolId}/.well-known/jwks.json`,
       });
 
       const unverifiedDecodedAuthPayload = jsonwebtoken.decode(jwt, {
@@ -84,7 +138,7 @@ export abstract class BaseController {
         });
 
       const getAccountsResult: GetAccountsResponseDto =
-        await getAccounts.execute(
+        await this.#getAccounts.execute(
           {
             userId: authPayload.username,
           },
@@ -109,8 +163,8 @@ export abstract class BaseController {
         isSystemInternal,
       });
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return Result.fail('');
     }
   }

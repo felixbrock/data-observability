@@ -1,5 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
 import {
   ReadNominalTestSuites,
   ReadNominalTestSuitesAuthDto,
@@ -11,23 +12,27 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import Result from '../../../domain/value-types/transient-types/result';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
 export default class ReadNominalTestSuitesController extends BaseController {
   readonly #readNominalTestSuites: ReadNominalTestSuites;
 
-  readonly #getAccounts: GetAccounts;
-
-  constructor(readNominalTestSuites: ReadNominalTestSuites, getAccounts: GetAccounts) {
-    super();
+  constructor(
+    readNominalTestSuites: ReadNominalTestSuites,
+    getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile
+  ) {
+    super(getAccounts, getSnowflakeProfile);
     this.#readNominalTestSuites = readNominalTestSuites;
-    this.#getAccounts = getAccounts;
   }
 
-  #buildRequestDto = (httpRequest: Request): ReadNominalTestSuitesRequestDto => {
-    const { executionFrequency, activated } = httpRequest.query;
+  #buildRequestDto = (
+    httpRequest: Request
+  ): ReadNominalTestSuitesRequestDto => {
+    const { activated } = httpRequest.query;
 
     if (
       activated &&
@@ -40,7 +45,6 @@ export default class ReadNominalTestSuitesController extends BaseController {
 
     return {
       activated: activated ? activated === 'true' : undefined,
-      executionFrequency: Number(executionFrequency),
     };
   };
 
@@ -58,15 +62,15 @@ export default class ReadNominalTestSuitesController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return ReadNominalTestSuitesController.unauthorized(res, 'Unauthorized');
+        return ReadNominalTestSuitesController.unauthorized(
+          res,
+          'Unauthorized'
+        );
 
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await ReadNominalTestSuitesController.getUserAccountInfo(
-          jwt,
-          this.#getAccounts
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return ReadNominalTestSuitesController.unauthorized(
@@ -76,14 +80,24 @@ export default class ReadNominalTestSuitesController extends BaseController {
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: ReadNominalTestSuitesRequestDto = this.#buildRequestDto(req);
+      const requestDto: ReadNominalTestSuitesRequestDto =
+        this.#buildRequestDto(req);
       const authDto: ReadNominalTestSuitesAuthDto = this.#buildAuthDto(
         jwt,
         getUserAccountInfoResult.value
       );
 
+      const connPool = await this.createConnectionPool(jwt, createPool);
+
       const useCaseResult: ReadNominalTestSuitesResponseDto =
-        await this.#readNominalTestSuites.execute(requestDto, authDto);
+        await this.#readNominalTestSuites.execute(
+          requestDto,
+          authDto,
+          connPool
+        );
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return ReadNominalTestSuitesController.badRequest(res);
@@ -95,9 +109,12 @@ export default class ReadNominalTestSuitesController extends BaseController {
 
       return ReadNominalTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
-      return ReadNominalTestSuitesController.fail(res, 'read nominal test suites - Unknown error occured');
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
+      return ReadNominalTestSuitesController.fail(
+        res,
+        'read nominal test suites - Unknown error occured'
+      );
     }
   }
 }

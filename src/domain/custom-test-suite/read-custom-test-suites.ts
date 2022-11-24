@@ -1,23 +1,18 @@
-import {
-  CustomTestSuite,
-  CustomTestSuiteDto,
-} from '../entities/custom-test-suite';
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
-import CitoDataQuery from '../services/cito-data-query';
-import { DbConnection } from '../services/i-db';
-import IUseCase from '../services/use-case';
+import { CustomTestSuiteDto } from '../entities/custom-test-suite';
+import BaseAuth from '../services/base-auth';
+
 import Result from '../value-types/transient-types/result';
+import IUseCase from '../services/use-case';
+import CustomTestSuiteRepo from '../../infrastructure/persistence/custom-test-suite-repo';
+import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
+import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 
 export interface ReadCustomTestSuitesRequestDto {
   activated?: boolean;
   executionFrequency?: number;
 }
 
-export interface ReadCustomTestSuitesAuthDto {
-  jwt: string;
-  isSystemInternal: boolean;
-  callerOrgId?: string;
-}
+export type ReadCustomTestSuitesAuthDto = BaseAuth;
 
 export type ReadCustomTestSuitesResponseDto = Result<CustomTestSuiteDto[]>;
 
@@ -27,82 +22,37 @@ export class ReadCustomTestSuites
       ReadCustomTestSuitesRequestDto,
       ReadCustomTestSuitesResponseDto,
       ReadCustomTestSuitesAuthDto,
-      DbConnection
+      IConnectionPool
     >
 {
-  readonly #querySnowflake: QuerySnowflake;
+  readonly #repo: ICustomTestSuiteRepo;
 
-  constructor(querySnowflake: QuerySnowflake) {
-    this.#querySnowflake = querySnowflake;
+  constructor(customTestSuiteRepo: CustomTestSuiteRepo) {
+    this.#repo = customTestSuiteRepo;
   }
 
   async execute(
     request: ReadCustomTestSuitesRequestDto,
-    auth: ReadCustomTestSuitesAuthDto
+    auth: ReadCustomTestSuitesAuthDto,
+    connPool: IConnectionPool
   ): Promise<ReadCustomTestSuitesResponseDto> {
     if (!auth.isSystemInternal && !auth.callerOrgId)
       throw new Error('Not authorized to perform operation');
 
     try {
-      const query = CitoDataQuery.getReadTestSuitesQuery(
-        'test_suites_custom',
-        [],
-        `${
-          request.executionFrequency
-            ? `execution_frequency = ${request.executionFrequency}`
-            : ''
-        } ${
-          request.executionFrequency && request.activated !== undefined
-            ? 'and'
-            : ''
-        } ${
-          request.activated !== undefined
-            ? `activated = ${request.activated}`
-            : ''
-        }`.replace(/\s/g, '') || undefined
+      const testSuites = await this.#repo.findBy(
+        {
+          activated: request.activated,
+          executionFrequency: request.executionFrequency,
+        },
+        auth,
+        connPool
       );
 
-      const querySnowflakeResult = await this.#querySnowflake.execute(
-        { query },
-        { jwt: auth.jwt }
-      );
-
-      if (!querySnowflakeResult.success)
-        throw new Error(querySnowflakeResult.error);
-
-      const result = querySnowflakeResult.value;
-
-      if (!result) throw new Error(`No test suites found that match condition`);
-
-      const customTestSuites = Object.keys(result).map((key) => {
-        const organizationResult = result[key];
-
-        const organizationCustomTestSuites = organizationResult.map((element) =>
-          CustomTestSuite.create({
-            id: element.ID,
-            activated: element.ACTIVATED,
-            executionFrequency: element.EXECUTION_FREQUENCY,
-            threshold: element.THRESHOLD,
-            name: element.NAME,
-            description: element.DESCRIPTION,
-            sqlLogic: element.SQL_LOGIC,
-            targetResourceIds: element.TARGET_RESOURCE_IDS,
-            organizationId: element.ORGANIZATION_ID,
-            cron: element.CRON,
-            executionType: element.EXECUTION_TYPE,
-          })
-        );
-
-        return organizationCustomTestSuites;
-      });
-
-      // if (customTestSuite.organizationId !== auth.organizationId)
-      //   throw new Error('Not authorized to perform action');
-
-      return Result.ok(customTestSuites.flat());
+      return Result.ok(testSuites);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return Result.fail('');
     }
   }

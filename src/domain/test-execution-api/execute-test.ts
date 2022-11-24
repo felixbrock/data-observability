@@ -2,7 +2,7 @@ import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { ITestExecutionApiRepo } from './i-test-execution-api-repo';
 import { AnomalyTestExecutionResultDto } from './anomaly-test-execution-result-dto';
-import { DbConnection } from '../services/i-db';
+import { IDbConnection } from '../services/i-db';
 import { CreateAnomalyTestResult } from '../anomaly-test-result/create-anomaly-test-result';
 import { CreateNominalTestResult } from '../nominal-test-result/create-nominal-test-result';
 import { SendAnomalySlackAlert } from '../integration-api/slack/send-anomaly-alert';
@@ -34,7 +34,7 @@ export class ExecuteTest
       ExecuteTestRequestDto,
       ExecuteTestResponseDto,
       ExecuteTestAuthDto,
-      DbConnection
+      IDbConnection
     >
 {
   readonly #testExecutionApiRepo: ITestExecutionApiRepo;
@@ -47,7 +47,7 @@ export class ExecuteTest
 
   readonly #sendNominalTestSlackAlert: SendNominalTestSlackAlert;
 
-  #dbConnection: DbConnection;
+  #dbConnection: IDbConnection;
 
   constructor(
     testExecutionApiRepo: ITestExecutionApiRepo,
@@ -189,7 +189,7 @@ export class ExecuteTest
   async execute(
     request: ExecuteTestRequestDto,
     auth: ExecuteTestAuthDto,
-    dbConnection: DbConnection
+    dbConnection: IDbConnection
   ): Promise<ExecuteTestResponseDto> {
     this.#dbConnection = dbConnection;
 
@@ -228,8 +228,8 @@ export class ExecuteTest
 
       return Result.ok(testExecutionResult);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return Result.fail('');
     }
   }

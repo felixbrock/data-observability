@@ -1,12 +1,12 @@
-// todo - clean architecture violation
-import Result from '../value-types/transient-types/result';
+import BaseAuth from '../services/base-auth';
+import BaseTriggerTestSuiteExecution from '../services/base-trigger-test-suite-execution';
+import { IDb } from '../services/i-db';
 import IUseCase from '../services/use-case';
-import { ReadNominalTestSuite } from './read-nominal-test-suite';
+import { QuerySnowflake } from '../snowflake-api/query-snowflake';
 import { ExecuteTest } from '../test-execution-api/execute-test';
-import { DbConnection } from '../services/i-db';
-import CitoDataQuery from '../services/cito-data-query';
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
 import { ExecutionType } from '../value-types/execution-type';
+import Result from '../value-types/transient-types/result';
+import { ReadNominalTestSuite } from './read-nominal-test-suite';
 
 export interface TriggerNominalTestSuiteExecutionRequestDto {
   id: string;
@@ -14,82 +14,38 @@ export interface TriggerNominalTestSuiteExecutionRequestDto {
   executionType: ExecutionType;
 }
 
-export interface TriggerNominalTestSuiteExecutionAuthDto {
-  jwt: string;
-  callerOrgId?: string;
-  isSystemInternal: boolean;
-}
+export type TriggerNominalTestSuiteExecutionAuthDto = BaseAuth;
 
 export type TriggerNominalTestSuiteExecutionResponseDto = Result<void>;
 
 export class TriggerNominalTestSuiteExecution
+  extends BaseTriggerTestSuiteExecution
   implements
     IUseCase<
       TriggerNominalTestSuiteExecutionRequestDto,
       TriggerNominalTestSuiteExecutionResponseDto,
       TriggerNominalTestSuiteExecutionAuthDto,
-      DbConnection
+      IDb
     >
 {
   readonly #readNominalTestSuite: ReadNominalTestSuite;
 
   readonly #executeTest: ExecuteTest;
 
-  readonly #querySnowflake: QuerySnowflake;
-
-  #dbConnection: DbConnection;
-
   constructor(
     readNominalTestSuite: ReadNominalTestSuite,
-    executeTest: ExecuteTest,
-    querySnowflake: QuerySnowflake
+    querySnowflake: QuerySnowflake,
+    executeTest: ExecuteTest
   ) {
+    super(querySnowflake);
     this.#readNominalTestSuite = readNominalTestSuite;
     this.#executeTest = executeTest;
-    this.#querySnowflake = querySnowflake;
   }
-
-  #wasAltered = async (
-    props: {
-      databaseName: string;
-      schemaName: string;
-      matName: string;
-      targetOrgId: string;
-    },
-    jwt: string
-  ): Promise<boolean> => {
-    const { databaseName, schemaName, matName, targetOrgId } = props;
-
-    const query = CitoDataQuery.getWasAltered({
-      databaseName,
-      schemaName,
-      matName,
-    });
-
-    const querySnowflakeResult = await this.#querySnowflake.execute(
-      { query, targetOrgId },
-      { jwt }
-    );
-
-    if (!querySnowflakeResult.success)
-      throw new Error(querySnowflakeResult.error);
-
-    const result = querySnowflakeResult.value;
-
-    if (!result) throw new Error(`"Was altered" query failed`);
-
-    const organizationResults = result[targetOrgId];
-
-    if (organizationResults.length !== 1)
-      throw new Error('No or multiple test suites found');
-
-    return organizationResults[0].WAS_ALTERED;
-  };
 
   async execute(
     request: TriggerNominalTestSuiteExecutionRequestDto,
     auth: TriggerNominalTestSuiteExecutionAuthDto,
-    dbConnection: DbConnection
+    db: IDb
   ): Promise<TriggerNominalTestSuiteExecutionResponseDto> {
     if (auth.isSystemInternal && !request.targetOrgId)
       throw new Error('Target organization id missing');
@@ -102,60 +58,49 @@ export class TriggerNominalTestSuiteExecution
         'When automatically executing test suite targetOrgId needs to be provided'
       );
 
-    this.#dbConnection = dbConnection;
-
     try {
-      const readNominalTestSuiteResult =
-        await this.#readNominalTestSuite.execute(
-          {
-            id: request.id,
-            targetOrgId: request.targetOrgId,
-          },
-          {
-            jwt: auth.jwt,
-            callerOrgId: auth.callerOrgId,
-            isSystemInternal: auth.isSystemInternal,
-          }
-        );
+      const readTestSuiteResult = await this.#readNominalTestSuite.execute(
+        { id: request.id },
+        auth,
+        db.sfConnPool
+      );
 
-      if (!readNominalTestSuiteResult.success)
-        throw new Error(readNominalTestSuiteResult.error);
-      if (!readNominalTestSuiteResult.value)
-        throw new Error('Reading nominal test suite failed');
+      if (!readTestSuiteResult.success)
+        throw new Error(readTestSuiteResult.error);
+      if (!readTestSuiteResult.value)
+        throw new Error('Reading test suite failed');
 
-      const nominalTestSuite = readNominalTestSuiteResult.value;
+      const testSuite = readTestSuiteResult.value;
 
       if (request.executionType === 'automatic') {
-        if (!request.targetOrgId)
-          throw new Error('targetOrgId missing');
-        const wasAltered = !this.#wasAltered(
+        const wasAltered = !this.wasAltered(
           {
-            databaseName: nominalTestSuite.target.databaseName,
-            schemaName: nominalTestSuite.target.schemaName,
-            matName: nominalTestSuite.target.materializationName,
-            targetOrgId: request.targetOrgId,
+            databaseName: testSuite.target.databaseName,
+            schemaName: testSuite.target.schemaName,
+            matName: testSuite.target.materializationName,
           },
-          auth.jwt
+          auth,
+          db.sfConnPool
         );
         if (!wasAltered) return Result.ok();
       }
 
       const executeTestResult = await this.#executeTest.execute(
         {
-          testSuiteId: nominalTestSuite.id,
-          testType: nominalTestSuite.type,
+          testSuiteId: testSuite.id,
+          testType: testSuite.type,
           targetOrgId: request.targetOrgId,
         },
         { jwt: auth.jwt },
-        this.#dbConnection
+        db.mongoConn
       );
 
       if (!executeTestResult.success) throw new Error(executeTestResult.error);
 
       return Result.ok();
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return Result.fail('');
     }
   }

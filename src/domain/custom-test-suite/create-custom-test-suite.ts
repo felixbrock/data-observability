@@ -1,14 +1,14 @@
-// todo - clean architecture violation
-import { ObjectId } from 'mongodb';
+import { v4 as uuidv4 } from 'uuid';
 import Result from '../value-types/transient-types/result';
-import IUseCase from '../services/use-case';
-import { CustomTestSuite } from '../entities/custom-test-suite';
-import { QuerySnowflake } from '../integration-api/snowflake/query-snowflake';
-import CitoDataQuery, { ColumnDefinition } from '../services/cito-data-query';
+import { CustomTestSuite} from '../entities/custom-test-suite';
 import { ExecutionType } from '../value-types/execution-type';
+import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
+import IUseCase from '../services/use-case';
+import CustomTestSuiteRepo from '../../infrastructure/persistence/custom-test-suite-repo';
+import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 
 export interface CreateCustomTestSuiteRequestDto {
-  activated: boolean;
+  entityProps: {activated: boolean;
   threshold: number;
   executionFrequency: number;
   cron?: string;
@@ -16,91 +16,60 @@ export interface CreateCustomTestSuiteRequestDto {
   name: string;
   description: string;
   sqlLogic: string;
-  targetResourceIds: string[];
+  targetResourceIds: string[];}
 }
 
 export interface CreateCustomTestSuiteAuthDto {
   jwt: string;
   callerOrgId: string;
+  isSystemInternal: boolean;
 }
 
 export type CreateCustomTestSuiteResponseDto = Result<CustomTestSuite>;
 
 export class CreateCustomTestSuite
-  implements
-    IUseCase<
+  implements IUseCase<
       CreateCustomTestSuiteRequestDto,
       CreateCustomTestSuiteResponseDto,
-      CreateCustomTestSuiteAuthDto
+      CreateCustomTestSuiteAuthDto,
+      IConnectionPool
     >
 {
-  readonly #querySnowflake: QuerySnowflake;
 
-  constructor(querySnowflake: QuerySnowflake) {
-    this.#querySnowflake = querySnowflake;
+  readonly #repo:  ICustomTestSuiteRepo;
+
+  constructor(
+    customTestSuiteRepo: CustomTestSuiteRepo
+  ) {
+    this.#repo = customTestSuiteRepo;
   }
 
   async execute(
     request: CreateCustomTestSuiteRequestDto,
-    auth: CreateCustomTestSuiteAuthDto
+    auth: CreateCustomTestSuiteAuthDto,
+    connPool: IConnectionPool
   ): Promise<CreateCustomTestSuiteResponseDto> {
     try {
       const customTestSuite = CustomTestSuite.create({
-        id: new ObjectId().toHexString(),
-        name: request.name,
-        description: request.description,
-        sqlLogic: request.sqlLogic,
-        activated: request.activated,
-        executionFrequency: request.executionFrequency,
-        cron: request.cron,
-        executionType: request.executionType,
+        id: uuidv4(),
+        name: request.entityProps.name,
+        description: request.entityProps.description,
+        sqlLogic: request.entityProps.sqlLogic,
+        activated: request.entityProps.activated,
+        executionFrequency: request.entityProps.executionFrequency,
+        cron: request.entityProps.cron,
+        executionType: request.entityProps.executionType,
         organizationId: auth.callerOrgId,
-        threshold: request.threshold,
-        targetResourceIds: request.targetResourceIds,
+        threshold: request.entityProps.threshold,
+        targetResourceIds: request.entityProps.targetResourceIds,
       });
 
-      const columnDefinitions: ColumnDefinition[] = [
-        { name: 'id' },
-        { name: 'activated' },
-        { name: 'threshold' },
-        { name: 'execution_frequency' },
-        { name: 'name' },
-        { name: 'description' },
-        { name: 'sql_logic' },
-        { name: 'target_resource_ids', selectType: 'parse_json' },
-        { name: 'organization_id' },
-        { name: 'cron' },
-        {name: 'execution_type'}
-      ];
-
-      const values = [
-        `('${customTestSuite.id}',${customTestSuite.activated},${
-          customTestSuite.threshold
-        },${customTestSuite.executionFrequency},'${customTestSuite.name}','${
-          customTestSuite.description
-        }','${customTestSuite.sqlLogic}','[${customTestSuite.targetResourceIds
-          .map((el) => `'${el}'`)
-          .join(',')}]','${customTestSuite.organizationId}', ${customTestSuite.cron ? customTestSuite.cron: null}, '${customTestSuite.executionType}')`,
-      ];
-
-      const query = CitoDataQuery.getInsertQuery(
-        'cito.observability.test_suites_custom',
-        columnDefinitions,
-        values
-      );
-
-      const querySnowflakeResult = await this.#querySnowflake.execute(
-        { query },
-        { jwt: auth.jwt }
-      );
-
-      if (!querySnowflakeResult.success)
-        throw new Error(querySnowflakeResult.error);
+      await this.#repo.insertOne(customTestSuite, auth, connPool);
 
       return Result.ok(customTestSuite);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return Result.fail('');
     }
   }

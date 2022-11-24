@@ -6,7 +6,8 @@ const customTestSuitesRoutes = Router();
 
 const readCustomTestSuitesController = new ReadCustomTestSuitesController(
   app.resolve('readCustomTestSuites'),
-  app.resolve('getAccounts')
+  app.resolve('getAccounts'),
+  app.resolve('getSnowflakeProfile')
 );
 
 customTestSuitesRoutes.get('/', (req, res) => {

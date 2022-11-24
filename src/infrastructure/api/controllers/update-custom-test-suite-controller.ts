@@ -1,5 +1,8 @@
 // TODO: Violation of control flow. DI for express instead
+import { SchedulerClient } from '@aws-sdk/client-scheduler';
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
+import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateCustomTestSuite,
@@ -7,13 +10,13 @@ import {
   UpdateCustomTestSuiteRequestDto,
   UpdateCustomTestSuiteResponseDto,
 } from '../../../domain/custom-test-suite/update-custom-test-suite';
+import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
   getAutomaticCronExpression,
   getFrequencyCronExpression,
-  patchCronJob,
-  patchTarget,
-  updateCronJobState,
-} from '../../../domain/services/cron-job';
+  ScheduleUpdateProps,
+  updateSchedule,
+} from '../../../domain/services/schedule';
 import { parseExecutionType } from '../../../domain/value-types/execution-type';
 import Result from '../../../domain/value-types/transient-types/result';
 
@@ -21,19 +24,17 @@ import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
-} from '../../shared/base-controller';
+} from './shared/base-controller';
 
 export default class UpdateCustomTestSuiteController extends BaseController {
   readonly #updateCustomTestSuite: UpdateCustomTestSuite;
 
-  readonly #getAccounts: GetAccounts;
-
   constructor(
     updateCustomTestSuite: UpdateCustomTestSuite,
-    getAccounts: GetAccounts
+    getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile
   ) {
-    super();
-    this.#getAccounts = getAccounts;
+    super(getAccounts, getSnowflakeProfile);
     this.#updateCustomTestSuite = updateCustomTestSuite;
   }
 
@@ -59,21 +60,32 @@ export default class UpdateCustomTestSuiteController extends BaseController {
 
     return {
       id: httpRequest.params.id,
-      activated: remainingBody.activated,
-      threshold: remainingBody.threshold,
-      frequency,
-      targetResourceIds: remainingBody.targetResourceIds,
-      name: remainingBody.name,
-      description: remainingBody.description,
-      sqlLogic: remainingBody.sqlLogic,
-      cron,
-      executionType,
+      props: {
+        activated: remainingBody.activated,
+        threshold: remainingBody.threshold,
+        frequency,
+        targetResourceIds: remainingBody.targetResourceIds,
+        name: remainingBody.name,
+        description: remainingBody.description,
+        sqlLogic: remainingBody.sqlLogic,
+        cron,
+        executionType,
+      },
     };
   };
 
-  #buildAuthDto = (jwt: string): UpdateCustomTestSuiteAuthDto => ({
-    jwt,
-  });
+  #buildAuthDto = (
+    userAccountInfo: UserAccountInfo,
+    jwt: string
+  ): UpdateCustomTestSuiteAuthDto => {
+    if (!userAccountInfo.callerOrgId) throw new Error('Unauthorized');
+
+    return {
+      jwt,
+      callerOrgId: userAccountInfo.callerOrgId,
+      isSystemInternal: userAccountInfo.isSystemInternal,
+    };
+  };
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -88,10 +100,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
       const jwt = authHeader.split(' ')[1];
 
       const getUserAccountInfoResult: Result<UserAccountInfo> =
-        await UpdateCustomTestSuiteController.getUserAccountInfo(
-          jwt,
-          this.#getAccounts
-        );
+        await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
         return UpdateCustomTestSuiteController.unauthorized(
@@ -103,10 +112,26 @@ export default class UpdateCustomTestSuiteController extends BaseController {
 
       const requestDto: UpdateCustomTestSuiteRequestDto =
         this.#buildRequestDto(req);
-      const authDto: UpdateCustomTestSuiteAuthDto = this.#buildAuthDto(jwt);
+
+      if (!requestDto.props)
+        return UpdateCustomTestSuiteController.ok(res, null, CodeHttp.OK);
+
+      const authDto: UpdateCustomTestSuiteAuthDto = this.#buildAuthDto(
+        getUserAccountInfoResult.value,
+        jwt
+      );
+
+      const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: UpdateCustomTestSuiteResponseDto =
-        await this.#updateCustomTestSuite.execute(requestDto, authDto);
+        await this.#updateCustomTestSuite.execute(
+          requestDto,
+          authDto,
+          connPool
+        );
+
+      await connPool.drain();
+      await connPool.clear();
 
       if (!useCaseResult.success) {
         return UpdateCustomTestSuiteController.badRequest(res);
@@ -120,34 +145,47 @@ export default class UpdateCustomTestSuiteController extends BaseController {
         );
 
       if (
-        requestDto.cron ||
-        requestDto.frequency ||
-        requestDto.executionType 
+        requestDto.props && Object.keys(requestDto.props).length
       ) {
-        let cron: string | undefined;
-        if (requestDto.executionType === 'automatic')
-          cron = getAutomaticCronExpression();
-        else if (requestDto.cron) cron = requestDto.cron;
-        else if (requestDto.frequency)
-          cron = getFrequencyCronExpression(requestDto.frequency);
+        const updateProps: ScheduleUpdateProps = {};
 
-        await patchCronJob(requestDto.id, {
-          cron,
+        if (requestDto.props.executionType === 'automatic')
+          updateProps.cron = getAutomaticCronExpression();
+        else if (requestDto.props.cron)
+          updateProps.cron = requestDto.props.cron;
+        else if (requestDto.props.frequency)
+          updateProps.cron = getFrequencyCronExpression(
+            requestDto.props.frequency
+          );
+        if (requestDto.props.activated !== undefined)
+          updateProps.toBeActivated = requestDto.props.activated;
+        if (requestDto.props.executionType)
+          updateProps.target = updateProps.target
+            ? {
+                ...updateProps.target,
+                executionType: requestDto.props.executionType,
+              }
+            : { executionType: requestDto.props.executionType };
+
+        const schedulerClient = new SchedulerClient({
+          region: appConfig.cloud.region,
         });
 
-        if (requestDto.executionType)
-          await patchTarget(requestDto.id, {
-            executionType: requestDto.executionType,
-          });
+        
+        await updateSchedule(
+          requestDto.id,
+          authDto.callerOrgId,
+          updateProps,
+          schedulerClient
+        );
+
+        schedulerClient.destroy();
       }
-
-      if (requestDto.activated !== undefined) await updateCronJobState(requestDto.id, requestDto.activated);
-
 
       return UpdateCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.trace(error.message);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return UpdateCustomTestSuiteController.fail(
         res,
         'update custom test suite - Unknown error occured'
