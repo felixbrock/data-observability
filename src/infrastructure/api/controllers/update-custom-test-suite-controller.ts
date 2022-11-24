@@ -1,8 +1,5 @@
-// TODO: Violation of control flow. DI for express instead
-import { SchedulerClient } from '@aws-sdk/client-scheduler';
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
-import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateCustomTestSuite,
@@ -11,12 +8,7 @@ import {
   UpdateCustomTestSuiteResponseDto,
 } from '../../../domain/custom-test-suite/update-custom-test-suite';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
-import {
-  getAutomaticCronExpression,
-  getFrequencyCronExpression,
-  ScheduleUpdateProps,
-  updateSchedule,
-} from '../../../domain/services/schedule';
+import { handleUpdateSchedule } from '../../../domain/services/schedule';
 import { parseExecutionType } from '../../../domain/value-types/execution-type';
 import Result from '../../../domain/value-types/transient-types/result';
 
@@ -144,47 +136,22 @@ export default class UpdateCustomTestSuiteController extends BaseController {
           'Update failed. Internal error.'
         );
 
-      if (
-        requestDto.props && Object.keys(requestDto.props).length
-      ) {
-        const updateProps: ScheduleUpdateProps = {};
-
-        if (requestDto.props.executionType === 'automatic')
-          updateProps.cron = getAutomaticCronExpression();
-        else if (requestDto.props.cron)
-          updateProps.cron = requestDto.props.cron;
-        else if (requestDto.props.frequency)
-          updateProps.cron = getFrequencyCronExpression(
-            requestDto.props.frequency
-          );
-        if (requestDto.props.activated !== undefined)
-          updateProps.toBeActivated = requestDto.props.activated;
-        if (requestDto.props.executionType)
-          updateProps.target = updateProps.target
-            ? {
-                ...updateProps.target,
-                executionType: requestDto.props.executionType,
-              }
-            : { executionType: requestDto.props.executionType };
-
-        const schedulerClient = new SchedulerClient({
-          region: appConfig.cloud.region,
-        });
-
-        
-        await updateSchedule(
-          requestDto.id,
-          authDto.callerOrgId,
-          updateProps,
-          schedulerClient
-        );
-
-        schedulerClient.destroy();
-      }
+      if (requestDto.props && Object.keys(requestDto.props).length)
+        await handleUpdateSchedule(authDto.callerOrgId, [
+          {
+            id: requestDto.id,
+            props: {
+              activated: requestDto.props.activated,
+              cron: requestDto.props.cron,
+              executionType: requestDto.props.executionType,
+              frequency: requestDto.props.frequency,
+            },
+          },
+        ]);
 
       return UpdateCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return UpdateCustomTestSuiteController.fail(
         res,

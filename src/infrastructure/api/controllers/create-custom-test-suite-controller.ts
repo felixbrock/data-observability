@@ -1,8 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
-import { SchedulerClient } from '@aws-sdk/client-scheduler';
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
-import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   CreateCustomTestSuite,
@@ -12,10 +10,7 @@ import {
 } from '../../../domain/custom-test-suite/create-custom-test-suite';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
-  createSchedule,
-  getAutomaticCronExpression,
-  getFrequencyCronExpression,
-  groupExists,
+  handleScheduleCreation,
 } from '../../../domain/services/schedule';
 import Result from '../../../domain/value-types/transient-types/result';
 
@@ -117,44 +112,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
           'Custom test suite not created. Internal error.'
         );
 
-      let cron: string;
-      switch (result.executionType) {
-        case 'automatic':
-          cron = getAutomaticCronExpression();
-          break;
-        case 'frequency':
-          cron = getFrequencyCronExpression(result.executionFrequency);
-          break;
-        case 'individual':
-          if (!result.cron)
-            throw new Error(
-              `Created test suite ${result.id} misses cron value while holding execution type "individual"`
-            );
-          cron = result.cron;
-          break;
-        default:
-          throw new Error('Unhandled execution type');
-      }
-
-      const schedulerClient = new SchedulerClient({
-        region: appConfig.cloud.region,
-      });
-
-      const scheduleGroupExists = await groupExists(authDto.callerOrgId, schedulerClient);
-
-      await createSchedule(
-        cron,
-        result.id,
-        authDto.callerOrgId,
-        {
-          testSuiteType: 'custom-test',
-          executionType: result.executionType,
-        },
-        scheduleGroupExists,
-        schedulerClient
-      );
-
-      schedulerClient.destroy();
+      await handleScheduleCreation(result.id, 'custom-test', [result]);
 
       return CreateCustomTestSuiteController.ok(
         res,
@@ -162,7 +120,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return CreateCustomTestSuiteController.fail(
         res,

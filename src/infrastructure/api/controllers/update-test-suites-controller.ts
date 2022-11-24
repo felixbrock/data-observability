@@ -1,7 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
-import { SchedulerClient } from '@aws-sdk/client-scheduler';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateTestSuites,
@@ -16,14 +15,8 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from './shared/base-controller';
-import {
-  getAutomaticCronExpression,
-  getFrequencyCronExpression,
-  ScheduleUpdateProps,
-  updateSchedule,
-} from '../../../domain/services/schedule';
+import { handleUpdateSchedule } from '../../../domain/services/schedule';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
-import { appConfig } from '../../../config';
 
 export default class UpdateTestSuitesController extends BaseController {
   readonly #updateTestSuites: UpdateTestSuites;
@@ -98,42 +91,11 @@ export default class UpdateTestSuitesController extends BaseController {
           'Update of test suites failed. Internal error.'
         );
 
-      const schedulerClient = new SchedulerClient({
-        region: appConfig.cloud.region,
-      });
-
-      await Promise.all(
-        requestDto.updateObjects.map(async (el) => {
-          const { id } = el;
-          const { cron, frequency, executionType, activated } = el.props;
-
-          const updateProps: ScheduleUpdateProps = {};
-
-          if (executionType === 'automatic')
-            updateProps.cron = getAutomaticCronExpression();
-          else if (cron) updateProps.cron = cron;
-          else if (frequency)
-            updateProps.cron = getFrequencyCronExpression(frequency);
-          if (activated !== undefined) updateProps.toBeActivated = activated;
-          if (executionType)
-            updateProps.target = updateProps.target
-              ? {
-                  ...updateProps.target,
-                  executionType,
-                }
-              : { executionType };
-
-          if (!Object.keys(updateProps).length) return;
-
-          await updateSchedule(id, authDto.callerOrgId, updateProps, schedulerClient);
-        })
-      );
-
-      schedulerClient.destroy();
+      await handleUpdateSchedule(authDto.callerOrgId, requestDto.updateObjects);
 
       return UpdateTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return UpdateTestSuitesController.fail(
         res,

@@ -14,11 +14,11 @@ provider:
       statements:
         - Effect: Allow
           Action: 
-            - "schedule:ListSchedules"
-            - "schedule:GetSchedule"
-            - "schedule:CreateSchedule"
-            - "schedule:UpdateSchedule"
-            - "schedule:DeleteSchedule"
+            - "scheduler:ListSchedules"
+            - "scheduler:GetSchedule"
+            - "scheduler:CreateSchedule"
+            - "scheduler:UpdateSchedule"
+            - "scheduler:DeleteSchedule"
             - "scheduler:ListScheduleGroups"
             - "scheduler:GetScheduleGroup"
             - "scheduler:CreateScheduleGroup"
@@ -26,6 +26,7 @@ provider:
             - "scheduler:ListTagsForResource"
             - "scheduler:TagResource"
             - "scheduler:UntagResource"
+            - "iam:PassRole"
           Resource: '*'
 functions:
   app:

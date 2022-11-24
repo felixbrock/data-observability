@@ -94,7 +94,7 @@ const getScheduleName = (testSuiteId: string): string =>
 
 const getGroupName = (orgId: string): string => `${groupPrefix}-${orgId}`;
 
-export const groupExists = async (
+const groupExists = async (
   orgId: string,
   client: SchedulerClient
 ): Promise<boolean> => {
@@ -128,16 +128,13 @@ const createScheduleGroup = async (
     throw new Error('Rule ARN for schedule rule not returned');
 };
 
-export const createSchedule = async (
+const createSchedule = async (
   cron: string,
   testSuiteId: string,
   orgId: string,
   targetInputPrototype: CreateScheduleTargetInputPrototype,
-  scheduleGroupExists: boolean,
   client: SchedulerClient
 ): Promise<void> => {
-  if (!scheduleGroupExists) await createScheduleGroup(orgId, client);
-
   const scheduleName = getScheduleName(testSuiteId);
   const groupName = getGroupName(orgId);
 
@@ -224,7 +221,7 @@ export interface ScheduleUpdateProps {
   };
 }
 
-export const updateSchedule = async (
+const updateSchedule = async (
   testSuiteId: string,
   orgId: string,
   updateProps: ScheduleUpdateProps,
@@ -252,4 +249,115 @@ export const updateSchedule = async (
     throw new Error(
       `Unexpected error occured while updating schedule  for test suite ${testSuiteId}`
     );
+};
+
+export const handleScheduleCreation = async <
+  Dto extends {
+    executionType: ExecutionType;
+    executionFrequency: number;
+    cron?: string;
+    id: string;
+  }
+>(
+  orgId: string,
+  testSuiteType: TestSuiteType,
+  testSuiteDtos: Dto[]
+): Promise<void> => {
+  const schedulerClient = new SchedulerClient({
+    region: appConfig.cloud.region,
+  });
+
+  const scheduleGroupExists = await groupExists(orgId, schedulerClient);
+
+  if (!scheduleGroupExists) await createScheduleGroup(orgId, schedulerClient);
+
+  await Promise.all(
+    testSuiteDtos.map(async (el) => {
+      let cron: string;
+      switch (el.executionType) {
+        case 'automatic':
+          cron = getAutomaticCronExpression();
+          break;
+        case 'frequency':
+          cron = getFrequencyCronExpression(el.executionFrequency);
+          break;
+        case 'individual':
+          if (!el.cron)
+            throw new Error(
+              `Created test suite ${el.id} misses cron value while holding execution type "individual"`
+            );
+          cron = el.cron;
+          break;
+        default:
+          throw new Error('Unhandled execution type');
+      }
+
+      await createSchedule(
+        cron,
+        el.id,
+        orgId,
+        {
+          testSuiteType,
+          executionType: el.executionType,
+        },
+        schedulerClient
+      );
+    })
+  );
+
+  schedulerClient.destroy();
+};
+
+export const handleUpdateSchedule = async <
+  UpdateObject extends {
+    id: string;
+    props: {
+      executionType?: ExecutionType;
+      cron?: string;
+      frequency?: number;
+      activated?: boolean;
+    };
+  }
+>(
+  orgId: string,
+  updateObjects: UpdateObject[]
+): Promise<void> => {
+  const schedulerClient = new SchedulerClient({
+    region: appConfig.cloud.region,
+  });
+
+  await Promise.all(
+    updateObjects.map(async (el) => {
+      const { id } = el;
+      const { cron, frequency, executionType, activated } = el.props;
+
+      const updateProps: ScheduleUpdateProps = {};
+
+      if (executionType === 'automatic')
+        updateProps.cron = getAutomaticCronExpression();
+      else if (cron) updateProps.cron = cron;
+      else if (frequency)
+        updateProps.cron = getFrequencyCronExpression(frequency);
+
+      if (activated !== undefined) updateProps.toBeActivated = activated;
+      if (executionType)
+        updateProps.target = updateProps.target
+          ? {
+              ...updateProps.target,
+              executionType,
+            }
+          : { executionType };
+
+      if (!Object.keys(updateProps).length) return;
+
+      await updateSchedule(
+        id,
+        orgId,
+        updateProps,
+        schedulerClient
+      );
+    })
+  );
+
+  schedulerClient.destroy();
 };
