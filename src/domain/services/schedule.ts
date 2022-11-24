@@ -81,26 +81,33 @@ export interface CreateScheduleTargetInputPrototype
 
 export type UpdateScheduleTargetInputPrototype = BaseTargetInputPrototype;
 
-const rulePrefix = 'test-suite';
+const schedulePrefix = 's';
+const groupPrefix = 'g';
 
 /* 
 For AWS Eventbridge schedule s to be working the lambda target needs corresponding permissions being defined:  
 aws lambda add-permission --function-name "test-suite-execution--production-app" --action 'lambda:InvokeFunction' --principal events.amazonaws.com --statement-id "test-suite-schedule-rule-wildcard-policy"
 */
 
+const getScheduleName = (testSuiteId: string): string =>
+  `${schedulePrefix}-${testSuiteId}`;
+
+const getGroupName = (orgId: string): string => `${groupPrefix}-${orgId}`;
+
 export const groupExists = async (
   orgId: string,
   client: SchedulerClient
 ): Promise<boolean> => {
   const commandInput: ListScheduleGroupsCommandInput = {
-    NamePrefix: orgId,
+    NamePrefix: getGroupName(orgId),
   };
 
   const command = new ListScheduleGroupsCommand(commandInput);
 
   const res = await client.send(command);
 
-  if(res.ScheduleGroups && res.ScheduleGroups.length > 1) throw new Error('Multiple schedule groups found that match name');
+  if (res.ScheduleGroups && res.ScheduleGroups.length > 1)
+    throw new Error('Multiple schedule groups found that match name');
 
   return !!(res.ScheduleGroups && res.ScheduleGroups.length);
 };
@@ -110,7 +117,7 @@ const createScheduleGroup = async (
   client: SchedulerClient
 ): Promise<void> => {
   const commandInput: CreateScheduleGroupCommandInput = {
-    Name: orgId,
+    Name: getGroupName(orgId),
   };
 
   const command = new CreateScheduleGroupCommand(commandInput);
@@ -131,11 +138,12 @@ export const createSchedule = async (
 ): Promise<void> => {
   if (!scheduleGroupExists) await createScheduleGroup(orgId, client);
 
-  const scheduleName = `${rulePrefix}-${testSuiteId}`;
+  const scheduleName = getScheduleName(testSuiteId);
+  const groupName = getGroupName(orgId);
 
   const commandInput: CreateScheduleCommandInput = {
     Name: scheduleName,
-    GroupName: orgId,
+    GroupName: groupName,
     ScheduleExpression: `cron(${cron})`,
     FlexibleTimeWindow: { Mode: FlexibleTimeWindowMode.OFF },
     State: ScheduleState.ENABLED,
@@ -164,7 +172,7 @@ const getCurrentSchedule = async (
   client: SchedulerClient
 ): Promise<Schedule> => {
   const getCommandInput: GetScheduleCommandInput = {
-    GroupName: orgId,
+    GroupName: getGroupName(orgId),
     Name: name,
   };
 
@@ -225,11 +233,12 @@ export const updateSchedule = async (
   if (!Object.keys(updateProps).length)
     throw new Error(`No input provided for updating schedule `);
 
-  const name = `${rulePrefix}-${testSuiteId}`;
-  const schedule = await getCurrentSchedule(name, orgId, client);
+  const scheduleName = getScheduleName(testSuiteId);
+  const schedule = await getCurrentSchedule(scheduleName, orgId, client);
 
   const commandInput: UpdateScheduleCommandInput = schedule;
-  if (updateProps.cron) schedule.ScheduleExpression = `cron(${updateProps.cron})`;
+  if (updateProps.cron)
+    schedule.ScheduleExpression = `cron(${updateProps.cron})`;
 
   if (updateProps.toBeActivated) schedule.State = ScheduleState.ENABLED;
   else if (updateProps.toBeActivated !== undefined)
