@@ -1,11 +1,18 @@
-import { NominalTestSuite, NominalTestSuiteProps, parseNominalTestType } from '../../domain/entities/nominal-test-suite';
+import {
+  NominalTestSuite,
+  NominalTestSuiteProps,
+  parseNominalTestType,
+} from '../../domain/entities/nominal-test-suite';
 import {
   ColumnDefinition,
   getUpdateQueryText,
   relationPath,
 } from './shared/query';
 import { QuerySnowflake } from '../../domain/snowflake-api/query-snowflake';
-import { Binds, SnowflakeEntity } from '../../domain/snowflake-api/i-snowflake-api-repo';
+import {
+  Binds,
+  SnowflakeEntity,
+} from '../../domain/snowflake-api/i-snowflake-api-repo';
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
 import {
@@ -68,14 +75,29 @@ export default class NominalTestSuiteRepo
       !NominalTestSuiteRepo.isOptionalOfType<string>(id, 'string') ||
       !NominalTestSuiteRepo.isOptionalOfType<string>(type, 'string') ||
       !NominalTestSuiteRepo.isOptionalOfType<boolean>(activated, 'boolean') ||
-      !NominalTestSuiteRepo.isOptionalOfType<number>(executionFrequency, 'number') ||
+      !NominalTestSuiteRepo.isOptionalOfType<number>(
+        executionFrequency,
+        'number'
+      ) ||
       !NominalTestSuiteRepo.isOptionalOfType<string>(databaseName, 'string') ||
       !NominalTestSuiteRepo.isOptionalOfType<string>(schemaName, 'string') ||
-      !NominalTestSuiteRepo.isOptionalOfType<string>(materializationName, 'string') ||
-      !NominalTestSuiteRepo.isOptionalOfType<string>(materializationType, 'string') ||
+      !NominalTestSuiteRepo.isOptionalOfType<string>(
+        materializationName,
+        'string'
+      ) ||
+      !NominalTestSuiteRepo.isOptionalOfType<string>(
+        materializationType,
+        'string'
+      ) ||
       !NominalTestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
-      !NominalTestSuiteRepo.isOptionalOfType<string>(targetResourceId, 'string') ||
-      !NominalTestSuiteRepo.isOptionalOfType<string>(organizationId, 'string') ||
+      !NominalTestSuiteRepo.isOptionalOfType<string>(
+        targetResourceId,
+        'string'
+      ) ||
+      !NominalTestSuiteRepo.isOptionalOfType<string>(
+        organizationId,
+        'string'
+      ) ||
       !NominalTestSuiteRepo.isOptionalOfType<string>(cron, 'string') ||
       !NominalTestSuiteRepo.isOptionalOfType<string>(executionType, 'string')
     )
@@ -127,23 +149,26 @@ export default class NominalTestSuiteRepo
       const whereCondition = 'activated = ?';
       whereClause = whereCondition;
     }
-    if(queryDto.ids && queryDto.ids.length) {
-      binds.push(queryDto.ids.map((el) => `'${el}'`).join(', '));
-      const whereCondition = 'array_contains(id::variant, array_construct(?))';
+    if (queryDto.ids && queryDto.ids.length) {
+      binds.push(...queryDto.ids);
+      const whereCondition = `array_contains(id::variant, array_construct(${queryDto.ids.map(()=>'?').join(',')}))`;
       whereClause = whereClause
         ? whereClause.concat(`and ${whereCondition} `)
         : whereCondition;
     }
 
     const text = `select * from ${relationPath}.${this.matName}
-        ${whereClause ? 'where': ''}  ${whereClause};`;
+        ${whereClause ? 'where' : ''}  ${whereClause};`;
 
     return { text, binds };
   };
 
-  buildUpdateQuery = (id: string, updateDto: NominalTestSuiteUpdateDto): Query => {
+  buildUpdateQuery = (
+    id: string,
+    updateDto: NominalTestSuiteUpdateDto
+  ): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
-    const binds : Binds = [id];
+    const binds: Binds = [id];
 
     if (updateDto.activated !== undefined) {
       colDefinitions.push(this.getDefinition('activated'));
@@ -169,6 +194,7 @@ export default class NominalTestSuiteRepo
     return { text, binds, colDefinitions };
   };
 
-  toEntity = (nominaltestsuiteProperties: NominalTestSuiteProps): NominalTestSuite =>
-    NominalTestSuite.create(nominaltestsuiteProperties);
+  toEntity = (
+    nominaltestsuiteProperties: NominalTestSuiteProps
+  ): NominalTestSuite => NominalTestSuite.create(nominaltestsuiteProperties);
 }

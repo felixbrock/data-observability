@@ -1,11 +1,18 @@
-import { parseTestType, TestSuite, TestSuiteProps } from '../../domain/entities/test-suite';
+import {
+  parseTestType,
+  TestSuite,
+  TestSuiteProps,
+} from '../../domain/entities/test-suite';
 import {
   ColumnDefinition,
   getUpdateQueryText,
   relationPath,
 } from './shared/query';
 import { QuerySnowflake } from '../../domain/snowflake-api/query-snowflake';
-import { Binds, SnowflakeEntity } from '../../domain/snowflake-api/i-snowflake-api-repo';
+import {
+  Binds,
+  SnowflakeEntity,
+} from '../../domain/snowflake-api/i-snowflake-api-repo';
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
 import {
@@ -132,23 +139,26 @@ export default class TestSuiteRepo
       const whereCondition = 'activated = ?';
       whereClause = whereCondition;
     }
-    if(queryDto.ids && queryDto.ids.length) {
-      binds.push(queryDto.ids.map((el) => `'${el}'`).join(', '));
-      const whereCondition = 'array_contains(id::variant, array_construct(?))';
+    if (queryDto.ids && queryDto.ids.length) {
+      binds.push(...queryDto.ids);
+      const whereCondition = `array_contains(id::variant, array_construct(${queryDto.ids
+        .map(() => '?')
+        .join(',')}))`;
       whereClause = whereClause
         ? whereClause.concat(`and ${whereCondition} `)
         : whereCondition;
     }
 
-    const text = `select * from ${relationPath}.${this.matName}
-        ${whereClause ? 'where': ''}  ${whereClause};`;
+    const text = `select * from ${relationPath}.${this.matName} ${
+      whereClause ? 'where' : ''
+    }  ${whereClause};`;
 
     return { text, binds };
   };
 
   buildUpdateQuery = (id: string, updateDto: TestSuiteUpdateDto): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
-    const binds : Binds = [id];
+    const binds: Binds = [id];
 
     if (updateDto.activated !== undefined) {
       colDefinitions.push(this.getDefinition('activated'));

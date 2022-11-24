@@ -8,6 +8,11 @@ import {
   GetScheduleCommand,
   FlexibleTimeWindow,
   ScheduleState,
+  FlexibleTimeWindowMode,
+  CreateScheduleGroupCommandInput,
+  CreateScheduleGroupCommand,
+  ListScheduleGroupsCommand,
+  ListScheduleGroupsCommandInput,
 } from '@aws-sdk/client-scheduler';
 import { appConfig } from '../../config';
 import { ExecutionType } from '../value-types/execution-type';
@@ -83,23 +88,57 @@ For AWS Eventbridge schedule s to be working the lambda target needs correspondi
 aws lambda add-permission --function-name "test-suite-execution--production-app" --action 'lambda:InvokeFunction' --principal events.amazonaws.com --statement-id "test-suite-schedule-rule-wildcard-policy"
 */
 
+export const groupExists = async (
+  orgId: string,
+  client: SchedulerClient
+): Promise<boolean> => {
+  const commandInput: ListScheduleGroupsCommandInput = {
+    NamePrefix: orgId,
+  };
+
+  const command = new ListScheduleGroupsCommand(commandInput);
+
+  const res = await client.send(command);
+
+  if(res.ScheduleGroups && res.ScheduleGroups.length > 1) throw new Error('Multiple schedule groups found that match name');
+
+  return !!(res.ScheduleGroups && res.ScheduleGroups.length);
+};
+
+const createScheduleGroup = async (
+  orgId: string,
+  client: SchedulerClient
+): Promise<void> => {
+  const commandInput: CreateScheduleGroupCommandInput = {
+    Name: orgId,
+  };
+
+  const command = new CreateScheduleGroupCommand(commandInput);
+
+  const res = await client.send(command);
+
+  if (!res.ScheduleGroupArn)
+    throw new Error('Rule ARN for schedule rule not returned');
+};
+
 export const createSchedule = async (
-  schedule: string,
+  cron: string,
   testSuiteId: string,
   orgId: string,
   targetInputPrototype: CreateScheduleTargetInputPrototype,
+  scheduleGroupExists: boolean,
   client: SchedulerClient
 ): Promise<void> => {
-  if (!targetInputPrototype.testSuiteType) throw new Error();
+  if (!scheduleGroupExists) await createScheduleGroup(orgId, client);
 
   const scheduleName = `${rulePrefix}-${testSuiteId}`;
 
   const commandInput: CreateScheduleCommandInput = {
     Name: scheduleName,
     GroupName: orgId,
-    ScheduleExpression: `schedule(${schedule})`,
-    FlexibleTimeWindow: undefined,
-    State: 'ENABLED',
+    ScheduleExpression: `cron(${cron})`,
+    FlexibleTimeWindow: { Mode: FlexibleTimeWindowMode.OFF },
+    State: ScheduleState.ENABLED,
     Target: {
       Arn: appConfig.cloud.testExecutionJobArn,
       RoleArn: appConfig.cloud.testExecutionJobRoleArn,
@@ -115,7 +154,8 @@ export const createSchedule = async (
 
   const res = await client.send(command);
 
-  if (!res.ScheduleArn) throw new Error('Rule ARN for schedule rule not returned');
+  if (!res.ScheduleArn)
+    throw new Error('Rule ARN for schedule rule not returned');
 };
 
 const getCurrentSchedule = async (
@@ -168,13 +208,18 @@ const getCurrentSchedule = async (
   };
 };
 
+export interface ScheduleUpdateProps {
+  cron?: string;
+  toBeActivated?: boolean;
+  target?: {
+    executionType: ExecutionType;
+  };
+}
+
 export const updateSchedule = async (
   testSuiteId: string,
   orgId: string,
-  updateProps: {
-    cron?: string;
-    toBeActivated?: boolean;
-  },
+  updateProps: ScheduleUpdateProps,
   client: SchedulerClient
 ): Promise<void> => {
   if (!Object.keys(updateProps).length)
@@ -184,7 +229,7 @@ export const updateSchedule = async (
   const schedule = await getCurrentSchedule(name, orgId, client);
 
   const commandInput: UpdateScheduleCommandInput = schedule;
-  if (updateProps.cron) schedule.ScheduleExpression = updateProps.cron;
+  if (updateProps.cron) schedule.ScheduleExpression = `cron(${updateProps.cron})`;
 
   if (updateProps.toBeActivated) schedule.State = ScheduleState.ENABLED;
   else if (updateProps.toBeActivated !== undefined)

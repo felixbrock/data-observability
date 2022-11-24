@@ -52,7 +52,7 @@ export class UpdateTestSuites
       organizationId: testSuite.organizationId,
       target: testSuite.target,
       type: testSuite.type,
-      activated: updateObj.props.activated || testSuite.activated,
+      activated: updateObj.props.activated !== undefined ? updateObj.props.activated : testSuite.activated,
       threshold: updateObj.props.threshold || testSuite.threshold,
       executionFrequency:
         updateObj.props.frequency || testSuite.executionFrequency,
@@ -95,8 +95,8 @@ export class UpdateTestSuites
 
       return Result.ok(replaceResult);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.error(error.stack);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return Result.fail('');
     }
   }

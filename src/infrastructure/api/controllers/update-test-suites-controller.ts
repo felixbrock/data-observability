@@ -19,9 +19,8 @@ import {
 import {
   getAutomaticCronExpression,
   getFrequencyCronExpression,
-  patchCronJob,
-  patchTarget,
-  updateCronJobState,
+  ScheduleUpdateProps,
+  updateSchedule,
 } from '../../../domain/services/schedule';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import { appConfig } from '../../../config';
@@ -99,43 +98,43 @@ export default class UpdateTestSuitesController extends BaseController {
           'Update of test suites failed. Internal error.'
         );
 
-        const eventBridgeClient = new EventBridgeClient({
-          region: appConfig.cloud.region,
-        });
+      const schedulerClient = new SchedulerClient({
+        region: appConfig.cloud.region,
+      });
 
       await Promise.all(
         requestDto.updateObjects.map(async (el) => {
           const { id } = el;
           const { cron, frequency, executionType, activated } = el.props;
 
-          if (cron || frequency || executionType) {
-            let localCron: string | undefined;
-            if (executionType === 'automatic')
-              localCron = getAutomaticCronExpression();
-            else if (cron) localCron = cron;
-            else if (frequency)
-              localCron = getFrequencyCronExpression(frequency);
+          const updateProps: ScheduleUpdateProps = {};
 
-            await patchCronJob(id, {
-              cron: localCron,
-            }, eventBridgeClient);
+          if (executionType === 'automatic')
+            updateProps.cron = getAutomaticCronExpression();
+          else if (cron) updateProps.cron = cron;
+          else if (frequency)
+            updateProps.cron = getFrequencyCronExpression(frequency);
+          if (activated !== undefined) updateProps.toBeActivated = activated;
+          if (executionType)
+            updateProps.target = updateProps.target
+              ? {
+                  ...updateProps.target,
+                  executionType,
+                }
+              : { executionType };
 
-            if (executionType)
-              await patchTarget(id, {
-                executionType,
-              }, eventBridgeClient);
-          }
+          if (!Object.keys(updateProps).length) return;
 
-          if (activated !== undefined) await updateCronJobState(id, activated, eventBridgeClient);
+          await updateSchedule(id, authDto.callerOrgId, updateProps, schedulerClient);
         })
       );
 
-      eventBridgeClient.destroy();
+      schedulerClient.destroy();
 
       return UpdateTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.error(error.stack);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return UpdateTestSuitesController.fail(
         res,
         'update test suites - Unknown error occured'

@@ -9,24 +9,6 @@ provider:
   timeout: 30
   memorySize: 256
   architecture: arm64
-  iam:
-    role:
-      statements:
-        - Effect: Allow
-          Action: 
-            - "schedule:ListSchedules"
-            - "schedule:GetSchedule"
-            - "schedule:CreateSchedule"
-            - "schedule:UpdateSchedule"
-            - "schedule:DeleteSchedule"
-            - "scheduler:ListScheduleGroups"
-            - "scheduler:GetScheduleGroup"
-            - "scheduler:CreateScheduleGroup"
-            - "scheduler:DeleteScheduleGroup"
-            - "scheduler:ListTagsForResource"
-            - "scheduler:TagResource"
-            - "scheduler:UntagResource"
-          Resource: '*'
 functions:
   app:
     handler: dist/lambda.handler

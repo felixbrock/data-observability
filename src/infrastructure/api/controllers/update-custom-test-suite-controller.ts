@@ -14,7 +14,8 @@ import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowfla
 import {
   getAutomaticCronExpression,
   getFrequencyCronExpression,
-  updateSchedule
+  ScheduleUpdateProps,
+  updateSchedule,
 } from '../../../domain/services/schedule';
 import { parseExecutionType } from '../../../domain/value-types/execution-type';
 import Result from '../../../domain/value-types/transient-types/result';
@@ -76,11 +77,15 @@ export default class UpdateCustomTestSuiteController extends BaseController {
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): UpdateCustomTestSuiteAuthDto => ({
-    jwt,
-    callerOrgId: userAccountInfo.callerOrgId,
-    isSystemInternal: userAccountInfo.isSystemInternal,
-  });
+  ): UpdateCustomTestSuiteAuthDto => {
+    if (!userAccountInfo.callerOrgId) throw new Error('Unauthorized');
+
+    return {
+      jwt,
+      callerOrgId: userAccountInfo.callerOrgId,
+      isSystemInternal: userAccountInfo.isSystemInternal,
+    };
+  };
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
@@ -140,51 +145,47 @@ export default class UpdateCustomTestSuiteController extends BaseController {
         );
 
       if (
-        requestDto.props.cron ||
-        requestDto.props.frequency ||
-        requestDto.props.executionType
+        requestDto.props && Object.keys(requestDto.props).length
       ) {
-        let cron: string | undefined;
+        const updateProps: ScheduleUpdateProps = {};
+
         if (requestDto.props.executionType === 'automatic')
-          cron = getAutomaticCronExpression();
-        else if (requestDto.props.cron) cron = requestDto.props.cron;
+          updateProps.cron = getAutomaticCronExpression();
+        else if (requestDto.props.cron)
+          updateProps.cron = requestDto.props.cron;
         else if (requestDto.props.frequency)
-          cron = getFrequencyCronExpression(requestDto.props.frequency);
+          updateProps.cron = getFrequencyCronExpression(
+            requestDto.props.frequency
+          );
+        if (requestDto.props.activated !== undefined)
+          updateProps.toBeActivated = requestDto.props.activated;
+        if (requestDto.props.executionType)
+          updateProps.target = updateProps.target
+            ? {
+                ...updateProps.target,
+                executionType: requestDto.props.executionType,
+              }
+            : { executionType: requestDto.props.executionType };
 
-          const schedulerClient = new SchedulerClient({
-            region: appConfig.cloud.region,
-          });
+        const schedulerClient = new SchedulerClient({
+          region: appConfig.cloud.region,
+        });
 
+        
         await updateSchedule(
           requestDto.id,
-          {
-            cron,
-          },
+          authDto.callerOrgId,
+          updateProps,
           schedulerClient
         );
 
-        if (requestDto.props.executionType)
-          await patchTarget(
-            requestDto.id,
-            {
-              executionType: requestDto.props.executionType,
-            },
-            eventBridgeClient
-          );
-        if (requestDto.props.activated !== undefined)
-          await updateCronJobState(
-            requestDto.id,
-            requestDto.props.activated,
-            eventBridgeClient
-          );
-
-        eventBridgeClient.destroy();
+        schedulerClient.destroy();
       }
 
       return UpdateCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.error(error.stack);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return UpdateCustomTestSuiteController.fail(
         res,
         'update custom test suite - Unknown error occured'

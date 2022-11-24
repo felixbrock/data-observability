@@ -99,8 +99,8 @@ export default class UpdateTestHistoryEntryController extends BaseController {
 
       return UpdateTestHistoryEntryController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.error(error.stack);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return UpdateTestHistoryEntryController.fail(
         res,
         'udpate test history - Unknown error occured'

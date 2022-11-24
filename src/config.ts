@@ -106,7 +106,7 @@ export const appConfig = {
     testExecutionJobArn:
       'arn:aws:lambda:eu-central-1:966593446935:function:test-suite-execution-job-production-app',
     testExecutionJobRoleArn:
-      'arn:aws:iam::966593446935:role/observability-service-production-eu-central-1-lambdaRole',
+      'arn:aws:iam::966593446935:role/SchedulerExecutionRole',
   },
   snowflake: {
     applicationName:

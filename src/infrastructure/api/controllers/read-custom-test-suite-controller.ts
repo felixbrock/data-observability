@@ -94,8 +94,8 @@ export default class ReadCustomTestSuiteController extends BaseController {
 
       return ReadCustomTestSuiteController.ok(res, result, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.error(error.stack);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return ReadCustomTestSuiteController.fail(
         res,
         'read custom test suite - Unknown error occured'

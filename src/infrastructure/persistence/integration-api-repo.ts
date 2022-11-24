@@ -38,8 +38,8 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
       if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.error(error.stack);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return Promise.reject(new Error(''));
     }
   };
@@ -63,8 +63,8 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
       if (response.status === 200) return jsonResponse;
       throw new Error(jsonResponse.message);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.error(error.stack);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return Promise.reject(new Error());
     }
   };

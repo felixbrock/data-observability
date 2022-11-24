@@ -19,9 +19,8 @@ import {
 import {
   getAutomaticCronExpression,
   getFrequencyCronExpression,
-  patchCronJob,
-  patchTarget,
-  updateCronJobState,
+  ScheduleUpdateProps,
+  updateSchedule,
 } from '../../../domain/services/schedule';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import { appConfig } from '../../../config';
@@ -112,7 +111,7 @@ export default class UpdateNominalTestSuitesController extends BaseController {
           'Update of test suites failed. Internal error.'
         );
 
-      const eventBridgeClient = new EventBridgeClient({
+      const schedulerClient = new SchedulerClient({
         region: appConfig.cloud.region,
       });
 
@@ -121,38 +120,29 @@ export default class UpdateNominalTestSuitesController extends BaseController {
           const { id } = el;
           const { cron, frequency, executionType, activated } = el.props;
 
-          if (cron || frequency || executionType) {
-            let localCron: string | undefined;
-            if (executionType === 'automatic')
-              localCron = getAutomaticCronExpression();
-            else if (cron) localCron = cron;
-            else if (frequency)
-              localCron = getFrequencyCronExpression(frequency);
+          const updateProps: ScheduleUpdateProps = {};
 
-            await patchCronJob(
-              id,
-              {
-                cron: localCron,
-              },
-              eventBridgeClient
-            );
-
-            if (executionType)
-              await patchTarget(
-                id,
-                {
+          if (executionType === 'automatic')
+            updateProps.cron = getAutomaticCronExpression();
+          else if (cron) updateProps.cron = cron;
+          else if (frequency)
+            updateProps.cron = getFrequencyCronExpression(frequency);
+          if (activated !== undefined) updateProps.toBeActivated = activated;
+          if (executionType)
+            updateProps.target = updateProps.target
+              ? {
+                  ...updateProps.target,
                   executionType,
-                },
-                eventBridgeClient
-              );
-          }
+                }
+              : { executionType };
 
-          if (activated !== undefined)
-            await updateCronJobState(id, activated, eventBridgeClient);
+          if (!Object.keys(updateProps).length) return;
+
+          await updateSchedule(id, authDto.callerOrgId, updateProps, schedulerClient);
         })
       );
 
-      eventBridgeClient.destroy();
+      schedulerClient.destroy();
 
       return UpdateNominalTestSuitesController.ok(
         res,
@@ -160,8 +150,8 @@ export default class UpdateNominalTestSuitesController extends BaseController {
         CodeHttp.OK
       );
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.error(error.stack);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return UpdateNominalTestSuitesController.fail(
         res,
         'update nominal test suites - Unknown error occured'

@@ -15,6 +15,7 @@ import {
   createSchedule,
   getAutomaticCronExpression,
   getFrequencyCronExpression,
+  groupExists,
 } from '../../../domain/services/schedule';
 import Result from '../../../domain/value-types/transient-types/result';
 
@@ -139,6 +140,8 @@ export default class CreateCustomTestSuiteController extends BaseController {
         region: appConfig.cloud.region,
       });
 
+      const scheduleGroupExists = await groupExists(authDto.callerOrgId, schedulerClient);
+
       await createSchedule(
         cron,
         result.id,
@@ -147,6 +150,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
           testSuiteType: 'custom-test',
           executionType: result.executionType,
         },
+        scheduleGroupExists,
         schedulerClient
       );
 
@@ -158,8 +162,8 @@ export default class CreateCustomTestSuiteController extends BaseController {
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.error(error.stack);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return CreateCustomTestSuiteController.fail(
         res,
         'create custom test suite - unknown error occured'

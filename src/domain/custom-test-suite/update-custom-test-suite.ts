@@ -22,7 +22,10 @@ export interface UpdateCustomTestSuiteRequestDto {
   };
 }
 
-export type UpdateCustomTestSuiteAuthDto = BaseAuth;
+export interface UpdateCustomTestSuiteAuthDto
+  extends Omit<BaseAuth, 'callerOrgId'> {
+  callerOrgId: string;
+}
 
 export type UpdateCustomTestSuiteResponseDto = Result<string>;
 
@@ -62,8 +65,8 @@ export class UpdateCustomTestSuite
 
       return Result.ok(updateResult);
     } catch (error: unknown) {
-      if (error instanceof Error && error.message) console.error(error.stack);
-      else if (!(error instanceof Error) && error) console.trace(error);
+      if (error instanceof Error ) console.error(error.stack);
+      else if (error) console.trace(error);
       return Result.fail('');
     }
   }
