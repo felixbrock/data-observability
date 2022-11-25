@@ -73,7 +73,7 @@ export class TriggerNominalTestSuiteExecution
       const testSuite = readTestSuiteResult.value;
 
       if (request.executionType === 'automatic') {
-        const wasAltered = !this.wasAltered(
+        const wasAltered = await this.wasAltered(
           {
             databaseName: testSuite.target.databaseName,
             schemaName: testSuite.target.schemaName,
@@ -99,7 +99,7 @@ export class TriggerNominalTestSuiteExecution
 
       return Result.ok();
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

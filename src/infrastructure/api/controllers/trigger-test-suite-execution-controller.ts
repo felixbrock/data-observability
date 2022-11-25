@@ -79,7 +79,7 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
-      const connPool = await this.createConnectionPool(jwt, createPool);
+      const connPool = await this.createConnectionPool(jwt, createPool, requestDto.targetOrgId);
 
       const useCaseResult: TriggerTestSuiteExecutionResponseDto =
         await this.#triggerTestSuiteExecution.execute(requestDto, authDto, {

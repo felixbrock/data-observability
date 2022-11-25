@@ -308,7 +308,7 @@ export const handleScheduleCreation = async <
   schedulerClient.destroy();
 };
 
-export const handleUpdateSchedule = async <
+export const handleScheduleUpdate = async <
   UpdateObject extends {
     id: string;
     props: {

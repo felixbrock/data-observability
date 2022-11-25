@@ -79,7 +79,7 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
-      const connPool = await this.createConnectionPool(jwt, createPool);
+      const connPool = await this.createConnectionPool(jwt, createPool, requestDto.targetOrgId);
 
       const useCaseResult: TriggerNominalTestSuiteExecutionResponseDto =
         await this.#triggerNominalTestSuiteExecution.execute(

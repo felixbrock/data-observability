@@ -15,7 +15,7 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from './shared/base-controller';
-import { handleUpdateSchedule } from '../../../domain/services/schedule';
+import { handleScheduleUpdate } from '../../../domain/services/schedule';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
 export default class UpdateTestSuitesController extends BaseController {
@@ -91,7 +91,7 @@ export default class UpdateTestSuitesController extends BaseController {
           'Update of test suites failed. Internal error.'
         );
 
-      await handleUpdateSchedule(authDto.callerOrgId, requestDto.updateObjects);
+      await handleScheduleUpdate(authDto.callerOrgId, requestDto.updateObjects);
 
       return UpdateTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

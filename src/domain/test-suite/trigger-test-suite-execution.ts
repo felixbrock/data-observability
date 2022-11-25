@@ -23,7 +23,8 @@ export interface TriggerTestSuiteExecutionAuthDto {
 
 export type TriggerTestSuiteExecutionResponseDto = Result<void>;
 
-export class TriggerTestSuiteExecution extends BaseTriggerTestSuiteExecution
+export class TriggerTestSuiteExecution
+  extends BaseTriggerTestSuiteExecution
   implements
     IUseCase<
       TriggerTestSuiteExecutionRequestDto,
@@ -45,7 +46,6 @@ export class TriggerTestSuiteExecution extends BaseTriggerTestSuiteExecution
     this.#readTestSuite = readTestSuite;
     this.#executeTest = executeTest;
   }
- 
 
   async execute(
     request: TriggerTestSuiteExecutionRequestDto,
@@ -78,7 +78,7 @@ export class TriggerTestSuiteExecution extends BaseTriggerTestSuiteExecution
       const testSuite = readTestSuiteResult.value;
 
       if (request.executionType === 'automatic') {
-        const wasAltered = !this.wasAltered(
+        const wasAltered = await this.wasAltered(
           {
             databaseName: testSuite.target.databaseName,
             schemaName: testSuite.target.schemaName,
@@ -104,7 +104,7 @@ export class TriggerTestSuiteExecution extends BaseTriggerTestSuiteExecution
 
       return Result.ok();
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }
