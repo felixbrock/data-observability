@@ -235,11 +235,20 @@ const updateSchedule = async (
 
   const commandInput: UpdateScheduleCommandInput = schedule;
   if (updateProps.cron)
-    schedule.ScheduleExpression = `cron(${updateProps.cron})`;
+    commandInput.ScheduleExpression = `cron(${updateProps.cron})`;
 
-  if (updateProps.toBeActivated) schedule.State = ScheduleState.ENABLED;
+  if (updateProps.toBeActivated) commandInput.State = ScheduleState.ENABLED;
   else if (updateProps.toBeActivated !== undefined)
-    schedule.State = ScheduleState.DISABLED;
+    commandInput.State = ScheduleState.DISABLED;
+
+  if (updateProps.target && updateProps.target.executionType) {
+    if (!commandInput.Target)
+      throw new Error('Current schedule is missing target input');
+    commandInput.Target.Input = JSON.stringify({
+      ...JSON.parse(schedule.Target.Input),
+      executionType: updateProps.target.executionType,
+    });
+  }
 
   const command = new UpdateScheduleCommand(commandInput);
 
@@ -350,12 +359,7 @@ export const handleScheduleUpdate = async <
 
       if (!Object.keys(updateProps).length) return;
 
-      await updateSchedule(
-        id,
-        orgId,
-        updateProps,
-        schedulerClient
-      );
+      await updateSchedule(id, orgId, updateProps, schedulerClient);
     })
   );
 
