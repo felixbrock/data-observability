@@ -29,7 +29,7 @@ export default abstract class BaseTriggerTestSuiteExecution {
         const binds: Binds = [databaseName, schemaName, matName];
     
         const queryText = `select ${wasAlteredClause} as was_altered from ${databaseName}.information_schema.tables
-            where table_catalog = upper(?) and table_schema = upper(?) and table_name = upper(?);`;
+            where table_catalog ilike ? and table_schema ilike ? and table_name ilike ?;`;
     
         const querySnowflakeResult = await this.#querySnowflake.execute(
           { queryText, binds },
