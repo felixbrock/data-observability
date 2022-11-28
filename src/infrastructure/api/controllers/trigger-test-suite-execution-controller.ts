@@ -77,9 +77,15 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
       const requestDto: TriggerTestSuiteExecutionRequestDto =
         this.#buildRequestDto(req);
 
+      console.log(`Handling trigger request for test-suite ${requestDto.id} of org ${requestDto.targetOrgId}`);
+
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
-      const connPool = await this.createConnectionPool(jwt, createPool, requestDto.targetOrgId);
+      const connPool = await this.createConnectionPool(
+        jwt,
+        createPool,
+        requestDto.targetOrgId
+      );
 
       const useCaseResult: TriggerTestSuiteExecutionResponseDto =
         await this.#triggerTestSuiteExecution.execute(requestDto, authDto, {
@@ -100,7 +106,7 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
         CodeHttp.CREATED
       );
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return TriggerTestSuiteExecutionController.fail(
         res,

@@ -81,6 +81,8 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
       const requestDto: TriggerCustomTestSuiteExecutionRequestDto =
         this.#buildRequestDto(req);
 
+      console.log(`Handling trigger request for custom test-suite ${requestDto.id} of org ${requestDto.targetOrgId}`);
+
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
       const connPool = await this.createConnectionPool(jwt, createPool, requestDto.targetOrgId);

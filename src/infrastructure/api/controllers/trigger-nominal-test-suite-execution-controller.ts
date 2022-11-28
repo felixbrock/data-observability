@@ -77,6 +77,9 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
       const requestDto: TriggerNominalTestSuiteExecutionRequestDto =
         this.#buildRequestDto(req);
 
+      console.log(`Handling trigger request for nominal test-suite ${requestDto.id} of org ${requestDto.targetOrgId}`);
+
+
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
       const connPool = await this.createConnectionPool(jwt, createPool, requestDto.targetOrgId);
