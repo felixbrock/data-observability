@@ -241,8 +241,9 @@ const updateSchedule = async (
   if (updateProps.toBeActivated) commandInput.State = ScheduleState.ENABLED;
   else if (updateProps.toBeActivated !== undefined)
     commandInput.State = ScheduleState.DISABLED;
-    if (!commandInput.Target)
-      throw new Error('Current schedule is missing target input');
+    
+  if (!commandInput.Target)
+    throw new Error('Current schedule is missing target input');
 
   if (updateProps.target && updateProps.target.executionType) {
     commandInput.Target.Input = JSON.stringify({
