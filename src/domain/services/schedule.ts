@@ -145,13 +145,14 @@ const createSchedule = async (
     FlexibleTimeWindow: { Mode: FlexibleTimeWindowMode.OFF },
     State: ScheduleState.ENABLED,
     Target: {
-      Arn: appConfig.cloud.testExecutionJobArn,
+      Arn: appConfig.cloud.scheduleQueueArn,
       RoleArn: appConfig.cloud.testExecutionJobRoleArn,
       Input: JSON.stringify({
         testSuiteId,
         targetOrgId: orgId,
         ...targetInputPrototype,
       }),
+      SqsParameters: { MessageGroupId: orgId },
     },
   };
 

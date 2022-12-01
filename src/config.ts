@@ -103,8 +103,8 @@ export const appConfig = {
     authSchedulerEnvConfig: getAuthSchedulerEnvConfig(),
     userPoolId: getCognitoUserPoolId(),
     region: 'eu-central-1',
-    testExecutionJobArn:
-      'arn:aws:lambda:eu-central-1:966593446935:function:test-suite-execution-job-production-app',
+    scheduleQueueArn:
+      'arn:aws:sqs:eu-central-1:966593446935:schedule-queue.fifo',
     testExecutionJobRoleArn:
       'arn:aws:iam::966593446935:role/SchedulerExecutionRole',
   },
