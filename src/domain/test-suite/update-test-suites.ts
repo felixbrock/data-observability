@@ -49,7 +49,6 @@ export class UpdateTestSuites
   ): TestSuite =>
     TestSuite.create({
       id: testSuite.id,
-      organizationId: testSuite.organizationId,
       target: testSuite.target,
       type: testSuite.type,
       activated: updateObj.props.activated !== undefined ? updateObj.props.activated : testSuite.activated,

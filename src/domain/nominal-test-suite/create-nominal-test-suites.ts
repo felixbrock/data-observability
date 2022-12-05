@@ -73,7 +73,6 @@ export class CreateNominalTestSuites
             columnName: createObject.columnName,
             targetResourceId: createObject.targetResourceId,
           },
-          organizationId: auth.callerOrgId,
           cron: createObject.cron,
           executionType: createObject.executionType,
         })

@@ -71,7 +71,6 @@ export class CreateTestSuites
             columnName: el.columnName,
             targetResourceId: el.targetResourceId,
           },
-          organizationId: auth.callerOrgId  ,
           cron: el.cron,
           executionType: el.executionType,
         })

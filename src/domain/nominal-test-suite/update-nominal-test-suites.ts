@@ -49,7 +49,6 @@ export class UpdateNominalTestSuites
   ): NominalTestSuite =>
     NominalTestSuite.create({
       id: testSuite.id,
-      organizationId: testSuite.organizationId,
       target: testSuite.target,
       type: testSuite.type,
       activated:

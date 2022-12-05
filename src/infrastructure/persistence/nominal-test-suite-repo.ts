@@ -44,7 +44,6 @@ export default class NominalTestSuiteRepo
     { name: 'materialization_type', nullable: true },
     { name: 'column_name', nullable: true },
     { name: 'target_resource_id', nullable: true },
-    { name: 'organization_id', nullable: true },
     { name: 'cron', nullable: true },
     { name: 'execution_type', nullable: true },
   ];
@@ -66,7 +65,6 @@ export default class NominalTestSuiteRepo
       MATERIALIZATION_TYPE: materializationType,
       COLUMN_NAME: columnName,
       TARGET_RESOURCE_ID: targetResourceId,
-      ORGANIZATION_ID: organizationId,
       CRON: cron,
       EXECUTION_TYPE: executionType,
     } = sfEntity;
@@ -94,10 +92,6 @@ export default class NominalTestSuiteRepo
         targetResourceId,
         'string'
       ) ||
-      !NominalTestSuiteRepo.isOptionalOfType<string>(
-        organizationId,
-        'string'
-      ) ||
       !NominalTestSuiteRepo.isOptionalOfType<string>(cron, 'string') ||
       !NominalTestSuiteRepo.isOptionalOfType<string>(executionType, 'string')
     )
@@ -118,7 +112,6 @@ export default class NominalTestSuiteRepo
         columnName,
       },
       type: parseNominalTestType(type),
-      organizationId,
       cron,
       executionType: parseExecutionType(executionType),
     };
@@ -135,7 +128,6 @@ export default class NominalTestSuiteRepo
     entity.target.materializationType,
     entity.target.columnName || 'null',
     entity.target.targetResourceId,
-    entity.organizationId,
     entity.cron || 'null',
     entity.executionType,
   ];

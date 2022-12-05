@@ -45,7 +45,6 @@ export default class TestSuiteRepo
     { name: 'materialization_type', nullable: true },
     { name: 'column_name', nullable: true },
     { name: 'target_resource_id', nullable: true },
-    { name: 'organization_id', nullable: true },
     { name: 'cron', nullable: true },
     { name: 'execution_type', nullable: true },
   ];
@@ -68,7 +67,6 @@ export default class TestSuiteRepo
       MATERIALIZATION_TYPE: materializationType,
       COLUMN_NAME: columnName,
       TARGET_RESOURCE_ID: targetResourceId,
-      ORGANIZATION_ID: organizationId,
       CRON: cron,
       EXECUTION_TYPE: executionType,
     } = sfEntity;
@@ -85,7 +83,6 @@ export default class TestSuiteRepo
       !TestSuiteRepo.isOptionalOfType<string>(materializationType, 'string') ||
       !TestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
       !TestSuiteRepo.isOptionalOfType<string>(targetResourceId, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(organizationId, 'string') ||
       !TestSuiteRepo.isOptionalOfType<string>(cron, 'string') ||
       !TestSuiteRepo.isOptionalOfType<string>(executionType, 'string')
     )
@@ -107,7 +104,6 @@ export default class TestSuiteRepo
         columnName,
       },
       type: parseTestType(type),
-      organizationId,
       cron,
       executionType: parseExecutionType(executionType),
     };
@@ -125,7 +121,6 @@ export default class TestSuiteRepo
     entity.target.materializationType,
     entity.target.columnName || 'null',
     entity.target.targetResourceId,
-    entity.organizationId,
     entity.cron || 'null',
     entity.executionType,
   ];

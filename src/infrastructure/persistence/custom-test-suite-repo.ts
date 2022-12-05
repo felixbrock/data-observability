@@ -37,7 +37,6 @@ export default class CustomTestSuiteRepo
     { name: 'description', nullable: true },
     { name: 'sql_logic', nullable: true },
     { name: 'target_resource_ids', selectType: 'parse_json', nullable: true },
-    { name: 'organization_id', nullable: true },
     { name: 'cron', nullable: true },
     { name: 'execution_type', nullable: true },
   ];
@@ -57,7 +56,6 @@ export default class CustomTestSuiteRepo
       DESCRIPTION: description,
       SQL_LOGIC: sqlLogic,
       TARGET_RESOURCE_IDS: targetResourceIds,
-      ORGANIZATION_ID: organizationId,
       CRON: cron,
       EXECUTION_TYPE: executionType,
     } = sfEntity;
@@ -74,7 +72,6 @@ export default class CustomTestSuiteRepo
       !CustomTestSuiteRepo.isOptionalOfType<string>(description, 'string') ||
       !CustomTestSuiteRepo.isOptionalOfType<string>(sqlLogic, 'string') ||
       !CustomTestSuiteRepo.isStringArray(targetResourceIds) ||
-      !CustomTestSuiteRepo.isOptionalOfType<string>(organizationId, 'string') ||
       !CustomTestSuiteRepo.isOptionalOfType<string>(cron, 'string') ||
       !CustomTestSuiteRepo.isOptionalOfType<string>(executionType, 'string')
     )
@@ -91,7 +88,6 @@ export default class CustomTestSuiteRepo
       description,
       sqlLogic,
       targetResourceIds,
-      organizationId,
       cron,
       executionType: parseExecutionType(executionType),
     };
@@ -129,7 +125,6 @@ export default class CustomTestSuiteRepo
     entity.description,
     entity.sqlLogic,
     JSON.stringify(entity.targetResourceIds),
-    entity.organizationId,
     entity.cron || 'null',
     entity.executionType,
   ];

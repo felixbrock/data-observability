@@ -29,8 +29,6 @@ export type CustomTestSuiteDto = CustomTestSuiteProps;
 export class CustomTestSuite implements CustomTestSuiteDto {
   #id: string;
 
-  #organizationId: string;
-
   #activated: boolean;
 
   #threshold: number;
@@ -51,10 +49,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   get id(): string {
     return this.#id;
-  }
-
-  get organizationId(): string {
-    return this.#organizationId;
   }
 
   get activated(): boolean {
@@ -95,7 +89,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   private constructor(props: CustomTestSuiteProps) {
     this.#id = props.id;
-    this.#organizationId = props.organizationId;
     this.#activated = props.activated;
     this.#threshold = props.threshold;
     this.#executionFrequency = props.executionFrequency;
@@ -109,8 +102,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   static create = (props: CustomTestSuiteProps): CustomTestSuite => {
     if (!props.id) throw new TypeError('CustomTestSuite must have id');
-    if (!props.organizationId)
-      throw new TypeError('CustomTestSuite must have organization id');
     if (!props.name) throw new TypeError('CustomTestSuite must have name');
     if (!props.description)
       throw new TypeError('CustomTestSuite must have description');
@@ -128,7 +119,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     executionFrequency: this.#executionFrequency,
     id: this.#id,
     name: this.#name,
-    organizationId: this.#organizationId,
     sqlLogic: this.#sqlLogic,
     targetResourceIds: this.#targetResourceIds,
     threshold: this.#threshold,

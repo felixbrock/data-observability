@@ -59,7 +59,6 @@ export class CreateCustomTestSuite
         executionFrequency: request.entityProps.executionFrequency,
         cron: request.entityProps.cron,
         executionType: request.entityProps.executionType,
-        organizationId: auth.callerOrgId,
         threshold: request.entityProps.threshold,
         targetResourceIds: request.entityProps.targetResourceIds,
       });

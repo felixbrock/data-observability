@@ -52,15 +52,12 @@ export interface TestSuiteDto {
   threshold: number;
   executionFrequency: number;
   target: TestTarget;
-  organizationId: string;
   cron?: string;
   executionType: ExecutionType;
 }
 
 export class TestSuite implements BaseAnomalyTestSuite {
   #id: string;
-
-  #organizationId: string;
 
   #activated: boolean;
 
@@ -78,10 +75,6 @@ export class TestSuite implements BaseAnomalyTestSuite {
 
   get id(): string {
     return this.#id;
-  }
-
-  get organizationId(): string {
-    return this.#organizationId;
   }
 
   get activated(): boolean {
@@ -114,7 +107,6 @@ export class TestSuite implements BaseAnomalyTestSuite {
 
   private constructor(props: TestSuiteProps) {
     this.#id = props.id;
-    this.#organizationId = props.organizationId;
     this.#activated = props.activated;
     this.#type = props.type;
     this.#threshold = props.threshold;
@@ -128,8 +120,6 @@ export class TestSuite implements BaseAnomalyTestSuite {
     const { type, target, ...remainingProps } = props;
 
     if (!remainingProps.id) throw new TypeError('TestSuite must have id');
-    if (!remainingProps.organizationId)
-      throw new TypeError('TestSuite must have organization id');
     if (!remainingProps.executionType)
       throw new TypeError('Test suite must have execution type');
     if (matTestTypes.includes(type) && target.columnName)
@@ -159,7 +149,6 @@ export class TestSuite implements BaseAnomalyTestSuite {
     threshold: this.#threshold,
     executionFrequency: this.#executionFrequency,
     target: this.#target,
-    organizationId: this.#organizationId,
     cron: this.#cron,
     executionType: this.#executionType,
   });

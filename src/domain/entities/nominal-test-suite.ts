@@ -41,15 +41,12 @@ export interface NominalTestSuiteDto {
   type: NominalTestType;
   executionFrequency: number;
   target: TestTarget;
-  organizationId: string;
   cron?: string;
   executionType: ExecutionType;
 }
 
 export class NominalTestSuite implements BaseTestSuite {
   #id: string;
-
-  #organizationId: string;
 
   #activated: boolean;
 
@@ -65,10 +62,6 @@ export class NominalTestSuite implements BaseTestSuite {
 
   get id(): string {
     return this.#id;
-  }
-
-  get organizationId(): string {
-    return this.#organizationId;
   }
 
   get activated(): boolean {
@@ -97,7 +90,6 @@ export class NominalTestSuite implements BaseTestSuite {
 
   private constructor(props: NominalTestSuiteProps) {
     this.#id = props.id;
-    this.#organizationId = props.organizationId;
     this.#activated = props.activated;
     this.#type = props.type;
     this.#executionFrequency = props.executionFrequency;
@@ -110,8 +102,6 @@ export class NominalTestSuite implements BaseTestSuite {
     const { type, target, ...remainingProps } = props;
 
     if (!remainingProps.id) throw new TypeError('TestSuite must have id');
-    if (!remainingProps.organizationId)
-      throw new TypeError('TestSuite must have organization id');
     if (!remainingProps.executionType)
       throw new TypeError('Test suite must have execution type');
     if (nominalMatTestTypes.includes(type) && target.columnName)
@@ -140,7 +130,6 @@ export class NominalTestSuite implements BaseTestSuite {
     type: this.#type,
     executionFrequency: this.#executionFrequency,
     target: this.#target,
-    organizationId: this.#organizationId,
     cron: this.#cron,
     executionType: this.#executionType,
   });
