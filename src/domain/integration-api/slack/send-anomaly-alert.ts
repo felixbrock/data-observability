@@ -33,15 +33,20 @@ export class SendAnomalySlackAlert
     this.#integrationApiRepo = integrationApiRepo;
   }
 
-  static #buildAlertMessageConfig = (anomalyAlertDto: AnomalyAlertDto): AlertMessageConfig => ({
+  static #buildAlertMessageConfig = (
+    anomalyAlertDto: AnomalyAlertDto
+  ): AlertMessageConfig => ({
     alertId: anomalyAlertDto.alertId,
     testType: anomalyAlertDto.testType,
     occuredOn: `${anomalyAlertDto.detectedOn} (UTC)`,
-    anomalyMessagePart: `Distribution Alert - ${anomalyAlertDto.deviation * 100}% Deviation`,
-    detectedValuePart: `*Detected Value:*\n${anomalyAlertDto.value} (${
+    anomalyMessagePart: `${anomalyAlertDto.testType.replaceAll(
+      /column|materialization/gi,
+      ''
+    )} Alert - ${(anomalyAlertDto.deviation * 100).toFixed(2)}% Deviation`,
+    detectedValuePart: `*Detected Value:*\n${anomalyAlertDto.value} (${(
       anomalyAlertDto.deviation * 100
-    }% deviation)`,
-    expectedRangePart: `*Expected Range:*\n${anomalyAlertDto.expectedLowerBound} - ${anomalyAlertDto.expectedUpperBound}`,
+    ).toFixed(2)}% deviation)`,
+    expectedRangePart: `*Expected Range:*\n${anomalyAlertDto.expectedLowerBound.toFixed(2)} - ${anomalyAlertDto.expectedUpperBound.toFixed(2)}`,
     summaryPart: anomalyAlertDto.message.replace(
       '__base_url__',
       appConfig.slack.callbackRoot
@@ -53,7 +58,9 @@ export class SendAnomalySlackAlert
     auth: SendAnomalySlackAlertAuthDto
   ): Promise<SendAnomalySlackAlertResponseDto> {
     try {
-      const messageConfig = SendAnomalySlackAlert.#buildAlertMessageConfig(request.alertDto);
+      const messageConfig = SendAnomalySlackAlert.#buildAlertMessageConfig(
+        request.alertDto
+      );
 
       const sendAnomalySlackAlertResponse: SendAlertResultDto =
         await this.#integrationApiRepo.sendSlackAlert(
@@ -64,7 +71,7 @@ export class SendAnomalySlackAlert
 
       return Result.ok(sendAnomalySlackAlertResponse);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

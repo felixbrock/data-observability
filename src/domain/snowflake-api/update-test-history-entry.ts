@@ -1,7 +1,7 @@
 import IUseCase from '../services/use-case';
 import Result from '../value-types/transient-types/result';
 
-import { columnTestTypes, matTestTypes, TestType } from '../entities/test-suite';
+import { TestType } from '../entities/test-suite';
 import { NominalTestType } from '../entities/nominal-test-suite';
 import { QuerySnowflake } from './query-snowflake';
 import { Binds, IConnectionPool } from './i-snowflake-api-repo';
@@ -64,15 +64,10 @@ export class UpdateTestHistoryEntry
     auth: UpdateTestHistoryEntryAuthDto, connPool: IConnectionPool
   ): Promise<UpdateTestHistoryEntryResponseDto> {
     try {
-      const binds: Binds = [req.alertId, req.userFeedbackIsAnomaly];
+      const binds: Binds = [req.userFeedbackIsAnomaly, req.alertId];
  
-      const tableName: CitoMaterializationName =
-      req.testType in columnTestTypes || req.testType in matTestTypes
-        ? 'test_history'
-        : 'test_history_nominal';
-
       const queryText = `
-      update cito.observability.${tableName}
+      update cito.observability.test_history
       set user_feedback_is_anomaly = ?
       where alert_id = ?;
       `;

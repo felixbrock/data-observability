@@ -1,8 +1,8 @@
-import { TestType } from "../../entities/test-suite";
+import { NominalTestType } from "../../entities/nominal-test-suite";
 
 export interface NominalTestAlertDto {
   alertId: string;
-  testType: TestType;
+  testType: NominalTestType;
   message: string;
   detectedOn: string;
   databaseName: string;
