@@ -30,7 +30,7 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
       };
 
       const response = await axios.post(
-        `${this.#baseUrl}/${this.#apiRoot}/${this.#version}/slack/alert/send`,
+        `${this.#baseUrl}/${this.#apiRoot}/${this.#version}/slack/alert`,
         data,
         config
       );
