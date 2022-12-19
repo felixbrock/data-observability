@@ -9,7 +9,6 @@ import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 
 export interface ReadCustomTestSuitesRequestDto {
   activated?: boolean;
-  executionFrequency?: number;
 }
 
 export type ReadCustomTestSuitesAuthDto = BaseAuth;
@@ -43,7 +42,6 @@ export class ReadCustomTestSuites
       const testSuites = await this.#repo.findBy(
         {
           activated: request.activated,
-          executionFrequency: request.executionFrequency,
         },
         auth,
         connPool

@@ -5,7 +5,6 @@ import { ExecutionType } from '../value-types/execution-type';
 export interface TestSuiteUpdateDto {
   activated?: boolean;
   threshold?: number;
-  frequency?: number;
   cron?: string;
   executionType?: ExecutionType;
 }

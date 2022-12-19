@@ -29,34 +29,6 @@ export const parseTestSuiteType = (testSuiteType: unknown): TestSuiteType => {
   throw new Error('Provision of invalid type');
 };
 
-export const getAutomaticCronExpression = (): string => `*/5 * * * ? *`;
-
-export const getFrequencyCronExpression = (frequency: number): string => {
-  const currentDate = new Date();
-  const currentMinutes = currentDate.getUTCMinutes();
-  const currentHours = currentDate.getUTCHours();
-
-  switch (frequency) {
-    case 1:
-      return `${currentMinutes} * * * ? *`;
-
-    case 3:
-      return `${currentMinutes} */3 * * ? *`;
-
-    case 6:
-      return `${currentMinutes} */6 * * ? *`;
-
-    case 12:
-      return `${currentMinutes} */12 * * ? *`;
-
-    case 24:
-      return `${currentMinutes} ${currentHours} * * ? *`;
-
-    default:
-      throw new Error('Unhandled schedule expression frequency input');
-  }
-};
-
 interface Schedule {
   Name: string;
   GroupName: string;
@@ -241,7 +213,7 @@ const updateSchedule = async (
   if (updateProps.toBeActivated) commandInput.State = ScheduleState.ENABLED;
   else if (updateProps.toBeActivated !== undefined)
     commandInput.State = ScheduleState.DISABLED;
-    
+
   if (!commandInput.Target)
     throw new Error('Current schedule is missing target input');
 
@@ -267,8 +239,7 @@ const updateSchedule = async (
 export const handleScheduleCreation = async <
   Dto extends {
     executionType: ExecutionType;
-    executionFrequency: number;
-    cron?: string;
+    cron: string;
     id: string;
   }
 >(
@@ -286,27 +257,8 @@ export const handleScheduleCreation = async <
 
   await Promise.all(
     testSuiteDtos.map(async (el) => {
-      let cron: string;
-      switch (el.executionType) {
-        case 'automatic':
-          cron = getAutomaticCronExpression();
-          break;
-        case 'frequency':
-          cron = getFrequencyCronExpression(el.executionFrequency);
-          break;
-        case 'individual':
-          if (!el.cron)
-            throw new Error(
-              `Created test suite ${el.id} misses cron value while holding execution type "individual"`
-            );
-          cron = el.cron;
-          break;
-        default:
-          throw new Error('Unhandled execution type');
-      }
-
       await createSchedule(
-        cron,
+        el.cron,
         el.id,
         orgId,
         {
@@ -327,7 +279,6 @@ export const handleScheduleUpdate = async <
     props: {
       executionType?: ExecutionType;
       cron?: string;
-      frequency?: number;
       activated?: boolean;
     };
   }
@@ -342,16 +293,11 @@ export const handleScheduleUpdate = async <
   await Promise.all(
     updateObjects.map(async (el) => {
       const { id } = el;
-      const { cron, frequency, executionType, activated } = el.props;
+      const { cron, executionType, activated } = el.props;
 
       const updateProps: ScheduleUpdateProps = {};
 
-      if (executionType === 'automatic')
-        updateProps.cron = getAutomaticCronExpression();
-      else if (cron) updateProps.cron = cron;
-      else if (frequency)
-        updateProps.cron = getFrequencyCronExpression(frequency);
-
+      if (cron) updateProps.cron = cron;
       if (activated !== undefined) updateProps.toBeActivated = activated;
       if (executionType)
         updateProps.target = updateProps.target

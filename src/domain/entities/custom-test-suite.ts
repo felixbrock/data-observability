@@ -33,8 +33,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   #threshold: number;
 
-  #executionFrequency: number;
-
   #name: string;
 
   #description: string;
@@ -43,7 +41,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   #targetResourceIds: string[];
 
-  #cron?: string;
+  #cron: string;
 
   #executionType: ExecutionType;
 
@@ -57,10 +55,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   get threshold(): number {
     return this.#threshold;
-  }
-
-  get executionFrequency(): number {
-    return this.#executionFrequency;
   }
 
   get name(): string {
@@ -79,7 +73,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     return this.#targetResourceIds;
   }
 
-  get cron(): string | undefined {
+  get cron(): string {
     return this.#cron;
   }
 
@@ -91,7 +85,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     this.#id = props.id;
     this.#activated = props.activated;
     this.#threshold = props.threshold;
-    this.#executionFrequency = props.executionFrequency;
     this.#name = props.name;
     this.#description = props.description;
     this.#sqlLogic = props.sqlLogic;
@@ -103,6 +96,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
   static create = (props: CustomTestSuiteProps): CustomTestSuite => {
     if (!props.id) throw new TypeError('CustomTestSuite must have id');
     if (!props.name) throw new TypeError('CustomTestSuite must have name');
+    if (!props.cron) throw new TypeError('CustomTestSuite must have cron job');
     if (!props.description)
       throw new TypeError('CustomTestSuite must have description');
     if (!props.sqlLogic)
@@ -116,7 +110,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
   toDto = (): CustomTestSuiteDto => ({
     activated: this.#activated,
     description: this.#description,
-    executionFrequency: this.#executionFrequency,
     id: this.#id,
     name: this.#name,
     sqlLogic: this.#sqlLogic,

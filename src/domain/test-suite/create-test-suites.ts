@@ -13,14 +13,13 @@ interface CreateObject {
   activated: boolean;
   type: TestType;
   threshold: number;
-  executionFrequency: number;
   databaseName: string;
   schemaName: string;
   materializationName: string;
   materializationType: MaterializationType;
   columnName?: string;
   targetResourceId: string;
-  cron?: string;
+  cron: string;
   executionType: ExecutionType;
 }
 
@@ -62,7 +61,6 @@ export class CreateTestSuites
           activated: el.activated,
           type: el.type,
           threshold: el.threshold,
-          executionFrequency: el.executionFrequency,
           target: {
             databaseName: el.databaseName,
             schemaName: el.schemaName,

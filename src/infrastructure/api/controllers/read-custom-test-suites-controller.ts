@@ -30,7 +30,7 @@ export default class ReadCustomTestSuitesController extends BaseController {
   }
 
   #buildRequestDto = (httpRequest: Request): ReadCustomTestSuitesRequestDto => {
-    const { executionFrequency, activated } = httpRequest.query;
+    const { activated } = httpRequest.query;
 
     if (
       activated &&
@@ -43,7 +43,6 @@ export default class ReadCustomTestSuitesController extends BaseController {
 
     return {
       activated: activated ? activated === 'true' : undefined,
-      executionFrequency: Number(executionFrequency),
     };
   };
 

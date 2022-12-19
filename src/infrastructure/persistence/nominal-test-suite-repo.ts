@@ -34,18 +34,17 @@ export default class NominalTestSuiteRepo
   readonly matName = 'test_suites_nominal';
 
   readonly colDefinitions: ColumnDefinition[] = [
-    { name: 'id', nullable: true },
-    { name: 'test_type', nullable: true },
-    { name: 'activated', nullable: true },
-    { name: 'execution_frequency', nullable: true },
-    { name: 'database_name', nullable: true },
-    { name: 'schema_name', nullable: true },
-    { name: 'materialization_name', nullable: true },
-    { name: 'materialization_type', nullable: true },
+    { name: 'id', nullable: false },
+    { name: 'test_type', nullable: false },
+    { name: 'activated', nullable: false },
+    { name: 'database_name', nullable: false },
+    { name: 'schema_name', nullable: false },
+    { name: 'materialization_name', nullable: false },
+    { name: 'materialization_type', nullable: false },
     { name: 'column_name', nullable: true },
-    { name: 'target_resource_id', nullable: true },
-    { name: 'cron', nullable: true },
-    { name: 'execution_type', nullable: true },
+    { name: 'target_resource_id', nullable: false },
+    { name: 'cron', nullable: false },
+    { name: 'execution_type', nullable: false },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -58,7 +57,6 @@ export default class NominalTestSuiteRepo
       ID: id,
       TEST_TYPE: type,
       ACTIVATED: activated,
-      EXECUTION_FREQUENCY: executionFrequency,
       DATABASE_NAME: databaseName,
       SCHEMA_NAME: schemaName,
       MATERIALIZATION_NAME: materializationName,
@@ -70,30 +68,17 @@ export default class NominalTestSuiteRepo
     } = sfEntity;
 
     if (
-      !NominalTestSuiteRepo.isOptionalOfType<string>(id, 'string') ||
-      !NominalTestSuiteRepo.isOptionalOfType<string>(type, 'string') ||
-      !NominalTestSuiteRepo.isOptionalOfType<boolean>(activated, 'boolean') ||
-      !NominalTestSuiteRepo.isOptionalOfType<number>(
-        executionFrequency,
-        'number'
-      ) ||
-      !NominalTestSuiteRepo.isOptionalOfType<string>(databaseName, 'string') ||
-      !NominalTestSuiteRepo.isOptionalOfType<string>(schemaName, 'string') ||
-      !NominalTestSuiteRepo.isOptionalOfType<string>(
-        materializationName,
-        'string'
-      ) ||
-      !NominalTestSuiteRepo.isOptionalOfType<string>(
-        materializationType,
-        'string'
-      ) ||
+      typeof id !== 'string' ||
+      typeof type !== 'string' ||
+      typeof activated !== 'boolean' ||
+      typeof databaseName !== 'string' ||
+      typeof schemaName !== 'string' ||
+      typeof materializationName !== 'string' ||
+      typeof materializationType !== 'string' ||
       !NominalTestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
-      !NominalTestSuiteRepo.isOptionalOfType<string>(
-        targetResourceId,
-        'string'
-      ) ||
-      !NominalTestSuiteRepo.isOptionalOfType<string>(cron, 'string') ||
-      !NominalTestSuiteRepo.isOptionalOfType<string>(executionType, 'string')
+      typeof targetResourceId !== 'string' ||
+      typeof cron !== 'string' ||
+      typeof executionType !== 'string'
     )
       throw new Error(
         'Retrieved unexpected nominal test suite field types from persistence'
@@ -102,7 +87,6 @@ export default class NominalTestSuiteRepo
     return {
       id,
       activated,
-      executionFrequency,
       target: {
         databaseName,
         materializationName,
@@ -121,7 +105,6 @@ export default class NominalTestSuiteRepo
     entity.id,
     entity.type,
     entity.activated.toString(),
-    entity.executionFrequency,
     entity.target.databaseName,
     entity.target.schemaName,
     entity.target.materializationName,
@@ -143,7 +126,9 @@ export default class NominalTestSuiteRepo
     }
     if (queryDto.ids && queryDto.ids.length) {
       binds.push(...queryDto.ids);
-      const whereCondition = `array_contains(id::variant, array_construct(${queryDto.ids.map(()=>'?').join(',')}))`;
+      const whereCondition = `array_contains(id::variant, array_construct(${queryDto.ids
+        .map(() => '?')
+        .join(',')}))`;
       whereClause = whereClause
         ? whereClause.concat(`and ${whereCondition} `)
         : whereCondition;
@@ -165,10 +150,6 @@ export default class NominalTestSuiteRepo
     if (updateDto.activated !== undefined) {
       colDefinitions.push(this.getDefinition('activated'));
       binds.push(updateDto.activated.toString());
-    }
-    if (updateDto.frequency) {
-      colDefinitions.push(this.getDefinition('execution_frequency'));
-      binds.push(updateDto.frequency);
     }
     if (updateDto.cron) {
       colDefinitions.push(this.getDefinition('cron'));

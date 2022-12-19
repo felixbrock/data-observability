@@ -3,8 +3,7 @@ import { ExecutionType } from "../execution-type";
 export interface BaseTestSuite{
   id: string;
   activated: boolean;
-  executionFrequency: number;
-  cron?: string;
+  cron: string;
   executionType: ExecutionType;
 }
 

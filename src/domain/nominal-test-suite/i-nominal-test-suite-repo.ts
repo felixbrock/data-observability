@@ -4,7 +4,6 @@ import { ExecutionType } from '../value-types/execution-type';
 
 export interface NominalTestSuiteUpdateDto {
   activated?: boolean;
-  frequency?: number;
   cron?: string;
   executionType?: ExecutionType;
 }

@@ -12,7 +12,6 @@ interface UpdateObject {
   props: {
     activated?: boolean;
     threshold?: number;
-    frequency?: number;
     cron?: string;
     executionType?: ExecutionType;
   };
@@ -53,8 +52,6 @@ export class UpdateTestSuites
       type: testSuite.type,
       activated: updateObj.props.activated !== undefined ? updateObj.props.activated : testSuite.activated,
       threshold: updateObj.props.threshold || testSuite.threshold,
-      executionFrequency:
-        updateObj.props.frequency || testSuite.executionFrequency,
       executionType: updateObj.props.executionType || testSuite.executionType,
       cron: updateObj.props.cron || testSuite.cron,
     });

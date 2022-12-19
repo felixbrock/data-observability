@@ -34,19 +34,18 @@ export default class TestSuiteRepo
   readonly matName = 'test_suites';
 
   readonly colDefinitions: ColumnDefinition[] = [
-    { name: 'id', nullable: true },
-    { name: 'test_type', nullable: true },
-    { name: 'activated', nullable: true },
-    { name: 'threshold', nullable: true },
-    { name: 'execution_frequency', nullable: true },
-    { name: 'database_name', nullable: true },
-    { name: 'schema_name', nullable: true },
-    { name: 'materialization_name', nullable: true },
-    { name: 'materialization_type', nullable: true },
+    { name: 'id', nullable: false },
+    { name: 'test_type', nullable: false },
+    { name: 'activated', nullable: false },
+    { name: 'threshold', nullable: false },
+    { name: 'database_name', nullable: false },
+    { name: 'schema_name', nullable: false },
+    { name: 'materialization_name', nullable: false },
+    { name: 'materialization_type', nullable: false },
     { name: 'column_name', nullable: true },
-    { name: 'target_resource_id', nullable: true },
-    { name: 'cron', nullable: true },
-    { name: 'execution_type', nullable: true },
+    { name: 'target_resource_id', nullable: false },
+    { name: 'cron', nullable: false },
+    { name: 'execution_type', nullable: false },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -60,7 +59,6 @@ export default class TestSuiteRepo
       TEST_TYPE: type,
       ACTIVATED: activated,
       THRESHOLD: threshold,
-      EXECUTION_FREQUENCY: executionFrequency,
       DATABASE_NAME: databaseName,
       SCHEMA_NAME: schemaName,
       MATERIALIZATION_NAME: materializationName,
@@ -72,19 +70,18 @@ export default class TestSuiteRepo
     } = sfEntity;
 
     if (
-      !TestSuiteRepo.isOptionalOfType<string>(id, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(type, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<boolean>(activated, 'boolean') ||
-      !TestSuiteRepo.isOptionalOfType<number>(threshold, 'number') ||
-      !TestSuiteRepo.isOptionalOfType<number>(executionFrequency, 'number') ||
-      !TestSuiteRepo.isOptionalOfType<string>(databaseName, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(schemaName, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(materializationName, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(materializationType, 'string') ||
+      typeof id !== 'string' ||
+      typeof type !== 'string' ||
+      typeof activated !== 'boolean' ||
+      typeof threshold !== 'number' ||
+      typeof databaseName !== 'string' ||
+      typeof schemaName !== 'string' ||
+      typeof materializationName !== 'string' ||
+      typeof materializationType !== 'string' ||
       !TestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(targetResourceId, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(cron, 'string') ||
-      !TestSuiteRepo.isOptionalOfType<string>(executionType, 'string')
+      typeof targetResourceId !== 'string' ||
+      typeof cron !== 'string' ||
+      typeof executionType !== 'string'
     )
       throw new Error(
         'Retrieved unexpected test suite field types from persistence'
@@ -94,7 +91,6 @@ export default class TestSuiteRepo
       id,
       activated,
       threshold,
-      executionFrequency,
       target: {
         databaseName,
         materializationName,
@@ -114,7 +110,6 @@ export default class TestSuiteRepo
     entity.type,
     entity.activated.toString(),
     entity.threshold,
-    entity.executionFrequency,
     entity.target.databaseName,
     entity.target.schemaName,
     entity.target.materializationName,
@@ -162,10 +157,6 @@ export default class TestSuiteRepo
     if (updateDto.threshold) {
       colDefinitions.push(this.getDefinition('threshold'));
       binds.push(updateDto.threshold);
-    }
-    if (updateDto.frequency) {
-      colDefinitions.push(this.getDefinition('execution_frequency'));
-      binds.push(updateDto.frequency);
     }
     if (updateDto.cron) {
       colDefinitions.push(this.getDefinition('cron'));

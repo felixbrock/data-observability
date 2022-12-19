@@ -15,8 +15,7 @@ import { INominalTestSuiteRepo } from './i-nominal-test-suite-repo';
 interface CreateObject {
   activated: boolean;
   type: NominalTestType;
-  executionFrequency: number;
-  cron?: string;
+  cron: string;
   executionType: ExecutionType;
   databaseName: string;
   schemaName: string;
@@ -64,7 +63,6 @@ export class CreateNominalTestSuites
           id: uuidv4(),
           activated: createObject.activated,
           type: createObject.type,
-          executionFrequency: createObject.executionFrequency,
           target: {
             databaseName: createObject.databaseName,
             schemaName: createObject.schemaName,

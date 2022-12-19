@@ -35,27 +35,16 @@ export default class UpdateCustomTestSuiteController extends BaseController {
   ): UpdateCustomTestSuiteRequestDto => {
     const {
       cron,
-      frequency,
       executionType: rawExecutionType,
       ...remainingBody
     } = httpRequest.body;
     const executionType = parseExecutionType(rawExecutionType);
-
-    if (cron && executionType !== 'individual')
-      throw new Error(
-        `Cron value provided, but execution type is ${executionType}`
-      );
-    if (frequency && executionType !== 'frequency')
-      throw new Error(
-        `Frequency value provided, but execution type is ${executionType}`
-      );
 
     return {
       id: httpRequest.params.id,
       props: {
         activated: remainingBody.activated,
         threshold: remainingBody.threshold,
-        frequency,
         targetResourceIds: remainingBody.targetResourceIds,
         name: remainingBody.name,
         description: remainingBody.description,
@@ -144,7 +133,6 @@ export default class UpdateCustomTestSuiteController extends BaseController {
               activated: requestDto.props.activated,
               cron: requestDto.props.cron,
               executionType: requestDto.props.executionType,
-              frequency: requestDto.props.frequency,
             },
           },
         ]);

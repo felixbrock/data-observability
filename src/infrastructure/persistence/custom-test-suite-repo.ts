@@ -29,16 +29,15 @@ export default class CustomTestSuiteRepo
   readonly matName = 'test_suites_custom';
 
   readonly colDefinitions: ColumnDefinition[] = [
-    { name: 'id', nullable: true },
-    { name: 'activated', nullable: true },
-    { name: 'threshold', nullable: true },
-    { name: 'execution_frequency', nullable: true },
-    { name: 'name', nullable: true },
+    { name: 'id', nullable: false },
+    { name: 'activated', nullable: false },
+    { name: 'threshold', nullable: false },
+    { name: 'name', nullable: false },
     { name: 'description', nullable: true },
-    { name: 'sql_logic', nullable: true },
-    { name: 'target_resource_ids', selectType: 'parse_json', nullable: true },
-    { name: 'cron', nullable: true },
-    { name: 'execution_type', nullable: true },
+    { name: 'sql_logic', nullable: false },
+    { name: 'target_resource_ids', selectType: 'parse_json', nullable: false },
+    { name: 'cron', nullable: false },
+    { name: 'execution_type', nullable: false },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -50,7 +49,6 @@ export default class CustomTestSuiteRepo
     const {
       ID: id,
       ACTIVATED: activated,
-      EXECUTION_FREQUENCY: executionFrequency,
       THRESHOLD: threshold,
       NAME: name,
       DESCRIPTION: description,
@@ -61,19 +59,12 @@ export default class CustomTestSuiteRepo
     } = sfEntity;
 
     if (
-      !CustomTestSuiteRepo.isOptionalOfType<string>(id, 'string') ||
-      !CustomTestSuiteRepo.isOptionalOfType<boolean>(activated, 'boolean') ||
-      !CustomTestSuiteRepo.isOptionalOfType<number>(threshold, 'number') ||
-      !CustomTestSuiteRepo.isOptionalOfType<number>(
-        executionFrequency,
-        'number'
-      ) ||
-      !CustomTestSuiteRepo.isOptionalOfType<string>(name, 'string') ||
+      typeof id !== 'string' || typeof activated !== 'boolean' || typeof threshold !== 'number' || 
+      typeof name !== 'string' || 
       !CustomTestSuiteRepo.isOptionalOfType<string>(description, 'string') ||
-      !CustomTestSuiteRepo.isOptionalOfType<string>(sqlLogic, 'string') ||
+      typeof sqlLogic !== 'string' ||
       !CustomTestSuiteRepo.isStringArray(targetResourceIds) ||
-      !CustomTestSuiteRepo.isOptionalOfType<string>(cron, 'string') ||
-      !CustomTestSuiteRepo.isOptionalOfType<string>(executionType, 'string')
+      typeof cron !== 'string' || typeof executionType !== 'string' 
     )
       throw new Error(
         'Retrieved unexpected custom test suite field types from persistence'
@@ -83,7 +74,6 @@ export default class CustomTestSuiteRepo
       id,
       activated,
       threshold,
-      executionFrequency,
       name,
       description,
       sqlLogic,
@@ -102,14 +92,6 @@ export default class CustomTestSuiteRepo
       const whereCondition = 'activated = ?';
       whereClause = whereCondition;
     }
-    if (queryDto.executionFrequency) {
-      binds.push(queryDto.executionFrequency);
-      const whereCondition = 'execution_frequency = ?';
-      whereClause = whereClause
-        ? whereClause.concat(`and ${whereCondition} `)
-        : whereCondition;
-    }
-
     const text = `select * from ${relationPath}.${this.matName}
     ${whereClause ? 'where' : ''}  ${whereClause};`;
 
@@ -120,7 +102,6 @@ export default class CustomTestSuiteRepo
     entity.id,
     entity.activated.toString(),
     entity.threshold,
-    entity.executionFrequency,
     entity.name,
     entity.description,
     entity.sqlLogic,
@@ -143,10 +124,6 @@ export default class CustomTestSuiteRepo
     if (updateDto.threshold) {
       colDefinitions.push(this.getDefinition('threshold'));
       binds.push(updateDto.threshold);
-    }
-    if (updateDto.frequency) {
-      colDefinitions.push(this.getDefinition('execution_frequency'));
-      binds.push(updateDto.frequency);
     }
     if (updateDto.name) {
       colDefinitions.push(this.getDefinition('name'));

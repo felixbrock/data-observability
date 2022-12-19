@@ -10,8 +10,7 @@ import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 export interface CreateCustomTestSuiteRequestDto {
   entityProps: {activated: boolean;
   threshold: number;
-  executionFrequency: number;
-  cron?: string;
+  cron: string;
   executionType: ExecutionType;
   name: string;
   description: string;
@@ -56,7 +55,6 @@ export class CreateCustomTestSuite
         description: request.entityProps.description,
         sqlLogic: request.entityProps.sqlLogic,
         activated: request.entityProps.activated,
-        executionFrequency: request.entityProps.executionFrequency,
         cron: request.entityProps.cron,
         executionType: request.entityProps.executionType,
         threshold: request.entityProps.threshold,

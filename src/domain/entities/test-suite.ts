@@ -50,9 +50,8 @@ export interface TestSuiteDto {
   activated: boolean;
   type: TestType;
   threshold: number;
-  executionFrequency: number;
   target: TestTarget;
-  cron?: string;
+  cron: string;
   executionType: ExecutionType;
 }
 
@@ -67,9 +66,7 @@ export class TestSuite implements BaseAnomalyTestSuite {
 
   #threshold: number;
 
-  #executionFrequency: number;
-
-  #cron?: string;
+  #cron: string;
 
   #executionType: ExecutionType;
 
@@ -93,11 +90,7 @@ export class TestSuite implements BaseAnomalyTestSuite {
     return this.#threshold;
   }
 
-  get executionFrequency(): number {
-    return this.#executionFrequency;
-  }
-
-  get cron(): string | undefined {
+  get cron(): string {
     return this.#cron;
   }
 
@@ -110,7 +103,6 @@ export class TestSuite implements BaseAnomalyTestSuite {
     this.#activated = props.activated;
     this.#type = props.type;
     this.#threshold = props.threshold;
-    this.#executionFrequency = props.executionFrequency;
     this.#target = props.target;
     this.#cron = props.cron;
     this.#executionType = props.executionType;
@@ -120,6 +112,7 @@ export class TestSuite implements BaseAnomalyTestSuite {
     const { type, target, ...remainingProps } = props;
 
     if (!remainingProps.id) throw new TypeError('TestSuite must have id');
+    if (!remainingProps.cron) throw new TypeError('TestSuite must have cron expression');
     if (!remainingProps.executionType)
       throw new TypeError('Test suite must have execution type');
     if (matTestTypes.includes(type) && target.columnName)
@@ -147,7 +140,6 @@ export class TestSuite implements BaseAnomalyTestSuite {
     activated: this.#activated,
     type: this.#type,
     threshold: this.#threshold,
-    executionFrequency: this.#executionFrequency,
     target: this.#target,
     cron: this.#cron,
     executionType: this.#executionType,

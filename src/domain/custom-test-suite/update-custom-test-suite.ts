@@ -12,7 +12,6 @@ export interface UpdateCustomTestSuiteRequestDto {
   props?: {
     activated?: boolean;
     threshold?: number;
-    frequency?: number;
     targetResourceIds?: string[];
     name?: string;
     description?: string;
