@@ -5,7 +5,6 @@ import { ExecutionType } from "../value-types/execution-type";
 export interface CustomTestSuiteUpdateDto {
     activated?: boolean;
     threshold?: number;
-    frequency?: number;
     targetResourceIds?: string[];
     name?: string;
     description?: string;
@@ -16,7 +15,6 @@ export interface CustomTestSuiteUpdateDto {
   
   export interface CustomTestSuiteQueryDto {
     activated?: boolean;
-    executionFrequency?: number;
   }
 
 export type ICustomTestSuiteRepo =  IServiceRepo<CustomTestSuite, CustomTestSuiteQueryDto, CustomTestSuiteUpdateDto>; 
