@@ -118,7 +118,7 @@ export default class UpdateNominalTestSuitesController extends BaseController {
       else if (error) console.trace(error);
       return UpdateNominalTestSuitesController.fail(
         res,
-        'update nominal test suites - Unknown error occured'
+        'update nominal test suites - Unknown error occurred'
       );
     }
   }

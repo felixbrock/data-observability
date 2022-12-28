@@ -11,7 +11,7 @@ export interface SnowflakeProfileDto {
 
 export interface AlertMessageConfig {
   anomalyMessagePart: string;
-  occuredOn: string;
+  occurredOn: string;
   alertId: string;
   testType: string;
   summaryPart: string;

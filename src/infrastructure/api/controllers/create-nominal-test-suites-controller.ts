@@ -112,7 +112,7 @@ export default class CreateNominalTestSuitesController extends BaseController {
       else if (error) console.trace(error);
       return CreateNominalTestSuitesController.fail(
         res,
-        'create nominal test suites - Unknown error occured'
+        'create nominal test suites - Unknown error occurred'
       );
     }
   }

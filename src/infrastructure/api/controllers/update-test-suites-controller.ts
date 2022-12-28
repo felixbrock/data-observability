@@ -99,7 +99,7 @@ export default class UpdateTestSuitesController extends BaseController {
       else if (error) console.trace(error);
       return UpdateTestSuitesController.fail(
         res,
-        'update test suites - Unknown error occured'
+        'update test suites - Unknown error occurred'
       );
     }
   }

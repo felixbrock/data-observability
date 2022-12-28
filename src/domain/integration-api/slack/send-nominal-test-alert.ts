@@ -38,7 +38,7 @@ export class SendNominalTestSlackAlert
   ): AlertMessageConfig => ({
     alertId: alertDto.alertId,
     testType: alertDto.testType,
-    occuredOn: `${alertDto.detectedOn} (UTC)`,
+    occurredOn: `${alertDto.detectedOn} (UTC)`,
     anomalyMessagePart: `Schema Change Alert`,
     detectedValuePart: `*Detected Schema Change:*\n${alertDto.schemaDiffs}`,
     expectedRangePart: ``,

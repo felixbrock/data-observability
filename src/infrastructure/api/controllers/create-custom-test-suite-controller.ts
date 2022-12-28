@@ -123,7 +123,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
       else if (error) console.trace(error);
       return CreateCustomTestSuiteController.fail(
         res,
-        'create custom test suite - unknown error occured'
+        'create custom test suite - unknown error occurred'
       );
     }
   }

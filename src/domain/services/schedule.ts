@@ -232,7 +232,7 @@ const updateSchedule = async (
 
   if (!res.ScheduleArn)
     throw new Error(
-      `Unexpected error occured while updating schedule  for test suite ${testSuiteId}`
+      `Unexpected error occurred while updating schedule  for test suite ${testSuiteId}`
     );
 };
 

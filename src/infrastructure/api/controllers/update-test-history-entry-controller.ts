@@ -103,7 +103,7 @@ export default class UpdateTestHistoryEntryController extends BaseController {
       else if (error) console.trace(error);
       return UpdateTestHistoryEntryController.fail(
         res,
-        'udpate test history - Unknown error occured'
+        'udpate test history - Unknown error occurred'
       );
     }
   }

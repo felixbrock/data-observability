@@ -111,7 +111,7 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
       else if (error) console.trace(error);
       return TriggerCustomTestSuiteExecutionController.fail(
         res,
-        'trigger custom test suite execution - Unknown error occured'
+        'trigger custom test suite execution - Unknown error occurred'
       );
     }
   }

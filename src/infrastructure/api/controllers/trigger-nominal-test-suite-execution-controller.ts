@@ -108,7 +108,7 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
       else if (error) console.trace(error);
       return TriggerNominalTestSuiteExecutionController.fail(
         res,
-        'trigger nominal test suite - Unknown error occured'
+        'trigger nominal test suite - Unknown error occurred'
       );
     }
   }

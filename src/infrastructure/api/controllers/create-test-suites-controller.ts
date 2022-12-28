@@ -102,7 +102,7 @@ export default class CreateTestSuitesController extends BaseController {
       else if (error) console.trace(error);
       return CreateTestSuitesController.fail(
         res,
-        'create test suites - Internal error occured'
+        'create test suites - Internal error occurred'
       );
     }
   }

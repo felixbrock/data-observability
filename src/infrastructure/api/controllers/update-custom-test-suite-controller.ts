@@ -143,7 +143,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
       else if (error) console.trace(error);
       return UpdateCustomTestSuiteController.fail(
         res,
-        'update custom test suite - Unknown error occured'
+        'update custom test suite - Unknown error occurred'
       );
     }
   }

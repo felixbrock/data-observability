@@ -94,7 +94,7 @@ export default class ReadTestSuiteController extends BaseController {
       else if (error) console.trace(error);
       return ReadTestSuiteController.fail(
         res,
-        'read test suite - Unknown error occured'
+        'read test suite - Unknown error occurred'
       );
     }
   }

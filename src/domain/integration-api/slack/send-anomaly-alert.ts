@@ -38,7 +38,7 @@ export class SendAnomalySlackAlert
   ): AlertMessageConfig => ({
     alertId: anomalyAlertDto.alertId,
     testType: anomalyAlertDto.testType,
-    occuredOn: `${anomalyAlertDto.detectedOn} (UTC)`,
+    occurredOn: `${anomalyAlertDto.detectedOn} (UTC)`,
     anomalyMessagePart: `${anomalyAlertDto.testType.replaceAll(
       /column|materialization/gi,
       ''

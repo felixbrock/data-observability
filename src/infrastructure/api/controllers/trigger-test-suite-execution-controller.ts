@@ -110,7 +110,7 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
       else if (error) console.trace(error);
       return TriggerTestSuiteExecutionController.fail(
         res,
-        'trigger test suite execution - Unknown error occured'
+        'trigger test suite execution - Unknown error occurred'
       );
     }
   }

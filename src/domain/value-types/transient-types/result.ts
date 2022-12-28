@@ -22,7 +22,7 @@ export default class Result<T> {
   get value(): T | undefined {
     if (!this.#success)
       throw new Error(
-        `An error occured. Cannot get the value of an error result: ${
+        `An error occurred. Cannot get the value of an error result: ${
           this.#error
         }`
       );
