@@ -4,11 +4,11 @@ import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
-  TriggerNominalTestSuiteExecution,
-  TriggerNominalTestSuiteExecutionAuthDto,
-  TriggerNominalTestSuiteExecutionRequestDto,
-  TriggerNominalTestSuiteExecutionResponseDto,
-} from '../../../domain/nominal-test-suite/trigger-nominal-test-suite-execution';
+  TriggerQualitativeTestSuiteExecution,
+  TriggerQualitativeTestSuiteExecutionAuthDto,
+  TriggerQualitativeTestSuiteExecutionRequestDto,
+  TriggerQualitativeTestSuiteExecutionResponseDto,
+} from '../../../domain/qualitative-test-suite/trigger-qualitative-test-suite-execution';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
 
@@ -18,25 +18,25 @@ import {
   UserAccountInfo,
 } from './shared/base-controller';
 
-export default class TriggerNominalTestSuiteExecutionController extends BaseController {
-  readonly #triggerNominalTestSuiteExecution: TriggerNominalTestSuiteExecution;
+export default class TriggerQualitativeTestSuiteExecutionController extends BaseController {
+  readonly #triggerQualitativeTestSuiteExecution: TriggerQualitativeTestSuiteExecution;
 
   readonly #dbo: Dbo;
 
   constructor(
-    triggerNominalTestSuiteExecution: TriggerNominalTestSuiteExecution,
+    triggerQualitativeTestSuiteExecution: TriggerQualitativeTestSuiteExecution,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile,
     dbo: Dbo
   ) {
     super(getAccounts, getSnowflakeProfile);
-    this.#triggerNominalTestSuiteExecution = triggerNominalTestSuiteExecution;
+    this.#triggerQualitativeTestSuiteExecution = triggerQualitativeTestSuiteExecution;
     this.#dbo = dbo;
   }
 
   #buildRequestDto = (
     httpRequest: Request
-  ): TriggerNominalTestSuiteExecutionRequestDto => ({
+  ): TriggerQualitativeTestSuiteExecutionRequestDto => ({
     id: httpRequest.params.id,
     targetOrgId: httpRequest.body.targetOrgId,
     executionType: httpRequest.body.executionType,
@@ -45,7 +45,7 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): TriggerNominalTestSuiteExecutionAuthDto => ({
+  ): TriggerQualitativeTestSuiteExecutionAuthDto => ({
     jwt,
     callerOrgId: userAccountInfo.callerOrgId,
     isSystemInternal: userAccountInfo.isSystemInternal,
@@ -56,7 +56,7 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return TriggerNominalTestSuiteExecutionController.unauthorized(
+        return TriggerQualitativeTestSuiteExecutionController.unauthorized(
           res,
           'Unauthorized'
         );
@@ -67,25 +67,25 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return TriggerNominalTestSuiteExecutionController.unauthorized(
+        return TriggerQualitativeTestSuiteExecutionController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: TriggerNominalTestSuiteExecutionRequestDto =
+      const requestDto: TriggerQualitativeTestSuiteExecutionRequestDto =
         this.#buildRequestDto(req);
 
-      console.log(`Handling trigger request for nominal test-suite ${requestDto.id} of org ${requestDto.targetOrgId}`);
+      console.log(`Handling trigger request for qualitative test-suite ${requestDto.id} of org ${requestDto.targetOrgId}`);
 
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
       const connPool = await this.createConnectionPool(jwt, createPool, requestDto.targetOrgId);
 
-      const useCaseResult: TriggerNominalTestSuiteExecutionResponseDto =
-        await this.#triggerNominalTestSuiteExecution.execute(
+      const useCaseResult: TriggerQualitativeTestSuiteExecutionResponseDto =
+        await this.#triggerQualitativeTestSuiteExecution.execute(
           requestDto,
           authDto,
           { mongoConn: this.#dbo.dbConnection, sfConnPool: connPool }
@@ -95,10 +95,10 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
       await connPool.clear();
 
       if (!useCaseResult.success) {
-        return TriggerNominalTestSuiteExecutionController.badRequest(res);
+        return TriggerQualitativeTestSuiteExecutionController.badRequest(res);
       }
 
-      return TriggerNominalTestSuiteExecutionController.ok(
+      return TriggerQualitativeTestSuiteExecutionController.ok(
         res,
         useCaseResult.value,
         CodeHttp.CREATED
@@ -106,9 +106,9 @@ export default class TriggerNominalTestSuiteExecutionController extends BaseCont
     } catch (error: unknown) {
       if (error instanceof Error ) console.error(error.stack);
       else if (error) console.trace(error);
-      return TriggerNominalTestSuiteExecutionController.fail(
+      return TriggerQualitativeTestSuiteExecutionController.fail(
         res,
-        'trigger nominal test suite - Unknown error occurred'
+        'trigger qualitative test suite - Unknown error occurred'
       );
     }
   }

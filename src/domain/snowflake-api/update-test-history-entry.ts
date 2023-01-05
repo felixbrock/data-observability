@@ -2,14 +2,14 @@ import IUseCase from '../services/use-case';
 import Result from '../value-types/transient-types/result';
 
 import { TestType } from '../entities/test-suite';
-import { NominalTestType } from '../entities/nominal-test-suite';
+import { QualitativeTestType } from '../entities/qualitative-test-suite';
 import { QuerySnowflake } from './query-snowflake';
 import { Binds, IConnectionPool } from './i-snowflake-api-repo';
 import BaseAuth from '../services/base-auth';
 
 export interface UpdateTestHistoryEntryRequestDto {
   alertId: string;
-  testType: TestType | NominalTestType;
+  testType: TestType | QualitativeTestType;
   userFeedbackIsAnomaly: number;
 }
 
@@ -23,11 +23,11 @@ const citoMaterializationNames = [
   'test_results',
   'test_executions',
   'test_alerts',
-  'test_suites_nominal',
-  'test_history_nominal',
-  'test_results_nominal',
-  'test_executions_nominal',
-  'test_alerts_nominal',
+  'test_suites_qualitative',
+  'test_history_qualitative',
+  'test_results_qualitative',
+  'test_executions_qualitative',
+  'test_alerts_qualitative',
   'test_suites_custom',
 ] as const;
 type CitoMaterializationName = typeof citoMaterializationNames[number];

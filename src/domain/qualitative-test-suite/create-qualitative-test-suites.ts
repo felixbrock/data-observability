@@ -1,20 +1,20 @@
 import { v4 as uuidv4 } from 'uuid';
-import NominalTestSuiteRepo from '../../infrastructure/persistence/nominal-test-suite-repo';
+import QualitativeTestSuiteRepo from '../../infrastructure/persistence/qualitative-test-suite-repo';
 import {
-  NominalTestSuite,
-  NominalTestType,
-} from '../entities/nominal-test-suite';
+  QualitativeTestSuite,
+  QualitativeTestType,
+} from '../entities/qualitative-test-suite';
 import BaseAuth from '../services/base-auth';
 import IUseCase from '../services/use-case';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { ExecutionType } from '../value-types/execution-type';
 import { MaterializationType } from '../value-types/materialization-type';
 import Result from '../value-types/transient-types/result';
-import { INominalTestSuiteRepo } from './i-nominal-test-suite-repo';
+import { IQualitativeTestSuiteRepo } from './i-qualitative-test-suite-repo';
 
 interface CreateObject {
   activated: boolean;
-  type: NominalTestType;
+  type: QualitativeTestType;
   cron: string;
   executionType: ExecutionType;
   databaseName: string;
@@ -25,41 +25,41 @@ interface CreateObject {
   targetResourceId: string;
 }
 
-export interface CreateNominalTestSuitesRequestDto {
+export interface CreateQualitativeTestSuitesRequestDto {
   createObjects: CreateObject[];
 }
 
-export interface CreateNominalTestSuitesAuthDto
+export interface CreateQualitativeTestSuitesAuthDto
   extends Omit<BaseAuth, 'callerOrgId'> {
   callerOrgId: string;
 }
 
-export type CreateNominalTestSuitesResponseDto = Result<NominalTestSuite[]>;
+export type CreateQualitativeTestSuitesResponseDto = Result<QualitativeTestSuite[]>;
 
-export class CreateNominalTestSuites
+export class CreateQualitativeTestSuites
   implements
     IUseCase<
-      CreateNominalTestSuitesRequestDto,
-      CreateNominalTestSuitesResponseDto,
-      CreateNominalTestSuitesAuthDto,
+      CreateQualitativeTestSuitesRequestDto,
+      CreateQualitativeTestSuitesResponseDto,
+      CreateQualitativeTestSuitesAuthDto,
       IConnectionPool
     >
 {
-  readonly #repo: INominalTestSuiteRepo;
+  readonly #repo: IQualitativeTestSuiteRepo;
 
-  constructor(nominalTestSuiteRepo: NominalTestSuiteRepo) {
-    this.#repo = nominalTestSuiteRepo;
+  constructor(qualitativeTestSuiteRepo: QualitativeTestSuiteRepo) {
+    this.#repo = qualitativeTestSuiteRepo;
   }
 
   async execute(
-    request: CreateNominalTestSuitesRequestDto,
-    auth: CreateNominalTestSuitesAuthDto,
+    request: CreateQualitativeTestSuitesRequestDto,
+    auth: CreateQualitativeTestSuitesAuthDto,
 
     connPool: IConnectionPool
-  ): Promise<CreateNominalTestSuitesResponseDto> {
+  ): Promise<CreateQualitativeTestSuitesResponseDto> {
     try {
       const testSuites = request.createObjects.map((createObject) =>
-        NominalTestSuite.create({
+        QualitativeTestSuite.create({
           id: uuidv4(),
           activated: createObject.activated,
           type: createObject.type,

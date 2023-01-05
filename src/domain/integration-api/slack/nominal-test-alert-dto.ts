@@ -1,8 +1,8 @@
-import { NominalTestType } from "../../entities/nominal-test-suite";
+import { QualitativeTestType } from "../../entities/qualitative-test-suite";
 
-export interface NominalTestAlertDto {
+export interface QualitativeTestAlertDto {
   alertId: string;
-  testType: NominalTestType;
+  testType: QualitativeTestType;
   message: string;
   detectedOn: string;
   databaseName: string;

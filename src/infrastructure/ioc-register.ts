@@ -10,28 +10,28 @@ import { UpdateTestSuites } from '../domain/test-suite/update-test-suites';
 import TestExecutionRepo from './persistence/test-execution-api-repo';
 import IntegrationApiRepo from './persistence/integration-api-repo';
 import { CreateQuantitativeTestResult } from '../domain/quantitative-test-result/create-quantitative-test-result';
-import { CreateNominalTestResult } from '../domain/nominal-test-result/create-nominal-test-result';
+import { CreateQualitativeTestResult } from '../domain/qualitative-test-result/create-qualitative-test-result';
 import { ExecuteTest } from '../domain/test-execution-api/execute-test';
 import QuantitativeTestResultRepo from './persistence/quantitative-test-result-repo';
 import { SendQuantitativeSlackAlert } from '../domain/integration-api/slack/send-quantitative-alert';
-import { SendNominalTestSlackAlert } from '../domain/integration-api/slack/send-nominal-test-alert';
+import { SendQualitativeTestSlackAlert } from '../domain/integration-api/slack/send-qualitative-test-alert';
 import { UpdateTestHistoryEntry } from '../domain/snowflake-api/update-test-history-entry';
 import { CreateCustomTestSuite } from '../domain/custom-test-suite/create-custom-test-suite';
 import { ReadCustomTestSuite } from '../domain/custom-test-suite/read-custom-test-suite';
 import { ReadCustomTestSuites } from '../domain/custom-test-suite/read-custom-test-suites';
 import { UpdateCustomTestSuite } from '../domain/custom-test-suite/update-custom-test-suite';
 import { TriggerCustomTestSuiteExecution } from '../domain/custom-test-suite/trigger-custom-test-suite-execution';
-import NominalTestResultRepo from './persistence/schema-change-test-result-repo';
-import { CreateNominalTestSuites } from '../domain/nominal-test-suite/create-nominal-test-suites';
-import { ReadNominalTestSuite } from '../domain/nominal-test-suite/read-nominal-test-suite';
-import { ReadNominalTestSuites } from '../domain/nominal-test-suite/read-nominal-test-suites';
-import { TriggerNominalTestSuiteExecution } from '../domain/nominal-test-suite/trigger-nominal-test-suite-execution';
-import { UpdateNominalTestSuites } from '../domain/nominal-test-suite/update-nominal-test-suites';
+import QualitativeTestResultRepo from './persistence/schema-change-test-result-repo';
+import { CreateQualitativeTestSuites } from '../domain/qualitative-test-suite/create-qualitative-test-suites';
+import { ReadQualitativeTestSuite } from '../domain/qualitative-test-suite/read-qualitative-test-suite';
+import { ReadQualitativeTestSuites } from '../domain/qualitative-test-suite/read-qualitative-test-suites';
+import { TriggerQualitativeTestSuiteExecution } from '../domain/qualitative-test-suite/trigger-qualitative-test-suite-execution';
+import { UpdateQualitativeTestSuites } from '../domain/qualitative-test-suite/update-qualitative-test-suites';
 import { TriggerTestSuiteExecution } from '../domain/test-suite/trigger-test-suite-execution';
 import { QuerySnowflake } from '../domain/snowflake-api/query-snowflake';
 import { GetSnowflakeProfile } from '../domain/integration-api/get-snowflake-profile';
 import CustomTestSuiteRepo from './persistence/custom-test-suite-repo';
-import NominalTestSuiteRepo from './persistence/nominal-test-suite-repo';
+import QualitativeTestSuiteRepo from './persistence/qualitative-test-suite-repo';
 import TestSuiteRepo from './persistence/test-suite-repo';
 import SnowflakeApiRepo from './persistence/snowflake-api-repo';
 
@@ -39,26 +39,26 @@ const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
 iocRegister.register({
   createQuantitativeTestResult: asClass(CreateQuantitativeTestResult),
-  createNominalTestResult: asClass(CreateNominalTestResult),
+  createQualitativeTestResult: asClass(CreateQualitativeTestResult),
 
   createTestSuites: asClass(CreateTestSuites),
   createCustomTestSuite: asClass(CreateCustomTestSuite),
-  createNominalTestSuites: asClass(CreateNominalTestSuites),
+  createQualitativeTestSuites: asClass(CreateQualitativeTestSuites),
 
   readTestSuite: asClass(ReadTestSuite),
-  readNominalTestSuite: asClass(ReadNominalTestSuite),
+  readQualitativeTestSuite: asClass(ReadQualitativeTestSuite),
   readCustomTestSuite: asClass(ReadCustomTestSuite),
 
   readTestSuites: asClass(ReadTestSuites),
-  readNominalTestSuites: asClass(ReadNominalTestSuites),
+  readQualitativeTestSuites: asClass(ReadQualitativeTestSuites),
   readCustomTestSuites: asClass(ReadCustomTestSuites),
 
   updateTestSuites: asClass(UpdateTestSuites),
-  updateNominalTestSuites: asClass(UpdateNominalTestSuites),
+  updateQualitativeTestSuites: asClass(UpdateQualitativeTestSuites),
   updateCustomTestSuite: asClass(UpdateCustomTestSuite),
 
   triggerTestSuiteExecution: asClass(TriggerTestSuiteExecution),
-  triggerNominalTestSuiteExecution: asClass(TriggerNominalTestSuiteExecution),
+  triggerQualitativeTestSuiteExecution: asClass(TriggerQualitativeTestSuiteExecution),
   triggerCustomTestSuiteExecution: asClass(TriggerCustomTestSuiteExecution),
 
   updateTestHistoryEntry: asClass(UpdateTestHistoryEntry),
@@ -68,12 +68,12 @@ iocRegister.register({
   querySnowflake: asClass(QuerySnowflake),
   getSnowflakeProfile: asClass(GetSnowflakeProfile),
   sendQuantitativeSlackAlert: asClass(SendQuantitativeSlackAlert),
-  sendNominalTestSlackAlert: asClass(SendNominalTestSlackAlert),
+  sendQualitativeTestSlackAlert: asClass(SendQualitativeTestSlackAlert),
 
   quantitativeTestResultRepo: asClass(QuantitativeTestResultRepo),
-  nominalTestResultRepo: asClass(NominalTestResultRepo),
+  qualitativeTestResultRepo: asClass(QualitativeTestResultRepo),
   customTestSuiteRepo: asClass(CustomTestSuiteRepo),
-  nominalTestSuiteRepo: asClass(NominalTestSuiteRepo),
+  qualitativeTestSuiteRepo: asClass(QualitativeTestSuiteRepo),
   testSuiteRepo: asClass(TestSuiteRepo),
 
   snowflakeApiRepo: asClass(SnowflakeApiRepo),

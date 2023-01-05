@@ -2,11 +2,11 @@
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
 import {
-  ReadNominalTestSuites,
-  ReadNominalTestSuitesAuthDto,
-  ReadNominalTestSuitesRequestDto,
-  ReadNominalTestSuitesResponseDto,
-} from '../../../domain/nominal-test-suite/read-nominal-test-suites';
+  ReadQualitativeTestSuites,
+  ReadQualitativeTestSuitesAuthDto,
+  ReadQualitativeTestSuitesRequestDto,
+  ReadQualitativeTestSuitesResponseDto,
+} from '../../../domain/qualitative-test-suite/read-qualitative-test-suites';
 
 import {
   BaseController,
@@ -17,21 +17,21 @@ import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import Result from '../../../domain/value-types/transient-types/result';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
-export default class ReadNominalTestSuitesController extends BaseController {
-  readonly #readNominalTestSuites: ReadNominalTestSuites;
+export default class ReadQualitativeTestSuitesController extends BaseController {
+  readonly #readQualitativeTestSuites: ReadQualitativeTestSuites;
 
   constructor(
-    readNominalTestSuites: ReadNominalTestSuites,
+    readQualitativeTestSuites: ReadQualitativeTestSuites,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
   ) {
     super(getAccounts, getSnowflakeProfile);
-    this.#readNominalTestSuites = readNominalTestSuites;
+    this.#readQualitativeTestSuites = readQualitativeTestSuites;
   }
 
   #buildRequestDto = (
     httpRequest: Request
-  ): ReadNominalTestSuitesRequestDto => {
+  ): ReadQualitativeTestSuitesRequestDto => {
     const { activated } = httpRequest.query;
 
     if (
@@ -51,7 +51,7 @@ export default class ReadNominalTestSuitesController extends BaseController {
   #buildAuthDto = (
     jwt: string,
     userAccountInfo: UserAccountInfo
-  ): ReadNominalTestSuitesAuthDto => ({
+  ): ReadQualitativeTestSuitesAuthDto => ({
     jwt,
     isSystemInternal: userAccountInfo.isSystemInternal,
     callerOrgId: userAccountInfo.callerOrgId,
@@ -62,7 +62,7 @@ export default class ReadNominalTestSuitesController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return ReadNominalTestSuitesController.unauthorized(
+        return ReadQualitativeTestSuitesController.unauthorized(
           res,
           'Unauthorized'
         );
@@ -73,24 +73,24 @@ export default class ReadNominalTestSuitesController extends BaseController {
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return ReadNominalTestSuitesController.unauthorized(
+        return ReadQualitativeTestSuitesController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: ReadNominalTestSuitesRequestDto =
+      const requestDto: ReadQualitativeTestSuitesRequestDto =
         this.#buildRequestDto(req);
-      const authDto: ReadNominalTestSuitesAuthDto = this.#buildAuthDto(
+      const authDto: ReadQualitativeTestSuitesAuthDto = this.#buildAuthDto(
         jwt,
         getUserAccountInfoResult.value
       );
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-      const useCaseResult: ReadNominalTestSuitesResponseDto =
-        await this.#readNominalTestSuites.execute(
+      const useCaseResult: ReadQualitativeTestSuitesResponseDto =
+        await this.#readQualitativeTestSuites.execute(
           requestDto,
           authDto,
           connPool
@@ -100,20 +100,20 @@ export default class ReadNominalTestSuitesController extends BaseController {
       await connPool.clear();
 
       if (!useCaseResult.success) {
-        return ReadNominalTestSuitesController.badRequest(res);
+        return ReadQualitativeTestSuitesController.badRequest(res);
       }
 
       const resultValue = useCaseResult.value
         ? useCaseResult.value.map((element) => element.toDto())
         : useCaseResult.value;
 
-      return ReadNominalTestSuitesController.ok(res, resultValue, CodeHttp.OK);
+      return ReadQualitativeTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error ) console.error(error.stack);
       else if (error) console.trace(error);
-      return ReadNominalTestSuitesController.fail(
+      return ReadQualitativeTestSuitesController.fail(
         res,
-        'read nominal test suites - Unknown error occurred'
+        'read qualitative test suites - Unknown error occurred'
       );
     }
   }

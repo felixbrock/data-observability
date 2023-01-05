@@ -3,11 +3,11 @@ import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
-  CreateNominalTestSuites,
-  CreateNominalTestSuitesAuthDto,
-  CreateNominalTestSuitesRequestDto,
-  CreateNominalTestSuitesResponseDto,
-} from '../../../domain/nominal-test-suite/create-nominal-test-suites';
+  CreateQualitativeTestSuites,
+  CreateQualitativeTestSuitesAuthDto,
+  CreateQualitativeTestSuitesRequestDto,
+  CreateQualitativeTestSuitesResponseDto,
+} from '../../../domain/qualitative-test-suite/create-qualitative-test-suites';
 import {
   handleScheduleCreation,
 } from '../../../domain/services/schedule';
@@ -19,28 +19,28 @@ import {
   UserAccountInfo,
 } from './shared/base-controller';
 
-export default class CreateNominalTestSuitesController extends BaseController {
-  readonly #createNominalTestSuites: CreateNominalTestSuites;
+export default class CreateQualitativeTestSuitesController extends BaseController {
+  readonly #createQualitativeTestSuites: CreateQualitativeTestSuites;
 
   constructor(
-    createNominalTestSuites: CreateNominalTestSuites,
+    createQualitativeTestSuites: CreateQualitativeTestSuites,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
   ) {
     super(getAccounts, getSnowflakeProfile);
-    this.#createNominalTestSuites = createNominalTestSuites;
+    this.#createQualitativeTestSuites = createQualitativeTestSuites;
   }
 
   #buildRequestDto = (
     httpRequest: Request
-  ): CreateNominalTestSuitesRequestDto => ({
+  ): CreateQualitativeTestSuitesRequestDto => ({
     createObjects: httpRequest.body.createObjects,
   });
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): CreateNominalTestSuitesAuthDto => {
+  ): CreateQualitativeTestSuitesAuthDto => {
     if (!userAccountInfo.callerOrgId)
       throw new Error('Unauthorized - Caller organization id missing');
 
@@ -56,7 +56,7 @@ export default class CreateNominalTestSuitesController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return CreateNominalTestSuitesController.unauthorized(
+        return CreateQualitativeTestSuitesController.unauthorized(
           res,
           'Unauthorized - auth-header missing'
         );
@@ -67,22 +67,22 @@ export default class CreateNominalTestSuitesController extends BaseController {
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return CreateNominalTestSuitesController.unauthorized(
+        return CreateQualitativeTestSuitesController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: CreateNominalTestSuitesRequestDto =
+      const requestDto: CreateQualitativeTestSuitesRequestDto =
         this.#buildRequestDto(req);
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-      const useCaseResult: CreateNominalTestSuitesResponseDto =
-        await this.#createNominalTestSuites.execute(
+      const useCaseResult: CreateQualitativeTestSuitesResponseDto =
+        await this.#createQualitativeTestSuites.execute(
           requestDto,
           authDto,
           connPool
@@ -92,7 +92,7 @@ export default class CreateNominalTestSuitesController extends BaseController {
       await connPool.clear();
 
       if (!useCaseResult.success) {
-        return CreateNominalTestSuitesController.badRequest(res);
+        return CreateQualitativeTestSuitesController.badRequest(res);
       }
 
       if (!useCaseResult.value)
@@ -100,9 +100,9 @@ export default class CreateNominalTestSuitesController extends BaseController {
 
       const resultValues = useCaseResult.value.map((el) => el.toDto());
 
-      await handleScheduleCreation(authDto.callerOrgId, 'nominal-test', resultValues);
+      await handleScheduleCreation(authDto.callerOrgId, 'qualitative-test', resultValues);
 
-      return CreateNominalTestSuitesController.ok(
+      return CreateQualitativeTestSuitesController.ok(
         res,
         resultValues,
         CodeHttp.CREATED
@@ -110,9 +110,9 @@ export default class CreateNominalTestSuitesController extends BaseController {
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
-      return CreateNominalTestSuitesController.fail(
+      return CreateQualitativeTestSuitesController.fail(
         res,
-        'create nominal test suites - Unknown error occurred'
+        'create qualitative test suites - Unknown error occurred'
       );
     }
   }

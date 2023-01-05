@@ -99,7 +99,7 @@ export class CreateTestResult
         return Result.ok(testExecutionResult);
 
       if (!instanceOfQuantitativeTestExecutionResultDto(testExecutionResult))
-        await this.#sendNominalTestAlert(testExecutionResult, auth);
+        await this.#sendQualitativeTestAlert(testExecutionResult, auth);
       else await this.#sendQuantitativeAlert(testExecutionResult, auth);
 
 

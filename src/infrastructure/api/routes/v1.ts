@@ -3,9 +3,9 @@ import { appConfig } from '../../../config';
 import customTestSuiteRoutes from './custom-test-suite-routes';
 import customTestSuitesRoutes from './custom-test-suites-routes';
 import testDataRoutes from './test-data-routes';
-import nominalTestSuiteRoutes from './test-suite-nominal-routes';
+import qualitativeTestSuiteRoutes from './test-suite-qualitative-routes';
 import testSuiteRoutes from './test-suite-routes';
-import nominalTestSuitesRoutes from './test-suites-nominal-routes';
+import qualitativeTestSuitesRoutes from './test-suites-qualitative-routes';
 import testSuitesRoutes from './test-suites-routes';
 
 
@@ -17,7 +17,7 @@ v1Router.get('/', (req, res) => res.json({ message: "Hi, we're up! Please provid
 
 v1Router.use(`/${appConfig.express.apiRoot}/${version}/test-suite`, testSuiteRoutes);
 
-v1Router.use(`/${appConfig.express.apiRoot}/${version}/nominal-test-suite`, nominalTestSuiteRoutes);
+v1Router.use(`/${appConfig.express.apiRoot}/${version}/qualitative-test-suite`, qualitativeTestSuiteRoutes);
 
 v1Router.use(`/${appConfig.express.apiRoot}/${version}/custom-test-suite`, customTestSuiteRoutes);
 
@@ -25,7 +25,7 @@ v1Router.use(`/${appConfig.express.apiRoot}/${version}/test-data`, testDataRoute
 
 v1Router.use(`/${appConfig.express.apiRoot}/${version}/test-suites`, testSuitesRoutes);
 
-v1Router.use(`/${appConfig.express.apiRoot}/${version}/nominal-test-suites`, nominalTestSuitesRoutes);
+v1Router.use(`/${appConfig.express.apiRoot}/${version}/qualitative-test-suites`, qualitativeTestSuitesRoutes);
 
 v1Router.use(`/${appConfig.express.apiRoot}/${version}/custom-test-suites`, customTestSuitesRoutes);
 

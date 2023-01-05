@@ -4,18 +4,18 @@ import { ITestExecutionApiRepo } from './i-test-execution-api-repo';
 import { TestExecutionResultDto } from './test-execution-result-dto';
 import { IDbConnection } from '../services/i-db';
 import { CreateQuantitativeTestResult } from '../test-result/create-test-result';
-import { CreateNominalTestResult } from '../nominal-test-result/create-nominal-test-result';
+import { CreateQualitativeTestResult } from '../qualitative-test-result/create-qualitative-test-result';
 import { SendQuantitativeSlackAlert } from '../integration-api/slack/send-quantitative-alert';
-import { SendNominalTestSlackAlert } from '../integration-api/slack/send-nominal-test-alert';
-import { NominalTestAlertDto } from '../integration-api/slack/nominal-test-alert-dto';
-import { NominalTestExecutionResultDto } from './nominal-test-execution-result-dto';
+import { SendQualitativeTestSlackAlert } from '../integration-api/slack/send-qualitative-test-alert';
+import { QualitativeTestAlertDto } from '../integration-api/slack/qualitative-test-alert-dto';
+import { QualitativeTestExecutionResultDto } from './qualitative-test-execution-result-dto';
 import { TestType } from '../entities/test-suite';
-import { NominalTestType } from '../entities/nominal-test-suite';
+import { QualitativeTestType } from '../entities/qualitative-test-suite';
 import { CustomTestType } from '../entities/custom-test-suite';
 
 export interface ExecuteTestRequestDto {
   testSuiteId: string;
-  testType: TestType | NominalTestType | CustomTestType;
+  testType: TestType | QualitativeTestType | CustomTestType;
   targetOrgId?: string;
 }
 
@@ -24,7 +24,7 @@ export interface ExecuteTestAuthDto {
 }
 
 export type ExecuteTestResponseDto = Result<
-  QuantitativeTestExecutionResultDto | NominalTestExecutionResultDto
+  QuantitativeTestExecutionResultDto | QualitativeTestExecutionResultDto
 >;
 
 export class ExecuteTest
@@ -40,32 +40,32 @@ export class ExecuteTest
 
   readonly #createQuantitativeTestResult: CreateQuantitativeTestResult;
 
-  readonly #createNominalTestResult: CreateNominalTestResult;
+  readonly #createQualitativeTestResult: CreateQualitativeTestResult;
 
   readonly #sendQuantitativeTestSlackAlert: SendQuantitativeSlackAlert;
 
-  readonly #sendNominalTestSlackAlert: SendNominalTestSlackAlert;
+  readonly #sendQualitativeTestSlackAlert: SendQualitativeTestSlackAlert;
 
   #dbConnection: IDbConnection;
 
   constructor(
     testExecutionApiRepo: ITestExecutionApiRepo,
     createQuantitativeTestResult: CreateQuantitativeTestResult,
-    createNominalTestResult: CreateNominalTestResult,
+    createQualitativeTestResult: CreateQualitativeTestResult,
     sendQuantitativeSlackAlert: SendQuantitativeSlackAlert,
-    sendNominalTestSlackAlert: SendNominalTestSlackAlert
+    sendQualitativeTestSlackAlert: SendQualitativeTestSlackAlert
   ) {
     this.#testExecutionApiRepo = testExecutionApiRepo;
     this.#createQuantitativeTestResult = createQuantitativeTestResult;
-    this.#createNominalTestResult = createNominalTestResult;
+    this.#createQualitativeTestResult = createQualitativeTestResult;
     this.#sendQuantitativeTestSlackAlert = sendQuantitativeSlackAlert;
-    this.#sendNominalTestSlackAlert = sendNominalTestSlackAlert;
+    this.#sendQualitativeTestSlackAlert = sendQualitativeTestSlackAlert;
   }
 
-  #createNominalTestExecutionResult = async (
-    testExecutionResult: NominalTestExecutionResultDto
+  #createQualitativeTestExecutionResult = async (
+    testExecutionResult: QualitativeTestExecutionResultDto
   ): Promise<void> => {
-    const createTestResultResult = await this.#createNominalTestResult.execute(
+    const createTestResultResult = await this.#createQualitativeTestResult.execute(
       {
         executionId: testExecutionResult.executionId,
         testData: testExecutionResult.testData,

@@ -1,5 +1,5 @@
 // todo - evaluate. approach to replace tedious work of working with classes. Imo does not violate Clean architecture & DDD
-export interface NominalTestResult {
+export interface QualitativeTestResult {
   testSuiteId: string;
   executionId: string;
   testData?: {

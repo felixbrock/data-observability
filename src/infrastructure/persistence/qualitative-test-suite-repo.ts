@@ -1,8 +1,8 @@
 import {
-  NominalTestSuite,
-  NominalTestSuiteProps,
-  parseNominalTestType,
-} from '../../domain/entities/nominal-test-suite';
+  QualitativeTestSuite,
+  QualitativeTestSuiteProps,
+  parseQualitativeTestType,
+} from '../../domain/entities/qualitative-test-suite';
 import {
   ColumnDefinition,
   getUpdateQueryText,
@@ -16,22 +16,22 @@ import {
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
 import {
-  INominalTestSuiteRepo,
-  NominalTestSuiteQueryDto,
-  NominalTestSuiteUpdateDto,
-} from '../../domain/nominal-test-suite/i-nominal-test-suite-repo';
+  IQualitativeTestSuiteRepo,
+  QualitativeTestSuiteQueryDto,
+  QualitativeTestSuiteUpdateDto,
+} from '../../domain/qualitative-test-suite/i-qualitative-test-suite-repo';
 import { parseMaterializationType } from '../../domain/value-types/materialization-type';
 
-export default class NominalTestSuiteRepo
+export default class QualitativeTestSuiteRepo
   extends BaseSfRepo<
-    NominalTestSuite,
-    NominalTestSuiteProps,
-    NominalTestSuiteQueryDto,
-    NominalTestSuiteUpdateDto
+    QualitativeTestSuite,
+    QualitativeTestSuiteProps,
+    QualitativeTestSuiteQueryDto,
+    QualitativeTestSuiteUpdateDto
   >
-  implements INominalTestSuiteRepo
+  implements IQualitativeTestSuiteRepo
 {
-  readonly matName = 'test_suites_nominal';
+  readonly matName = 'test_suites_qualitative';
 
   readonly colDefinitions: ColumnDefinition[] = [
     { name: 'id', nullable: false },
@@ -52,7 +52,7 @@ export default class NominalTestSuiteRepo
     super(querySnowflake);
   }
 
-  buildEntityProps = (sfEntity: SnowflakeEntity): NominalTestSuiteProps => {
+  buildEntityProps = (sfEntity: SnowflakeEntity): QualitativeTestSuiteProps => {
     const {
       ID: id,
       TEST_TYPE: type,
@@ -75,13 +75,13 @@ export default class NominalTestSuiteRepo
       typeof schemaName !== 'string' ||
       typeof materializationName !== 'string' ||
       typeof materializationType !== 'string' ||
-      !NominalTestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
+      !QualitativeTestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string'
     )
       throw new Error(
-        'Retrieved unexpected nominal test suite field types from persistence'
+        'Retrieved unexpected qualitative test suite field types from persistence'
       );
 
     return {
@@ -95,13 +95,13 @@ export default class NominalTestSuiteRepo
         targetResourceId,
         columnName,
       },
-      type: parseNominalTestType(type),
+      type: parseQualitativeTestType(type),
       cron,
       executionType: parseExecutionType(executionType),
     };
   };
 
-  getBinds = (entity: NominalTestSuite): (string | number)[] => [
+  getBinds = (entity: QualitativeTestSuite): (string | number)[] => [
     entity.id,
     entity.type,
     entity.activated.toString(),
@@ -115,7 +115,7 @@ export default class NominalTestSuiteRepo
     entity.executionType,
   ];
 
-  buildFindByQuery = (queryDto: NominalTestSuiteQueryDto): Query => {
+  buildFindByQuery = (queryDto: QualitativeTestSuiteQueryDto): Query => {
     const binds: (string | number)[] = [];
     let whereClause = '';
 
@@ -142,7 +142,7 @@ export default class NominalTestSuiteRepo
 
   buildUpdateQuery = (
     id: string,
-    updateDto: NominalTestSuiteUpdateDto
+    updateDto: QualitativeTestSuiteUpdateDto
   ): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
     const binds: Binds = [id];
@@ -168,6 +168,6 @@ export default class NominalTestSuiteRepo
   };
 
   toEntity = (
-    nominaltestsuiteProperties: NominalTestSuiteProps
-  ): NominalTestSuite => NominalTestSuite.create(nominaltestsuiteProperties);
+    qualitativetestsuiteProperties: QualitativeTestSuiteProps
+  ): QualitativeTestSuite => QualitativeTestSuite.create(qualitativetestsuiteProperties);
 }

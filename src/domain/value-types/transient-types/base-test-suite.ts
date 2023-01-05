@@ -11,4 +11,4 @@ export interface BaseQuantitativeTestSuite extends BaseTestSuite{
   threshold: number;
 }
 
-export type NominalTestSuite = BaseTestSuite;
+export type QualitativeTestSuite = BaseTestSuite;

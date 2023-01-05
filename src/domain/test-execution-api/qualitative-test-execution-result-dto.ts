@@ -1,9 +1,9 @@
-import { NominalTestType } from '../entities/nominal-test-suite';
+import { QualitativeTestType } from '../entities/qualitative-test-suite';
 import { MaterializationType } from '../value-types/materialization-type';
 
-export interface NominalTestExecutionResultDto {
+export interface QualitativeTestExecutionResultDto {
   testSuiteId: string;
-  testType: NominalTestType;
+  testType: QualitativeTestType;
   executionId: string;
   testData: {
     executedOn: string;

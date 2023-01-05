@@ -3,11 +3,11 @@ import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
-  UpdateNominalTestSuites,
-  UpdateNominalTestSuitesAuthDto,
-  UpdateNominalTestSuitesRequestDto,
-  UpdateNominalTestSuitesResponseDto,
-} from '../../../domain/nominal-test-suite/update-nominal-test-suites';
+  UpdateQualitativeTestSuites,
+  UpdateQualitativeTestSuitesAuthDto,
+  UpdateQualitativeTestSuitesRequestDto,
+  UpdateQualitativeTestSuitesResponseDto,
+} from '../../../domain/qualitative-test-suite/update-qualitative-test-suites';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -20,28 +20,28 @@ import {
 } from '../../../domain/services/schedule';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
-export default class UpdateNominalTestSuitesController extends BaseController {
-  readonly #updateNominalTestSuites: UpdateNominalTestSuites;
+export default class UpdateQualitativeTestSuitesController extends BaseController {
+  readonly #updateQualitativeTestSuites: UpdateQualitativeTestSuites;
 
   constructor(
-    updateNominalTestSuites: UpdateNominalTestSuites,
+    updateQualitativeTestSuites: UpdateQualitativeTestSuites,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
   ) {
     super(getAccounts, getSnowflakeProfile);
-    this.#updateNominalTestSuites = updateNominalTestSuites;
+    this.#updateQualitativeTestSuites = updateQualitativeTestSuites;
   }
 
   #buildRequestDto = (
     httpRequest: Request
-  ): UpdateNominalTestSuitesRequestDto => ({
+  ): UpdateQualitativeTestSuitesRequestDto => ({
     updateObjects: httpRequest.body.updateObjects,
   });
 
   #buildAuthDto = (
     jwt: string,
     userAccountInfo: UserAccountInfo
-  ): UpdateNominalTestSuitesAuthDto => {
+  ): UpdateQualitativeTestSuitesAuthDto => {
     if (!userAccountInfo.callerOrgId) throw new Error('callerOrgId missing');
     return {
       jwt,
@@ -55,7 +55,7 @@ export default class UpdateNominalTestSuitesController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return UpdateNominalTestSuitesController.unauthorized(
+        return UpdateQualitativeTestSuitesController.unauthorized(
           res,
           'Unauthorized'
         );
@@ -66,24 +66,24 @@ export default class UpdateNominalTestSuitesController extends BaseController {
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return UpdateNominalTestSuitesController.unauthorized(
+        return UpdateQualitativeTestSuitesController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: UpdateNominalTestSuitesRequestDto =
+      const requestDto: UpdateQualitativeTestSuitesRequestDto =
         this.#buildRequestDto(req);
-      const authDto: UpdateNominalTestSuitesAuthDto = this.#buildAuthDto(
+      const authDto: UpdateQualitativeTestSuitesAuthDto = this.#buildAuthDto(
         jwt,
         getUserAccountInfoResult.value
       );
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-      const useCaseResult: UpdateNominalTestSuitesResponseDto =
-        await this.#updateNominalTestSuites.execute(
+      const useCaseResult: UpdateQualitativeTestSuitesResponseDto =
+        await this.#updateQualitativeTestSuites.execute(
           requestDto,
           authDto,
           connPool
@@ -93,7 +93,7 @@ export default class UpdateNominalTestSuitesController extends BaseController {
       await connPool.clear();
 
       if (!useCaseResult.success) {
-        return UpdateNominalTestSuitesController.badRequest(
+        return UpdateQualitativeTestSuitesController.badRequest(
           res,
           useCaseResult.error
         );
@@ -101,14 +101,14 @@ export default class UpdateNominalTestSuitesController extends BaseController {
 
       const resultValue = useCaseResult.value;
       if (!resultValue)
-        UpdateNominalTestSuitesController.fail(
+        UpdateQualitativeTestSuitesController.fail(
           res,
           'Update of test suites failed. Internal error.'
         );
 
       await handleScheduleUpdate(authDto.callerOrgId, requestDto.updateObjects);
 
-      return UpdateNominalTestSuitesController.ok(
+      return UpdateQualitativeTestSuitesController.ok(
         res,
         resultValue,
         CodeHttp.OK
@@ -116,9 +116,9 @@ export default class UpdateNominalTestSuitesController extends BaseController {
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
-      return UpdateNominalTestSuitesController.fail(
+      return UpdateQualitativeTestSuitesController.fail(
         res,
-        'update nominal test suites - Unknown error occurred'
+        'update qualitative test suites - Unknown error occurred'
       );
     }
   }

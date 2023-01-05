@@ -1,12 +1,12 @@
 // todo - clean architecture violation
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { NominalTestResult } from '../value-types/nominal-test-result';
+import { QualitativeTestResult } from '../value-types/qualitative-test-result';
 import { IDbConnection } from '../services/i-db';
-import { INominalTestResultRepo } from './i-nominal-test-result-repo';
+import { IQualitativeTestResultRepo } from './i-qualitative-test-result-repo';
 import { TestType } from '../entities/test-suite';
 
-export interface CreateNominalTestTestResultRequestDto {
+export interface CreateQualitativeTestTestResultRequestDto {
   testSuiteId: string;
   testType: TestType;
   executionId: string;
@@ -22,29 +22,29 @@ export interface CreateNominalTestTestResultRequestDto {
   targetOrgId: string;
 }
 
-export type CreateNominalTestResultAuthDto = null;
+export type CreateQualitativeTestResultAuthDto = null;
 
-export type CreateNominalTestResultResponseDto = Result<NominalTestResult>;
+export type CreateQualitativeTestResultResponseDto = Result<QualitativeTestResult>;
 
-export class CreateNominalTestResult
+export class CreateQualitativeTestResult
   implements
     IUseCase<
-      CreateNominalTestTestResultRequestDto,
-      CreateNominalTestResultResponseDto,
-      CreateNominalTestResultAuthDto,
+      CreateQualitativeTestTestResultRequestDto,
+      CreateQualitativeTestResultResponseDto,
+      CreateQualitativeTestResultAuthDto,
       IDbConnection
     >
 {
-  readonly #nominalTestResultRepo: INominalTestResultRepo;
+  readonly #qualitativeTestResultRepo: IQualitativeTestResultRepo;
 
   #dbConnection: IDbConnection;
 
-  constructor(nominalTestResultRepo: INominalTestResultRepo) {
-    this.#nominalTestResultRepo = nominalTestResultRepo;
+  constructor(qualitativeTestResultRepo: IQualitativeTestResultRepo) {
+    this.#qualitativeTestResultRepo = qualitativeTestResultRepo;
   }
 
   #sendAlert = async (
-    testExecutionResult: NominalTestExecutionResultDto,
+    testExecutionResult: QualitativeTestExecutionResultDto,
     auth: ExecuteTestAuthDto
   ): Promise<void> => {
     if (!testExecutionResult.testData)
@@ -54,7 +54,7 @@ export class CreateNominalTestResult
         'Missing alert data. Previous checks indicated alert data'
       );
 
-    const alertDto: NominalTestAlertDto = {
+    const alertDto: QualitativeTestAlertDto = {
       alertId: testExecutionResult.alertData.alertId,
       testType: testExecutionResult.testType,
       detectedOn: testExecutionResult.testData.executedOn,
@@ -66,7 +66,7 @@ export class CreateNominalTestResult
       schemaDiffs: testExecutionResult.testData.schemaDiffs,
     };
 
-    const sendSlackAlertResult = await this.#sendNominalTestSlackAlert.execute(
+    const sendSlackAlertResult = await this.#sendQualitativeTestSlackAlert.execute(
       { alertDto, targetOrgId: testExecutionResult.organizationId },
       { jwt: auth.jwt }
     );
@@ -78,10 +78,10 @@ export class CreateNominalTestResult
   };
 
   async execute(
-    request: CreateNominalTestTestResultRequestDto,
-    auth: CreateNominalTestResultAuthDto,
+    request: CreateQualitativeTestTestResultRequestDto,
+    auth: CreateQualitativeTestResultAuthDto,
     dbConnection: IDbConnection
-  ): Promise<CreateNominalTestResultResponseDto> {
+  ): Promise<CreateQualitativeTestResultResponseDto> {
     try {
       this.#dbConnection = dbConnection;
 
@@ -93,17 +93,17 @@ export class CreateNominalTestResult
         return Result.ok(testExecutionResult);
 
       if (!instanceOfQuantitativeTestExecutionResultDto(testExecutionResult))
-        await this.#sendNominalTestAlert(testExecutionResult, auth);
+        await this.#sendQualitativeTestAlert(testExecutionResult, auth);
       else await this.#sendQuantitativeAlert(testExecutionResult, auth);
 
-      const nominalTestResult: NominalTestResult = {
+      const qualitativeTestResult: QualitativeTestResult = {
         ...request,
         organizationId: request.targetOrgId,
       };
 
-      await this.#nominalTestResultRepo.insertOne(nominalTestResult, this.#dbConnection);
+      await this.#qualitativeTestResultRepo.insertOne(qualitativeTestResult, this.#dbConnection);
 
-      return Result.ok(nominalTestResult);
+      return Result.ok(qualitativeTestResult);
     } catch (error: unknown) {
       if (error instanceof Error ) console.error(error.stack);
       else if (error) console.trace(error);

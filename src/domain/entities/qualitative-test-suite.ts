@@ -14,42 +14,42 @@ export interface TestTarget {
   columnName?: string;
 }
 
-export const nominalMatTestTypes = ['MaterializationSchemaChange'] as const;
+export const qualitativeMatTestTypes = ['MaterializationSchemaChange'] as const;
 
-export const nominalColumnTestTypes = [] as const;
+export const qualitativeColumnTestTypes = [] as const;
 
-export type NominalTestType =
-  | typeof nominalMatTestTypes[number]
-  | typeof nominalColumnTestTypes[number];
+export type QualitativeTestType =
+  | typeof qualitativeMatTestTypes[number]
+  | typeof qualitativeColumnTestTypes[number];
 
-export const parseNominalTestType = (testType: unknown): NominalTestType => {
-  const identifiedElement = nominalMatTestTypes
-    .concat(nominalColumnTestTypes)
+export const parseQualitativeTestType = (testType: unknown): QualitativeTestType => {
+  const identifiedElement = qualitativeMatTestTypes
+    .concat(qualitativeColumnTestTypes)
     .find((element) => element === testType);
   if (identifiedElement) return identifiedElement;
   throw new Error('Provision of invalid type');
 };
 
-export interface NominalTestSuiteProps extends BaseTestSuite {
-  type: NominalTestType;
+export interface QualitativeTestSuiteProps extends BaseTestSuite {
+  type: QualitativeTestType;
   target: TestTarget;
 }
 
-export interface NominalTestSuiteDto {
+export interface QualitativeTestSuiteDto {
   id: string;
   activated: boolean;
-  type: NominalTestType;
+  type: QualitativeTestType;
   target: TestTarget;
   cron: string;
   executionType: ExecutionType;
 }
 
-export class NominalTestSuite implements BaseTestSuite {
+export class QualitativeTestSuite implements BaseTestSuite {
   #id: string;
 
   #activated: boolean;
 
-  #type: NominalTestType;
+  #type: QualitativeTestType;
 
   #target: TestTarget;
 
@@ -65,7 +65,7 @@ export class NominalTestSuite implements BaseTestSuite {
     return this.#activated;
   }
 
-  get type(): NominalTestType {
+  get type(): QualitativeTestType {
     return this.#type;
   }
 
@@ -81,7 +81,7 @@ export class NominalTestSuite implements BaseTestSuite {
     return this.#executionType;
   }
 
-  private constructor(props: NominalTestSuiteProps) {
+  private constructor(props: QualitativeTestSuiteProps) {
     this.#id = props.id;
     this.#activated = props.activated;
     this.#type = props.type;
@@ -90,24 +90,24 @@ export class NominalTestSuite implements BaseTestSuite {
     this.#executionType = props.executionType;
   }
 
-  static create = (props: NominalTestSuiteProps): NominalTestSuite => {
+  static create = (props: QualitativeTestSuiteProps): QualitativeTestSuite => {
     const { type, target, ...remainingProps } = props;
 
     if (!remainingProps.id) throw new TypeError('TestSuite must have id');
     if (!remainingProps.cron) throw new TypeError('TestSuite must have cron');
     if (!remainingProps.executionType)
       throw new TypeError('Test suite must have execution type');
-    if (nominalMatTestTypes.includes(type) && target.columnName)
+    if (qualitativeMatTestTypes.includes(type) && target.columnName)
       throw new SyntaxError(
         'Column name provision only allowed for column level tests'
       );
 
-    const parsedType = parseNominalTestType(type);
+    const parsedType = parseQualitativeTestType(type);
     const parsedMaterializationType = parseMaterializationType(
       target.materializationType
     );
 
-    return new NominalTestSuite({
+    return new QualitativeTestSuite({
       ...props,
       type: parsedType,
       target: {
@@ -117,7 +117,7 @@ export class NominalTestSuite implements BaseTestSuite {
     });
   };
 
-  toDto = (): NominalTestSuiteDto => ({
+  toDto = (): QualitativeTestSuiteDto => ({
     id: this.#id,
     activated: this.#activated,
     type: this.#type,

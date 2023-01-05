@@ -2,11 +2,11 @@
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
 import {
-  ReadNominalTestSuite,
-  ReadNominalTestSuiteAuthDto,
-  ReadNominalTestSuiteRequestDto,
-  ReadNominalTestSuiteResponseDto,
-} from '../../../domain/nominal-test-suite/read-nominal-test-suite';
+  ReadQualitativeTestSuite,
+  ReadQualitativeTestSuiteAuthDto,
+  ReadQualitativeTestSuiteRequestDto,
+  ReadQualitativeTestSuiteResponseDto,
+} from '../../../domain/qualitative-test-suite/read-qualitative-test-suite';
 
 import {
   BaseController,
@@ -17,19 +17,19 @@ import Result from '../../../domain/value-types/transient-types/result';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
-export default class ReadNominalTestSuiteController extends BaseController {
-  readonly #readNominalTestSuite: ReadNominalTestSuite;
+export default class ReadQualitativeTestSuiteController extends BaseController {
+  readonly #readQualitativeTestSuite: ReadQualitativeTestSuite;
 
   constructor(
-    readNominalTestSuite: ReadNominalTestSuite,
+    readQualitativeTestSuite: ReadQualitativeTestSuite,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
   ) {
     super(getAccounts, getSnowflakeProfile);
-    this.#readNominalTestSuite = readNominalTestSuite;
+    this.#readQualitativeTestSuite = readQualitativeTestSuite;
   }
 
-  #buildRequestDto = (httpRequest: Request): ReadNominalTestSuiteRequestDto => {
+  #buildRequestDto = (httpRequest: Request): ReadQualitativeTestSuiteRequestDto => {
     const { id } = httpRequest.params;
 
     return {
@@ -40,7 +40,7 @@ export default class ReadNominalTestSuiteController extends BaseController {
   #buildAuthDto = (
     jwt: string,
     userAccountInfo: UserAccountInfo
-  ): ReadNominalTestSuiteAuthDto => ({
+  ): ReadQualitativeTestSuiteAuthDto => ({
     jwt,
     callerOrgId: userAccountInfo.callerOrgId,
     isSystemInternal: userAccountInfo.isSystemInternal,
@@ -51,7 +51,7 @@ export default class ReadNominalTestSuiteController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return ReadNominalTestSuiteController.unauthorized(res, 'Unauthorized');
+        return ReadQualitativeTestSuiteController.unauthorized(res, 'Unauthorized');
 
       const jwt = authHeader.split(' ')[1];
 
@@ -59,43 +59,43 @@ export default class ReadNominalTestSuiteController extends BaseController {
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return ReadNominalTestSuiteController.unauthorized(
+        return ReadQualitativeTestSuiteController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: ReadNominalTestSuiteRequestDto =
+      const requestDto: ReadQualitativeTestSuiteRequestDto =
         this.#buildRequestDto(req);
-      const authDto: ReadNominalTestSuiteAuthDto = this.#buildAuthDto(
+      const authDto: ReadQualitativeTestSuiteAuthDto = this.#buildAuthDto(
         jwt,
         getUserAccountInfoResult.value
       );
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-      const useCaseResult: ReadNominalTestSuiteResponseDto =
-        await this.#readNominalTestSuite.execute(requestDto, authDto, connPool);
+      const useCaseResult: ReadQualitativeTestSuiteResponseDto =
+        await this.#readQualitativeTestSuite.execute(requestDto, authDto, connPool);
 
       await connPool.drain();
       await connPool.clear();
 
       if (!useCaseResult.success) {
-        return ReadNominalTestSuiteController.badRequest(res);
+        return ReadQualitativeTestSuiteController.badRequest(res);
       }
 
       const resultValue = useCaseResult.value
         ? useCaseResult.value.toDto()
         : useCaseResult.value;
 
-      return ReadNominalTestSuiteController.ok(res, resultValue, CodeHttp.OK);
+      return ReadQualitativeTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error ) console.error(error.stack);
       else if (error) console.trace(error);
-      return ReadNominalTestSuiteController.fail(
+      return ReadQualitativeTestSuiteController.fail(
         res,
-        'read nominal test suite - Unknown error occurred'
+        'read qualitative test suite - Unknown error occurred'
       );
     }
   }

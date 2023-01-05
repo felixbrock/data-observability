@@ -3,10 +3,10 @@
 import { Db, Document, InsertOneResult } from 'mongodb';
 import sanitize from 'mongo-sanitize';
 
-import { INominalTestResultRepo } from '../../domain/nominal-test-result/i-nominal-test-result-repo';
-import { NominalTestResult } from '../../domain/value-types/nominal-test-result';
+import { IQualitativeTestResultRepo } from '../../domain/qualitative-test-result/i-qualitative-test-result-repo';
+import { QualitativeTestResult } from '../../domain/value-types/qualitative-test-result';
 
-interface NominalTestResultPersistence {
+interface QualitativeTestResultPersistence {
   testSuiteId: string;
   executionId: string;
   testData?: {
@@ -21,21 +21,21 @@ interface NominalTestResultPersistence {
   organizationId: string;
 }
 
-const collectionName = 'nominalTestResult';
+const collectionName = 'qualitativeTestResult';
 
-export default class NominalTestResultRepo implements INominalTestResultRepo {
+export default class QualitativeTestResultRepo implements IQualitativeTestResultRepo {
   insertOne = async (
-    nominalTestResult: NominalTestResult,
+    qualitativeTestResult: QualitativeTestResult,
     dbConnection: Db
   ): Promise<string> => {
     try {
       const result: InsertOneResult<Document> = await dbConnection
         .collection(collectionName)
-        .insertOne(await this.#toPersistence(sanitize(nominalTestResult)));
+        .insertOne(await this.#toPersistence(sanitize(qualitativeTestResult)));
 
       if (!result.acknowledged)
         throw new Error(
-          'NominalTestResult creation failed. Insert not acknowledged'
+          'QualitativeTestResult creation failed. Insert not acknowledged'
         );
 
       return result.insertedId.toHexString();
@@ -47,10 +47,10 @@ export default class NominalTestResultRepo implements INominalTestResultRepo {
   };
 
   #toPersistence = async (
-    nominalTestResult: NominalTestResult
+    qualitativeTestResult: QualitativeTestResult
   ): Promise<Document> => {
-    const persistenceObject: NominalTestResultPersistence = {
-      ...nominalTestResult,
+    const persistenceObject: QualitativeTestResultPersistence = {
+      ...qualitativeTestResult,
     };
 
     return persistenceObject;

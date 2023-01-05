@@ -6,47 +6,47 @@ import { QuerySnowflake } from '../snowflake-api/query-snowflake';
 import { ExecuteTest } from '../test-execution-api/execute-test';
 import { ExecutionType } from '../value-types/execution-type';
 import Result from '../value-types/transient-types/result';
-import { ReadNominalTestSuite } from './read-nominal-test-suite';
+import { ReadQualitativeTestSuite } from './read-qualitative-test-suite';
 
-export interface TriggerNominalTestSuiteExecutionRequestDto {
+export interface TriggerQualitativeTestSuiteExecutionRequestDto {
   id: string;
   targetOrgId?: string;
   executionType: ExecutionType;
 }
 
-export type TriggerNominalTestSuiteExecutionAuthDto = BaseAuth;
+export type TriggerQualitativeTestSuiteExecutionAuthDto = BaseAuth;
 
-export type TriggerNominalTestSuiteExecutionResponseDto = Result<void>;
+export type TriggerQualitativeTestSuiteExecutionResponseDto = Result<void>;
 
-export class TriggerNominalTestSuiteExecution
+export class TriggerQualitativeTestSuiteExecution
   extends BaseTriggerTestSuiteExecution
   implements
     IUseCase<
-      TriggerNominalTestSuiteExecutionRequestDto,
-      TriggerNominalTestSuiteExecutionResponseDto,
-      TriggerNominalTestSuiteExecutionAuthDto,
+      TriggerQualitativeTestSuiteExecutionRequestDto,
+      TriggerQualitativeTestSuiteExecutionResponseDto,
+      TriggerQualitativeTestSuiteExecutionAuthDto,
       IDb
     >
 {
-  readonly #readNominalTestSuite: ReadNominalTestSuite;
+  readonly #readQualitativeTestSuite: ReadQualitativeTestSuite;
 
   readonly #executeTest: ExecuteTest;
 
   constructor(
-    readNominalTestSuite: ReadNominalTestSuite,
+    readQualitativeTestSuite: ReadQualitativeTestSuite,
     querySnowflake: QuerySnowflake,
     executeTest: ExecuteTest
   ) {
     super(querySnowflake);
-    this.#readNominalTestSuite = readNominalTestSuite;
+    this.#readQualitativeTestSuite = readQualitativeTestSuite;
     this.#executeTest = executeTest;
   }
 
   async execute(
-    request: TriggerNominalTestSuiteExecutionRequestDto,
-    auth: TriggerNominalTestSuiteExecutionAuthDto,
+    request: TriggerQualitativeTestSuiteExecutionRequestDto,
+    auth: TriggerQualitativeTestSuiteExecutionAuthDto,
     db: IDb
-  ): Promise<TriggerNominalTestSuiteExecutionResponseDto> {
+  ): Promise<TriggerQualitativeTestSuiteExecutionResponseDto> {
     if (auth.isSystemInternal && !request.targetOrgId)
       throw new Error('Target organization id missing');
     if (!auth.isSystemInternal && !auth.callerOrgId)
@@ -59,7 +59,7 @@ export class TriggerNominalTestSuiteExecution
       );
 
     try {
-      const readTestSuiteResult = await this.#readNominalTestSuite.execute(
+      const readTestSuiteResult = await this.#readQualitativeTestSuite.execute(
         { id: request.id },
         auth,
         db.sfConnPool
