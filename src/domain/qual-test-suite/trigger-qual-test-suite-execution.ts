@@ -6,7 +6,7 @@ import { QuerySnowflake } from '../snowflake-api/query-snowflake';
 import { ExecuteTest } from '../test-execution-api/execute-test';
 import { ExecutionType } from '../value-types/execution-type';
 import Result from '../value-types/transient-types/result';
-import { ReadQualTestSuite } from './read-qualitative-test-suite';
+import { ReadQualTestSuite } from './read-qual-test-suite';
 
 export interface TriggerQualTestSuiteExecutionRequestDto {
   id: string;

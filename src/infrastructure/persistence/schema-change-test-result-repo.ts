@@ -3,8 +3,8 @@
 import { Db, Document, InsertOneResult } from 'mongodb';
 import sanitize from 'mongo-sanitize';
 
-import { IQualTestResultRepo } from '../../domain/qualitative-test-result/i-qualitative-test-result-repo';
-import { QualTestResult } from '../../domain/value-types/qualitative-test-result';
+import { IQualTestResultRepo } from '../../domain/qual-test-result/i-qual-test-result-repo';
+import { QualTestResult } from '../../domain/value-types/qual-test-result';
 
 interface QualTestResultPersistence {
   testSuiteId: string;

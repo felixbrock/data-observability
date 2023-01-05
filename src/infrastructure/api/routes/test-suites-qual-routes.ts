@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import app from '../../ioc-register';
-import ReadQualTestSuitesController from '../controllers/read-qualitative-test-suites-controller';
-import UpdateQualTestSuitesController from '../controllers/update-qualitative-test-suites-controller';
-import CreateQualTestSuitesController from '../controllers/create-qualitative-test-suites-controller';
+import ReadQualTestSuitesController from '../controllers/read-qual-test-suites-controller';
+import UpdateQualTestSuitesController from '../controllers/update-qual-test-suites-controller';
+import CreateQualTestSuitesController from '../controllers/create-qual-test-suites-controller';
 
 const qualTestSuitesRoutes = Router();
 

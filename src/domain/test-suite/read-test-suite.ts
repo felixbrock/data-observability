@@ -1,6 +1,6 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { TestSuite } from '../entities/quantitative-test-suite';
+import { TestSuite } from '../entities/quant-test-suite';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { ITestSuiteRepo } from './i-test-suite-repo';
 import TestSuiteRepo from '../../infrastructure/persistence/test-suite-repo';

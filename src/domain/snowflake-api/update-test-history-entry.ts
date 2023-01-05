@@ -1,8 +1,8 @@
 import IUseCase from '../services/use-case';
 import Result from '../value-types/transient-types/result';
 
-import { TestType } from '../entities/quantitative-test-suite';
-import { QualTestType } from '../entities/qualitative-test-suite';
+import { TestType } from '../entities/quant-test-suite';
+import { QualTestType } from '../entities/qual-test-suite';
 import { QuerySnowflake } from './query-snowflake';
 import { Binds, IConnectionPool } from './i-snowflake-api-repo';
 import BaseAuth from '../services/base-auth';

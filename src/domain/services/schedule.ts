@@ -17,7 +17,7 @@ import {
 import { appConfig } from '../../config';
 import { ExecutionType } from '../value-types/execution-type';
 
-export const testSuiteTypes = ['test', 'custom-test', 'qualitative-test'] as const;
+export const testSuiteTypes = ['test', 'custom-test', 'nominal-test'] as const;
 
 export type TestSuiteType = typeof testSuiteTypes[number];
 

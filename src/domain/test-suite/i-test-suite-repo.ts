@@ -1,4 +1,4 @@
-import { TestSuite } from '../entities/quantitative-test-suite';
+import { TestSuite } from '../entities/quant-test-suite';
 import { IServiceRepo } from '../services/i-service-repo';
 import { ExecutionType } from '../value-types/execution-type';
 

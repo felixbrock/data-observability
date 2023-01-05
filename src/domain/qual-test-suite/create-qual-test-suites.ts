@@ -1,16 +1,16 @@
 import { v4 as uuidv4 } from 'uuid';
-import QualTestSuiteRepo from '../../infrastructure/persistence/qualitative-test-suite-repo';
+import QualTestSuiteRepo from '../../infrastructure/persistence/qual-test-suite-repo';
 import {
   QualTestSuite,
   QualTestType,
-} from '../entities/qualitative-test-suite';
+} from '../entities/qual-test-suite';
 import BaseAuth from '../services/base-auth';
 import IUseCase from '../services/use-case';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { ExecutionType } from '../value-types/execution-type';
 import { MaterializationType } from '../value-types/materialization-type';
 import Result from '../value-types/transient-types/result';
-import { IQualTestSuiteRepo } from './i-qualitative-test-suite-repo';
+import { IQualTestSuiteRepo } from './i-qual-test-suite-repo';
 
 interface CreateObject {
   activated: boolean;

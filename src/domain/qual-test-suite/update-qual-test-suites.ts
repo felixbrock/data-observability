@@ -3,9 +3,9 @@ import Result from '../value-types/transient-types/result';
 import { ExecutionType } from '../value-types/execution-type';
 import BaseAuth from '../services/base-auth';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
-import { IQualTestSuiteRepo } from './i-qualitative-test-suite-repo';
-import QualTestSuiteRepo from '../../infrastructure/persistence/qualitative-test-suite-repo';
-import { QualTestSuite } from '../entities/qualitative-test-suite';
+import { IQualTestSuiteRepo } from './i-qual-test-suite-repo';
+import QualTestSuiteRepo from '../../infrastructure/persistence/qual-test-suite-repo';
+import { QualTestSuite } from '../entities/qual-test-suite';
 
 interface UpdateObject {
   id: string;

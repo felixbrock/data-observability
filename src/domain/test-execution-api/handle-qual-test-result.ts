@@ -1,16 +1,16 @@
 // todo - clean architecture violation
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { QualTestResult } from '../value-types/qualitative-test-result';
+import { QualTestResult } from '../value-types/qual-test-result';
 import { IDbConnection } from '../services/i-db';
-import { IQualTestResultRepo } from './i-qualitative-test-result-repo';
-import { TestType } from '../entities/quantitative-test-suite';
-import { QualTestExecutionResultDto } from '../test-execution-api/qualitative-test-execution-result-dto';
+import { IQualTestResultRepo } from './i-qual-test-result-repo';
+import { TestType } from '../entities/quant-test-suite';
+import { QualTestExecutionResultDto } from '../test-execution-api/qual-test-execution-result-dto';
 import { ExecuteTestAuthDto } from '../test-execution-api/execute-test';
-import { QualTestAlertDto } from '../integration-api/slack/qualitative-test-alert-dto';
-import { SendQualTestSlackAlert } from '../integration-api/slack/send-qualitative-test-alert';
+import { QualTestAlertDto } from '../integration-api/slack/qual-test-alert-dto';
+import { SendQualTestSlackAlert } from '../integration-api/slack/send-qual-test-alert';
 
-export interface CreateQualTestTestResultRequestDto {
+export interface HandleQualTestResultRequestDto {
   testSuiteId: string;
   testType: TestType;
   executionId: string;
@@ -26,16 +26,16 @@ export interface CreateQualTestTestResultRequestDto {
   targetOrgId: string;
 }
 
-export type CreateQualTestResultAuthDto = null;
+export type HandleQualTestResultAuthDto = null;
 
-export type CreateQualTestResultResponseDto = Result<QualTestResult>;
+export type HandleQualTestResultResponseDto = Result<QualTestResult>;
 
-export class CreateQualTestResult
+export class HandleQualTestResult
   implements
     IUseCase<
-      CreateQualTestTestResultRequestDto,
-      CreateQualTestResultResponseDto,
-      CreateQualTestResultAuthDto,
+      HandleQualTestResultRequestDto,
+      HandleQualTestResultResponseDto,
+      HandleQualTestResultAuthDto,
       IDbConnection
     >
 {
@@ -85,10 +85,10 @@ export class CreateQualTestResult
   };
 
 
-  #createQualTestExecutionResult = async (
+  #handleQualTestExecutionResult = async (
     testExecutionResult: QualTestExecutionResultDto
   ): Promise<void> => {
-    const createQualTestResult = await this.#createQualTestResult.execute(
+    const handleQualTestResultResult = await this.#handleQualTestResult.execute(
       {
         executionId: testExecutionResult.executionId,
         testData: testExecutionResult.testData,
@@ -104,15 +104,15 @@ export class CreateQualTestResult
       this.#dbConnection
     );
 
-    if (!createQualTestResult.success)
-      throw new Error(createQualTestResult.error);
+    if (!handleQualTestResultResult.success)
+      throw new Error(handleQualTestResultResult.error);
   };
 
   async execute(
-    request: CreateQualTestTestResultRequestDto,
-    auth: CreateQualTestResultAuthDto,
+    request: HandleQualTestResultRequestDto,
+    auth: HandleQualTestResultAuthDto,
     dbConnection: IDbConnection
-  ): Promise<CreateQualTestResultResponseDto> {
+  ): Promise<HandleQualTestResultResponseDto> {
     try {
       this.#dbConnection = dbConnection;
 

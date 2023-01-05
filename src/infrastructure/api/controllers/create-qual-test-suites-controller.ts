@@ -7,7 +7,7 @@ import {
   CreateQualTestSuitesAuthDto,
   CreateQualTestSuitesRequestDto,
   CreateQualTestSuitesResponseDto,
-} from '../../../domain/qualitative-test-suite/create-qualitative-test-suites';
+} from '../../../domain/qual-test-suite/create-qual-test-suites';
 import {
   handleScheduleCreation,
 } from '../../../domain/services/schedule';
@@ -100,7 +100,7 @@ export default class CreateQualTestSuitesController extends BaseController {
 
       const resultValues = useCaseResult.value.map((el) => el.toDto());
 
-      await handleScheduleCreation(authDto.callerOrgId, 'qualitative-test', resultValues);
+      await handleScheduleCreation(authDto.callerOrgId, 'qual-test', resultValues);
 
       return CreateQualTestSuitesController.ok(
         res,

@@ -1,4 +1,4 @@
-import { QualTestResult } from '../value-types/qualitative-test-result';
+import { QualTestResult } from '../value-types/qual-test-result';
 import { IDbConnection} from '../services/i-db';
 
 export interface IQualTestResultRepo {

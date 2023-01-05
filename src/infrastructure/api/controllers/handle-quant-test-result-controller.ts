@@ -10,7 +10,7 @@ import {
   CreateQuantTestResultAuthDto,
   CreateQuantTestResultRequestDto,
   CreateQuantTestResultResponseDto,
-} from '../../../domain/quantitative-test-result/create-quantitative-test-result';
+} from '../../../domain/quant-test-result/create-quant-test-result';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {

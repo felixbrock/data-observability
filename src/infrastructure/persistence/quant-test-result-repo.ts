@@ -3,8 +3,8 @@
 import { Db, Document, InsertOneResult } from 'mongodb';
 import sanitize from 'mongo-sanitize';
 
-import { IQuantTestResultRepo } from '../../domain/quantitative-test-result/i-quantitative-test-result-repo';
-import { QuantTestResult } from '../../domain/value-types/quantitative-test-result';
+import { IQuantTestResultRepo } from '../../domain/quant-test-result/i-quant-test-result-repo';
+import { QuantTestResult } from '../../domain/value-types/quant-test-result';
 
 interface QuantTestResultPersistence {
   testSuiteId: string;

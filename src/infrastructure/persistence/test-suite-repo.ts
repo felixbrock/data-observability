@@ -2,7 +2,7 @@ import {
   parseTestType,
   TestSuite,
   TestSuiteProps,
-} from '../../domain/entities/quantitative-test-suite';
+} from '../../domain/entities/quant-test-suite';
 import {
   ColumnDefinition,
   getUpdateQueryText,

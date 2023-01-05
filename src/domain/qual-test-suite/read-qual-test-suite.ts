@@ -2,11 +2,11 @@
 
 
 import Result from '../value-types/transient-types/result';
-import { BaseQualTestSuite} from '../entities/qualitative-test-suite';
+import { QualTestSuite} from '../entities/qual-test-suite';
 import BaseAuth from '../services/base-auth';
 import IUseCase from '../services/use-case';
-import { IQualTestSuiteRepo } from './i-qualitative-test-suite-repo';
-import QualTestSuiteRepo from '../../infrastructure/persistence/qualitative-test-suite-repo';
+import { IQualTestSuiteRepo } from './i-qual-test-suite-repo';
+import QualTestSuiteRepo from '../../infrastructure/persistence/qual-test-suite-repo';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 
 export interface ReadQualTestSuiteRequestDto {
@@ -15,7 +15,7 @@ export interface ReadQualTestSuiteRequestDto {
 
 export type ReadQualTestSuiteAuthDto = BaseAuth;
 
-export type ReadQualTestSuiteResponseDto = Result<BaseQualTestSuite | null>;
+export type ReadQualTestSuiteResponseDto = Result<QualTestSuite | null>;
 
 export class ReadQualTestSuite implements IUseCase<
   ReadQualTestSuiteRequestDto,

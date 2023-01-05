@@ -7,7 +7,7 @@ import {
   UpdateQualTestSuitesAuthDto,
   UpdateQualTestSuitesRequestDto,
   UpdateQualTestSuitesResponseDto,
-} from '../../../domain/qualitative-test-suite/update-qualitative-test-suites';
+} from '../../../domain/qual-test-suite/update-qual-test-suites';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {

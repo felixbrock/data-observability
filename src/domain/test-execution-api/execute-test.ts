@@ -2,11 +2,11 @@ import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { ITestExecutionApiRepo } from './i-test-execution-api-repo';
 import { IDbConnection } from '../services/i-db';
-import { QualTestExecutionResultDto } from './qualitative-test-execution-result-dto';
-import { TestType } from '../entities/quantitative-test-suite';
-import { QualTestType } from '../entities/qualitative-test-suite';
+import { QualTestExecutionResultDto } from './qual-test-execution-result-dto';
+import { TestType } from '../entities/quant-test-suite';
+import { QualTestType } from '../entities/qual-test-suite';
 import { CustomTestType } from '../entities/custom-test-suite';
-import { QuantTestExecutionResultDto } from './quantitative-test-execution-result-dto';
+import { QuantTestExecutionResultDto } from './quant-test-execution-result-dto';
 
 export interface ExecuteTestRequestDto {
   testSuiteId: string;

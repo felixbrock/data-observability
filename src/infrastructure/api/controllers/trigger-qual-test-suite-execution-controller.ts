@@ -8,7 +8,7 @@ import {
   TriggerQualTestSuiteExecutionAuthDto,
   TriggerQualTestSuiteExecutionRequestDto,
   TriggerQualTestSuiteExecutionResponseDto,
-} from '../../../domain/qualitative-test-suite/trigger-qualitative-test-suite-execution';
+} from '../../../domain/qual-test-suite/trigger-qual-test-suite-execution';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
 

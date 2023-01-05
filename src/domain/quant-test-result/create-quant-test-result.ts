@@ -2,12 +2,12 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { IDbConnection } from '../services/i-db';
-import { SendQuantSlackAlert } from '../integration-api/slack/send-quantitative-test-alert';
-import { QuantTestExecutionResultDto } from '../test-execution-api/quantitative-test-execution-result-dto';
+import { SendQuantSlackAlert } from '../integration-api/slack/send-quant-test-alert';
+import { QuantTestExecutionResultDto } from '../test-execution-api/quant-test-execution-result-dto';
 import { ExecuteTestAuthDto } from '../test-execution-api/execute-test';
-import { QuantTestAlertDto } from '../integration-api/slack/quantitative-test-alert-dto';
-import { QuantTestResult } from '../value-types/quantitative-test-result';
-import { IQuantTestResultRepo } from './i-quantitative-test-result-repo';
+import { QuantTestAlertDto } from '../integration-api/slack/quant-test-alert-dto';
+import { QuantTestResult } from '../value-types/quant-test-result';
+import { IQuantTestResultRepo } from './i-quant-test-result-repo';
 
 export interface CreateQuantTestResultRequestDto {
   testSuiteId: string;

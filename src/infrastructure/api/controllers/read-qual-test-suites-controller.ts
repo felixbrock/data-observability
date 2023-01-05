@@ -6,7 +6,7 @@ import {
   ReadQualTestSuitesAuthDto,
   ReadQualTestSuitesRequestDto,
   ReadQualTestSuitesResponseDto,
-} from '../../../domain/qualitative-test-suite/read-qualitative-test-suites';
+} from '../../../domain/qual-test-suite/read-qual-test-suites';
 
 import {
   BaseController,

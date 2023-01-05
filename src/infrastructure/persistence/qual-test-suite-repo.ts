@@ -2,7 +2,7 @@ import {
   QualTestSuiteProps,
   parseQualTestType,
   QualTestSuite,
-} from '../../domain/entities/qualitative-test-suite';
+} from '../../domain/entities/qual-test-suite';
 import {
   ColumnDefinition,
   getUpdateQueryText,
@@ -19,7 +19,7 @@ import {
   IQualTestSuiteRepo,
   QualTestSuiteQueryDto,
   QualTestSuiteUpdateDto,
-} from '../../domain/qualitative-test-suite/i-qualitative-test-suite-repo';
+} from '../../domain/qual-test-suite/i-qual-test-suite-repo';
 import { parseMaterializationType } from '../../domain/value-types/materialization-type';
 
 export default class QualTestSuiteRepo

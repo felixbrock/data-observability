@@ -1,10 +1,10 @@
-import QualTestSuiteRepo from '../../infrastructure/persistence/qualitative-test-suite-repo';
-import { BaseQualTestSuite } from '../entities/qualitative-test-suite';
+import QualTestSuiteRepo from '../../infrastructure/persistence/qual-test-suite-repo';
+import { QualTestSuite } from '../entities/qual-test-suite';
 import BaseAuth from '../services/base-auth';
 import IUseCase from '../services/use-case';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import Result from '../value-types/transient-types/result';
-import { IQualTestSuiteRepo } from './i-qualitative-test-suite-repo';
+import { IQualTestSuiteRepo } from './i-qual-test-suite-repo';
 
 export interface ReadQualTestSuitesRequestDto {
   activated?: boolean;
@@ -12,7 +12,7 @@ export interface ReadQualTestSuitesRequestDto {
 
 export type ReadQualTestSuitesAuthDto = BaseAuth;
 
-export type ReadQualTestSuitesResponseDto = Result<BaseQualTestSuite[]>;
+export type ReadQualTestSuitesResponseDto = Result<QualTestSuite[]>;
 
 export class ReadQualTestSuites
   implements

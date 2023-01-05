@@ -1,4 +1,4 @@
-import { TestType } from '../entities/quantitative-test-suite';
+import { TestType } from '../entities/quant-test-suite';
 import { MaterializationType } from '../value-types/materialization-type';
 
 export interface TestExecutionResultDto {

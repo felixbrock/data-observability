@@ -1,4 +1,4 @@
-import { BaseQualTestSuite } from '../entities/qualitative-test-suite';
+import { QualTestSuite } from '../entities/qual-test-suite';
 import { IServiceRepo } from '../services/i-service-repo';
 import { ExecutionType } from '../value-types/execution-type';
 
@@ -14,7 +14,7 @@ export interface QualTestSuiteQueryDto {
 }
 
 export type IQualTestSuiteRepo = IServiceRepo<
-  BaseQualTestSuite,
+  QualTestSuite,
   QualTestSuiteQueryDto,
   QualTestSuiteUpdateDto
 >;

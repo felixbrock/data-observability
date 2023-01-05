@@ -5,7 +5,7 @@ import {
   IIntegrationApiRepo,
 } from '../i-integration-api-repo';
 import { SendAlertResultDto } from './send-alert-result-dto';
-import { QualTestAlertDto } from './qualitative-test-alert-dto';
+import { QualTestAlertDto } from './qual-test-alert-dto';
 import { appConfig } from '../../../config';
 
 export type SendQualTestSlackAlertRequestDto = {

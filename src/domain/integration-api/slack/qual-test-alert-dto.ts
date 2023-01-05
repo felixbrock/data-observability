@@ -1,4 +1,4 @@
-import { QualTestType } from "../../entities/qualitative-test-suite";
+import { QualTestType } from "../../entities/qual-test-suite";
 
 export interface QualTestAlertDto {
   alertId: string;

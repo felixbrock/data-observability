@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import app from '../../ioc-register';
-import ReadQualTestSuiteController from '../controllers/read-qualitative-test-suite-controller';
-import TriggerQualTestSuiteExecutionController from '../controllers/trigger-qualitative-test-suite-execution-controller';
+import ReadQualTestSuiteController from '../controllers/read-qual-test-suite-controller';
+import TriggerQualTestSuiteExecutionController from '../controllers/trigger-qual-test-suite-execution-controller';
 
 const qualTestSuiteRoutes = Router();
 
