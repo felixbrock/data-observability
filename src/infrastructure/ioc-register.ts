@@ -13,7 +13,7 @@ import { CreateQuantTestResult } from '../domain/quant-test-result/create-quant-
 import { CreateQualTestResult } from '../domain/qual-test-result/create-qual-test-result';
 import { ExecuteTest } from '../domain/test-execution-api/execute-test';
 import QuantTestResultRepo from './persistence/quant-test-result-repo';
-import { SendQuantSlackAlert } from '../domain/integration-api/slack/send-quant-test-alert';
+import { SendQuantTestSlackAlert } from '../domain/integration-api/slack/send-quant-test-alert';
 import { SendQualTestSlackAlert } from '../domain/integration-api/slack/send-qual-test-alert';
 import { UpdateTestHistoryEntry } from '../domain/snowflake-api/update-test-history-entry';
 import { CreateCustomTestSuite } from '../domain/custom-test-suite/create-custom-test-suite';
@@ -34,6 +34,8 @@ import CustomTestSuiteRepo from './persistence/custom-test-suite-repo';
 import QualTestSuiteRepo from './persistence/qual-test-suite-repo';
 import TestSuiteRepo from './persistence/test-suite-repo';
 import SnowflakeApiRepo from './persistence/snowflake-api-repo';
+import { HandleQuantTestExecutionResult } from '../domain/test-execution-api/handle-quant-test-execution-result';
+import { HandleQualTestExecutionResult } from '../domain/test-execution-api/handle-qual-test-execution-result';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
@@ -61,13 +63,16 @@ iocRegister.register({
   triggerQualTestSuiteExecution: asClass(TriggerQualTestSuiteExecution),
   triggerCustomTestSuiteExecution: asClass(TriggerCustomTestSuiteExecution),
 
+  handleQuantTestExecutionExecution: asClass(HandleQuantTestExecutionResult),
+  handleQualTestExecutionExecution: asClass(HandleQualTestExecutionResult),
+
   updateTestHistoryEntry: asClass(UpdateTestHistoryEntry),
   executeTest: asClass(ExecuteTest),
 
   getAccounts: asClass(GetAccounts),
   querySnowflake: asClass(QuerySnowflake),
   getSnowflakeProfile: asClass(GetSnowflakeProfile),
-  sendQuantSlackAlert: asClass(SendQuantSlackAlert),
+  sendQuantSlackAlert: asClass(SendQuantTestSlackAlert),
   sendQualTestSlackAlert: asClass(SendQualTestSlackAlert),
 
   quantTestResultRepo: asClass(QuantTestResultRepo),

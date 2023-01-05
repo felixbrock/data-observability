@@ -19,7 +19,7 @@ export interface SendQuantSlackAlertAuthDto {
 
 export type SendQuantSlackAlertResponseDto = Result<SendAlertResultDto>;
 
-export class SendQuantSlackAlert
+export class SendQuantTestSlackAlert
   implements
     IUseCase<
       SendQuantSlackAlertRequestDto,
@@ -58,7 +58,7 @@ export class SendQuantSlackAlert
     auth: SendQuantSlackAlertAuthDto
   ): Promise<SendQuantSlackAlertResponseDto> {
     try {
-      const messageConfig = SendQuantSlackAlert.#buildAlertMessageConfig(
+      const messageConfig = SendQuantTestSlackAlert.#buildAlertMessageConfig(
         request.alertDto
       );
 

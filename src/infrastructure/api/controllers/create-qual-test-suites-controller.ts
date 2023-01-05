@@ -100,7 +100,7 @@ export default class CreateQualTestSuitesController extends BaseController {
 
       const resultValues = useCaseResult.value.map((el) => el.toDto());
 
-      await handleScheduleCreation(authDto.callerOrgId, 'qual-test', resultValues);
+      await handleScheduleCreation(authDto.callerOrgId, 'nominal-test', resultValues);
 
       return CreateQualTestSuitesController.ok(
         res,

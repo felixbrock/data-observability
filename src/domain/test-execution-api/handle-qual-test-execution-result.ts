@@ -1,58 +1,46 @@
 // todo - clean architecture violation
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { QualTestResult } from '../value-types/qual-test-result';
 import { IDbConnection } from '../services/i-db';
-import { IQualTestResultRepo } from './i-qual-test-result-repo';
-import { TestType } from '../entities/quant-test-suite';
-import { QualTestExecutionResultDto } from '../test-execution-api/qual-test-execution-result-dto';
-import { ExecuteTestAuthDto } from '../test-execution-api/execute-test';
 import { QualTestAlertDto } from '../integration-api/slack/qual-test-alert-dto';
 import { SendQualTestSlackAlert } from '../integration-api/slack/send-qual-test-alert';
+import { QualTestExecutionResultDto } from './qual-test-execution-result-dto';
+import { CreateQualTestResult } from '../qual-test-result/create-qual-test-result';
 
-export interface HandleQualTestResultRequestDto {
-  testSuiteId: string;
-  testType: TestType;
-  executionId: string;
-  testData?: {
-    executedOn: string;
-    isAnomolous: boolean;
-    schemaDiffs: any;
-  };
-  alertData?: {
-    alertId: string;
-  };
-  targetResourceId: string;
-  targetOrgId: string;
+export type HandleQualTestExecutionResultRequestDto = QualTestExecutionResultDto;
+
+export interface HandleQualTestExecutionResultAuthDto {
+  jwt: string;
 }
 
-export type HandleQualTestResultAuthDto = null;
+export type HandleQualTestExecutionResultResponseDto = Result<null>;
 
-export type HandleQualTestResultResponseDto = Result<QualTestResult>;
-
-export class HandleQualTestResult
+export class HandleQualTestExecutionResult
   implements
     IUseCase<
-      HandleQualTestResultRequestDto,
-      HandleQualTestResultResponseDto,
-      HandleQualTestResultAuthDto,
+      HandleQualTestExecutionResultRequestDto,
+      HandleQualTestExecutionResultResponseDto,
+      HandleQualTestExecutionResultAuthDto,
       IDbConnection
     >
 {
-  readonly #qualTestResultRepo: IQualTestResultRepo;
-
   readonly #sendQualTestSlackAlert: SendQualTestSlackAlert;
+
+  readonly #createQualTestResult: CreateQualTestResult;
 
   #dbConnection: IDbConnection;
 
-  constructor(qualTestResultRepo: IQualTestResultRepo, sendQualTestSlackAlert: SendQualTestSlackAlert) {
-    this.#qualTestResultRepo = qualTestResultRepo;
+  constructor(
+    sendQualTestSlackAlert: SendQualTestSlackAlert,
+    createQualTestResult: CreateQualTestResult
+  ) {
     this.#sendQualTestSlackAlert = sendQualTestSlackAlert;
+    this.#createQualTestResult = createQualTestResult;
   }
 
   #sendAlert = async (
     testExecutionResult: QualTestExecutionResultDto,
-    auth: ExecuteTestAuthDto
+    jwt: string
   ): Promise<void> => {
     if (!testExecutionResult.testData)
       throw new Error('Missing test data. Previous checks indicated test data');
@@ -75,7 +63,7 @@ export class HandleQualTestResult
 
     const sendSlackAlertResult = await this.#sendQualTestSlackAlert.execute(
       { alertDto, targetOrgId: testExecutionResult.organizationId },
-      { jwt: auth.jwt }
+      { jwt }
     );
 
     if (!sendSlackAlertResult.success)
@@ -84,11 +72,10 @@ export class HandleQualTestResult
       );
   };
 
-
-  #handleQualTestExecutionResult = async (
+  #createTestResult = async (
     testExecutionResult: QualTestExecutionResultDto
   ): Promise<void> => {
-    const handleQualTestResultResult = await this.#handleQualTestResult.execute(
+    const createQualTestResultResult = await this.#createQualTestResult.execute(
       {
         executionId: testExecutionResult.executionId,
         testData: testExecutionResult.testData,
@@ -104,39 +91,28 @@ export class HandleQualTestResult
       this.#dbConnection
     );
 
-    if (!handleQualTestResultResult.success)
-      throw new Error(handleQualTestResultResult.error);
+    if (!createQualTestResultResult.success)
+      throw new Error(createQualTestResultResult.error);
   };
 
   async execute(
-    request: HandleQualTestResultRequestDto,
-    auth: HandleQualTestResultAuthDto,
+    req: HandleQualTestExecutionResultRequestDto,
+    auth: HandleQualTestExecutionResultAuthDto,
     dbConnection: IDbConnection
-  ): Promise<HandleQualTestResultResponseDto> {
+  ): Promise<HandleQualTestExecutionResultResponseDto> {
     try {
       this.#dbConnection = dbConnection;
 
-      if (
-        !testExecutionResult.testData ||
-        (!testExecutionResult.testData.isAnomolous &&
-          !testExecutionResult.alertData)
-      )
-        return Result.ok(testExecutionResult);
+      await this.#createTestResult(req);
 
-      if (!instanceOfQuantTestExecutionResultDto(testExecutionResult))
-        await this.#sendQualTestAlert(testExecutionResult, auth);
-      else await this.#sendQuantAlert(testExecutionResult, auth);
+      if (!req.testData || (!req.testData.isAnomolous && !req.alertData))
+        return Result.ok();
 
-      const qualTestResult: QualTestResult = {
-        ...request,
-        organizationId: request.targetOrgId,
-      };
+      await this.#sendAlert(req, auth.jwt);
 
-      await this.#qualTestResultRepo.insertOne(qualTestResult, this.#dbConnection);
-
-      return Result.ok(qualTestResult);
+      return Result.ok();
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }
