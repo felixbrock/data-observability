@@ -9,11 +9,11 @@ import { ReadTestSuite } from '../domain/test-suite/read-test-suite';
 import { UpdateTestSuites } from '../domain/test-suite/update-test-suites';
 import TestExecutionRepo from './persistence/test-execution-api-repo';
 import IntegrationApiRepo from './persistence/integration-api-repo';
-import { CreateAnomalyTestResult } from '../domain/anomaly-test-result/create-anomaly-test-result';
+import { CreateQuantitativeTestResult } from '../domain/quantitative-test-result/create-quantitative-test-result';
 import { CreateNominalTestResult } from '../domain/nominal-test-result/create-nominal-test-result';
 import { ExecuteTest } from '../domain/test-execution-api/execute-test';
-import AnomalyTestResultRepo from './persistence/anomaly-test-result-repo';
-import { SendAnomalySlackAlert } from '../domain/integration-api/slack/send-anomaly-alert';
+import QuantitativeTestResultRepo from './persistence/quantitative-test-result-repo';
+import { SendQuantitativeSlackAlert } from '../domain/integration-api/slack/send-quantitative-alert';
 import { SendNominalTestSlackAlert } from '../domain/integration-api/slack/send-nominal-test-alert';
 import { UpdateTestHistoryEntry } from '../domain/snowflake-api/update-test-history-entry';
 import { CreateCustomTestSuite } from '../domain/custom-test-suite/create-custom-test-suite';
@@ -38,7 +38,7 @@ import SnowflakeApiRepo from './persistence/snowflake-api-repo';
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
 iocRegister.register({
-  createAnomalyTestResult: asClass(CreateAnomalyTestResult),
+  createQuantitativeTestResult: asClass(CreateQuantitativeTestResult),
   createNominalTestResult: asClass(CreateNominalTestResult),
 
   createTestSuites: asClass(CreateTestSuites),
@@ -67,10 +67,10 @@ iocRegister.register({
   getAccounts: asClass(GetAccounts),
   querySnowflake: asClass(QuerySnowflake),
   getSnowflakeProfile: asClass(GetSnowflakeProfile),
-  sendAnomalySlackAlert: asClass(SendAnomalySlackAlert),
+  sendQuantitativeSlackAlert: asClass(SendQuantitativeSlackAlert),
   sendNominalTestSlackAlert: asClass(SendNominalTestSlackAlert),
 
-  anomalyTestResultRepo: asClass(AnomalyTestResultRepo),
+  quantitativeTestResultRepo: asClass(QuantitativeTestResultRepo),
   nominalTestResultRepo: asClass(NominalTestResultRepo),
   customTestSuiteRepo: asClass(CustomTestSuiteRepo),
   nominalTestSuiteRepo: asClass(NominalTestSuiteRepo),

@@ -90,7 +90,7 @@ export class TriggerTestSuiteExecution
         if (!wasAltered) return Result.ok();
       }
 
-      const executeTestResult = await this.#executeTest.execute(
+      await this.#executeTest.execute(
         {
           testSuiteId: testSuite.id,
           testType: testSuite.type,
@@ -99,8 +99,6 @@ export class TriggerTestSuiteExecution
         { jwt: auth.jwt },
         db.mongoConn
       );
-
-      if (!executeTestResult.success) throw new Error(executeTestResult.error);
 
       return Result.ok();
     } catch (error: unknown) {

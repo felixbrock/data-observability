@@ -1,12 +1,11 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { ITestExecutionApiRepo } from './i-test-execution-api-repo';
-import { AnomalyTestExecutionResultDto } from './anomaly-test-execution-result-dto';
+import { TestExecutionResultDto } from './test-execution-result-dto';
 import { IDbConnection } from '../services/i-db';
-import { CreateAnomalyTestResult } from '../anomaly-test-result/create-anomaly-test-result';
+import { CreateQuantitativeTestResult } from '../test-result/create-test-result';
 import { CreateNominalTestResult } from '../nominal-test-result/create-nominal-test-result';
-import { SendAnomalySlackAlert } from '../integration-api/slack/send-anomaly-alert';
-import { AnomalyAlertDto as AnomalyTestAlertDto } from '../integration-api/slack/anomaly-alert-dto';
+import { SendQuantitativeSlackAlert } from '../integration-api/slack/send-quantitative-alert';
 import { SendNominalTestSlackAlert } from '../integration-api/slack/send-nominal-test-alert';
 import { NominalTestAlertDto } from '../integration-api/slack/nominal-test-alert-dto';
 import { NominalTestExecutionResultDto } from './nominal-test-execution-result-dto';
@@ -25,7 +24,7 @@ export interface ExecuteTestAuthDto {
 }
 
 export type ExecuteTestResponseDto = Result<
-  AnomalyTestExecutionResultDto | NominalTestExecutionResultDto
+  QuantitativeTestExecutionResultDto | NominalTestExecutionResultDto
 >;
 
 export class ExecuteTest
@@ -39,11 +38,11 @@ export class ExecuteTest
 {
   readonly #testExecutionApiRepo: ITestExecutionApiRepo;
 
-  readonly #createAnomalyTestResult: CreateAnomalyTestResult;
+  readonly #createQuantitativeTestResult: CreateQuantitativeTestResult;
 
   readonly #createNominalTestResult: CreateNominalTestResult;
 
-  readonly #sendAnomalyTestSlackAlert: SendAnomalySlackAlert;
+  readonly #sendQuantitativeTestSlackAlert: SendQuantitativeSlackAlert;
 
   readonly #sendNominalTestSlackAlert: SendNominalTestSlackAlert;
 
@@ -51,15 +50,15 @@ export class ExecuteTest
 
   constructor(
     testExecutionApiRepo: ITestExecutionApiRepo,
-    createAnomalyTestResult: CreateAnomalyTestResult,
+    createQuantitativeTestResult: CreateQuantitativeTestResult,
     createNominalTestResult: CreateNominalTestResult,
-    sendAnomalySlackAlert: SendAnomalySlackAlert,
+    sendQuantitativeSlackAlert: SendQuantitativeSlackAlert,
     sendNominalTestSlackAlert: SendNominalTestSlackAlert
   ) {
     this.#testExecutionApiRepo = testExecutionApiRepo;
-    this.#createAnomalyTestResult = createAnomalyTestResult;
+    this.#createQuantitativeTestResult = createQuantitativeTestResult;
     this.#createNominalTestResult = createNominalTestResult;
-    this.#sendAnomalyTestSlackAlert = sendAnomalySlackAlert;
+    this.#sendQuantitativeTestSlackAlert = sendQuantitativeSlackAlert;
     this.#sendNominalTestSlackAlert = sendNominalTestSlackAlert;
   }
 
@@ -86,15 +85,15 @@ export class ExecuteTest
       throw new Error(createTestResultResult.error);
   };
 
-  #createAnomalyTestExecutionResult = async (
-    testExecutionResult: AnomalyTestExecutionResultDto
+  #createQuantitativeTestExecutionResult = async (
+    testExecutionResult: QuantitativeTestExecutionResultDto
   ): Promise<void> => {
     const { testData } = testExecutionResult;
 
     if (!testData && !testExecutionResult.isWarmup)
       throw new Error('Test result data misalignment');
 
-    const createTestResultResult = await this.#createAnomalyTestResult.execute(
+    const createTestResultResult = await this.#createQuantitativeTestResult.execute(
       {
         isWarmup: testExecutionResult.isWarmup,
         executionId: testExecutionResult.executionId,
@@ -114,78 +113,6 @@ export class ExecuteTest
       throw new Error(createTestResultResult.error);
   };
 
-  #sendAnomalyAlert = async (
-    testExecutionResult: AnomalyTestExecutionResultDto,
-    auth: ExecuteTestAuthDto
-  ): Promise<void> => {
-    if (!testExecutionResult.testData)
-      throw new Error('Missing test data. Previous checks indicated test data');
-    if (!testExecutionResult.alertData)
-      throw new Error(
-        'Missing alert data. Previous checks indicated alert data'
-      );
-
-    const alertDto: AnomalyTestAlertDto = {
-      alertId: testExecutionResult.alertData.alertId,
-      testType: testExecutionResult.testType,
-      detectedOn: testExecutionResult.testData.executedOn,
-      deviation: testExecutionResult.testData.deviation,
-      expectedLowerBound: testExecutionResult.alertData.expectedLowerBound,
-      expectedUpperBound: testExecutionResult.alertData.expectedUpperBound,
-      databaseName: testExecutionResult.alertData.databaseName,
-      schemaName: testExecutionResult.alertData.schemaName,
-      materializationName: testExecutionResult.alertData.materializationName,
-      columnName: testExecutionResult.alertData.columnName,
-      message: testExecutionResult.alertData.message,
-      value: testExecutionResult.alertData.value,
-      resourceId: testExecutionResult.targetResourceId,
-    };
-
-    const sendSlackAlertResult = await this.#sendAnomalyTestSlackAlert.execute(
-      { alertDto, targetOrgId: testExecutionResult.organizationId },
-      { jwt: auth.jwt }
-    );
-
-    if (!sendSlackAlertResult.success)
-      throw new Error(
-        `Sending alert ${testExecutionResult.alertData.alertId} failed`
-      );
-  };
-
-  #sendNominalTestAlert = async (
-    testExecutionResult: NominalTestExecutionResultDto,
-    auth: ExecuteTestAuthDto
-  ): Promise<void> => {
-    if (!testExecutionResult.testData)
-      throw new Error('Missing test data. Previous checks indicated test data');
-    if (!testExecutionResult.alertData)
-      throw new Error(
-        'Missing alert data. Previous checks indicated alert data'
-      );
-
-    const alertDto: NominalTestAlertDto = {
-      alertId: testExecutionResult.alertData.alertId,
-      testType: testExecutionResult.testType,
-      detectedOn: testExecutionResult.testData.executedOn,
-      databaseName: testExecutionResult.alertData.databaseName,
-      schemaName: testExecutionResult.alertData.schemaName,
-      materializationName: testExecutionResult.alertData.materializationName,
-      message: testExecutionResult.alertData.message,
-      resourceId: testExecutionResult.targetResourceId,
-      schemaDiffs: testExecutionResult.testData.schemaDiffs,
-    };
-
-    const sendSlackAlertResult = await this.#sendNominalTestSlackAlert.execute(
-      { alertDto, targetOrgId: testExecutionResult.organizationId },
-      { jwt: auth.jwt }
-    );
-
-    if (!sendSlackAlertResult.success)
-      throw new Error(
-        `Sending alert ${testExecutionResult.alertData.alertId} failed`
-      );
-  };
-
   async execute(
     request: ExecuteTestRequestDto,
     auth: ExecuteTestAuthDto,
@@ -194,39 +121,14 @@ export class ExecuteTest
     this.#dbConnection = dbConnection;
 
     try {
-      const testExecutionResult = await this.#testExecutionApiRepo.executeTest(
+      this.#testExecutionApiRepo.executeTest(
         request.testSuiteId,
         request.testType,
         auth.jwt,
         request.targetOrgId
       );
 
-      if (
-        testExecutionResult.testData &&
-        testExecutionResult.testData.isAnomolous &&
-        !testExecutionResult.alertData
-      )
-        throw new Error('Anomaly data mismatch');
-
-      const instanceOfAnomalyTestExecutionResultDto = (
-        object: any
-      ): object is AnomalyTestExecutionResultDto => 'isWarmup' in object;
-      if (!instanceOfAnomalyTestExecutionResultDto(testExecutionResult))
-        await this.#createNominalTestExecutionResult(testExecutionResult);
-      else await this.#createAnomalyTestExecutionResult(testExecutionResult);
-
-      if (
-        !testExecutionResult.testData ||
-        (!testExecutionResult.testData.isAnomolous &&
-          !testExecutionResult.alertData)
-      )
-        return Result.ok(testExecutionResult);
-
-      if (!instanceOfAnomalyTestExecutionResultDto(testExecutionResult))
-        await this.#sendNominalTestAlert(testExecutionResult, auth);
-      else await this.#sendAnomalyAlert(testExecutionResult, auth);
-
-      return Result.ok(testExecutionResult);
+      return Result.ok();
     } catch (error: unknown) {
       if (error instanceof Error ) console.error(error.stack);
       else if (error) console.trace(error);

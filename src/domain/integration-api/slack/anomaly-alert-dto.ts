@@ -1,6 +1,6 @@
 import { TestType } from "../../entities/test-suite";
 
-export interface AnomalyAlertDto {
+export interface QuantitativeAlertDto {
   alertId: string;
   value: number;
   testType: TestType;

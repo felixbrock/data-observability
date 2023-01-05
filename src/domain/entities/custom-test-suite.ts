@@ -1,5 +1,5 @@
 import { ExecutionType } from '../value-types/execution-type';
-import { BaseAnomalyTestSuite } from '../value-types/transient-types/base-test-suite';
+import { BaseQuantitativeTestSuite } from '../value-types/transient-types/base-test-suite';
 
 export const customTestTypes = [
   'Custom',
@@ -15,7 +15,7 @@ export const parseCustomTestType = (testType: unknown): CustomTestType => {
   throw new Error('Provision of invalid type');
 };
 
-export interface CustomTestSuiteProps extends BaseAnomalyTestSuite {
+export interface CustomTestSuiteProps extends BaseQuantitativeTestSuite {
   id: string;
   name: string;
   description: string;

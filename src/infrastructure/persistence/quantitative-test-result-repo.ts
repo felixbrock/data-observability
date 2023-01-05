@@ -3,10 +3,10 @@
 import { Db, Document, InsertOneResult } from 'mongodb';
 import sanitize from 'mongo-sanitize';
 
-import { IAnomalyTestResultRepo } from '../../domain/anomaly-test-result/i-anomaly-test-result-repo';
-import { AnomalyTestResult } from '../../domain/value-types/anomaly-test-result';
+import { IQuantitativeTestResultRepo } from '../../domain/quantitative-test-result/i-quantitative-test-result-repo';
+import { QuantitativeTestResult } from '../../domain/value-types/quantitative-test-result';
 
-interface AnomalyTestResultPersistence {
+interface QuantitativeTestResultPersistence {
   testSuiteId: string;
   executionId: string;
   isWarmup: boolean;
@@ -23,20 +23,20 @@ interface AnomalyTestResultPersistence {
   organizationId: string;
 }
 
-const collectionName = 'anomalyTestResult';
+const collectionName = 'quantitativeTestResult';
 
-export default class AnomalyTestResultRepo implements IAnomalyTestResultRepo {
+export default class QuantitativeTestResultRepo implements IQuantitativeTestResultRepo {
   insertOne = async (
-    anomalyTestResult: AnomalyTestResult,
+    quantitativeTestResult: QuantitativeTestResult,
     dbConnection: Db
   ): Promise<string> => {
     try {
       const result: InsertOneResult<Document> = await dbConnection
         .collection(collectionName)
-        .insertOne(await this.#toPersistence(sanitize(anomalyTestResult)));
+        .insertOne(await this.#toPersistence(sanitize(quantitativeTestResult)));
 
       if (!result.acknowledged)
-        throw new Error('AnomalyTestResult creation failed. Insert not acknowledged');
+        throw new Error('QuantitativeTestResult creation failed. Insert not acknowledged');
 
       return result.insertedId.toHexString();
     } catch (error: unknown) {
@@ -46,9 +46,9 @@ export default class AnomalyTestResultRepo implements IAnomalyTestResultRepo {
     }
   };
 
-  #toPersistence = async (anomalyTestResult: AnomalyTestResult): Promise<Document> => {
-    const persistenceObject: AnomalyTestResultPersistence = {
-      ...anomalyTestResult,
+  #toPersistence = async (quantitativeTestResult: QuantitativeTestResult): Promise<Document> => {
+    const persistenceObject: QuantitativeTestResultPersistence = {
+      ...quantitativeTestResult,
     };
 
     return persistenceObject;

@@ -72,7 +72,7 @@ export class TriggerCustomTestSuiteExecution extends BaseTriggerTestSuiteExecuti
         throw new Error('Not implemented yet');
       }
 
-      const executeTestResult = await this.#executeTest.execute(
+      await this.#executeTest.execute(
         {
           testSuiteId: customTestSuite.id,
           testType: 'Custom',
@@ -81,8 +81,6 @@ export class TriggerCustomTestSuiteExecution extends BaseTriggerTestSuiteExecuti
         { jwt: auth.jwt },
         db.mongoConn
       );
-
-      if (!executeTestResult.success) throw new Error(executeTestResult.error);
 
       return Result.ok();
     } catch (error: unknown) {

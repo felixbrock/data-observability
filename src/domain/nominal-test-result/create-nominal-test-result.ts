@@ -43,6 +43,40 @@ export class CreateNominalTestResult
     this.#nominalTestResultRepo = nominalTestResultRepo;
   }
 
+  #sendAlert = async (
+    testExecutionResult: NominalTestExecutionResultDto,
+    auth: ExecuteTestAuthDto
+  ): Promise<void> => {
+    if (!testExecutionResult.testData)
+      throw new Error('Missing test data. Previous checks indicated test data');
+    if (!testExecutionResult.alertData)
+      throw new Error(
+        'Missing alert data. Previous checks indicated alert data'
+      );
+
+    const alertDto: NominalTestAlertDto = {
+      alertId: testExecutionResult.alertData.alertId,
+      testType: testExecutionResult.testType,
+      detectedOn: testExecutionResult.testData.executedOn,
+      databaseName: testExecutionResult.alertData.databaseName,
+      schemaName: testExecutionResult.alertData.schemaName,
+      materializationName: testExecutionResult.alertData.materializationName,
+      message: testExecutionResult.alertData.message,
+      resourceId: testExecutionResult.targetResourceId,
+      schemaDiffs: testExecutionResult.testData.schemaDiffs,
+    };
+
+    const sendSlackAlertResult = await this.#sendNominalTestSlackAlert.execute(
+      { alertDto, targetOrgId: testExecutionResult.organizationId },
+      { jwt: auth.jwt }
+    );
+
+    if (!sendSlackAlertResult.success)
+      throw new Error(
+        `Sending alert ${testExecutionResult.alertData.alertId} failed`
+      );
+  };
+
   async execute(
     request: CreateNominalTestTestResultRequestDto,
     auth: CreateNominalTestResultAuthDto,
@@ -50,6 +84,17 @@ export class CreateNominalTestResult
   ): Promise<CreateNominalTestResultResponseDto> {
     try {
       this.#dbConnection = dbConnection;
+
+      if (
+        !testExecutionResult.testData ||
+        (!testExecutionResult.testData.isAnomolous &&
+          !testExecutionResult.alertData)
+      )
+        return Result.ok(testExecutionResult);
+
+      if (!instanceOfQuantitativeTestExecutionResultDto(testExecutionResult))
+        await this.#sendNominalTestAlert(testExecutionResult, auth);
+      else await this.#sendQuantitativeAlert(testExecutionResult, auth);
 
       const nominalTestResult: NominalTestResult = {
         ...request,

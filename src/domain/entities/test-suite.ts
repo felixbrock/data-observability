@@ -3,7 +3,7 @@ import {
   MaterializationType,
   parseMaterializationType,
 } from '../value-types/materialization-type';
-import { BaseAnomalyTestSuite } from '../value-types/transient-types/base-test-suite';
+import { BaseQuantitativeTestSuite } from '../value-types/transient-types/base-test-suite';
 
 export interface TestTarget {
   targetResourceId: string;
@@ -40,7 +40,7 @@ export const parseTestType = (testType: unknown): TestType => {
   throw new Error('Provision of invalid type');
 };
 
-export interface TestSuiteProps extends BaseAnomalyTestSuite {
+export interface TestSuiteProps extends BaseQuantitativeTestSuite {
   type: TestType;
   target: TestTarget;
 }
@@ -55,7 +55,7 @@ export interface TestSuiteDto {
   executionType: ExecutionType;
 }
 
-export class TestSuite implements BaseAnomalyTestSuite {
+export class TestSuite implements BaseQuantitativeTestSuite {
   #id: string;
 
   #activated: boolean;

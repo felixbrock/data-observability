@@ -1,7 +1,7 @@
 import { TestType } from '../entities/test-suite';
 import { MaterializationType } from '../value-types/materialization-type';
 
-export interface AnomalyTestExecutionResultDto {
+export interface QuantitativeTestExecutionResultDto {
   testSuiteId: string;
   testType: TestType;
   executionId: string;
