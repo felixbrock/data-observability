@@ -1,4 +1,4 @@
-import { TestSuite } from '../entities/test-suite';
+import { TestSuite } from '../entities/quantitative-test-suite';
 import BaseAuth from '../services/base-auth';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';

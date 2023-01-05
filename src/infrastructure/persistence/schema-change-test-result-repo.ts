@@ -3,10 +3,10 @@
 import { Db, Document, InsertOneResult } from 'mongodb';
 import sanitize from 'mongo-sanitize';
 
-import { IQualitativeTestResultRepo } from '../../domain/qualitative-test-result/i-qualitative-test-result-repo';
-import { QualitativeTestResult } from '../../domain/value-types/qualitative-test-result';
+import { IQualTestResultRepo } from '../../domain/qualitative-test-result/i-qualitative-test-result-repo';
+import { QualTestResult } from '../../domain/value-types/qualitative-test-result';
 
-interface QualitativeTestResultPersistence {
+interface QualTestResultPersistence {
   testSuiteId: string;
   executionId: string;
   testData?: {
@@ -21,21 +21,21 @@ interface QualitativeTestResultPersistence {
   organizationId: string;
 }
 
-const collectionName = 'qualitativeTestResult';
+const collectionName = 'qualTestResult';
 
-export default class QualitativeTestResultRepo implements IQualitativeTestResultRepo {
+export default class QualTestResultRepo implements IQualTestResultRepo {
   insertOne = async (
-    qualitativeTestResult: QualitativeTestResult,
+    qualTestResult: QualTestResult,
     dbConnection: Db
   ): Promise<string> => {
     try {
       const result: InsertOneResult<Document> = await dbConnection
         .collection(collectionName)
-        .insertOne(await this.#toPersistence(sanitize(qualitativeTestResult)));
+        .insertOne(await this.#toPersistence(sanitize(qualTestResult)));
 
       if (!result.acknowledged)
         throw new Error(
-          'QualitativeTestResult creation failed. Insert not acknowledged'
+          'QualTestResult creation failed. Insert not acknowledged'
         );
 
       return result.insertedId.toHexString();
@@ -47,10 +47,10 @@ export default class QualitativeTestResultRepo implements IQualitativeTestResult
   };
 
   #toPersistence = async (
-    qualitativeTestResult: QualitativeTestResult
+    qualTestResult: QualTestResult
   ): Promise<Document> => {
-    const persistenceObject: QualitativeTestResultPersistence = {
-      ...qualitativeTestResult,
+    const persistenceObject: QualTestResultPersistence = {
+      ...qualTestResult,
     };
 
     return persistenceObject;

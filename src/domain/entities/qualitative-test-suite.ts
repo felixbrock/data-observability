@@ -3,7 +3,7 @@ import {
   MaterializationType,
   parseMaterializationType,
 } from '../value-types/materialization-type';
-import { BaseTestSuite } from '../value-types/transient-types/base-test-suite';
+import { BaseQualTestSuite } from '../value-types/transient-types/base-test-suite';
 
 export interface TestTarget {
   targetResourceId: string;
@@ -14,42 +14,42 @@ export interface TestTarget {
   columnName?: string;
 }
 
-export const qualitativeMatTestTypes = ['MaterializationSchemaChange'] as const;
+export const qualMatTestTypes = ['MaterializationSchemaChange'] as const;
 
-export const qualitativeColumnTestTypes = [] as const;
+export const qualColumnTestTypes = [] as const;
 
-export type QualitativeTestType =
-  | typeof qualitativeMatTestTypes[number]
-  | typeof qualitativeColumnTestTypes[number];
+export type QualTestType =
+  | typeof qualMatTestTypes[number]
+  | typeof qualColumnTestTypes[number];
 
-export const parseQualitativeTestType = (testType: unknown): QualitativeTestType => {
-  const identifiedElement = qualitativeMatTestTypes
-    .concat(qualitativeColumnTestTypes)
+export const parseQualTestType = (testType: unknown): QualTestType => {
+  const identifiedElement = qualMatTestTypes
+    .concat(qualColumnTestTypes)
     .find((element) => element === testType);
   if (identifiedElement) return identifiedElement;
   throw new Error('Provision of invalid type');
 };
 
-export interface QualitativeTestSuiteProps extends BaseTestSuite {
-  type: QualitativeTestType;
+export interface QualTestSuiteProps extends BaseQualTestSuite {
+  type: QualTestType;
   target: TestTarget;
 }
 
-export interface QualitativeTestSuiteDto {
+export interface QualTestSuiteDto {
   id: string;
   activated: boolean;
-  type: QualitativeTestType;
+  type: QualTestType;
   target: TestTarget;
   cron: string;
   executionType: ExecutionType;
 }
 
-export class QualitativeTestSuite implements BaseTestSuite {
+export class QualTestSuite implements BaseQualTestSuite {
   #id: string;
 
   #activated: boolean;
 
-  #type: QualitativeTestType;
+  #type: QualTestType;
 
   #target: TestTarget;
 
@@ -65,7 +65,7 @@ export class QualitativeTestSuite implements BaseTestSuite {
     return this.#activated;
   }
 
-  get type(): QualitativeTestType {
+  get type(): QualTestType {
     return this.#type;
   }
 
@@ -81,7 +81,7 @@ export class QualitativeTestSuite implements BaseTestSuite {
     return this.#executionType;
   }
 
-  private constructor(props: QualitativeTestSuiteProps) {
+  private constructor(props: QualTestSuiteProps) {
     this.#id = props.id;
     this.#activated = props.activated;
     this.#type = props.type;
@@ -90,24 +90,24 @@ export class QualitativeTestSuite implements BaseTestSuite {
     this.#executionType = props.executionType;
   }
 
-  static create = (props: QualitativeTestSuiteProps): QualitativeTestSuite => {
+  static create = (props: QualTestSuiteProps): QualTestSuite => {
     const { type, target, ...remainingProps } = props;
 
     if (!remainingProps.id) throw new TypeError('TestSuite must have id');
     if (!remainingProps.cron) throw new TypeError('TestSuite must have cron');
     if (!remainingProps.executionType)
       throw new TypeError('Test suite must have execution type');
-    if (qualitativeMatTestTypes.includes(type) && target.columnName)
+    if (qualMatTestTypes.includes(type) && target.columnName)
       throw new SyntaxError(
         'Column name provision only allowed for column level tests'
       );
 
-    const parsedType = parseQualitativeTestType(type);
+    const parsedType = parseQualTestType(type);
     const parsedMaterializationType = parseMaterializationType(
       target.materializationType
     );
 
-    return new QualitativeTestSuite({
+    return new QualTestSuite({
       ...props,
       type: parsedType,
       target: {
@@ -117,7 +117,7 @@ export class QualitativeTestSuite implements BaseTestSuite {
     });
   };
 
-  toDto = (): QualitativeTestSuiteDto => ({
+  toDto = (): QualTestSuiteDto => ({
     id: this.#id,
     activated: this.#activated,
     type: this.#type,

@@ -1,39 +1,39 @@
-import QualitativeTestSuiteRepo from '../../infrastructure/persistence/qualitative-test-suite-repo';
-import { QualitativeTestSuite } from '../entities/qualitative-test-suite';
+import QualTestSuiteRepo from '../../infrastructure/persistence/qualitative-test-suite-repo';
+import { BaseQualTestSuite } from '../entities/qualitative-test-suite';
 import BaseAuth from '../services/base-auth';
 import IUseCase from '../services/use-case';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import Result from '../value-types/transient-types/result';
-import { IQualitativeTestSuiteRepo } from './i-qualitative-test-suite-repo';
+import { IQualTestSuiteRepo } from './i-qualitative-test-suite-repo';
 
-export interface ReadQualitativeTestSuitesRequestDto {
+export interface ReadQualTestSuitesRequestDto {
   activated?: boolean;
 }
 
-export type ReadQualitativeTestSuitesAuthDto = BaseAuth;
+export type ReadQualTestSuitesAuthDto = BaseAuth;
 
-export type ReadQualitativeTestSuitesResponseDto = Result<QualitativeTestSuite[]>;
+export type ReadQualTestSuitesResponseDto = Result<BaseQualTestSuite[]>;
 
-export class ReadQualitativeTestSuites
+export class ReadQualTestSuites
   implements
     IUseCase<
-      ReadQualitativeTestSuitesRequestDto,
-      ReadQualitativeTestSuitesResponseDto,
-      ReadQualitativeTestSuitesAuthDto,
+      ReadQualTestSuitesRequestDto,
+      ReadQualTestSuitesResponseDto,
+      ReadQualTestSuitesAuthDto,
       IConnectionPool
     >
 {
-  readonly #repo: IQualitativeTestSuiteRepo;
+  readonly #repo: IQualTestSuiteRepo;
 
-  constructor(qualitativeTestSuiteRepo: QualitativeTestSuiteRepo) {
-    this.#repo = qualitativeTestSuiteRepo;
+  constructor(qualTestSuiteRepo: QualTestSuiteRepo) {
+    this.#repo = qualTestSuiteRepo;
   }
 
   async execute(
-    request: ReadQualitativeTestSuitesRequestDto,
-    auth: ReadQualitativeTestSuitesAuthDto,
+    request: ReadQualTestSuitesRequestDto,
+    auth: ReadQualTestSuitesAuthDto,
     connPool: IConnectionPool
-  ): Promise<ReadQualitativeTestSuitesResponseDto> {
+  ): Promise<ReadQualTestSuitesResponseDto> {
     if (!auth.isSystemInternal && !auth.callerOrgId)
       throw new Error('Not authorized to perform operation');
 

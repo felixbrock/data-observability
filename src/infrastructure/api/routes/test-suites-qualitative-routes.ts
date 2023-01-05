@@ -1,42 +1,42 @@
 import { Router } from 'express';
 import app from '../../ioc-register';
-import ReadQualitativeTestSuitesController from '../controllers/read-qualitative-test-suites-controller';
-import UpdateQualitativeTestSuitesController from '../controllers/update-qualitative-test-suites-controller';
-import CreateQualitativeTestSuitesController from '../controllers/create-qualitative-test-suites-controller';
+import ReadQualTestSuitesController from '../controllers/read-qualitative-test-suites-controller';
+import UpdateQualTestSuitesController from '../controllers/update-qualitative-test-suites-controller';
+import CreateQualTestSuitesController from '../controllers/create-qualitative-test-suites-controller';
 
-const qualitativeTestSuitesRoutes = Router();
+const qualTestSuitesRoutes = Router();
 
 const getAccounts = app.resolve('getAccounts');
 const getSnowflakeProfile = app.resolve('getSnowflakeProfile');
 
-const readQualitativeTestSuitesController = new ReadQualitativeTestSuitesController(
-  app.resolve('readQualitativeTestSuites'),
+const readQualTestSuitesController = new ReadQualTestSuitesController(
+  app.resolve('readQualTestSuites'),
   getAccounts,
   getSnowflakeProfile
 );
 
-const createQualitativeTestSuitesController = new CreateQualitativeTestSuitesController(
-  app.resolve('createQualitativeTestSuites'),
+const createQualTestSuitesController = new CreateQualTestSuitesController(
+  app.resolve('createQualTestSuites'),
   getAccounts,
   getSnowflakeProfile
 );
 
-const updateQualitativeTestSuitesController = new UpdateQualitativeTestSuitesController(
-  app.resolve('updateQualitativeTestSuites'),
+const updateQualTestSuitesController = new UpdateQualTestSuitesController(
+  app.resolve('updateQualTestSuites'),
   getAccounts,
   getSnowflakeProfile
 );
 
-qualitativeTestSuitesRoutes.get('/', (req, res) => {
-  readQualitativeTestSuitesController.execute(req, res);
+qualTestSuitesRoutes.get('/', (req, res) => {
+  readQualTestSuitesController.execute(req, res);
 });
 
-qualitativeTestSuitesRoutes.post('/', (req, res) => {
-  createQualitativeTestSuitesController.execute(req, res);
+qualTestSuitesRoutes.post('/', (req, res) => {
+  createQualTestSuitesController.execute(req, res);
 });
 
-qualitativeTestSuitesRoutes.patch('/', (req, res) => {
-  updateQualitativeTestSuitesController.execute(req, res);
+qualTestSuitesRoutes.patch('/', (req, res) => {
+  updateQualTestSuitesController.execute(req, res);
 });
 
-export default qualitativeTestSuitesRoutes;
+export default qualTestSuitesRoutes;

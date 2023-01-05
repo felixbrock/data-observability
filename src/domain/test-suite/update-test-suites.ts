@@ -4,7 +4,7 @@ import { ExecutionType } from '../value-types/execution-type';
 import { ITestSuiteRepo } from './i-test-suite-repo';
 import TestSuiteRepo from '../../infrastructure/persistence/test-suite-repo';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
-import { TestSuite } from '../entities/test-suite';
+import { TestSuite } from '../entities/quantitative-test-suite';
 import BaseAuth from '../services/base-auth';
 
 interface UpdateObject {

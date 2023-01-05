@@ -1,9 +1,9 @@
-import { QuantitativeTestResult } from '../value-types/quantitative-test-result';
+import { QuantTestResult } from '../value-types/quantitative-test-result';
 import { IDbConnection} from '../services/i-db';
 
-export interface IQuantitativeTestResultRepo {
+export interface IQuantTestResultRepo {
   insertOne(
-    quantitativeTestResult: QuantitativeTestResult,
+    quantTestResult: QuantTestResult,
     dbConnection: IDbConnection,
   ): Promise<string>;
 }

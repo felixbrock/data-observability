@@ -2,38 +2,38 @@
 
 
 import Result from '../value-types/transient-types/result';
-import { QualitativeTestSuite} from '../entities/qualitative-test-suite';
+import { BaseQualTestSuite} from '../entities/qualitative-test-suite';
 import BaseAuth from '../services/base-auth';
 import IUseCase from '../services/use-case';
-import { IQualitativeTestSuiteRepo } from './i-qualitative-test-suite-repo';
-import QualitativeTestSuiteRepo from '../../infrastructure/persistence/qualitative-test-suite-repo';
+import { IQualTestSuiteRepo } from './i-qualitative-test-suite-repo';
+import QualTestSuiteRepo from '../../infrastructure/persistence/qualitative-test-suite-repo';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 
-export interface ReadQualitativeTestSuiteRequestDto {
+export interface ReadQualTestSuiteRequestDto {
   id: string;
 }
 
-export type ReadQualitativeTestSuiteAuthDto = BaseAuth;
+export type ReadQualTestSuiteAuthDto = BaseAuth;
 
-export type ReadQualitativeTestSuiteResponseDto = Result<QualitativeTestSuite | null>;
+export type ReadQualTestSuiteResponseDto = Result<BaseQualTestSuite | null>;
 
-export class ReadQualitativeTestSuite implements IUseCase<
-  ReadQualitativeTestSuiteRequestDto,
-  ReadQualitativeTestSuiteResponseDto,
-  ReadQualitativeTestSuiteAuthDto,
+export class ReadQualTestSuite implements IUseCase<
+  ReadQualTestSuiteRequestDto,
+  ReadQualTestSuiteResponseDto,
+  ReadQualTestSuiteAuthDto,
   IConnectionPool
 > {
-  readonly #repo: IQualitativeTestSuiteRepo;
+  readonly #repo: IQualTestSuiteRepo;
 
-  constructor(qualitativeTestSuiteRepo: QualitativeTestSuiteRepo) {
-    this.#repo = qualitativeTestSuiteRepo;
+  constructor(qualTestSuiteRepo: QualTestSuiteRepo) {
+    this.#repo = qualTestSuiteRepo;
   }
 
   async execute(
-    request: ReadQualitativeTestSuiteRequestDto,
-    auth: ReadQualitativeTestSuiteAuthDto,
+    request: ReadQualTestSuiteRequestDto,
+    auth: ReadQualTestSuiteAuthDto,
     connPool: IConnectionPool
-  ): Promise<ReadQualitativeTestSuiteResponseDto> {
+  ): Promise<ReadQualTestSuiteResponseDto> {
     try {
       const testSuite = await this.#repo.findOne(
         request.id,

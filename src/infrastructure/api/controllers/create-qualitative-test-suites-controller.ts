@@ -3,10 +3,10 @@ import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
-  CreateQualitativeTestSuites,
-  CreateQualitativeTestSuitesAuthDto,
-  CreateQualitativeTestSuitesRequestDto,
-  CreateQualitativeTestSuitesResponseDto,
+  CreateQualTestSuites,
+  CreateQualTestSuitesAuthDto,
+  CreateQualTestSuitesRequestDto,
+  CreateQualTestSuitesResponseDto,
 } from '../../../domain/qualitative-test-suite/create-qualitative-test-suites';
 import {
   handleScheduleCreation,
@@ -19,28 +19,28 @@ import {
   UserAccountInfo,
 } from './shared/base-controller';
 
-export default class CreateQualitativeTestSuitesController extends BaseController {
-  readonly #createQualitativeTestSuites: CreateQualitativeTestSuites;
+export default class CreateQualTestSuitesController extends BaseController {
+  readonly #createQualTestSuites: CreateQualTestSuites;
 
   constructor(
-    createQualitativeTestSuites: CreateQualitativeTestSuites,
+    createQualTestSuites: CreateQualTestSuites,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
   ) {
     super(getAccounts, getSnowflakeProfile);
-    this.#createQualitativeTestSuites = createQualitativeTestSuites;
+    this.#createQualTestSuites = createQualTestSuites;
   }
 
   #buildRequestDto = (
     httpRequest: Request
-  ): CreateQualitativeTestSuitesRequestDto => ({
+  ): CreateQualTestSuitesRequestDto => ({
     createObjects: httpRequest.body.createObjects,
   });
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): CreateQualitativeTestSuitesAuthDto => {
+  ): CreateQualTestSuitesAuthDto => {
     if (!userAccountInfo.callerOrgId)
       throw new Error('Unauthorized - Caller organization id missing');
 
@@ -56,7 +56,7 @@ export default class CreateQualitativeTestSuitesController extends BaseControlle
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return CreateQualitativeTestSuitesController.unauthorized(
+        return CreateQualTestSuitesController.unauthorized(
           res,
           'Unauthorized - auth-header missing'
         );
@@ -67,22 +67,22 @@ export default class CreateQualitativeTestSuitesController extends BaseControlle
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return CreateQualitativeTestSuitesController.unauthorized(
+        return CreateQualTestSuitesController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: CreateQualitativeTestSuitesRequestDto =
+      const requestDto: CreateQualTestSuitesRequestDto =
         this.#buildRequestDto(req);
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-      const useCaseResult: CreateQualitativeTestSuitesResponseDto =
-        await this.#createQualitativeTestSuites.execute(
+      const useCaseResult: CreateQualTestSuitesResponseDto =
+        await this.#createQualTestSuites.execute(
           requestDto,
           authDto,
           connPool
@@ -92,7 +92,7 @@ export default class CreateQualitativeTestSuitesController extends BaseControlle
       await connPool.clear();
 
       if (!useCaseResult.success) {
-        return CreateQualitativeTestSuitesController.badRequest(res);
+        return CreateQualTestSuitesController.badRequest(res);
       }
 
       if (!useCaseResult.value)
@@ -102,7 +102,7 @@ export default class CreateQualitativeTestSuitesController extends BaseControlle
 
       await handleScheduleCreation(authDto.callerOrgId, 'qualitative-test', resultValues);
 
-      return CreateQualitativeTestSuitesController.ok(
+      return CreateQualTestSuitesController.ok(
         res,
         resultValues,
         CodeHttp.CREATED
@@ -110,9 +110,9 @@ export default class CreateQualitativeTestSuitesController extends BaseControlle
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
-      return CreateQualitativeTestSuitesController.fail(
+      return CreateQualTestSuitesController.fail(
         res,
-        'create qualitative test suites - Unknown error occurred'
+        'create qual test suites - Unknown error occurred'
       );
     }
   }

@@ -3,9 +3,9 @@ import Result from '../value-types/transient-types/result';
 import { ExecutionType } from '../value-types/execution-type';
 import BaseAuth from '../services/base-auth';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
-import { IQualitativeTestSuiteRepo } from './i-qualitative-test-suite-repo';
-import QualitativeTestSuiteRepo from '../../infrastructure/persistence/qualitative-test-suite-repo';
-import { QualitativeTestSuite } from '../entities/qualitative-test-suite';
+import { IQualTestSuiteRepo } from './i-qualitative-test-suite-repo';
+import QualTestSuiteRepo from '../../infrastructure/persistence/qualitative-test-suite-repo';
+import { QualTestSuite } from '../entities/qualitative-test-suite';
 
 interface UpdateObject {
   id: string;
@@ -16,37 +16,37 @@ interface UpdateObject {
   };
 }
 
-export interface UpdateQualitativeTestSuitesRequestDto {
+export interface UpdateQualTestSuitesRequestDto {
   updateObjects: UpdateObject[];
 }
 
-export interface UpdateQualitativeTestSuitesAuthDto
+export interface UpdateQualTestSuitesAuthDto
   extends Omit<BaseAuth, 'callerOrgId'> {
   callerOrgId: string;
 }
 
-export type UpdateQualitativeTestSuitesResponseDto = Result<number>;
+export type UpdateQualTestSuitesResponseDto = Result<number>;
 
-export class UpdateQualitativeTestSuites
+export class UpdateQualTestSuites
   implements
     IUseCase<
-      UpdateQualitativeTestSuitesRequestDto,
-      UpdateQualitativeTestSuitesResponseDto,
-      UpdateQualitativeTestSuitesAuthDto,
+      UpdateQualTestSuitesRequestDto,
+      UpdateQualTestSuitesResponseDto,
+      UpdateQualTestSuitesAuthDto,
       IConnectionPool
     >
 {
-  readonly #repo: IQualitativeTestSuiteRepo;
+  readonly #repo: IQualTestSuiteRepo;
 
-  constructor(qualitativeTestSuiteRepo: QualitativeTestSuiteRepo) {
-    this.#repo = qualitativeTestSuiteRepo;
+  constructor(qualTestSuiteRepo: QualTestSuiteRepo) {
+    this.#repo = qualTestSuiteRepo;
   }
 
   #getReplacement = (
-    testSuite: QualitativeTestSuite,
+    testSuite: QualTestSuite,
     updateObj: UpdateObject
-  ): QualitativeTestSuite =>
-    QualitativeTestSuite.create({
+  ): QualTestSuite =>
+    QualTestSuite.create({
       id: testSuite.id,
       target: testSuite.target,
       type: testSuite.type,
@@ -59,10 +59,10 @@ export class UpdateQualitativeTestSuites
     });
 
   async execute(
-    req: UpdateQualitativeTestSuitesRequestDto,
-    auth: UpdateQualitativeTestSuitesAuthDto,
+    req: UpdateQualTestSuitesRequestDto,
+    auth: UpdateQualTestSuitesAuthDto,
     connPool: IConnectionPool
-  ): Promise<UpdateQualitativeTestSuitesResponseDto> {
+  ): Promise<UpdateQualTestSuitesResponseDto> {
     try {
       if (req.updateObjects.every((el) => !el.props)) return Result.ok();
 

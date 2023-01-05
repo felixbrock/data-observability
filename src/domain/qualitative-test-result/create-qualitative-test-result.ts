@@ -1,12 +1,16 @@
 // todo - clean architecture violation
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { QualitativeTestResult } from '../value-types/qualitative-test-result';
+import { QualTestResult } from '../value-types/qualitative-test-result';
 import { IDbConnection } from '../services/i-db';
-import { IQualitativeTestResultRepo } from './i-qualitative-test-result-repo';
-import { TestType } from '../entities/test-suite';
+import { IQualTestResultRepo } from './i-qualitative-test-result-repo';
+import { TestType } from '../entities/quantitative-test-suite';
+import { QualTestExecutionResultDto } from '../test-execution-api/qualitative-test-execution-result-dto';
+import { ExecuteTestAuthDto } from '../test-execution-api/execute-test';
+import { QualTestAlertDto } from '../integration-api/slack/qualitative-test-alert-dto';
+import { SendQualTestSlackAlert } from '../integration-api/slack/send-qualitative-test-alert';
 
-export interface CreateQualitativeTestTestResultRequestDto {
+export interface CreateQualTestTestResultRequestDto {
   testSuiteId: string;
   testType: TestType;
   executionId: string;
@@ -22,29 +26,32 @@ export interface CreateQualitativeTestTestResultRequestDto {
   targetOrgId: string;
 }
 
-export type CreateQualitativeTestResultAuthDto = null;
+export type CreateQualTestResultAuthDto = null;
 
-export type CreateQualitativeTestResultResponseDto = Result<QualitativeTestResult>;
+export type CreateQualTestResultResponseDto = Result<QualTestResult>;
 
-export class CreateQualitativeTestResult
+export class CreateQualTestResult
   implements
     IUseCase<
-      CreateQualitativeTestTestResultRequestDto,
-      CreateQualitativeTestResultResponseDto,
-      CreateQualitativeTestResultAuthDto,
+      CreateQualTestTestResultRequestDto,
+      CreateQualTestResultResponseDto,
+      CreateQualTestResultAuthDto,
       IDbConnection
     >
 {
-  readonly #qualitativeTestResultRepo: IQualitativeTestResultRepo;
+  readonly #qualTestResultRepo: IQualTestResultRepo;
+
+  readonly #sendQualTestSlackAlert: SendQualTestSlackAlert;
 
   #dbConnection: IDbConnection;
 
-  constructor(qualitativeTestResultRepo: IQualitativeTestResultRepo) {
-    this.#qualitativeTestResultRepo = qualitativeTestResultRepo;
+  constructor(qualTestResultRepo: IQualTestResultRepo, sendQualTestSlackAlert: SendQualTestSlackAlert) {
+    this.#qualTestResultRepo = qualTestResultRepo;
+    this.#sendQualTestSlackAlert = sendQualTestSlackAlert;
   }
 
   #sendAlert = async (
-    testExecutionResult: QualitativeTestExecutionResultDto,
+    testExecutionResult: QualTestExecutionResultDto,
     auth: ExecuteTestAuthDto
   ): Promise<void> => {
     if (!testExecutionResult.testData)
@@ -54,7 +61,7 @@ export class CreateQualitativeTestResult
         'Missing alert data. Previous checks indicated alert data'
       );
 
-    const alertDto: QualitativeTestAlertDto = {
+    const alertDto: QualTestAlertDto = {
       alertId: testExecutionResult.alertData.alertId,
       testType: testExecutionResult.testType,
       detectedOn: testExecutionResult.testData.executedOn,
@@ -66,7 +73,7 @@ export class CreateQualitativeTestResult
       schemaDiffs: testExecutionResult.testData.schemaDiffs,
     };
 
-    const sendSlackAlertResult = await this.#sendQualitativeTestSlackAlert.execute(
+    const sendSlackAlertResult = await this.#sendQualTestSlackAlert.execute(
       { alertDto, targetOrgId: testExecutionResult.organizationId },
       { jwt: auth.jwt }
     );
@@ -77,11 +84,35 @@ export class CreateQualitativeTestResult
       );
   };
 
+
+  #createQualTestExecutionResult = async (
+    testExecutionResult: QualTestExecutionResultDto
+  ): Promise<void> => {
+    const createQualTestResult = await this.#createQualTestResult.execute(
+      {
+        executionId: testExecutionResult.executionId,
+        testData: testExecutionResult.testData,
+        alertData: testExecutionResult.alertData
+          ? { alertId: testExecutionResult.alertData.alertId }
+          : undefined,
+        testSuiteId: testExecutionResult.testSuiteId,
+        testType: testExecutionResult.testType,
+        targetResourceId: testExecutionResult.targetResourceId,
+        targetOrgId: testExecutionResult.organizationId,
+      },
+      null,
+      this.#dbConnection
+    );
+
+    if (!createQualTestResult.success)
+      throw new Error(createQualTestResult.error);
+  };
+
   async execute(
-    request: CreateQualitativeTestTestResultRequestDto,
-    auth: CreateQualitativeTestResultAuthDto,
+    request: CreateQualTestTestResultRequestDto,
+    auth: CreateQualTestResultAuthDto,
     dbConnection: IDbConnection
-  ): Promise<CreateQualitativeTestResultResponseDto> {
+  ): Promise<CreateQualTestResultResponseDto> {
     try {
       this.#dbConnection = dbConnection;
 
@@ -92,18 +123,18 @@ export class CreateQualitativeTestResult
       )
         return Result.ok(testExecutionResult);
 
-      if (!instanceOfQuantitativeTestExecutionResultDto(testExecutionResult))
-        await this.#sendQualitativeTestAlert(testExecutionResult, auth);
-      else await this.#sendQuantitativeAlert(testExecutionResult, auth);
+      if (!instanceOfQuantTestExecutionResultDto(testExecutionResult))
+        await this.#sendQualTestAlert(testExecutionResult, auth);
+      else await this.#sendQuantAlert(testExecutionResult, auth);
 
-      const qualitativeTestResult: QualitativeTestResult = {
+      const qualTestResult: QualTestResult = {
         ...request,
         organizationId: request.targetOrgId,
       };
 
-      await this.#qualitativeTestResultRepo.insertOne(qualitativeTestResult, this.#dbConnection);
+      await this.#qualTestResultRepo.insertOne(qualTestResult, this.#dbConnection);
 
-      return Result.ok(qualitativeTestResult);
+      return Result.ok(qualTestResult);
     } catch (error: unknown) {
       if (error instanceof Error ) console.error(error.stack);
       else if (error) console.trace(error);

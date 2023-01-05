@@ -3,10 +3,10 @@
 import { Db, Document, InsertOneResult } from 'mongodb';
 import sanitize from 'mongo-sanitize';
 
-import { IQuantitativeTestResultRepo } from '../../domain/quantitative-test-result/i-quantitative-test-result-repo';
-import { QuantitativeTestResult } from '../../domain/value-types/quantitative-test-result';
+import { IQuantTestResultRepo } from '../../domain/quantitative-test-result/i-quantitative-test-result-repo';
+import { QuantTestResult } from '../../domain/value-types/quantitative-test-result';
 
-interface QuantitativeTestResultPersistence {
+interface QuantTestResultPersistence {
   testSuiteId: string;
   executionId: string;
   isWarmup: boolean;
@@ -23,20 +23,20 @@ interface QuantitativeTestResultPersistence {
   organizationId: string;
 }
 
-const collectionName = 'quantitativeTestResult';
+const collectionName = 'quantTestResult';
 
-export default class QuantitativeTestResultRepo implements IQuantitativeTestResultRepo {
+export default class QuantTestResultRepo implements IQuantTestResultRepo {
   insertOne = async (
-    quantitativeTestResult: QuantitativeTestResult,
+    quantTestResult: QuantTestResult,
     dbConnection: Db
   ): Promise<string> => {
     try {
       const result: InsertOneResult<Document> = await dbConnection
         .collection(collectionName)
-        .insertOne(await this.#toPersistence(sanitize(quantitativeTestResult)));
+        .insertOne(await this.#toPersistence(sanitize(quantTestResult)));
 
       if (!result.acknowledged)
-        throw new Error('QuantitativeTestResult creation failed. Insert not acknowledged');
+        throw new Error('QuantTestResult creation failed. Insert not acknowledged');
 
       return result.insertedId.toHexString();
     } catch (error: unknown) {
@@ -46,9 +46,9 @@ export default class QuantitativeTestResultRepo implements IQuantitativeTestResu
     }
   };
 
-  #toPersistence = async (quantitativeTestResult: QuantitativeTestResult): Promise<Document> => {
-    const persistenceObject: QuantitativeTestResultPersistence = {
-      ...quantitativeTestResult,
+  #toPersistence = async (quantTestResult: QuantTestResult): Promise<Document> => {
+    const persistenceObject: QuantTestResultPersistence = {
+      ...quantTestResult,
     };
 
     return persistenceObject;

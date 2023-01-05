@@ -7,8 +7,8 @@ interface BaseTestSuite{
   executionType: ExecutionType;
 }
 
-export interface BaseQuantitativeTestSuite extends BaseTestSuite{
+export interface BaseQuantTestSuite extends BaseTestSuite{
   threshold: number;
 }
 
-export type QualitativeTestSuite = BaseTestSuite;
+export type BaseQualTestSuite = BaseTestSuite;

@@ -4,10 +4,10 @@ import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
-  TriggerQualitativeTestSuiteExecution,
-  TriggerQualitativeTestSuiteExecutionAuthDto,
-  TriggerQualitativeTestSuiteExecutionRequestDto,
-  TriggerQualitativeTestSuiteExecutionResponseDto,
+  TriggerQualTestSuiteExecution,
+  TriggerQualTestSuiteExecutionAuthDto,
+  TriggerQualTestSuiteExecutionRequestDto,
+  TriggerQualTestSuiteExecutionResponseDto,
 } from '../../../domain/qualitative-test-suite/trigger-qualitative-test-suite-execution';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
@@ -18,25 +18,25 @@ import {
   UserAccountInfo,
 } from './shared/base-controller';
 
-export default class TriggerQualitativeTestSuiteExecutionController extends BaseController {
-  readonly #triggerQualitativeTestSuiteExecution: TriggerQualitativeTestSuiteExecution;
+export default class TriggerQualTestSuiteExecutionController extends BaseController {
+  readonly #triggerQualTestSuiteExecution: TriggerQualTestSuiteExecution;
 
   readonly #dbo: Dbo;
 
   constructor(
-    triggerQualitativeTestSuiteExecution: TriggerQualitativeTestSuiteExecution,
+    triggerQualTestSuiteExecution: TriggerQualTestSuiteExecution,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile,
     dbo: Dbo
   ) {
     super(getAccounts, getSnowflakeProfile);
-    this.#triggerQualitativeTestSuiteExecution = triggerQualitativeTestSuiteExecution;
+    this.#triggerQualTestSuiteExecution = triggerQualTestSuiteExecution;
     this.#dbo = dbo;
   }
 
   #buildRequestDto = (
     httpRequest: Request
-  ): TriggerQualitativeTestSuiteExecutionRequestDto => ({
+  ): TriggerQualTestSuiteExecutionRequestDto => ({
     id: httpRequest.params.id,
     targetOrgId: httpRequest.body.targetOrgId,
     executionType: httpRequest.body.executionType,
@@ -45,7 +45,7 @@ export default class TriggerQualitativeTestSuiteExecutionController extends Base
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): TriggerQualitativeTestSuiteExecutionAuthDto => ({
+  ): TriggerQualTestSuiteExecutionAuthDto => ({
     jwt,
     callerOrgId: userAccountInfo.callerOrgId,
     isSystemInternal: userAccountInfo.isSystemInternal,
@@ -56,7 +56,7 @@ export default class TriggerQualitativeTestSuiteExecutionController extends Base
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return TriggerQualitativeTestSuiteExecutionController.unauthorized(
+        return TriggerQualTestSuiteExecutionController.unauthorized(
           res,
           'Unauthorized'
         );
@@ -67,25 +67,25 @@ export default class TriggerQualitativeTestSuiteExecutionController extends Base
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return TriggerQualitativeTestSuiteExecutionController.unauthorized(
+        return TriggerQualTestSuiteExecutionController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: TriggerQualitativeTestSuiteExecutionRequestDto =
+      const requestDto: TriggerQualTestSuiteExecutionRequestDto =
         this.#buildRequestDto(req);
 
-      console.log(`Handling trigger request for qualitative test-suite ${requestDto.id} of org ${requestDto.targetOrgId}`);
+      console.log(`Handling trigger request for qual test-suite ${requestDto.id} of org ${requestDto.targetOrgId}`);
 
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
       const connPool = await this.createConnectionPool(jwt, createPool, requestDto.targetOrgId);
 
-      const useCaseResult: TriggerQualitativeTestSuiteExecutionResponseDto =
-        await this.#triggerQualitativeTestSuiteExecution.execute(
+      const useCaseResult: TriggerQualTestSuiteExecutionResponseDto =
+        await this.#triggerQualTestSuiteExecution.execute(
           requestDto,
           authDto,
           { mongoConn: this.#dbo.dbConnection, sfConnPool: connPool }
@@ -95,10 +95,10 @@ export default class TriggerQualitativeTestSuiteExecutionController extends Base
       await connPool.clear();
 
       if (!useCaseResult.success) {
-        return TriggerQualitativeTestSuiteExecutionController.badRequest(res);
+        return TriggerQualTestSuiteExecutionController.badRequest(res);
       }
 
-      return TriggerQualitativeTestSuiteExecutionController.ok(
+      return TriggerQualTestSuiteExecutionController.ok(
         res,
         useCaseResult.value,
         CodeHttp.CREATED
@@ -106,9 +106,9 @@ export default class TriggerQualitativeTestSuiteExecutionController extends Base
     } catch (error: unknown) {
       if (error instanceof Error ) console.error(error.stack);
       else if (error) console.trace(error);
-      return TriggerQualitativeTestSuiteExecutionController.fail(
+      return TriggerQualTestSuiteExecutionController.fail(
         res,
-        'trigger qualitative test suite - Unknown error occurred'
+        'trigger qual test suite - Unknown error occurred'
       );
     }
   }

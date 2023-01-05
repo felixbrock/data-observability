@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import Result from '../value-types/transient-types/result';
-import { TestSuite, TestType } from '../entities/test-suite';
+import { TestSuite, TestType } from '../entities/quantitative-test-suite';
 import { MaterializationType } from '../value-types/materialization-type';
 import { ExecutionType } from '../value-types/execution-type';
 import { ITestSuiteRepo } from './i-test-suite-repo';

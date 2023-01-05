@@ -5,26 +5,26 @@ import {
   IIntegrationApiRepo,
 } from '../i-integration-api-repo';
 import { SendAlertResultDto } from './send-alert-result-dto';
-import { QualitativeTestAlertDto } from './qualitative-test-alert-dto';
+import { QualTestAlertDto } from './qualitative-test-alert-dto';
 import { appConfig } from '../../../config';
 
-export type SendQualitativeTestSlackAlertRequestDto = {
-  alertDto: QualitativeTestAlertDto;
+export type SendQualTestSlackAlertRequestDto = {
+  alertDto: QualTestAlertDto;
   targetOrgId: string;
 };
 
-export interface SendQualitativeTestSlackAlertAuthDto {
+export interface SendQualTestSlackAlertAuthDto {
   jwt: string;
 }
 
-export type SendQualitativeTestSlackAlertResponseDto = Result<SendAlertResultDto>;
+export type SendQualTestSlackAlertResponseDto = Result<SendAlertResultDto>;
 
-export class SendQualitativeTestSlackAlert
+export class SendQualTestSlackAlert
   implements
     IUseCase<
-      SendQualitativeTestSlackAlertRequestDto,
-      SendQualitativeTestSlackAlertResponseDto,
-      SendQualitativeTestSlackAlertAuthDto
+      SendQualTestSlackAlertRequestDto,
+      SendQualTestSlackAlertResponseDto,
+      SendQualTestSlackAlertAuthDto
     >
 {
   readonly #integrationApiRepo: IIntegrationApiRepo;
@@ -34,7 +34,7 @@ export class SendQualitativeTestSlackAlert
   }
 
   #buildAlertMessageConfig = (
-    alertDto: QualitativeTestAlertDto
+    alertDto: QualTestAlertDto
   ): AlertMessageConfig => ({
     alertId: alertDto.alertId,
     testType: alertDto.testType,
@@ -49,9 +49,9 @@ export class SendQualitativeTestSlackAlert
   });
 
   async execute(
-    request: SendQualitativeTestSlackAlertRequestDto,
-    auth: SendQualitativeTestSlackAlertAuthDto
-  ): Promise<SendQualitativeTestSlackAlertResponseDto> {
+    request: SendQualTestSlackAlertRequestDto,
+    auth: SendQualTestSlackAlertAuthDto
+  ): Promise<SendQualTestSlackAlertResponseDto> {
     try {
       const messageConfig = this.#buildAlertMessageConfig(request.alertDto);
 

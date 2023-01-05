@@ -1,6 +1,6 @@
-import { TestType } from "../../entities/test-suite";
+import { TestType } from "../../entities/quantitative-test-suite";
 
-export interface QuantitativeAlertDto {
+export interface QuantTestAlertDto {
   alertId: string;
   value: number;
   testType: TestType;

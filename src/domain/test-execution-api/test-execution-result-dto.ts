@@ -1,22 +1,28 @@
-import { QualTestType } from '../entities/qualitative-test-suite';
+import { TestType } from '../entities/quantitative-test-suite';
 import { MaterializationType } from '../value-types/materialization-type';
 
-export interface QualTestExecutionResultDto {
+export interface TestExecutionResultDto {
   testSuiteId: string;
-  testType: QualTestType;
+  testType: TestType;
   executionId: string;
-  testData: {
+  isWarmup: boolean;
+  testData?: {
     executedOn: string;
     isAnomolous: boolean;
-    schemaDiffs: any;
+    modifiedZScore: number;
+    deviation: number;
   };
   alertData?: {
     alertId: string;
     message: string;
+    value: number;
+    expectedUpperBound: number;
+    expectedLowerBound: number;
     databaseName: string;
     schemaName: string;
     materializationName: string;
     materializationType: MaterializationType;
+    columnName?: string;
   };
   targetResourceId: string;
   organizationId: string;

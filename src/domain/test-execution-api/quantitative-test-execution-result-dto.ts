@@ -1,7 +1,7 @@
-import { TestType } from '../entities/test-suite';
+import { TestType } from '../entities/quantitative-test-suite';
 import { MaterializationType } from '../value-types/materialization-type';
 
-export interface QuantitativeTestExecutionResultDto {
+export interface QuantTestExecutionResultDto {
   testSuiteId: string;
   testType: TestType;
   executionId: string;

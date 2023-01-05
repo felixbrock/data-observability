@@ -2,10 +2,10 @@
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
 import {
-  ReadQualitativeTestSuites,
-  ReadQualitativeTestSuitesAuthDto,
-  ReadQualitativeTestSuitesRequestDto,
-  ReadQualitativeTestSuitesResponseDto,
+  ReadQualTestSuites,
+  ReadQualTestSuitesAuthDto,
+  ReadQualTestSuitesRequestDto,
+  ReadQualTestSuitesResponseDto,
 } from '../../../domain/qualitative-test-suite/read-qualitative-test-suites';
 
 import {
@@ -17,21 +17,21 @@ import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import Result from '../../../domain/value-types/transient-types/result';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
-export default class ReadQualitativeTestSuitesController extends BaseController {
-  readonly #readQualitativeTestSuites: ReadQualitativeTestSuites;
+export default class ReadQualTestSuitesController extends BaseController {
+  readonly #readQualTestSuites: ReadQualTestSuites;
 
   constructor(
-    readQualitativeTestSuites: ReadQualitativeTestSuites,
+    readQualTestSuites: ReadQualTestSuites,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
   ) {
     super(getAccounts, getSnowflakeProfile);
-    this.#readQualitativeTestSuites = readQualitativeTestSuites;
+    this.#readQualTestSuites = readQualTestSuites;
   }
 
   #buildRequestDto = (
     httpRequest: Request
-  ): ReadQualitativeTestSuitesRequestDto => {
+  ): ReadQualTestSuitesRequestDto => {
     const { activated } = httpRequest.query;
 
     if (
@@ -51,7 +51,7 @@ export default class ReadQualitativeTestSuitesController extends BaseController 
   #buildAuthDto = (
     jwt: string,
     userAccountInfo: UserAccountInfo
-  ): ReadQualitativeTestSuitesAuthDto => ({
+  ): ReadQualTestSuitesAuthDto => ({
     jwt,
     isSystemInternal: userAccountInfo.isSystemInternal,
     callerOrgId: userAccountInfo.callerOrgId,
@@ -62,7 +62,7 @@ export default class ReadQualitativeTestSuitesController extends BaseController 
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return ReadQualitativeTestSuitesController.unauthorized(
+        return ReadQualTestSuitesController.unauthorized(
           res,
           'Unauthorized'
         );
@@ -73,24 +73,24 @@ export default class ReadQualitativeTestSuitesController extends BaseController 
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return ReadQualitativeTestSuitesController.unauthorized(
+        return ReadQualTestSuitesController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: ReadQualitativeTestSuitesRequestDto =
+      const requestDto: ReadQualTestSuitesRequestDto =
         this.#buildRequestDto(req);
-      const authDto: ReadQualitativeTestSuitesAuthDto = this.#buildAuthDto(
+      const authDto: ReadQualTestSuitesAuthDto = this.#buildAuthDto(
         jwt,
         getUserAccountInfoResult.value
       );
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-      const useCaseResult: ReadQualitativeTestSuitesResponseDto =
-        await this.#readQualitativeTestSuites.execute(
+      const useCaseResult: ReadQualTestSuitesResponseDto =
+        await this.#readQualTestSuites.execute(
           requestDto,
           authDto,
           connPool
@@ -100,20 +100,20 @@ export default class ReadQualitativeTestSuitesController extends BaseController 
       await connPool.clear();
 
       if (!useCaseResult.success) {
-        return ReadQualitativeTestSuitesController.badRequest(res);
+        return ReadQualTestSuitesController.badRequest(res);
       }
 
       const resultValue = useCaseResult.value
         ? useCaseResult.value.map((element) => element.toDto())
         : useCaseResult.value;
 
-      return ReadQualitativeTestSuitesController.ok(res, resultValue, CodeHttp.OK);
+      return ReadQualTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error ) console.error(error.stack);
       else if (error) console.trace(error);
-      return ReadQualitativeTestSuitesController.fail(
+      return ReadQualTestSuitesController.fail(
         res,
-        'read qualitative test suites - Unknown error occurred'
+        'read qual test suites - Unknown error occurred'
       );
     }
   }

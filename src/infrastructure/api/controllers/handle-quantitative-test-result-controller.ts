@@ -6,11 +6,11 @@ import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowfla
 import { handleScheduleCreation } from '../../../domain/services/schedule';
 
 import {
-  CreateQuantitativeTestResult,
-  CreateQuantitativeTestResultAuthDto,
-  CreateQuantitativeTestResultRequestDto,
-  CreateQuantitativeTestResultResponseDto,
-} from '../../../domain/test-result/create-test-result';
+  CreateQuantTestResult,
+  CreateQuantTestResultAuthDto,
+  CreateQuantTestResultRequestDto,
+  CreateQuantTestResultResponseDto,
+} from '../../../domain/quantitative-test-result/create-quantitative-test-result';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -19,27 +19,27 @@ import {
   UserAccountInfo,
 } from './shared/base-controller';
 
-export default class CreateQuantitativeTestResultController extends BaseController {
-  readonly #createQuantitativeTestResult: CreateQuantitativeTestResult;
+export default class CreateQuantTestResultController extends BaseController {
+  readonly #createQuantTestResult: CreateQuantTestResult;
 
   constructor(
-    createQuantitativeTestResult: CreateQuantitativeTestResult,
+    createQuantTestResult: CreateQuantTestResult,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
   ) {
     super(getAccounts, getSnowflakeProfile);
 
-    this.#createQuantitativeTestResult = createQuantitativeTestResult;
+    this.#createQuantTestResult = createQuantTestResult;
   }
 
-  #buildRequestDto = (httpRequest: Request): CreateQuantitativeTestResultRequestDto => ({
+  #buildRequestDto = (httpRequest: Request): CreateQuantTestResultRequestDto => ({
     createObjects: httpRequest.body.createObjects,
   });
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): CreateQuantitativeTestResultAuthDto => {
+  ): CreateQuantTestResultAuthDto => {
     if (!userAccountInfo.callerOrgId)
       throw new Error('Unauthorized - Caller organization id missing');
 
@@ -55,7 +55,7 @@ export default class CreateQuantitativeTestResultController extends BaseControll
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return CreateQuantitativeTestResultController.unauthorized(
+        return CreateQuantTestResultController.unauthorized(
           res,
           'Unauthorized - auth-header missing'
         );
@@ -66,27 +66,27 @@ export default class CreateQuantitativeTestResultController extends BaseControll
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return CreateQuantitativeTestResultController.unauthorized(
+        return CreateQuantTestResultController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: CreateQuantitativeTestResultRequestDto = this.#buildRequestDto(req);
+      const requestDto: CreateQuantTestResultRequestDto = this.#buildRequestDto(req);
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-      const useCaseResult: CreateQuantitativeTestResultResponseDto =
-        await this.#createQuantitativeTestResult.execute(requestDto, authDto, connPool);
+      const useCaseResult: CreateQuantTestResultResponseDto =
+        await this.#createQuantTestResult.execute(requestDto, authDto, connPool);
 
       await connPool.drain();
       await connPool.clear();
 
       if (!useCaseResult.success) {
-        return CreateQuantitativeTestResultController.badRequest(res);
+        return CreateQuantTestResultController.badRequest(res);
       }
 
       if (!useCaseResult.value)
@@ -96,11 +96,11 @@ export default class CreateQuantitativeTestResultController extends BaseControll
 
       await handleScheduleCreation(authDto.callerOrgId, 'test', resultValues);
 
-      return CreateQuantitativeTestResultController.ok(res, resultValues, CodeHttp.CREATED);
+      return CreateQuantTestResultController.ok(res, resultValues, CodeHttp.CREATED);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
-      return CreateQuantitativeTestResultController.fail(
+      return CreateQuantTestResultController.fail(
         res,
         'create test result - Internal error occurred'
       );

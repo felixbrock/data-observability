@@ -1,7 +1,7 @@
 import {
-  QualitativeTestSuite,
-  QualitativeTestSuiteProps,
-  parseQualitativeTestType,
+  QualTestSuiteProps,
+  parseQualTestType,
+  QualTestSuite,
 } from '../../domain/entities/qualitative-test-suite';
 import {
   ColumnDefinition,
@@ -16,22 +16,22 @@ import {
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
 import {
-  IQualitativeTestSuiteRepo,
-  QualitativeTestSuiteQueryDto,
-  QualitativeTestSuiteUpdateDto,
+  IQualTestSuiteRepo,
+  QualTestSuiteQueryDto,
+  QualTestSuiteUpdateDto,
 } from '../../domain/qualitative-test-suite/i-qualitative-test-suite-repo';
 import { parseMaterializationType } from '../../domain/value-types/materialization-type';
 
-export default class QualitativeTestSuiteRepo
+export default class QualTestSuiteRepo
   extends BaseSfRepo<
-    QualitativeTestSuite,
-    QualitativeTestSuiteProps,
-    QualitativeTestSuiteQueryDto,
-    QualitativeTestSuiteUpdateDto
+    QualTestSuite,
+    QualTestSuiteProps,
+    QualTestSuiteQueryDto,
+    QualTestSuiteUpdateDto
   >
-  implements IQualitativeTestSuiteRepo
+  implements IQualTestSuiteRepo
 {
-  readonly matName = 'test_suites_qualitative';
+  readonly matName = 'test_suites_qual';
 
   readonly colDefinitions: ColumnDefinition[] = [
     { name: 'id', nullable: false },
@@ -52,7 +52,7 @@ export default class QualitativeTestSuiteRepo
     super(querySnowflake);
   }
 
-  buildEntityProps = (sfEntity: SnowflakeEntity): QualitativeTestSuiteProps => {
+  buildEntityProps = (sfEntity: SnowflakeEntity): QualTestSuiteProps => {
     const {
       ID: id,
       TEST_TYPE: type,
@@ -75,13 +75,13 @@ export default class QualitativeTestSuiteRepo
       typeof schemaName !== 'string' ||
       typeof materializationName !== 'string' ||
       typeof materializationType !== 'string' ||
-      !QualitativeTestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
+      !QualTestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string'
     )
       throw new Error(
-        'Retrieved unexpected qualitative test suite field types from persistence'
+        'Retrieved unexpected qual test suite field types from persistence'
       );
 
     return {
@@ -95,13 +95,13 @@ export default class QualitativeTestSuiteRepo
         targetResourceId,
         columnName,
       },
-      type: parseQualitativeTestType(type),
+      type: parseQualTestType(type),
       cron,
       executionType: parseExecutionType(executionType),
     };
   };
 
-  getBinds = (entity: QualitativeTestSuite): (string | number)[] => [
+  getBinds = (entity: QualTestSuite): (string | number)[] => [
     entity.id,
     entity.type,
     entity.activated.toString(),
@@ -115,7 +115,7 @@ export default class QualitativeTestSuiteRepo
     entity.executionType,
   ];
 
-  buildFindByQuery = (queryDto: QualitativeTestSuiteQueryDto): Query => {
+  buildFindByQuery = (queryDto: QualTestSuiteQueryDto): Query => {
     const binds: (string | number)[] = [];
     let whereClause = '';
 
@@ -142,7 +142,7 @@ export default class QualitativeTestSuiteRepo
 
   buildUpdateQuery = (
     id: string,
-    updateDto: QualitativeTestSuiteUpdateDto
+    updateDto: QualTestSuiteUpdateDto
   ): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
     const binds: Binds = [id];
@@ -168,6 +168,6 @@ export default class QualitativeTestSuiteRepo
   };
 
   toEntity = (
-    qualitativetestsuiteProperties: QualitativeTestSuiteProps
-  ): QualitativeTestSuite => QualitativeTestSuite.create(qualitativetestsuiteProperties);
+    qualtestsuiteProperties: QualTestSuiteProps
+  ): QualTestSuite => QualTestSuite.create(qualtestsuiteProperties);
 }
