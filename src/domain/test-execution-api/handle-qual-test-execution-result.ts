@@ -10,6 +10,7 @@ import { CreateQualTestResult } from '../qual-test-result/create-qual-test-resul
 export type HandleQualTestExecutionResultRequestDto = QualTestExecutionResultDto;
 
 export interface HandleQualTestExecutionResultAuthDto {
+  isSystemInternal: boolean,
   jwt: string;
 }
 

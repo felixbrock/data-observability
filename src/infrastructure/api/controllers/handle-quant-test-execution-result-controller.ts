@@ -6,7 +6,6 @@ import {
   TestType,
 } from '../../../domain/entities/quant-test-suite';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
-import { handleScheduleCreation } from '../../../domain/services/schedule';
 
 import {
   HandleQuantTestExecutionResult,
@@ -113,7 +112,7 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
       'materializationName' in obj &&
       typeof obj.materializationName === 'string' &&
       'materializationType' in obj &&
-      parseMaterializationType(obj.materializationType) &&
+      !!parseMaterializationType(obj.materializationType) &&
       (!('columnName' in obj) ||
         ('columnName' in obj && typeof obj.columnName === 'string'));
     if (alertData && !isAlertData(alertData))
@@ -192,18 +191,10 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
       if (!useCaseResult.success) {
         return HandleQuantTestExecutionResultController.badRequest(res);
       }
-returns null
-      xxxxxxxxif (!useCaseResult.value)
-        throw new Error('Missing handle test result result value');
-
-      const resultValues = useCaseResult.value.map((el) => el.toDto());
-
-      await handleScheduleCreation(authDto.callerOrgId, 'test', resultValues);
 
       return HandleQuantTestExecutionResultController.ok(
         res,
-        resultValues,
-        CodeHttp.HANDLED
+        CodeHttp.CREATED
       );
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);

@@ -63,8 +63,8 @@ iocRegister.register({
   triggerQualTestSuiteExecution: asClass(TriggerQualTestSuiteExecution),
   triggerCustomTestSuiteExecution: asClass(TriggerCustomTestSuiteExecution),
 
-  handleQuantTestExecutionExecution: asClass(HandleQuantTestExecutionResult),
-  handleQualTestExecutionExecution: asClass(HandleQualTestExecutionResult),
+  handleQuantTestExecution: asClass(HandleQuantTestExecutionResult),
+  handleQualTestExecution: asClass(HandleQualTestExecutionResult),
 
   updateTestHistoryEntry: asClass(UpdateTestHistoryEntry),
   executeTest: asClass(ExecuteTest),

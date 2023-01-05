@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import app from '../../ioc-register';
+import HandleQualTestExecutionResultController from '../controllers/handle-qual-test-execution-result-controller';
 import ReadQualTestSuiteController from '../controllers/read-qual-test-suite-controller';
 import TriggerQualTestSuiteExecutionController from '../controllers/trigger-qual-test-suite-execution-controller';
 
@@ -22,12 +23,23 @@ const triggerQualTestSuiteExecutionController = new TriggerQualTestSuiteExecutio
   dbo
 );
 
+const handleQualTestExecutionResultController = new HandleQualTestExecutionResultController(
+  app.resolve('handleQualTestExecutionResult'),
+  getAccounts,
+  getSnowflakeProfile,
+  dbo
+);
+
 qualTestSuiteRoutes.get('/:id', (req, res) => {
   readQualTestSuiteController.execute(req, res);
 });
 
 qualTestSuiteRoutes.post('/:id/execute', (req, res) => {
   triggerQualTestSuiteExecutionController.execute(req, res);
+});
+
+qualTestSuiteRoutes.post('/execution/result/handle', (req, res) => {
+  handleQualTestExecutionResultController.execute(req, res);
 });
 
 export default qualTestSuiteRoutes;
