@@ -14,9 +14,10 @@ import {
   HandleQuantTestExecutionResultResponseDto,
 } from '../../../domain/test-execution-api/handle-quant-test-execution-result';
 import {
-  MaterializationType,
-  parseMaterializationType,
-} from '../../../domain/value-types/materialization-type';
+  QuantTestAlertData,
+  QuantTestTestData,
+} from '../../../domain/test-execution-api/quant-test-execution-result-dto';
+import { parseMaterializationType } from '../../../domain/value-types/materialization-type';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
 
@@ -43,6 +44,73 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
     this.#dbo = dbo;
   }
 
+  #isObj = (obj: unknown): obj is { [key: string]: unknown } =>
+    !obj ||
+    typeof obj !== 'object' ||
+    Object.keys(obj).some((el) => typeof el !== 'string');
+
+  #isTestData = (obj: unknown): obj is QuantTestTestData => {
+    if (!this.#isObj(obj)) return false;
+
+    const { executedOn, isAnomolous, modifiedZScore, deviation } = obj;
+
+    if (
+      !executedOn ||
+      executedOn !== 'string' ||
+      !isAnomolous ||
+      isAnomolous !== 'boolean' ||
+      !modifiedZScore ||
+      modifiedZScore !== 'number' ||
+      !deviation ||
+      deviation !== 'number'
+    )
+      return false;
+
+    return true;
+  };
+
+  #isAlertData = (obj: unknown): obj is QuantTestAlertData => {
+    if (!this.#isObj(obj)) return false;
+
+    const {
+      alertId,
+      message,
+      value,
+      expectedUpperBound,
+      expectedLowerBound,
+      databaseName,
+      schemaName,
+      materializationName,
+      materializationType,
+      columnName,
+    } = obj;
+
+    if (
+      !alertId ||
+      typeof alertId === 'string' ||
+      !message ||
+      typeof message === 'string' ||
+      !value ||
+      typeof value === 'number' ||
+      !expectedLowerBound ||
+      typeof expectedLowerBound === 'number' ||
+      !expectedUpperBound ||
+      typeof expectedUpperBound === 'number' ||
+      !databaseName ||
+      typeof databaseName === 'string' ||
+      !schemaName ||
+      typeof schemaName === 'string' ||
+      !materializationName ||
+      typeof materializationName === 'string' ||
+      !materializationType ||
+      parseMaterializationType(materializationType) ||
+      (columnName && typeof columnName !== 'string')
+    )
+      return false;
+
+    return true;
+  };
+
   #buildRequestDto = (
     httpRequest: Request
   ): HandleQuantTestExecutionResultRequestDto => {
@@ -58,64 +126,10 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
 
     const testType: TestType = parseTestType(httpRequest.body.testType);
 
-    const isTestData = (
-      obj: unknown
-    ): obj is {
-      executedOn: string;
-      isAnomolous: boolean;
-      modifiedZScore: number;
-      deviation: number;
-    } =>
-      !!obj &&
-      typeof obj === 'object' &&
-      'executedOn' in obj &&
-      typeof obj.executedOn === 'string' &&
-      'isAnomolous' in obj &&
-      typeof obj.isAnomolous === 'boolean' &&
-      'modifiedZScore' in obj &&
-      typeof obj.modifiedZScore === 'number' &&
-      'deviation' in obj &&
-      typeof obj.deviation === 'number';
-    if (testData && !isTestData(testData))
+    if (testData && !this.#isTestData(testData))
       throw new Error('Incorrect testData obj provided');
 
-    const isAlertData = (
-      obj: unknown
-    ): obj is {
-      alertId: string;
-      message: string;
-      value: number;
-      expectedUpperBound: number;
-      expectedLowerBound: number;
-      databaseName: string;
-      schemaName: string;
-      materializationName: string;
-      materializationType: MaterializationType;
-      columnName?: string;
-    } =>
-      !!obj &&
-      typeof obj === 'object' &&
-      'alertId' in obj &&
-      typeof obj.alertId === 'string' &&
-      'message' in obj &&
-      typeof obj.message === 'string' &&
-      'value' in obj &&
-      typeof obj.value === 'number' &&
-      'expectedUpperBound' in obj &&
-      typeof obj.expectedUpperBound === 'number' &&
-      'expectedLowerBound' in obj &&
-      typeof obj.expectedLowerBound === 'number' &&
-      'databaseName' in obj &&
-      typeof obj.databaseName === 'string' &&
-      'schemaName' in obj &&
-      typeof obj.schemaName === 'string' &&
-      'materializationName' in obj &&
-      typeof obj.materializationName === 'string' &&
-      'materializationType' in obj &&
-      !!parseMaterializationType(obj.materializationType) &&
-      (!('columnName' in obj) ||
-        ('columnName' in obj && typeof obj.columnName === 'string'));
-    if (alertData && !isAlertData(alertData))
+    if (alertData && !this.#isAlertData(alertData))
       throw new Error('Incorrect alertData obj provided');
 
     if (
@@ -187,15 +201,11 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
           this.#dbo
         );
 
-
       if (!useCaseResult.success) {
         return HandleQuantTestExecutionResultController.badRequest(res);
       }
 
-      return HandleQuantTestExecutionResultController.ok(
-        res,
-        CodeHttp.CREATED
-      );
+      return HandleQuantTestExecutionResultController.ok(res, CodeHttp.CREATED);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);

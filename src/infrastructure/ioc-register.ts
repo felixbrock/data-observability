@@ -63,8 +63,8 @@ iocRegister.register({
   triggerQualTestSuiteExecution: asClass(TriggerQualTestSuiteExecution),
   triggerCustomTestSuiteExecution: asClass(TriggerCustomTestSuiteExecution),
 
-  handleQuantTestExecution: asClass(HandleQuantTestExecutionResult),
-  handleQualTestExecution: asClass(HandleQualTestExecutionResult),
+  handleQuantTestExecutionResult: asClass(HandleQuantTestExecutionResult),
+  handleQualTestExecutionResult: asClass(HandleQualTestExecutionResult),
 
   updateTestHistoryEntry: asClass(UpdateTestHistoryEntry),
   executeTest: asClass(ExecuteTest),
@@ -72,7 +72,7 @@ iocRegister.register({
   getAccounts: asClass(GetAccounts),
   querySnowflake: asClass(QuerySnowflake),
   getSnowflakeProfile: asClass(GetSnowflakeProfile),
-  sendQuantSlackAlert: asClass(SendQuantTestSlackAlert),
+  sendQuantTestSlackAlert: asClass(SendQuantTestSlackAlert),
   sendQualTestSlackAlert: asClass(SendQualTestSlackAlert),
 
   quantTestResultRepo: asClass(QuantTestResultRepo),
