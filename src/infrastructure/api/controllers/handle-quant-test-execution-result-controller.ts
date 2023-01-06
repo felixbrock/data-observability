@@ -45,9 +45,9 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
   }
 
   #isObj = (obj: unknown): obj is { [key: string]: unknown } =>
-    !obj ||
-    typeof obj !== 'object' ||
-    Object.keys(obj).some((el) => typeof el !== 'string');
+    !!obj &&
+    typeof obj === 'object' &&
+    Object.keys(obj).every((el) => typeof el === 'string');
 
   #isTestData = (obj: unknown): obj is QuantTestTestData => {
     if (!this.#isObj(obj)) return false;
@@ -158,7 +158,7 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
     jwt: string
   ): HandleQuantTestExecutionResultAuthDto => {
     if (!userAccountInfo.isSystemInternal)
-      throw new Error('Unauthorized - Caller organization id missing');
+      throw new Error('Unauthorized - External Call');
 
     return {
       isSystemInternal: userAccountInfo.isSystemInternal,

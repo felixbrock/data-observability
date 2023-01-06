@@ -45,9 +45,9 @@ export default class HandleQualTestExecutionResultController extends BaseControl
   }
 
   #isObj = (obj: unknown): obj is { [key: string]: unknown } =>
-    !obj ||
-    typeof obj !== 'object' ||
-    Object.keys(obj).some((el) => typeof el !== 'string');
+    !!obj &&
+    typeof obj === 'object' &&
+    Object.keys(obj).every((el) => typeof el === 'string');
 
   #isTestData = (obj: unknown): obj is QualTestTestData => {
     if (!this.#isObj(obj)) return false;
@@ -141,7 +141,7 @@ export default class HandleQualTestExecutionResultController extends BaseControl
     jwt: string
   ): HandleQualTestExecutionResultAuthDto => {
     if (!userAccountInfo.isSystemInternal)
-      throw new Error('Unauthorized - Caller organization id missing');
+      throw new Error('Unauthorized - External Call');
 
     return {
       isSystemInternal: userAccountInfo.isSystemInternal,

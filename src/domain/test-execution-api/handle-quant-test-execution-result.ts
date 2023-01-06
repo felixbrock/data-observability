@@ -7,10 +7,11 @@ import { SendQuantTestSlackAlert } from '../integration-api/slack/send-quant-tes
 import { QuantTestExecutionResultDto } from './quant-test-execution-result-dto';
 import { CreateQuantTestResult } from '../quant-test-result/create-quant-test-result';
 
-export type HandleQuantTestExecutionResultRequestDto = QuantTestExecutionResultDto;
+export type HandleQuantTestExecutionResultRequestDto =
+  QuantTestExecutionResultDto;
 
 export interface HandleQuantTestExecutionResultAuthDto {
-  isSystemInternal: boolean,
+  isSystemInternal: boolean;
   jwt: string;
 }
 
