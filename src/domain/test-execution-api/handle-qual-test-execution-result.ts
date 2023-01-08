@@ -6,11 +6,15 @@ import { QualTestAlertDto } from '../integration-api/slack/qual-test-alert-dto';
 import { SendQualTestSlackAlert } from '../integration-api/slack/send-qual-test-alert';
 import { QualTestExecutionResultDto } from './qual-test-execution-result-dto';
 import { CreateQualTestResult } from '../qual-test-result/create-qual-test-result';
+import { TestHistoryDataPoint } from './test-history-data-point';
 
-export type HandleQualTestExecutionResultRequestDto = QualTestExecutionResultDto;
+export interface HandleQualTestExecutionResultRequestDto
+  extends QualTestExecutionResultDto {
+  testHistoryDataPoints: TestHistoryDataPoint[];
+}
 
 export interface HandleQualTestExecutionResultAuthDto {
-  isSystemInternal: boolean,
+  isSystemInternal: boolean;
   jwt: string;
 }
 

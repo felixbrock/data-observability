@@ -17,6 +17,7 @@ import {
   QuantTestAlertData,
   QuantTestTestData,
 } from '../../../domain/test-execution-api/quant-test-execution-result-dto';
+import { TestHistoryDataPoint } from '../../../domain/test-execution-api/test-history-data-point';
 import { parseMaterializationType } from '../../../domain/value-types/materialization-type';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
@@ -110,6 +111,16 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
     return true;
   };
 
+  #isTestHistoryDataPoint = (obj: unknown): obj is TestHistoryDataPoint =>
+    !!obj &&
+    typeof obj === 'object' &&
+    'isAnomaly' in obj &&
+    'userFeedbackIsAnomaly' in obj &&
+    'timestamp' in obj &&
+    'valueLowerBound' in obj &&
+    'valueUpperBound' in obj &&
+    'value' in obj;
+
   #buildRequestDto = (
     httpRequest: Request
   ): HandleQuantTestExecutionResultRequestDto => {
@@ -121,6 +132,7 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
       alertData,
       targetResourceId,
       organizationId,
+      testHistoryDataPoints,
     } = httpRequest.body;
 
     const testType: TestType = parseTestType(httpRequest.body.testType);
@@ -130,6 +142,15 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
 
     if (alertData && !this.#isAlertData(alertData))
       throw new Error('Incorrect alertData obj provided');
+
+    if (
+      !testHistoryDataPoints ||
+      testHistoryDataPoints.constructor.name !== 'Array' ||
+      (testHistoryDataPoints as unknown[]).some(
+        (el) => !this.#isTestHistoryDataPoint(el)
+      )
+    )
+      throw new Error('Incorrect test history elements provided');
 
     if (
       typeof testSuiteId !== 'string' &&
@@ -149,6 +170,7 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
       testSuiteId,
       alertData,
       testData,
+      testHistoryDataPoints,
     };
   };
 

@@ -6,9 +6,12 @@ import { QuantTestAlertDto } from '../integration-api/slack/quant-test-alert-dto
 import { SendQuantTestSlackAlert } from '../integration-api/slack/send-quant-test-alert';
 import { QuantTestExecutionResultDto } from './quant-test-execution-result-dto';
 import { CreateQuantTestResult } from '../quant-test-result/create-quant-test-result';
+import { TestHistoryDataPoint } from './test-history-data-point';
 
-export type HandleQuantTestExecutionResultRequestDto =
-  QuantTestExecutionResultDto;
+export interface HandleQuantTestExecutionResultRequestDto
+  extends QuantTestExecutionResultDto {
+  testHistoryDataPoints: TestHistoryDataPoint[];
+}
 
 export interface HandleQuantTestExecutionResultAuthDto {
   isSystemInternal: boolean;

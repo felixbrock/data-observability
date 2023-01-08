@@ -5,12 +5,12 @@ import { ITestExecutionApiRepo } from '../../domain/test-execution-api/i-test-ex
 export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
   #baseUrl = appConfig.baseUrl.testEngine;
 
-  executeTest = (
+  executeTest = async (
     testSuiteId: string,
     testType: string,
     jwt: string,
     targetOrgId?: string
-  ): void => {
+  ): Promise<void> => {
     try {
       const payload = {
         targetOrgId,
@@ -27,7 +27,7 @@ export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
         config
       );
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
     }
   };

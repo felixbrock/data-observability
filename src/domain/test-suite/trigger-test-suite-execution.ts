@@ -96,8 +96,7 @@ export class TriggerTestSuiteExecution
           testType: testSuite.type,
           targetOrgId: request.targetOrgId,
         },
-        { jwt: auth.jwt },
-        db.mongoConn
+        { jwt: auth.jwt }
       );
 
       return Result.ok();

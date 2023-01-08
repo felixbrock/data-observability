@@ -33,23 +33,16 @@ export class ExecuteTest
 {
   readonly #testExecutionApiRepo: ITestExecutionApiRepo;
 
-  #dbConnection: IDbConnection;
-
-  constructor(
-    testExecutionApiRepo: ITestExecutionApiRepo,
-  ) {
+  constructor(testExecutionApiRepo: ITestExecutionApiRepo) {
     this.#testExecutionApiRepo = testExecutionApiRepo;
   }
 
   async execute(
     request: ExecuteTestRequestDto,
-    auth: ExecuteTestAuthDto,
-    dbConnection: IDbConnection
+    auth: ExecuteTestAuthDto
   ): Promise<ExecuteTestResponseDto> {
-    this.#dbConnection = dbConnection;
-
     try {
-      this.#testExecutionApiRepo.executeTest(
+      await this.#testExecutionApiRepo.executeTest(
         request.testSuiteId,
         request.testType,
         auth.jwt,
@@ -58,7 +51,7 @@ export class ExecuteTest
 
       return Result.ok();
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

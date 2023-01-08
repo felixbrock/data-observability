@@ -17,6 +17,7 @@ import {
   QualTestAlertData,
   QualTestTestData,
 } from '../../../domain/test-execution-api/qual-test-execution-result-dto';
+import { TestHistoryDataPoint } from '../../../domain/test-execution-api/test-history-data-point';
 import { parseMaterializationType } from '../../../domain/value-types/materialization-type';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
@@ -96,6 +97,16 @@ export default class HandleQualTestExecutionResultController extends BaseControl
     return true;
   };
 
+  #isTestHistoryDataPoint = (obj: unknown): obj is TestHistoryDataPoint =>
+    !!obj &&
+    typeof obj === 'object' &&
+    'isAnomaly' in obj &&
+    'userFeedbackIsAnomaly' in obj &&
+    'timestamp' in obj &&
+    'valueLowerBound' in obj &&
+    'valueUpperBound' in obj &&
+    'value' in obj;
+
   #buildRequestDto = (
     httpRequest: Request
   ): HandleQualTestExecutionResultRequestDto => {
@@ -106,6 +117,7 @@ export default class HandleQualTestExecutionResultController extends BaseControl
       alertData,
       targetResourceId,
       organizationId,
+      testHistoryDataPoints,
     } = httpRequest.body;
 
     const testType: QualTestType = parseQualTestType(httpRequest.body.testType);
@@ -115,6 +127,15 @@ export default class HandleQualTestExecutionResultController extends BaseControl
 
     if (alertData && !this.#isAlertData(alertData))
       throw new Error('Incorrect alertData obj provided');
+
+    if (
+      !testHistoryDataPoints ||
+      testHistoryDataPoints.constructor.name !== 'Array' ||
+      (testHistoryDataPoints as unknown[]).some(
+        (el) => !this.#isTestHistoryDataPoint(el)
+      )
+    )
+      throw new Error('Incorrect test history elements provided');
 
     if (
       typeof testSuiteId !== 'string' &&
@@ -132,6 +153,7 @@ export default class HandleQualTestExecutionResultController extends BaseControl
       testSuiteId,
       alertData,
       testData,
+      testHistoryDataPoints,
     };
   };
 

@@ -2,7 +2,7 @@
 import Result from '../value-types/transient-types/result';
 import { ReadCustomTestSuite } from './read-custom-test-suite';
 import { ExecuteTest } from '../test-execution-api/execute-test';
-import { IDb} from '../services/i-db';
+import { IDb } from '../services/i-db';
 import { ExecutionType } from '../value-types/execution-type';
 import BaseAuth from '../services/base-auth';
 import IUseCase from '../services/use-case';
@@ -19,12 +19,16 @@ export type TriggerCustomTestSuiteExecutionAuthDto = BaseAuth;
 
 export type TriggerCustomTestSuiteExecutionResponseDto = Result<void>;
 
-export class TriggerCustomTestSuiteExecution extends BaseTriggerTestSuiteExecution implements IUseCase<
-  TriggerCustomTestSuiteExecutionRequestDto,
-  TriggerCustomTestSuiteExecutionResponseDto,
-  TriggerCustomTestSuiteExecutionAuthDto,
-  IDb
-> {
+export class TriggerCustomTestSuiteExecution
+  extends BaseTriggerTestSuiteExecution
+  implements
+    IUseCase<
+      TriggerCustomTestSuiteExecutionRequestDto,
+      TriggerCustomTestSuiteExecutionResponseDto,
+      TriggerCustomTestSuiteExecutionAuthDto,
+      IDb
+    >
+{
   readonly #readCustomTestSuite: ReadCustomTestSuite;
 
   readonly #executeTest: ExecuteTest;
@@ -57,8 +61,9 @@ export class TriggerCustomTestSuiteExecution extends BaseTriggerTestSuiteExecuti
 
     try {
       const readCustomTestSuiteResult = await this.#readCustomTestSuite.execute(
-        { id: request.id},
-        auth, db.sfConnPool
+        { id: request.id },
+        auth,
+        db.sfConnPool
       );
 
       if (!readCustomTestSuiteResult.success)
@@ -78,13 +83,12 @@ export class TriggerCustomTestSuiteExecution extends BaseTriggerTestSuiteExecuti
           testType: 'Custom',
           targetOrgId: request.targetOrgId,
         },
-        { jwt: auth.jwt },
-        db.mongoConn
+        { jwt: auth.jwt }
       );
 
       return Result.ok();
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }
