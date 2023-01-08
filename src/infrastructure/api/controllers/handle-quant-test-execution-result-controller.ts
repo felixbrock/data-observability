@@ -56,13 +56,12 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
 
     if (
       !executedOn ||
-      executedOn !== 'string' ||
-      !isAnomolous ||
-      isAnomolous !== 'boolean' ||
+      typeof executedOn !== 'string' ||
+      typeof isAnomolous !== 'boolean' ||
       !modifiedZScore ||
-      modifiedZScore !== 'number' ||
+      typeof modifiedZScore !== 'number' ||
       !deviation ||
-      deviation !== 'number'
+      typeof deviation !== 'number'
     )
       return false;
 
@@ -198,14 +197,18 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
         await this.#handleQuantTestExecutionResult.execute(
           requestDto,
           authDto,
-          this.#dbo
+          this.#dbo.dbConnection
         );
 
       if (!useCaseResult.success) {
         return HandleQuantTestExecutionResultController.badRequest(res);
       }
 
-      return HandleQuantTestExecutionResultController.ok(res, CodeHttp.CREATED);
+      return HandleQuantTestExecutionResultController.ok(
+        res,
+        undefined,
+        CodeHttp.CREATED
+      );
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);

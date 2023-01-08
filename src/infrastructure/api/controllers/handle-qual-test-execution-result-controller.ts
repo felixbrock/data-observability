@@ -56,9 +56,8 @@ export default class HandleQualTestExecutionResultController extends BaseControl
 
     if (
       !executedOn ||
-      executedOn !== 'string' ||
-      !isAnomolous ||
-      isAnomolous !== 'boolean' ||
+      typeof executedOn !== 'string' ||
+      typeof isAnomolous !== 'boolean' ||
       !schemaDiffs
     )
       return false;
@@ -181,14 +180,18 @@ export default class HandleQualTestExecutionResultController extends BaseControl
         await this.#handleQualTestExecutionResult.execute(
           requestDto,
           authDto,
-          this.#dbo
+          this.#dbo.dbConnection
         );
 
       if (!useCaseResult.success) {
         return HandleQualTestExecutionResultController.badRequest(res);
       }
 
-      return HandleQualTestExecutionResultController.ok(res, CodeHttp.CREATED);
+      return HandleQualTestExecutionResultController.ok(
+        res,
+        undefined,
+        CodeHttp.CREATED
+      );
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
