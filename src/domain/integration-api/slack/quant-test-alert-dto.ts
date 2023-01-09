@@ -1,4 +1,4 @@
-import { TestType } from "../../entities/quant-test-suite";
+import { TestType } from '../../entities/quant-test-suite';
 
 export interface QuantTestAlertDto {
   alertId: string;
@@ -14,4 +14,5 @@ export interface QuantTestAlertDto {
   columnName?: string;
   deviation: number;
   resourceId: string;
+  chartUrl: string;
 }

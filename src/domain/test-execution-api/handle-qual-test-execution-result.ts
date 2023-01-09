@@ -1,17 +1,14 @@
 // todo - clean architecture violation
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { IDbConnection } from '../services/i-db';
+import { IDb, IDbConnection } from '../services/i-db';
 import { QualTestAlertDto } from '../integration-api/slack/qual-test-alert-dto';
 import { SendQualTestSlackAlert } from '../integration-api/slack/send-qual-test-alert';
 import { QualTestExecutionResultDto } from './qual-test-execution-result-dto';
 import { CreateQualTestResult } from '../qual-test-result/create-qual-test-result';
-import { TestHistoryDataPoint } from './test-history-data-point';
 
-export interface HandleQualTestExecutionResultRequestDto
-  extends QualTestExecutionResultDto {
-  testHistoryDataPoints: TestHistoryDataPoint[];
-}
+export type HandleQualTestExecutionResultRequestDto =
+  QualTestExecutionResultDto;
 
 export interface HandleQualTestExecutionResultAuthDto {
   isSystemInternal: boolean;
@@ -26,7 +23,7 @@ export class HandleQualTestExecutionResult
       HandleQualTestExecutionResultRequestDto,
       HandleQualTestExecutionResultResponseDto,
       HandleQualTestExecutionResultAuthDto,
-      IDbConnection
+      IDb
     >
 {
   readonly #sendQualTestSlackAlert: SendQualTestSlackAlert;
@@ -63,7 +60,7 @@ export class HandleQualTestExecutionResult
       materializationName: testExecutionResult.alertData.materializationName,
       message: testExecutionResult.alertData.message,
       resourceId: testExecutionResult.targetResourceId,
-      schemaDiffs: testExecutionResult.testData.schemaDiffs,
+      deviations: testExecutionResult.testData.deviations,
     };
 
     const sendSlackAlertResult = await this.#sendQualTestSlackAlert.execute(
@@ -103,14 +100,14 @@ export class HandleQualTestExecutionResult
   async execute(
     req: HandleQualTestExecutionResultRequestDto,
     auth: HandleQualTestExecutionResultAuthDto,
-    dbConnection: IDbConnection
+    db: IDb
   ): Promise<HandleQualTestExecutionResultResponseDto> {
     try {
-      this.#dbConnection = dbConnection;
+      this.#dbConnection = db.mongoConn;
 
       await this.#createTestResult(req);
 
-      if (!req.testData || (!req.testData.isAnomolous && !req.alertData))
+      if (!req.testData || (req.testData.isIdentical && !req.alertData))
         return Result.ok();
 
       await this.#sendAlert(req, auth.jwt);

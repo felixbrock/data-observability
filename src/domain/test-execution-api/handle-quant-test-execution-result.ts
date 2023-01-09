@@ -1,17 +1,18 @@
 // todo - clean architecture violation
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { IDbConnection } from '../services/i-db';
+import { IDb, IDbConnection } from '../services/i-db';
 import { QuantTestAlertDto } from '../integration-api/slack/quant-test-alert-dto';
 import { SendQuantTestSlackAlert } from '../integration-api/slack/send-quant-test-alert';
 import { QuantTestExecutionResultDto } from './quant-test-execution-result-dto';
 import { CreateQuantTestResult } from '../quant-test-result/create-quant-test-result';
-import { TestHistoryDataPoint } from './test-history-data-point';
+import { QuerySnowflake } from '../snowflake-api/query-snowflake';
+import { GenerateChart } from './generate-chart';
+import BaseAuth from '../services/base-auth';
+import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 
-export interface HandleQuantTestExecutionResultRequestDto
-  extends QuantTestExecutionResultDto {
-  testHistoryDataPoints: TestHistoryDataPoint[];
-}
+export type HandleQuantTestExecutionResultRequestDto =
+  QuantTestExecutionResultDto;
 
 export interface HandleQuantTestExecutionResultAuthDto {
   isSystemInternal: boolean;
@@ -33,19 +34,26 @@ export class HandleQuantTestExecutionResult
 
   readonly #createQuantTestResult: CreateQuantTestResult;
 
-  #dbConnection: IDbConnection;
+  readonly #generateChart: GenerateChart;
+
+  readonly #querySnowflake: QuerySnowflake;
 
   constructor(
     sendQuantTestSlackAlert: SendQuantTestSlackAlert,
-    createQuantTestResult: CreateQuantTestResult
+    createQuantTestResult: CreateQuantTestResult,
+    generateChart: GenerateChart,
+    querySnowflake: QuerySnowflake
   ) {
     this.#sendQuantTestSlackAlert = sendQuantTestSlackAlert;
     this.#createQuantTestResult = createQuantTestResult;
+    this.#generateChart = generateChart;
+    this.#querySnowflake = querySnowflake;
   }
 
   #sendAlert = async (
     testExecutionResult: QuantTestExecutionResultDto,
-    jwt: string
+    auth: BaseAuth,
+    connPool: IConnectionPool
   ): Promise<void> => {
     if (!testExecutionResult.testData)
       throw new Error('Missing test data. Previous checks indicated test data');
@@ -53,6 +61,16 @@ export class HandleQuantTestExecutionResult
       throw new Error(
         'Missing alert data. Previous checks indicated alert data'
       );
+
+    const generateChartRes = await this.#generateChart.execute(
+      { testSuiteId: testExecutionResult.testSuiteId },
+      auth,
+      connPool
+    );
+
+    if (!generateChartRes.success) throw new Error(generateChartRes.error);
+    if (!generateChartRes.value)
+      throw new Error('Missing gen chart response value');
 
     const alertDto: QuantTestAlertDto = {
       alertId: testExecutionResult.alertData.alertId,
@@ -68,6 +86,7 @@ export class HandleQuantTestExecutionResult
       message: testExecutionResult.alertData.message,
       value: testExecutionResult.alertData.value,
       resourceId: testExecutionResult.targetResourceId,
+      chartUrl: generateChartRes.value,
     };
 
     const sendSlackAlertResult = await this.#sendQuantTestSlackAlert.execute(
@@ -82,7 +101,8 @@ export class HandleQuantTestExecutionResult
   };
 
   #createTestResult = async (
-    testExecutionResult: QuantTestExecutionResultDto
+    testExecutionResult: QuantTestExecutionResultDto,
+    dbConn: IDbConnection
   ): Promise<void> => {
     const { testData } = testExecutionResult;
 
@@ -103,7 +123,7 @@ export class HandleQuantTestExecutionResult
           targetOrgId: testExecutionResult.organizationId,
         },
         null,
-        this.#dbConnection
+        dbConn
       );
 
     if (!createQuantTestResultResult.success)
@@ -113,12 +133,10 @@ export class HandleQuantTestExecutionResult
   async execute(
     req: HandleQuantTestExecutionResultRequestDto,
     auth: HandleQuantTestExecutionResultAuthDto,
-    dbConnection: IDbConnection
+    db: IDb
   ): Promise<HandleQuantTestExecutionResultResponseDto> {
     try {
-      this.#dbConnection = dbConnection;
-
-      await this.#createTestResult(req);
+      await this.#createTestResult(req, db.mongoConn);
 
       if (!req.testData || (!req.testData.isAnomolous && !req.alertData))
         return Result.ok();

@@ -11,8 +11,8 @@ interface QualTestResultPersistence {
   executionId: string;
   testData?: {
     executedOn: string;
-    isAnomolous: boolean;
-    schemaDiffs: any;
+    isIdentical: boolean;
+    deviations: string;
   };
   alertData?: {
     alertId: string;
@@ -40,7 +40,7 @@ export default class QualTestResultRepo implements IQualTestResultRepo {
 
       return result.insertedId.toHexString();
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Promise.reject(new Error(''));
     }

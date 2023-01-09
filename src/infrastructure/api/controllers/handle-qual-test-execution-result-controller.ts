@@ -16,8 +16,8 @@ import {
 import {
   QualTestAlertData,
   QualTestTestData,
+  SchemaDiff,
 } from '../../../domain/test-execution-api/qual-test-execution-result-dto';
-import { TestHistoryDataPoint } from '../../../domain/test-execution-api/test-history-data-point';
 import { parseMaterializationType } from '../../../domain/value-types/materialization-type';
 import Result from '../../../domain/value-types/transient-types/result';
 import Dbo from '../../persistence/db/mongo-db';
@@ -50,16 +50,29 @@ export default class HandleQualTestExecutionResultController extends BaseControl
     typeof obj === 'object' &&
     Object.keys(obj).every((el) => typeof el === 'string');
 
+  #isSchemaDiff = (obj: unknown): obj is SchemaDiff =>
+    !!obj &&
+    typeof obj === 'object' &&
+    'column_name' in obj &&
+    'ordinal_position' in obj;
+
   #isTestData = (obj: unknown): obj is QualTestTestData => {
     if (!this.#isObj(obj)) return false;
 
-    const { executedOn, isAnomolous, schemaDiffs } = obj;
+    const { executedOn, isIdentical, deviations } = obj;
+
+    if (
+      !deviations ||
+      typeof deviations !== 'object' ||
+      (deviations.constructor.name !== 'Array' &&
+        (deviations as unknown[]).some((el) => !this.#isSchemaDiff(el)))
+    )
+      throw new Error('Received incorrect schemadiff deviation objs');
 
     if (
       !executedOn ||
       typeof executedOn !== 'string' ||
-      typeof isAnomolous !== 'boolean' ||
-      !schemaDiffs
+      typeof isIdentical !== 'boolean'
     )
       return false;
 
@@ -97,16 +110,6 @@ export default class HandleQualTestExecutionResultController extends BaseControl
     return true;
   };
 
-  #isTestHistoryDataPoint = (obj: unknown): obj is TestHistoryDataPoint =>
-    !!obj &&
-    typeof obj === 'object' &&
-    'isAnomaly' in obj &&
-    'userFeedbackIsAnomaly' in obj &&
-    'timestamp' in obj &&
-    'valueLowerBound' in obj &&
-    'valueUpperBound' in obj &&
-    'value' in obj;
-
   #buildRequestDto = (
     httpRequest: Request
   ): HandleQualTestExecutionResultRequestDto => {
@@ -117,7 +120,6 @@ export default class HandleQualTestExecutionResultController extends BaseControl
       alertData,
       targetResourceId,
       organizationId,
-      testHistoryDataPoints,
     } = httpRequest.body;
 
     const testType: QualTestType = parseQualTestType(httpRequest.body.testType);
@@ -127,15 +129,6 @@ export default class HandleQualTestExecutionResultController extends BaseControl
 
     if (alertData && !this.#isAlertData(alertData))
       throw new Error('Incorrect alertData obj provided');
-
-    if (
-      !testHistoryDataPoints ||
-      testHistoryDataPoints.constructor.name !== 'Array' ||
-      (testHistoryDataPoints as unknown[]).some(
-        (el) => !this.#isTestHistoryDataPoint(el)
-      )
-    )
-      throw new Error('Incorrect test history elements provided');
 
     if (
       typeof testSuiteId !== 'string' &&
@@ -153,7 +146,6 @@ export default class HandleQualTestExecutionResultController extends BaseControl
       testSuiteId,
       alertData,
       testData,
-      testHistoryDataPoints,
     };
   };
 
@@ -198,12 +190,17 @@ export default class HandleQualTestExecutionResultController extends BaseControl
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
+      const connPool = await this.createConnectionPool(
+        jwt,
+        createPool,
+        requestDto.targetOrgId
+      );
+
       const useCaseResult: HandleQualTestExecutionResultResponseDto =
-        await this.#handleQualTestExecutionResult.execute(
-          requestDto,
-          authDto,
-          this.#dbo.dbConnection
-        );
+        await this.#handleQualTestExecutionResult.execute(requestDto, authDto, {
+          mongoConn: this.#dbo.dbConnection,
+          sfConnPool: connPool,
+        });
 
       if (!useCaseResult.success) {
         return HandleQualTestExecutionResultController.badRequest(res);

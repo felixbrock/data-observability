@@ -40,7 +40,7 @@ export class SendQualTestSlackAlert
     testType: alertDto.testType,
     occurredOn: `${alertDto.detectedOn} (UTC)`,
     anomalyMessagePart: `Schema Change Alert`,
-    detectedValuePart: `*Detected Schema Change:*\n${alertDto.schemaDiffs}`,
+    detectedValuePart: `*Detected Schema Change:*\n${alertDto.deviations}`,
     expectedRangePart: ``,
     summaryPart: alertDto.message.replace(
       '__base_url__',
@@ -64,7 +64,7 @@ export class SendQualTestSlackAlert
 
       return Result.ok(sendSlackAlertResponse);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

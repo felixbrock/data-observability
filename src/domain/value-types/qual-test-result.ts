@@ -4,8 +4,8 @@ export interface QualTestResult {
   executionId: string;
   testData?: {
     executedOn: string;
-    isAnomolous: boolean;
-    schemaDiffs: string;
+    isIdentical: boolean;
+    deviations: string;
   };
   alertData?: {
     alertId: string;

@@ -1,4 +1,5 @@
-import { QualTestType } from "../../entities/qual-test-suite";
+import { QualTestType } from '../../entities/qual-test-suite';
+import { SchemaDiff } from '../../test-execution-api/qual-test-execution-result-dto';
 
 export interface QualTestAlertDto {
   alertId: string;
@@ -8,6 +9,6 @@ export interface QualTestAlertDto {
   databaseName: string;
   schemaName: string;
   materializationName: string;
-  schemaDiffs: any;
+  deviations: SchemaDiff[];
   resourceId: string;
 }

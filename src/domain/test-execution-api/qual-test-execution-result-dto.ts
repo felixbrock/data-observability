@@ -1,10 +1,18 @@
 import { QualTestType } from '../entities/qual-test-suite';
 import { MaterializationType } from '../value-types/materialization-type';
 
+export interface SchemaDiff {
+  column_name: [string | undefined, string | undefined];
+  ordinal_position: [number | undefined, number | undefined];
+  data_type: [string | undefined, string | undefined] | undefined;
+  is_identity: [boolean | undefined, boolean | undefined] | undefined;
+  is_nullable: [boolean | undefined, boolean | undefined] | undefined;
+}
+
 export interface QualTestTestData {
   executedOn: string;
-  isAnomolous: boolean;
-  schemaDiffs: any;
+  isIdentical: boolean;
+  deviations: SchemaDiff[];
 }
 
 export interface QualTestAlertData {
