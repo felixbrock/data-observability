@@ -17,6 +17,7 @@ export interface AlertMessageConfig {
   summaryPart: string;
   expectedRangePart: string;
   detectedValuePart: string;
+  imageUrl?: string;
 }
 export interface IIntegrationApiRepo {
   sendSlackAlert(

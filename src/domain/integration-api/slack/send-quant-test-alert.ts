@@ -53,6 +53,7 @@ export class SendQuantTestSlackAlert
       '__base_url__',
       appConfig.slack.callbackRoot
     ),
+    imageUrl: quantAlertDto.chartUrl,
   });
 
   async execute(props: {
