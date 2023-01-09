@@ -29,26 +29,27 @@ export class ReadTestSuites
     this.#repo = testSuiteRepo;
   }
 
-  async execute(
-    request: ReadTestSuitesRequestDto,
-    auth: ReadTestSuitesAuthDto,
-    connPool: IConnectionPool
-  ): Promise<ReadTestSuitesResponseDto> {
+  async execute(props: {
+    req: ReadTestSuitesRequestDto;
+    auth: ReadTestSuitesAuthDto;
+    connPool: IConnectionPool;
+  }): Promise<ReadTestSuitesResponseDto> {
+    const { req, auth, connPool } = props;
+
     if (!auth.isSystemInternal && !auth.callerOrgId)
       throw new Error('Not authorized to perform operation');
 
     try {
       const testSuites = await this.#repo.findBy(
         {
-          activated: request.activated,
+          activated: req.activated,
         },
-        auth,
         connPool
       );
 
       return Result.ok(testSuites);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

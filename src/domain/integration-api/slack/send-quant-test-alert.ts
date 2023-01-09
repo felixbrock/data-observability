@@ -46,26 +46,30 @@ export class SendQuantTestSlackAlert
     detectedValuePart: `*Detected Value:*\n${quantAlertDto.value} (${(
       quantAlertDto.deviation * 100
     ).toFixed(2)}% deviation)`,
-    expectedRangePart: `*Expected Range:*\n${quantAlertDto.expectedLowerBound.toFixed(2)} - ${quantAlertDto.expectedUpperBound.toFixed(2)}`,
+    expectedRangePart: `*Expected Range:*\n${quantAlertDto.expectedLowerBound.toFixed(
+      2
+    )} - ${quantAlertDto.expectedUpperBound.toFixed(2)}`,
     summaryPart: quantAlertDto.message.replace(
       '__base_url__',
       appConfig.slack.callbackRoot
     ),
   });
 
-  async execute(
-    request: SendQuantSlackAlertRequestDto,
-    auth: SendQuantSlackAlertAuthDto
-  ): Promise<SendQuantSlackAlertResponseDto> {
+  async execute(props: {
+    req: SendQuantSlackAlertRequestDto;
+    auth: SendQuantSlackAlertAuthDto;
+  }): Promise<SendQuantSlackAlertResponseDto> {
+    const { req, auth } = props;
+
     try {
       const messageConfig = SendQuantTestSlackAlert.#buildAlertMessageConfig(
-        request.alertDto
+        req.alertDto
       );
 
       const sendQuantSlackAlertResponse: SendAlertResultDto =
         await this.#integrationApiRepo.sendSlackAlert(
           messageConfig,
-          request.targetOrgId,
+          req.targetOrgId,
           auth.jwt
         );
 

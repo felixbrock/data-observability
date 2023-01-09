@@ -35,7 +35,10 @@ export abstract class BaseController {
 
   readonly #getAccounts: GetAccounts;
 
-  constructor(getAccounts: GetAccounts, getSnowflakeProfile: GetSnowflakeProfile) {
+  constructor(
+    getAccounts: GetAccounts,
+    getSnowflakeProfile: GetSnowflakeProfile
+  ) {
     this.#getAccounts = getAccounts;
     this.#getSnowflakeProfile = getSnowflakeProfile;
   }
@@ -56,12 +59,12 @@ export abstract class BaseController {
     jwt: string,
     targetOrgId?: string
   ): Promise<SnowflakeProfileDto> => {
-    const readSnowflakeProfileResult = await this.#getSnowflakeProfile.execute(
-      { targetOrgId },
-      {
+    const readSnowflakeProfileResult = await this.#getSnowflakeProfile.execute({
+      req: { targetOrgId },
+      auth: {
         jwt,
-      }
-    );
+      },
+    });
 
     if (!readSnowflakeProfileResult.success)
       throw new Error(readSnowflakeProfileResult.error);
@@ -95,7 +98,7 @@ export abstract class BaseController {
   };
 
   protected async getUserAccountInfo(
-    jwt: string,
+    jwt: string
   ): Promise<Result<UserAccountInfo>> {
     if (!jwt) return Result.fail('Unauthorized');
 
@@ -138,12 +141,12 @@ export abstract class BaseController {
         });
 
       const getAccountsResult: GetAccountsResponseDto =
-        await this.#getAccounts.execute(
-          {
+        await this.#getAccounts.execute({
+          req: {
             userId: authPayload.username,
           },
-          { jwt }
-        );
+          auth: { jwt },
+        });
 
       if (!getAccountsResult.value)
         throw new ReferenceError(
@@ -163,7 +166,7 @@ export abstract class BaseController {
         isSystemInternal,
       });
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

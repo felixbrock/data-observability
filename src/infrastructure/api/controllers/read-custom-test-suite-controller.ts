@@ -3,7 +3,6 @@ import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
 import {
   ReadCustomTestSuite,
-  ReadCustomTestSuiteAuthDto,
   ReadCustomTestSuiteRequestDto,
   ReadCustomTestSuiteResponseDto,
 } from '../../../domain/custom-test-suite/read-custom-test-suite';
@@ -37,15 +36,6 @@ export default class ReadCustomTestSuiteController extends BaseController {
     };
   };
 
-  #buildAuthDto = (
-    jwt: string,
-    userAccountInfo: UserAccountInfo
-  ): ReadCustomTestSuiteAuthDto => ({
-    jwt,
-    callerOrgId: userAccountInfo.callerOrgId,
-    isSystemInternal: userAccountInfo.isSystemInternal,
-  });
-
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
       const authHeader = req.headers.authorization;
@@ -66,17 +56,19 @@ export default class ReadCustomTestSuiteController extends BaseController {
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
+      if (!getUserAccountInfoResult.value.callerOrgId)
+        throw new Error('Unauthorized - Caller organization id missing');
+
       const requestDto: ReadCustomTestSuiteRequestDto =
         this.#buildRequestDto(req);
-      const authDto: ReadCustomTestSuiteAuthDto = this.#buildAuthDto(
-        jwt,
-        getUserAccountInfoResult.value
-      );
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: ReadCustomTestSuiteResponseDto =
-        await this.#readCustomTestSuite.execute(requestDto, authDto, connPool);
+        await this.#readCustomTestSuite.execute({
+          req: requestDto,
+          connPool,
+        });
 
       await connPool.drain();
       await connPool.clear();
@@ -94,7 +86,7 @@ export default class ReadCustomTestSuiteController extends BaseController {
 
       return ReadCustomTestSuiteController.ok(res, result, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return ReadCustomTestSuiteController.fail(
         res,

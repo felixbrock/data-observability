@@ -1,7 +1,6 @@
 import IUseCase from '../services/use-case';
 import Result from '../value-types/transient-types/result';
 import { ExecutionType } from '../value-types/execution-type';
-import BaseAuth from '../services/base-auth';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { IQualTestSuiteRepo } from './i-qual-test-suite-repo';
 import QualTestSuiteRepo from '../../infrastructure/persistence/qual-test-suite-repo';
@@ -20,10 +19,7 @@ export interface UpdateQualTestSuitesRequestDto {
   updateObjects: UpdateObject[];
 }
 
-export interface UpdateQualTestSuitesAuthDto
-  extends Omit<BaseAuth, 'callerOrgId'> {
-  callerOrgId: string;
-}
+export type UpdateQualTestSuitesAuthDto = null;
 
 export type UpdateQualTestSuitesResponseDto = Result<number>;
 
@@ -58,17 +54,17 @@ export class UpdateQualTestSuites
       cron: updateObj.props.cron || testSuite.cron,
     });
 
-  async execute(
-    req: UpdateQualTestSuitesRequestDto,
-    auth: UpdateQualTestSuitesAuthDto,
-    connPool: IConnectionPool
-  ): Promise<UpdateQualTestSuitesResponseDto> {
+  async execute(props: {
+    req: UpdateQualTestSuitesRequestDto;
+    connPool: IConnectionPool;
+  }): Promise<UpdateQualTestSuitesResponseDto> {
+    const { req, connPool } = props;
+
     try {
       if (req.updateObjects.every((el) => !el.props)) return Result.ok();
 
       const testSuites = await this.#repo.findBy(
         { ids: req.updateObjects.map((el) => el.id) },
-        auth,
         connPool
       );
 
@@ -87,13 +83,12 @@ export class UpdateQualTestSuites
 
       const replaceResult = await this.#repo.replaceMany(
         replacements,
-        auth,
         connPool
       );
 
       return Result.ok(replaceResult);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

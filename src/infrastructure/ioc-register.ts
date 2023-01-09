@@ -36,7 +36,7 @@ import TestSuiteRepo from './persistence/test-suite-repo';
 import SnowflakeApiRepo from './persistence/snowflake-api-repo';
 import { HandleQuantTestExecutionResult } from '../domain/test-execution-api/handle-quant-test-execution-result';
 import { HandleQualTestExecutionResult } from '../domain/test-execution-api/handle-qual-test-execution-result';
-import { GenerateChart } from '../domain/test-execution-api/generate-chart';
+import { GenerateChart } from '../domain/integration-api/slack/chart/generate-chart';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 

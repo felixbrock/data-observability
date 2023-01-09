@@ -1,7 +1,5 @@
 import Result from '../value-types/transient-types/result';
-
 import { ExecutionType } from '../value-types/execution-type';
-import BaseAuth from '../services/base-auth';
 import IUseCase from '../services/use-case';
 import CustomTestSuiteRepo from '../../infrastructure/persistence/custom-test-suite-repo';
 import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
@@ -21,10 +19,7 @@ export interface UpdateCustomTestSuiteRequestDto {
   };
 }
 
-export interface UpdateCustomTestSuiteAuthDto
-  extends Omit<BaseAuth, 'callerOrgId'> {
-  callerOrgId: string;
-}
+export type UpdateCustomTestSuiteAuthDto = null;
 
 export type UpdateCustomTestSuiteResponseDto = Result<string>;
 
@@ -43,28 +38,28 @@ export class UpdateCustomTestSuite
     this.#repo = customTestSuiteRepo;
   }
 
-  async execute(
-    request: UpdateCustomTestSuiteRequestDto,
-    auth: UpdateCustomTestSuiteAuthDto,
-    connPool: IConnectionPool
-  ): Promise<UpdateCustomTestSuiteResponseDto> {
-    try {
-      if (!request.props) return Result.ok(request.id);
+  async execute(props: {
+    req: UpdateCustomTestSuiteRequestDto;
+    connPool: IConnectionPool;
+  }): Promise<UpdateCustomTestSuiteResponseDto> {
+    const { req, connPool } = props;
 
-      const testSuite = await this.#repo.findOne(request.id, auth, connPool);
+    try {
+      if (!req.props) return Result.ok(req.id);
+
+      const testSuite = await this.#repo.findOne(req.id, connPool);
 
       if (!testSuite) throw new Error('Test suite not found');
 
       const updateResult = await this.#repo.updateOne(
-        request.id,
-        request.props,
-        auth,
+        req.id,
+        req.props,
         connPool
       );
 
       return Result.ok(updateResult);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

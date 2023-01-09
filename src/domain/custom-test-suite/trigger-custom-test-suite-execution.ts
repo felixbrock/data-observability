@@ -43,27 +43,30 @@ export class TriggerCustomTestSuiteExecution
     this.#executeTest = executeTest;
   }
 
-  async execute(
-    request: TriggerCustomTestSuiteExecutionRequestDto,
-    auth: TriggerCustomTestSuiteExecutionAuthDto,
-    db: IDb
-  ): Promise<TriggerCustomTestSuiteExecutionResponseDto> {
-    if (auth.isSystemInternal && !request.targetOrgId)
+  async execute(props: {
+    req: TriggerCustomTestSuiteExecutionRequestDto;
+    auth: TriggerCustomTestSuiteExecutionAuthDto;
+    db: IDb;
+  }): Promise<TriggerCustomTestSuiteExecutionResponseDto> {
+    const { req, auth, db } = props;
+
+    if (auth.isSystemInternal && !req.targetOrgId)
       throw new Error('Target organization id missing');
     if (!auth.isSystemInternal && !auth.callerOrgId)
       throw new Error('Caller organization id missing');
-    if (!request.targetOrgId && !auth.callerOrgId)
+    if (!req.targetOrgId && !auth.callerOrgId)
       throw new Error('No organization Id provided');
-    if (request.executionType === 'automatic' && !request.targetOrgId)
+    if (req.executionType === 'automatic' && !req.targetOrgId)
       throw new Error(
         'When automatically executing test suite targetOrgId needs to be provided'
       );
 
     try {
       const readCustomTestSuiteResult = await this.#readCustomTestSuite.execute(
-        { id: request.id },
-        auth,
-        db.sfConnPool
+        {
+          req: { id: req.id },
+          connPool: db.sfConnPool,
+        }
       );
 
       if (!readCustomTestSuiteResult.success)
@@ -73,18 +76,18 @@ export class TriggerCustomTestSuiteExecution
 
       const customTestSuite = readCustomTestSuiteResult.value;
 
-      if (request.executionType === 'automatic') {
+      if (req.executionType === 'automatic') {
         throw new Error('Not implemented yet');
       }
 
-      await this.#executeTest.execute(
-        {
+      await this.#executeTest.execute({
+        req: {
           testSuiteId: customTestSuite.id,
           testType: 'Custom',
-          targetOrgId: request.targetOrgId,
+          targetOrgId: req.targetOrgId,
         },
-        { jwt: auth.jwt }
-      );
+        auth: { jwt: auth.jwt },
+      });
 
       return Result.ok();
     } catch (error: unknown) {

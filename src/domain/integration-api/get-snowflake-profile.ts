@@ -5,7 +5,7 @@ import {
   SnowflakeProfileDto,
 } from './i-integration-api-repo';
 
-export type GetSnowflakeProfileRequestDto = {targetOrgId?: string};
+export type GetSnowflakeProfileRequestDto = { targetOrgId?: string };
 
 export interface GetSnowflakeProfileAuthDto {
   jwt: string;
@@ -27,20 +27,22 @@ export class GetSnowflakeProfile
     this.#integrationApiRepo = integrationApiRepo;
   }
 
-  async execute(
-    request: GetSnowflakeProfileRequestDto,
-    auth: GetSnowflakeProfileAuthDto
-  ): Promise<GetSnowflakeProfileResponseDto> {
+  async execute(props: {
+    req: GetSnowflakeProfileRequestDto;
+    auth: GetSnowflakeProfileAuthDto;
+  }): Promise<GetSnowflakeProfileResponseDto> {
+    const { req, auth } = props;
+
     try {
       const getSnowflakeProfileResponse: SnowflakeProfileDto =
         await this.#integrationApiRepo.getSnowflakeProfile(
           auth.jwt,
-          request.targetOrgId,
+          req.targetOrgId
         );
 
       return Result.ok(getSnowflakeProfileResponse);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

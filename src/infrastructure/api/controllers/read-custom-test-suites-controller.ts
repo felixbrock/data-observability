@@ -85,7 +85,11 @@ export default class ReadCustomTestSuitesController extends BaseController {
       const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: ReadCustomTestSuitesResponseDto =
-        await this.#readCustomTestSuites.execute(requestDto, authDto, connPool);
+        await this.#readCustomTestSuites.execute({
+          req: requestDto,
+          auth: authDto,
+          connPool,
+        });
 
       await connPool.drain();
       await connPool.clear();
@@ -103,7 +107,7 @@ export default class ReadCustomTestSuitesController extends BaseController {
 
       return ReadCustomTestSuitesController.ok(res, result, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return ReadCustomTestSuitesController.fail(
         res,

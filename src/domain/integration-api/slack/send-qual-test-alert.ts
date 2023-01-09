@@ -48,17 +48,19 @@ export class SendQualTestSlackAlert
     ),
   });
 
-  async execute(
-    request: SendQualTestSlackAlertRequestDto,
-    auth: SendQualTestSlackAlertAuthDto
-  ): Promise<SendQualTestSlackAlertResponseDto> {
+  async execute(props: {
+    req: SendQualTestSlackAlertRequestDto;
+    auth: SendQualTestSlackAlertAuthDto;
+  }): Promise<SendQualTestSlackAlertResponseDto> {
+    const { req, auth } = props;
+
     try {
-      const messageConfig = this.#buildAlertMessageConfig(request.alertDto);
+      const messageConfig = this.#buildAlertMessageConfig(req.alertDto);
 
       const sendSlackAlertResponse: SendAlertResultDto =
         await this.#integrationApiRepo.sendSlackAlert(
           messageConfig,
-          request.targetOrgId,
+          req.targetOrgId,
           auth.jwt
         );
 

@@ -32,7 +32,7 @@ export class CreateQualTestResult
     IUseCase<
       CreateQualTestResultRequestDto,
       CreateQualTestResultResponseDto,
-      CreateQualTestResultAuthDto,
+      null,
       IDbConnection
     >
 {
@@ -44,23 +44,24 @@ export class CreateQualTestResult
     this.#qualTestResultRepo = qualTestResultRepo;
   }
 
-  async execute(
-    request: CreateQualTestResultRequestDto,
-    auth: CreateQualTestResultAuthDto,
-    dbConnection: IDbConnection
-  ): Promise<CreateQualTestResultResponseDto> {
+  async execute(props: {
+    req: CreateQualTestResultRequestDto;
+    dbConnection: IDbConnection;
+  }): Promise<CreateQualTestResultResponseDto> {
+    const { req, dbConnection } = props;
+
     try {
       this.#dbConnection = dbConnection;
 
       const qualTestResult: QualTestResult = {
-        ...request,
-        testData: request.testData
+        ...req,
+        testData: req.testData
           ? {
-              ...request.testData,
-              deviations: JSON.stringify(request.testData.deviations),
+              ...req.testData,
+              deviations: JSON.stringify(req.testData.deviations),
             }
           : undefined,
-        organizationId: request.targetOrgId,
+        organizationId: req.targetOrgId,
       };
 
       await this.#qualTestResultRepo.insertOne(

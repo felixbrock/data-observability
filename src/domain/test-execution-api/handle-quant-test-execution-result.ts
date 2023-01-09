@@ -7,9 +7,8 @@ import { SendQuantTestSlackAlert } from '../integration-api/slack/send-quant-tes
 import { QuantTestExecutionResultDto } from './quant-test-execution-result-dto';
 import { CreateQuantTestResult } from '../quant-test-result/create-quant-test-result';
 import { QuerySnowflake } from '../snowflake-api/query-snowflake';
-import { GenerateChart } from './generate-chart';
-import BaseAuth from '../services/base-auth';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
+import { GenerateChart } from '../integration-api/slack/chart/generate-chart';
 
 export type HandleQuantTestExecutionResultRequestDto =
   QuantTestExecutionResultDto;
@@ -52,7 +51,7 @@ export class HandleQuantTestExecutionResult
 
   #sendAlert = async (
     testExecutionResult: QuantTestExecutionResultDto,
-    auth: BaseAuth,
+    jwt: string,
     connPool: IConnectionPool
   ): Promise<void> => {
     if (!testExecutionResult.testData)
@@ -62,11 +61,10 @@ export class HandleQuantTestExecutionResult
         'Missing alert data. Previous checks indicated alert data'
       );
 
-    const generateChartRes = await this.#generateChart.execute(
-      { testSuiteId: testExecutionResult.testSuiteId },
-      auth,
-      connPool
-    );
+    const generateChartRes = await this.#generateChart.execute({
+      req: { testSuiteId: testExecutionResult.testSuiteId },
+      connPool,
+    });
 
     if (!generateChartRes.success) throw new Error(generateChartRes.error);
     if (!generateChartRes.value)
@@ -86,13 +84,13 @@ export class HandleQuantTestExecutionResult
       message: testExecutionResult.alertData.message,
       value: testExecutionResult.alertData.value,
       resourceId: testExecutionResult.targetResourceId,
-      chartUrl: generateChartRes.value,
+      chartUrl: generateChartRes.value.url,
     };
 
-    const sendSlackAlertResult = await this.#sendQuantTestSlackAlert.execute(
-      { alertDto, targetOrgId: testExecutionResult.organizationId },
-      { jwt }
-    );
+    const sendSlackAlertResult = await this.#sendQuantTestSlackAlert.execute({
+      req: { alertDto, targetOrgId: testExecutionResult.organizationId },
+      auth: { jwt },
+    });
 
     if (!sendSlackAlertResult.success)
       throw new Error(
@@ -110,8 +108,8 @@ export class HandleQuantTestExecutionResult
       throw new Error('Test result data misalignment');
 
     const createQuantTestResultResult =
-      await this.#createQuantTestResult.execute(
-        {
+      await this.#createQuantTestResult.execute({
+        req: {
           isWarmup: testExecutionResult.isWarmup,
           executionId: testExecutionResult.executionId,
           testData,
@@ -122,26 +120,27 @@ export class HandleQuantTestExecutionResult
           targetResourceId: testExecutionResult.targetResourceId,
           targetOrgId: testExecutionResult.organizationId,
         },
-        null,
-        dbConn
-      );
+        dbConnection: dbConn,
+      });
 
     if (!createQuantTestResultResult.success)
       throw new Error(createQuantTestResultResult.error);
   };
 
-  async execute(
-    req: HandleQuantTestExecutionResultRequestDto,
-    auth: HandleQuantTestExecutionResultAuthDto,
-    db: IDb
-  ): Promise<HandleQuantTestExecutionResultResponseDto> {
+  async execute(props: {
+    req: HandleQuantTestExecutionResultRequestDto;
+    auth: HandleQuantTestExecutionResultAuthDto;
+    db: IDb;
+  }): Promise<HandleQuantTestExecutionResultResponseDto> {
+    const { req, auth, db } = props;
+
     try {
       await this.#createTestResult(req, db.mongoConn);
 
       if (!req.testData || (!req.testData.isAnomolous && !req.alertData))
         return Result.ok();
 
-      await this.#sendAlert(req, auth.jwt);
+      await this.#sendAlert(req, auth.jwt, db.sfConnPool);
 
       return Result.ok();
     } catch (error: unknown) {

@@ -3,7 +3,6 @@ import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
 import {
   ReadTestSuite,
-  ReadTestSuiteAuthDto,
   ReadTestSuiteRequestDto,
   ReadTestSuiteResponseDto,
 } from '../../../domain/test-suite/read-test-suite';
@@ -37,15 +36,6 @@ export default class ReadTestSuiteController extends BaseController {
     };
   };
 
-  #buildAuthDto = (
-    jwt: string,
-    userAccountInfo: UserAccountInfo
-  ): ReadTestSuiteAuthDto => ({
-    jwt,
-    callerOrgId: userAccountInfo.callerOrgId,
-    isSystemInternal: userAccountInfo.isSystemInternal,
-  });
-
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
       const authHeader = req.headers.authorization;
@@ -67,15 +57,14 @@ export default class ReadTestSuiteController extends BaseController {
         throw new ReferenceError('Authorization failed');
 
       const requestDto: ReadTestSuiteRequestDto = this.#buildRequestDto(req);
-      const authDto: ReadTestSuiteAuthDto = this.#buildAuthDto(
-        jwt,
-        getUserAccountInfoResult.value
-      );
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: ReadTestSuiteResponseDto =
-        await this.#readTestSuite.execute(requestDto, authDto, connPool);
+        await this.#readTestSuite.execute({
+          req: requestDto,
+          connPool,
+        });
 
       await connPool.drain();
       await connPool.clear();
@@ -90,7 +79,7 @@ export default class ReadTestSuiteController extends BaseController {
 
       return ReadTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return ReadTestSuiteController.fail(
         res,

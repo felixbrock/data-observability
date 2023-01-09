@@ -63,10 +63,10 @@ export class HandleQualTestExecutionResult
       deviations: testExecutionResult.testData.deviations,
     };
 
-    const sendSlackAlertResult = await this.#sendQualTestSlackAlert.execute(
-      { alertDto, targetOrgId: testExecutionResult.organizationId },
-      { jwt }
-    );
+    const sendSlackAlertResult = await this.#sendQualTestSlackAlert.execute({
+      req: { alertDto, targetOrgId: testExecutionResult.organizationId },
+      auth: { jwt },
+    });
 
     if (!sendSlackAlertResult.success)
       throw new Error(
@@ -79,29 +79,32 @@ export class HandleQualTestExecutionResult
   ): Promise<void> => {
     const createQualTestResultResult = await this.#createQualTestResult.execute(
       {
-        executionId: testExecutionResult.executionId,
-        testData: testExecutionResult.testData,
-        alertData: testExecutionResult.alertData
-          ? { alertId: testExecutionResult.alertData.alertId }
-          : undefined,
-        testSuiteId: testExecutionResult.testSuiteId,
-        testType: testExecutionResult.testType,
-        targetResourceId: testExecutionResult.targetResourceId,
-        targetOrgId: testExecutionResult.organizationId,
-      },
-      null,
-      this.#dbConnection
+        req: {
+          executionId: testExecutionResult.executionId,
+          testData: testExecutionResult.testData,
+          alertData: testExecutionResult.alertData
+            ? { alertId: testExecutionResult.alertData.alertId }
+            : undefined,
+          testSuiteId: testExecutionResult.testSuiteId,
+          testType: testExecutionResult.testType,
+          targetResourceId: testExecutionResult.targetResourceId,
+          targetOrgId: testExecutionResult.organizationId,
+        },
+        dbConnection: this.#dbConnection,
+      }
     );
 
     if (!createQualTestResultResult.success)
       throw new Error(createQualTestResultResult.error);
   };
 
-  async execute(
-    req: HandleQualTestExecutionResultRequestDto,
-    auth: HandleQualTestExecutionResultAuthDto,
-    db: IDb
-  ): Promise<HandleQualTestExecutionResultResponseDto> {
+  async execute(props: {
+    req: HandleQualTestExecutionResultRequestDto;
+    auth: HandleQualTestExecutionResultAuthDto;
+    db: IDb;
+  }): Promise<HandleQualTestExecutionResultResponseDto> {
+    const { req, auth, db } = props;
+
     try {
       this.#dbConnection = db.mongoConn;
 

@@ -3,7 +3,6 @@ import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateCustomTestSuite,
-  UpdateCustomTestSuiteAuthDto,
   UpdateCustomTestSuiteRequestDto,
   UpdateCustomTestSuiteResponseDto,
 } from '../../../domain/custom-test-suite/update-custom-test-suite';
@@ -55,19 +54,6 @@ export default class UpdateCustomTestSuiteController extends BaseController {
     };
   };
 
-  #buildAuthDto = (
-    userAccountInfo: UserAccountInfo,
-    jwt: string
-  ): UpdateCustomTestSuiteAuthDto => {
-    if (!userAccountInfo.callerOrgId) throw new Error('Unauthorized');
-
-    return {
-      jwt,
-      callerOrgId: userAccountInfo.callerOrgId,
-      isSystemInternal: userAccountInfo.isSystemInternal,
-    };
-  };
-
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
       const authHeader = req.headers.authorization;
@@ -91,25 +77,22 @@ export default class UpdateCustomTestSuiteController extends BaseController {
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
+      if (!getUserAccountInfoResult.value.callerOrgId)
+        throw new Error('Unauthorized');
+
       const requestDto: UpdateCustomTestSuiteRequestDto =
         this.#buildRequestDto(req);
 
       if (!requestDto.props)
         return UpdateCustomTestSuiteController.ok(res, null, CodeHttp.OK);
 
-      const authDto: UpdateCustomTestSuiteAuthDto = this.#buildAuthDto(
-        getUserAccountInfoResult.value,
-        jwt
-      );
-
       const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: UpdateCustomTestSuiteResponseDto =
-        await this.#updateCustomTestSuite.execute(
-          requestDto,
-          authDto,
-          connPool
-        );
+        await this.#updateCustomTestSuite.execute({
+          req: requestDto,
+          connPool,
+        });
 
       await connPool.drain();
       await connPool.clear();
@@ -126,7 +109,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
         );
 
       if (requestDto.props && Object.keys(requestDto.props).length)
-        await handleScheduleUpdate(authDto.callerOrgId, [
+        await handleScheduleUpdate(getUserAccountInfoResult.value.callerOrgId, [
           {
             id: requestDto.id,
             props: {

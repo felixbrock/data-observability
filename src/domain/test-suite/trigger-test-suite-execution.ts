@@ -47,28 +47,29 @@ export class TriggerTestSuiteExecution
     this.#executeTest = executeTest;
   }
 
-  async execute(
-    request: TriggerTestSuiteExecutionRequestDto,
-    auth: TriggerTestSuiteExecutionAuthDto,
-    db: IDb
-  ): Promise<TriggerTestSuiteExecutionResponseDto> {
-    if (auth.isSystemInternal && !request.targetOrgId)
+  async execute(props: {
+    req: TriggerTestSuiteExecutionRequestDto;
+    auth: TriggerTestSuiteExecutionAuthDto;
+    db: IDb;
+  }): Promise<TriggerTestSuiteExecutionResponseDto> {
+    const { req, auth, db } = props;
+
+    if (auth.isSystemInternal && !req.targetOrgId)
       throw new Error('Target organization id missing');
     if (!auth.isSystemInternal && !auth.callerOrgId)
       throw new Error('Caller organization id missing');
-    if (!request.targetOrgId && !auth.callerOrgId)
+    if (!req.targetOrgId && !auth.callerOrgId)
       throw new Error('No organization Id provided');
-    if (request.executionType === 'automatic' && !request.targetOrgId)
+    if (req.executionType === 'automatic' && !req.targetOrgId)
       throw new Error(
         'When automatically executing test suite targetOrgId needs to be provided'
       );
 
     try {
-      const readTestSuiteResult = await this.#readTestSuite.execute(
-        { id: request.id },
-        auth,
-        db.sfConnPool
-      );
+      const readTestSuiteResult = await this.#readTestSuite.execute({
+        req: { id: req.id },
+        connPool: db.sfConnPool,
+      });
 
       if (!readTestSuiteResult.success)
         throw new Error(readTestSuiteResult.error);
@@ -77,27 +78,26 @@ export class TriggerTestSuiteExecution
 
       const testSuite = readTestSuiteResult.value;
 
-      if (request.executionType === 'automatic') {
+      if (req.executionType === 'automatic') {
         const wasAltered = await this.wasAltered(
           {
             databaseName: testSuite.target.databaseName,
             schemaName: testSuite.target.schemaName,
             matName: testSuite.target.materializationName,
           },
-          auth,
           db.sfConnPool
         );
         if (!wasAltered) return Result.ok();
       }
 
-      await this.#executeTest.execute(
-        {
+      await this.#executeTest.execute({
+        req: {
           testSuiteId: testSuite.id,
           testType: testSuite.type,
-          targetOrgId: request.targetOrgId,
+          targetOrgId: req.targetOrgId,
         },
-        { jwt: auth.jwt }
-      );
+        auth: { jwt: auth.jwt },
+      });
 
       return Result.ok();
     } catch (error: unknown) {

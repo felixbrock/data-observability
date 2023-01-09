@@ -4,7 +4,6 @@ import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateTestSuites,
-  UpdateTestSuitesAuthDto,
   UpdateTestSuitesRequestDto,
   UpdateTestSuitesResponseDto,
 } from '../../../domain/test-suite/update-test-suites';
@@ -34,18 +33,6 @@ export default class UpdateTestSuitesController extends BaseController {
     updateObjects: httpRequest.body.updateObjects,
   });
 
-  #buildAuthDto = (
-    jwt: string,
-    userAccountInfo: UserAccountInfo
-  ): UpdateTestSuitesAuthDto => {
-    if (!userAccountInfo.callerOrgId) throw new Error('callerOrgId missing');
-    return {
-      jwt,
-      isSystemInternal: userAccountInfo.isSystemInternal,
-      callerOrgId: userAccountInfo.callerOrgId,
-    };
-  };
-
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
       const authHeader = req.headers.authorization;
@@ -66,16 +53,18 @@ export default class UpdateTestSuitesController extends BaseController {
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
+      if (!getUserAccountInfoResult.value.callerOrgId)
+        throw new Error('Unauthorized');
+
       const requestDto: UpdateTestSuitesRequestDto = this.#buildRequestDto(req);
-      const authDto: UpdateTestSuitesAuthDto = this.#buildAuthDto(
-        jwt,
-        getUserAccountInfoResult.value
-      );
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: UpdateTestSuitesResponseDto =
-        await this.#updateTestSuites.execute(requestDto, authDto, connPool);
+        await this.#updateTestSuites.execute({
+          req: requestDto,
+          connPool,
+        });
 
       await connPool.drain();
       await connPool.clear();
@@ -91,7 +80,10 @@ export default class UpdateTestSuitesController extends BaseController {
           'Update of test suites failed. Internal error.'
         );
 
-      await handleScheduleUpdate(authDto.callerOrgId, requestDto.updateObjects);
+      await handleScheduleUpdate(
+        getUserAccountInfoResult.value.callerOrgId,
+        requestDto.updateObjects
+      );
 
       return UpdateTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

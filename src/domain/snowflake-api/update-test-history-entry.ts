@@ -13,7 +13,8 @@ export interface UpdateTestHistoryEntryRequestDto {
   userFeedbackIsAnomaly: number;
 }
 
-export interface UpdateTestHistoryEntryAuthDto extends Omit<BaseAuth, 'callerOrgId'>  {
+export interface UpdateTestHistoryEntryAuthDto
+  extends Omit<BaseAuth, 'callerOrgId'> {
   callerOrgId: string;
 }
 
@@ -59,34 +60,36 @@ export class UpdateTestHistoryEntry
     this.#querySnowflake = querySnowflake;
   }
 
-  async execute(
-    req: UpdateTestHistoryEntryRequestDto,
-    auth: UpdateTestHistoryEntryAuthDto, connPool: IConnectionPool
-  ): Promise<UpdateTestHistoryEntryResponseDto> {
+  async execute(props: {
+    req: UpdateTestHistoryEntryRequestDto;
+    auth: UpdateTestHistoryEntryAuthDto;
+    connPool: IConnectionPool;
+  }): Promise<UpdateTestHistoryEntryResponseDto> {
     try {
+      const { req, connPool } = props;
+
       const binds: Binds = [req.userFeedbackIsAnomaly, req.alertId];
- 
+
       const queryText = `
       update cito.observability.test_history
       set user_feedback_is_anomaly = ?
       where alert_id = ?;
       `;
-      
-      const querySnowflakeResult = await this.#querySnowflake.execute(
-        { queryText, binds },
-        auth,
-        connPool
-      );
-  
+
+      const querySnowflakeResult = await this.#querySnowflake.execute({
+        req: { queryText, binds },
+        connPool,
+      });
+
       if (!querySnowflakeResult.success)
         throw new Error(querySnowflakeResult.error);
-  
+
       const result = querySnowflakeResult.value;
       if (!result) throw new Error(`"Update Test History" query failed`);
-  
+
       return Result.ok(req.alertId);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

@@ -7,7 +7,6 @@ import { handleScheduleCreation } from '../../../domain/services/schedule';
 
 import {
   CreateTestSuites,
-  CreateTestSuitesAuthDto,
   CreateTestSuitesRequestDto,
   CreateTestSuitesResponseDto,
 } from '../../../domain/test-suite/create-test-suites';
@@ -36,20 +35,6 @@ export default class CreateTestSuitesController extends BaseController {
     createObjects: httpRequest.body.createObjects,
   });
 
-  #buildAuthDto = (
-    userAccountInfo: UserAccountInfo,
-    jwt: string
-  ): CreateTestSuitesAuthDto => {
-    if (!userAccountInfo.callerOrgId)
-      throw new Error('Unauthorized - Caller organization id missing');
-
-    return {
-      callerOrgId: userAccountInfo.callerOrgId,
-      isSystemInternal: userAccountInfo.isSystemInternal,
-      jwt,
-    };
-  };
-
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
       const authHeader = req.headers.authorization;
@@ -73,14 +58,18 @@ export default class CreateTestSuitesController extends BaseController {
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: CreateTestSuitesRequestDto = this.#buildRequestDto(req);
+      if (!getUserAccountInfoResult.value.callerOrgId)
+        throw new Error('Unauthorized - Caller organization id missing');
 
-      const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
+      const requestDto: CreateTestSuitesRequestDto = this.#buildRequestDto(req);
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: CreateTestSuitesResponseDto =
-        await this.#createTestSuites.execute(requestDto, authDto, connPool);
+        await this.#createTestSuites.execute({
+          req: requestDto,
+          connPool,
+        });
 
       await connPool.drain();
       await connPool.clear();
@@ -94,7 +83,11 @@ export default class CreateTestSuitesController extends BaseController {
 
       const resultValues = useCaseResult.value.map((el) => el.toDto());
 
-      await handleScheduleCreation(authDto.callerOrgId, 'test', resultValues);
+      await handleScheduleCreation(
+        getUserAccountInfoResult.value.callerOrgId,
+        'test',
+        resultValues
+      );
 
       return CreateTestSuitesController.ok(res, resultValues, CodeHttp.CREATED);
     } catch (error: unknown) {

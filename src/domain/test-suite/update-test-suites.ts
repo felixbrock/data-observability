@@ -5,7 +5,6 @@ import { ITestSuiteRepo } from './i-test-suite-repo';
 import TestSuiteRepo from '../../infrastructure/persistence/test-suite-repo';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { TestSuite } from '../entities/quant-test-suite';
-import BaseAuth from '../services/base-auth';
 
 interface UpdateObject {
   id: string;
@@ -21,9 +20,7 @@ export interface UpdateTestSuitesRequestDto {
   updateObjects: UpdateObject[];
 }
 
-export interface UpdateTestSuitesAuthDto extends Omit<BaseAuth, 'callerOrgId'> {
-  callerOrgId: string;
-}
+export type UpdateTestSuitesAuthDto = null;
 
 export type UpdateTestSuitesResponseDto = Result<number>;
 
@@ -50,23 +47,26 @@ export class UpdateTestSuites
       id: testSuite.id,
       target: testSuite.target,
       type: testSuite.type,
-      activated: updateObj.props.activated !== undefined ? updateObj.props.activated : testSuite.activated,
+      activated:
+        updateObj.props.activated !== undefined
+          ? updateObj.props.activated
+          : testSuite.activated,
       threshold: updateObj.props.threshold || testSuite.threshold,
       executionType: updateObj.props.executionType || testSuite.executionType,
       cron: updateObj.props.cron || testSuite.cron,
     });
 
-  async execute(
-    req: UpdateTestSuitesRequestDto,
-    auth: UpdateTestSuitesAuthDto,
-    connPool: IConnectionPool
-  ): Promise<UpdateTestSuitesResponseDto> {
+  async execute(props: {
+    req: UpdateTestSuitesRequestDto;
+    connPool: IConnectionPool;
+  }): Promise<UpdateTestSuitesResponseDto> {
+    const { req, connPool } = props;
+
     try {
       if (req.updateObjects.every((el) => !el.props)) return Result.ok();
 
       const testSuites = await this.#repo.findBy(
         { ids: req.updateObjects.map((el) => el.id) },
-        auth,
         connPool
       );
 
@@ -85,13 +85,12 @@ export class UpdateTestSuites
 
       const replaceResult = await this.#repo.replaceMany(
         replacements,
-        auth,
         connPool
       );
 
       return Result.ok(replaceResult);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

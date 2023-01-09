@@ -31,7 +31,7 @@ export class CreateQuantTestResult
     IUseCase<
       CreateQuantTestResultRequestDto,
       CreateQuantTestResultResponseDto,
-      CreateQuantTestResultAuthDto,
+      null,
       IDbConnection
     >
 {
@@ -43,24 +43,28 @@ export class CreateQuantTestResult
     this.#quantTestResultRepo = quantTestResultRepo;
   }
 
-  async execute(
-    request: CreateQuantTestResultRequestDto,
-    auth: CreateQuantTestResultAuthDto,
-    dbConnection: IDbConnection
-  ): Promise<CreateQuantTestResultResponseDto> {
+  async execute(props: {
+    req: CreateQuantTestResultRequestDto;
+    dbConnection: IDbConnection;
+  }): Promise<CreateQuantTestResultResponseDto> {
+    const { req, dbConnection } = props;
+
     try {
       this.#dbConnection = dbConnection;
 
       const quantTestResult: QuantTestResult = {
-        ...request,
-        organizationId: request.targetOrgId,
+        ...req,
+        organizationId: req.targetOrgId,
       };
 
-      await this.#quantTestResultRepo.insertOne(quantTestResult, this.#dbConnection);
+      await this.#quantTestResultRepo.insertOne(
+        quantTestResult,
+        this.#dbConnection
+      );
 
       return Result.ok(quantTestResult);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

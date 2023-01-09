@@ -1,5 +1,6 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
+import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   parseTestType,
@@ -196,15 +197,15 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
       const connPool = await this.createConnectionPool(
         jwt,
         createPool,
-        requestDto.targetOrgId
+        requestDto.organizationId
       );
 
       const useCaseResult: HandleQuantTestExecutionResultResponseDto =
-        await this.#handleQuantTestExecutionResult.execute(
-          requestDto,
-          authDto,
-          { mongoConn: this.#dbo.dbConnection, sfConnPool: connPool }
-        );
+        await this.#handleQuantTestExecutionResult.execute({
+          req: requestDto,
+          auth: authDto,
+          db: { mongoConn: this.#dbo.dbConnection, sfConnPool: connPool },
+        });
 
       if (!useCaseResult.success) {
         return HandleQuantTestExecutionResultController.badRequest(res);

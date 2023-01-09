@@ -77,7 +77,9 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
       const requestDto: TriggerTestSuiteExecutionRequestDto =
         this.#buildRequestDto(req);
 
-      console.log(`Handling trigger request for test-suite ${requestDto.id} of org ${requestDto.targetOrgId}`);
+      console.log(
+        `Handling trigger request for test-suite ${requestDto.id} of org ${requestDto.targetOrgId}`
+      );
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
@@ -88,9 +90,13 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
       );
 
       const useCaseResult: TriggerTestSuiteExecutionResponseDto =
-        await this.#triggerTestSuiteExecution.execute(requestDto, authDto, {
-          mongoConn: this.#dbo.dbConnection,
-          sfConnPool: connPool,
+        await this.#triggerTestSuiteExecution.execute({
+          req: requestDto,
+          auth: authDto,
+          db: {
+            mongoConn: this.#dbo.dbConnection,
+            sfConnPool: connPool,
+          },
         });
 
       await connPool.drain();

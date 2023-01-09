@@ -24,23 +24,25 @@ export class GetAccounts
     this.#accountApiRepo = accountApiRepo;
   }
 
-  async execute(
-    request: GetAccountsRequestDto,
-    auth: GetAccountsAuthDto
-  ): Promise<GetAccountsResponseDto> {
+  async execute(props: {
+    req: GetAccountsRequestDto;
+    auth: GetAccountsAuthDto;
+  }): Promise<GetAccountsResponseDto> {
+    const { req, auth } = props;
+
     try {
       const getAccountsResponse: AccountDto[] =
         await this.#accountApiRepo.getBy(
-          new URLSearchParams({ userId: request.userId }),
+          new URLSearchParams({ userId: req.userId }),
           auth.jwt
         );
 
       if (!getAccountsResponse.length)
-        throw new Error(`No accounts found for user id ${request.userId}`);
+        throw new Error(`No accounts found for user id ${req.userId}`);
 
       return Result.ok(getAccountsResponse);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

@@ -4,13 +4,10 @@ import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
   CreateQualTestSuites,
-  CreateQualTestSuitesAuthDto,
   CreateQualTestSuitesRequestDto,
   CreateQualTestSuitesResponseDto,
 } from '../../../domain/qual-test-suite/create-qual-test-suites';
-import {
-  handleScheduleCreation,
-} from '../../../domain/services/schedule';
+import { handleScheduleCreation } from '../../../domain/services/schedule';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -37,20 +34,6 @@ export default class CreateQualTestSuitesController extends BaseController {
     createObjects: httpRequest.body.createObjects,
   });
 
-  #buildAuthDto = (
-    userAccountInfo: UserAccountInfo,
-    jwt: string
-  ): CreateQualTestSuitesAuthDto => {
-    if (!userAccountInfo.callerOrgId)
-      throw new Error('Unauthorized - Caller organization id missing');
-
-    return {
-      callerOrgId: userAccountInfo.callerOrgId,
-      isSystemInternal: userAccountInfo.isSystemInternal,
-      jwt,
-    };
-  };
-
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
       const authHeader = req.headers.authorization;
@@ -74,19 +57,19 @@ export default class CreateQualTestSuitesController extends BaseController {
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
+      if (!getUserAccountInfoResult.value.callerOrgId)
+        throw new Error('Unauthorized - Caller organization id missing');
+
       const requestDto: CreateQualTestSuitesRequestDto =
         this.#buildRequestDto(req);
-
-      const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: CreateQualTestSuitesResponseDto =
-        await this.#createQualTestSuites.execute(
-          requestDto,
-          authDto,
-          connPool
-        );
+        await this.#createQualTestSuites.execute({
+          req: requestDto,
+          connPool,
+        });
 
       await connPool.drain();
       await connPool.clear();
@@ -100,7 +83,11 @@ export default class CreateQualTestSuitesController extends BaseController {
 
       const resultValues = useCaseResult.value.map((el) => el.toDto());
 
-      await handleScheduleCreation(authDto.callerOrgId, 'nominal-test', resultValues);
+      await handleScheduleCreation(
+        getUserAccountInfoResult.value.callerOrgId,
+        'nominal-test',
+        resultValues
+      );
 
       return CreateQualTestSuitesController.ok(
         res,

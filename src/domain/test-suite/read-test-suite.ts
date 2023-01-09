@@ -9,13 +9,9 @@ export interface ReadTestSuiteRequestDto {
   id: string;
 }
 
-export interface ReadTestSuiteAuthDto {
-  jwt: string;
-  callerOrgId?: string;
-  isSystemInternal: boolean;
-}
+export type ReadTestSuiteAuthDto = null;
 
-export type ReadTestSuiteResponseDto = Result<TestSuite|null>;
+export type ReadTestSuiteResponseDto = Result<TestSuite | null>;
 
 export class ReadTestSuite
   implements
@@ -26,30 +22,24 @@ export class ReadTestSuite
       IConnectionPool
     >
 {
+  readonly #repo: ITestSuiteRepo;
 
-  readonly #repo:  ITestSuiteRepo;
-
-  constructor(
-    testSuiteRepo: TestSuiteRepo
-  ) {
+  constructor(testSuiteRepo: TestSuiteRepo) {
     this.#repo = testSuiteRepo;
   }
 
-  async execute(
-    req: ReadTestSuiteRequestDto,
-    auth: ReadTestSuiteAuthDto, 
-    connPool: IConnectionPool
-  ): Promise<ReadTestSuiteResponseDto> {
+  async execute(props: {
+    req: ReadTestSuiteRequestDto;
+    connPool: IConnectionPool;
+  }): Promise<ReadTestSuiteResponseDto> {
+    const { req, connPool } = props;
+
     try {
-      const testSuite = await this.#repo.findOne(
-        req.id,
-        auth,
-        connPool,
-      );
+      const testSuite = await this.#repo.findOne(req.id, connPool);
 
       return Result.ok(testSuite);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

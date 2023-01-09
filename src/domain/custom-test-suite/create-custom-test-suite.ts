@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import Result from '../value-types/transient-types/result';
-import { CustomTestSuite} from '../entities/custom-test-suite';
+import { CustomTestSuite } from '../entities/custom-test-suite';
 import { ExecutionType } from '../value-types/execution-type';
 import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
 import IUseCase from '../services/use-case';
@@ -8,64 +8,61 @@ import CustomTestSuiteRepo from '../../infrastructure/persistence/custom-test-su
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 
 export interface CreateCustomTestSuiteRequestDto {
-  entityProps: {activated: boolean;
-  threshold: number;
-  cron: string;
-  executionType: ExecutionType;
-  name: string;
-  description: string;
-  sqlLogic: string;
-  targetResourceIds: string[];}
+  entityProps: {
+    activated: boolean;
+    threshold: number;
+    cron: string;
+    executionType: ExecutionType;
+    name: string;
+    description: string;
+    sqlLogic: string;
+    targetResourceIds: string[];
+  };
 }
 
-export interface CreateCustomTestSuiteAuthDto {
-  jwt: string;
-  callerOrgId: string;
-  isSystemInternal: boolean;
-}
+export type CreateCustomTestSuiteAuthDto = null;
 
 export type CreateCustomTestSuiteResponseDto = Result<CustomTestSuite>;
 
 export class CreateCustomTestSuite
-  implements IUseCase<
+  implements
+    IUseCase<
       CreateCustomTestSuiteRequestDto,
       CreateCustomTestSuiteResponseDto,
       CreateCustomTestSuiteAuthDto,
       IConnectionPool
     >
 {
+  readonly #repo: ICustomTestSuiteRepo;
 
-  readonly #repo:  ICustomTestSuiteRepo;
-
-  constructor(
-    customTestSuiteRepo: CustomTestSuiteRepo
-  ) {
+  constructor(customTestSuiteRepo: CustomTestSuiteRepo) {
     this.#repo = customTestSuiteRepo;
   }
 
-  async execute(
-    request: CreateCustomTestSuiteRequestDto,
-    auth: CreateCustomTestSuiteAuthDto,
-    connPool: IConnectionPool
-  ): Promise<CreateCustomTestSuiteResponseDto> {
+  async execute(props: {
+    req: CreateCustomTestSuiteRequestDto;
+    connPool: IConnectionPool;
+  }): Promise<CreateCustomTestSuiteResponseDto> {
+    const { req, connPool } = props;
+
     try {
       const customTestSuite = CustomTestSuite.create({
         id: uuidv4(),
-        name: request.entityProps.name,
-        description: request.entityProps.description,
-        sqlLogic: request.entityProps.sqlLogic,
-        activated: request.entityProps.activated,
-        cron: request.entityProps.cron,
-        executionType: request.entityProps.executionType,
-        threshold: request.entityProps.threshold,
-        targetResourceIds: request.entityProps.targetResourceIds,
+        name: req.entityProps.name,
+        description: req.entityProps.description,
+        sqlLogic: req.entityProps.sqlLogic,
+        activated: req.entityProps.activated,
+        cron: req.entityProps.cron,
+        executionType: req.entityProps.executionType,
+        threshold: req.entityProps.threshold,
+        targetResourceIds: req.entityProps.targetResourceIds,
       });
 
-      await this.#repo.insertOne(customTestSuite, auth, connPool);
+      await this.#repo.insertOne(customTestSuite, connPool);
 
       return Result.ok(customTestSuite);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

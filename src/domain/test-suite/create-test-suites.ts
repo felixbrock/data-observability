@@ -4,7 +4,6 @@ import { TestSuite, TestType } from '../entities/quant-test-suite';
 import { MaterializationType } from '../value-types/materialization-type';
 import { ExecutionType } from '../value-types/execution-type';
 import { ITestSuiteRepo } from './i-test-suite-repo';
-import BaseAuth from '../services/base-auth';
 import TestSuiteRepo from '../../infrastructure/persistence/test-suite-repo';
 import IUseCase from '../services/use-case';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
@@ -25,37 +24,35 @@ interface CreateObject {
 
 export interface CreateTestSuitesRequestDto {
   createObjects: CreateObject[];
-  
 }
 
-export interface CreateTestSuitesAuthDto extends Omit<BaseAuth, 'callerOrgId'>{
-  callerOrgId: string;
-};
+export type CreateTestSuitesAuthDto = null;
 
 export type CreateTestSuitesResponseDto = Result<TestSuite[]>;
 
 export class CreateTestSuites
-  implements IUseCase<
+  implements
+    IUseCase<
       CreateTestSuitesRequestDto,
       CreateTestSuitesResponseDto,
-      CreateTestSuitesAuthDto, IConnectionPool
+      CreateTestSuitesAuthDto,
+      IConnectionPool
     >
 {
+  readonly #repo: ITestSuiteRepo;
 
-  readonly #repo:  ITestSuiteRepo;
-
-  constructor(
-    testSuiteRepo: TestSuiteRepo
-  ) {
+  constructor(testSuiteRepo: TestSuiteRepo) {
     this.#repo = testSuiteRepo;
   }
 
-  async execute(
-    request: CreateTestSuitesRequestDto,
-    auth: CreateTestSuitesAuthDto, connPool: IConnectionPool
-  ): Promise<CreateTestSuitesResponseDto> {
+  async execute(props: {
+    req: CreateTestSuitesRequestDto;
+    connPool: IConnectionPool;
+  }): Promise<CreateTestSuitesResponseDto> {
+    const { req, connPool } = props;
+
     try {
-      const testSuites = request.createObjects.map((el) =>
+      const testSuites = req.createObjects.map((el) =>
         TestSuite.create({
           id: uuidv4(),
           activated: el.activated,
@@ -74,7 +71,7 @@ export class CreateTestSuites
         })
       );
 
-      await this.#repo.insertMany(testSuites, auth, connPool);
+      await this.#repo.insertMany(testSuites, connPool);
 
       return Result.ok(testSuites);
     } catch (error: unknown) {

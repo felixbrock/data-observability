@@ -1,10 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import QualTestSuiteRepo from '../../infrastructure/persistence/qual-test-suite-repo';
-import {
-  QualTestSuite,
-  QualTestType,
-} from '../entities/qual-test-suite';
-import BaseAuth from '../services/base-auth';
+import { QualTestSuite, QualTestType } from '../entities/qual-test-suite';
 import IUseCase from '../services/use-case';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { ExecutionType } from '../value-types/execution-type';
@@ -29,10 +25,7 @@ export interface CreateQualTestSuitesRequestDto {
   createObjects: CreateObject[];
 }
 
-export interface CreateQualTestSuitesAuthDto
-  extends Omit<BaseAuth, 'callerOrgId'> {
-  callerOrgId: string;
-}
+export type CreateQualTestSuitesAuthDto = null;
 
 export type CreateQualTestSuitesResponseDto = Result<QualTestSuite[]>;
 
@@ -51,14 +44,14 @@ export class CreateQualTestSuites
     this.#repo = qualTestSuiteRepo;
   }
 
-  async execute(
-    request: CreateQualTestSuitesRequestDto,
-    auth: CreateQualTestSuitesAuthDto,
+  async execute(props: {
+    req: CreateQualTestSuitesRequestDto;
+    connPool: IConnectionPool;
+  }): Promise<CreateQualTestSuitesResponseDto> {
+    const { req, connPool } = props;
 
-    connPool: IConnectionPool
-  ): Promise<CreateQualTestSuitesResponseDto> {
     try {
-      const testSuites = request.createObjects.map((createObject) =>
+      const testSuites = req.createObjects.map((createObject) =>
         QualTestSuite.create({
           id: uuidv4(),
           activated: createObject.activated,
@@ -76,11 +69,11 @@ export class CreateQualTestSuites
         })
       );
 
-      await this.#repo.insertMany(testSuites, auth, connPool);
+      await this.#repo.insertMany(testSuites, connPool);
 
       return Result.ok(testSuites);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Result.fail('');
     }

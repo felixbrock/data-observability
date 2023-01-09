@@ -9,9 +9,7 @@ import {
   CreateCustomTestSuiteResponseDto,
 } from '../../../domain/custom-test-suite/create-custom-test-suite';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
-import {
-  handleScheduleCreation,
-} from '../../../domain/services/schedule';
+import { handleScheduleCreation } from '../../../domain/services/schedule';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -48,16 +46,11 @@ export default class CreateCustomTestSuiteController extends BaseController {
   });
 
   #buildAuthDto = (
-    userAccountInfo: UserAccountInfo,
-    jwt: string
+    userAccountInfo: UserAccountInfo
   ): CreateCustomTestSuiteAuthDto => {
     if (!userAccountInfo.callerOrgId) throw new Error('Unauthorized');
 
-    return {
-      callerOrgId: userAccountInfo.callerOrgId,
-      isSystemInternal: userAccountInfo.isSystemInternal,
-      jwt,
-    };
+    return null;
   };
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
@@ -86,16 +79,15 @@ export default class CreateCustomTestSuiteController extends BaseController {
       const requestDto: CreateCustomTestSuiteRequestDto =
         this.#buildRequestDto(req);
 
-      const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
+      this.#buildAuthDto(getUserAccountInfoResult.value);
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: CreateCustomTestSuiteResponseDto =
-        await this.#createCustomTestSuite.execute(
-          requestDto,
-          authDto,
-          connPool
-        );
+        await this.#createCustomTestSuite.execute({
+          req: requestDto,
+          connPool,
+        });
 
       await connPool.drain();
       await connPool.clear();

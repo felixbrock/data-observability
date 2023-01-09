@@ -37,16 +37,18 @@ export class ExecuteTest
     this.#testExecutionApiRepo = testExecutionApiRepo;
   }
 
-  async execute(
-    request: ExecuteTestRequestDto,
-    auth: ExecuteTestAuthDto
-  ): Promise<ExecuteTestResponseDto> {
+  async execute(props: {
+    req: ExecuteTestRequestDto;
+    auth: ExecuteTestAuthDto;
+  }): Promise<ExecuteTestResponseDto> {
+    const { req, auth } = props;
+
     try {
       await this.#testExecutionApiRepo.executeTest(
-        request.testSuiteId,
-        request.testType,
+        req.testSuiteId,
+        req.testType,
         auth.jwt,
-        request.targetOrgId
+        req.targetOrgId
       );
 
       return Result.ok();

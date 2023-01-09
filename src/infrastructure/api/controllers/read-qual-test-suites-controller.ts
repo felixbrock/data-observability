@@ -29,9 +29,7 @@ export default class ReadQualTestSuitesController extends BaseController {
     this.#readQualTestSuites = readQualTestSuites;
   }
 
-  #buildRequestDto = (
-    httpRequest: Request
-  ): ReadQualTestSuitesRequestDto => {
+  #buildRequestDto = (httpRequest: Request): ReadQualTestSuitesRequestDto => {
     const { activated } = httpRequest.query;
 
     if (
@@ -62,10 +60,7 @@ export default class ReadQualTestSuitesController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return ReadQualTestSuitesController.unauthorized(
-          res,
-          'Unauthorized'
-        );
+        return ReadQualTestSuitesController.unauthorized(res, 'Unauthorized');
 
       const jwt = authHeader.split(' ')[1];
 
@@ -90,11 +85,11 @@ export default class ReadQualTestSuitesController extends BaseController {
       const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: ReadQualTestSuitesResponseDto =
-        await this.#readQualTestSuites.execute(
-          requestDto,
-          authDto,
-          connPool
-        );
+        await this.#readQualTestSuites.execute({
+          req: requestDto,
+          auth: authDto,
+          connPool,
+        });
 
       await connPool.drain();
       await connPool.clear();
@@ -109,7 +104,7 @@ export default class ReadQualTestSuitesController extends BaseController {
 
       return ReadQualTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return ReadQualTestSuitesController.fail(
         res,

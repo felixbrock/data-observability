@@ -3,11 +3,17 @@ import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Canvas, createCanvas } from 'canvas';
 import { EChartsOption, init, YAXisComponentOption } from 'echarts';
 import { appConfig } from '../../../../config';
-import BaseAuth from '../services/base-auth';
-import IUseCase from '../services/use-case';
-import { Binds, IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
-import { QuerySnowflake } from '../snowflake-api/query-snowflake';
-import Result from '../value-types/transient-types/result';
+import IUseCase from '../../../services/use-case';
+import {
+  Binds,
+  IConnectionPool,
+} from '../../../snowflake-api/i-snowflake-api-repo';
+import { QuerySnowflake } from '../../../snowflake-api/query-snowflake';
+import Result from '../../../value-types/transient-types/result';
+
+export interface ChartRepresentation {
+  url: string;
+}
 
 interface VisualPiece {
   gte: number;
@@ -32,16 +38,16 @@ export interface GenerateChartRequestDto {
   testSuiteId: string;
 }
 
-export type GenerateChartAuthDto = BaseAuth;
+export type GenerateChartAuthDto = null;
 
-export type GenerateChartResponseDto = Result<{ url: string }>;
+export type GenerateChartResponseDto = Result<ChartRepresentation>;
 
 export class GenerateChart
   implements
     IUseCase<
       GenerateChartRequestDto,
       GenerateChartResponseDto,
-      GenerateChartAuthDto,
+      null,
       IConnectionPool
     >
 {
@@ -223,8 +229,7 @@ export class GenerateChart
 
   #queryTestHistory = async (
     testSuiteId: string,
-    auth: BaseAuth,
-    sfConnPool: IConnectionPool
+    connPool: IConnectionPool
   ): Promise<TestHistoryDataPoint[]> => {
     const binds: Binds = [testSuiteId];
 
@@ -246,11 +251,10 @@ export class GenerateChart
       where ${whereCondition}
       order by test_executions.executed_on desc limit 200;`;
 
-    const queryResult = await this.#querySnowflake.execute(
-      { queryText, binds },
-      auth,
-      sfConnPool
-    );
+    const queryResult = await this.#querySnowflake.execute({
+      req: { queryText, binds },
+      connPool,
+    });
 
     if (!queryResult.success) throw new Error(queryResult.error);
     if (!queryResult.value)
@@ -258,7 +262,10 @@ export class GenerateChart
 
     const historyDataPoints = queryResult.value
       .reverse()
-      .map((el): TestHistoryDataPoint => this.#toTestHistoryDataPoint(el));
+      .map(
+        (el: { [key: string]: unknown }): TestHistoryDataPoint =>
+          this.#toTestHistoryDataPoint(el)
+      );
 
     return historyDataPoints;
   };
@@ -273,49 +280,47 @@ export class GenerateChart
     return canvas;
   };
 
-  #storeChart = async (chart: Canvas): Promise<{url: string}> => {
+  #storeChart = async (
+    chart: Canvas,
+    testSuiteId: string
+  ): Promise<ChartRepresentation> => {
     const client = new S3Client({
       region: appConfig.cloud.region,
     });
     const command = new PutObjectCommand({
       ACL: 'public-read',
-      Key: 'test-xxx.jpeg',
+      Key: `${testSuiteId}.jpeg`,
       Bucket: 'slack-charts',
       Body: chart.toBuffer('image/jpeg'),
       ContentType: 'image/jpeg',
     });
     const response = await client.send(command);
 
-    if(response.$metadata.httpStatusCode !== 200)
-    throw new Error('Problem ocurred while uploading chart')
+    if (response.$metadata.httpStatusCode !== 200)
+      throw new Error('Problem ocurred while uploading chart');
 
-    const url = ``
+    const url = `https://slack-charts.s3.eu-central-1.amazonaws.com/${testSuiteId}.jpeg`;
 
-    return {}
-
+    return { url };
   };
 
-  async execute(
-    req: GenerateChartRequestDto,
-    auth: GenerateChartAuthDto,
-    connPool: IConnectionPool
-  ): Promise<GenerateChartResponseDto> {
+  async execute(props: {
+    req: GenerateChartRequestDto;
+    connPool: IConnectionPool;
+  }): Promise<GenerateChartResponseDto> {
+    const { req, connPool } = props;
+
     try {
       const historyDataPoints = await this.#queryTestHistory(
         req.testSuiteId,
-        auth,
         connPool
       );
 
       const chart = this.#buildChart(historyDataPoints);
 
-      await this.#storeChart(chart);
+      const representation = await this.#storeChart(chart, req.testSuiteId);
 
-      const buffer = ;
-
-      
-
-      return Result.ok();
+      return Result.ok(representation);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
