@@ -204,10 +204,12 @@ export class GenerateChart
         | 'function'
     ): val is T => val === null || typeof val === targetType;
 
+    const isTimestamp = (obj: unknown): obj is Date =>
+      !!obj && typeof obj === 'object' && obj.constructor.name === 'Date';
     if (
       typeof value !== 'number' ||
       typeof testSuiteId !== 'string' ||
-      typeof executedOn !== 'string' ||
+      !(typeof executedOn === 'string' || isTimestamp(executedOn)) ||
       typeof isAnomaly !== 'boolean' ||
       typeof userFeedbackIsAnomaly !== 'number' ||
       !isOptionalOfType<number>(valueLowerBound, 'number') ||
@@ -218,7 +220,8 @@ export class GenerateChart
     const datapoint = {
       isAnomaly,
       userFeedbackIsAnomaly,
-      timestamp: executedOn,
+      timestamp:
+        typeof executedOn === 'string' ? executedOn : executedOn.toISOString(),
       valueLowerBound,
       valueUpperBound,
       value,

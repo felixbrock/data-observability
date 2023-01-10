@@ -85,25 +85,26 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
       columnName,
     } = obj;
 
+    parseMaterializationType(materializationType);
+
     if (
       !alertId ||
-      typeof alertId === 'string' ||
+      typeof alertId !== 'string' ||
       !message ||
-      typeof message === 'string' ||
+      typeof message !== 'string' ||
       !value ||
-      typeof value === 'number' ||
+      typeof value !== 'number' ||
       !expectedLowerBound ||
-      typeof expectedLowerBound === 'number' ||
+      typeof expectedLowerBound !== 'number' ||
       !expectedUpperBound ||
-      typeof expectedUpperBound === 'number' ||
+      typeof expectedUpperBound !== 'number' ||
       !databaseName ||
-      typeof databaseName === 'string' ||
+      typeof databaseName !== 'string' ||
       !schemaName ||
-      typeof schemaName === 'string' ||
+      typeof schemaName !== 'string' ||
       !materializationName ||
-      typeof materializationName === 'string' ||
+      typeof materializationName !== 'string' ||
       !materializationType ||
-      parseMaterializationType(materializationType) ||
       (columnName && typeof columnName !== 'string')
     )
       return false;

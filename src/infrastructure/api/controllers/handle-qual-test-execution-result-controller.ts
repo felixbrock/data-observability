@@ -92,19 +92,20 @@ export default class HandleQualTestExecutionResultController extends BaseControl
       materializationType,
     } = obj;
 
+    parseMaterializationType(materializationType);
+
     if (
       !alertId ||
-      typeof alertId === 'string' ||
+      typeof alertId !== 'string' ||
       !message ||
-      typeof message === 'string' ||
+      typeof message !== 'string' ||
       !databaseName ||
-      typeof databaseName === 'string' ||
+      typeof databaseName !== 'string' ||
       !schemaName ||
-      typeof schemaName === 'string' ||
+      typeof schemaName !== 'string' ||
       !materializationName ||
-      typeof materializationName === 'string' ||
-      !materializationType ||
-      parseMaterializationType(materializationType)
+      typeof materializationName !== 'string' ||
+      !materializationType
     )
       return false;
 
