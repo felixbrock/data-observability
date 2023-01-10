@@ -9,6 +9,10 @@ provider:
   timeout: 65
   memorySize: 256
   architecture: arm64
+  ecr:
+    images:
+      latest:
+        path: ./
   iam:
     role:
       statements:
@@ -32,5 +36,6 @@ provider:
           Resource: '*'
 functions:
   app:
-    handler: dist/lambda.handler
+    image:
+      name: latest
     url: true
