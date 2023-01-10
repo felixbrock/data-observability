@@ -1,11 +1,11 @@
 // todo - violation of clean code dependency flow
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { Canvas, createCanvas } from 'canvas';
-import { EChartsOption, init, YAXisComponentOption } from 'echarts';
-import { appConfig } from '../../../../config';
+// import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+// import { Canvas, createCanvas } from 'canvas';
+// import { EChartsOption, init, YAXisComponentOption } from 'echarts';
+// import { appConfig } from '../../../../config';
 import IUseCase from '../../../services/use-case';
 import {
-  Binds,
+  // Binds,
   IConnectionPool,
 } from '../../../snowflake-api/i-snowflake-api-repo';
 import { QuerySnowflake } from '../../../snowflake-api/query-snowflake';
@@ -15,15 +15,15 @@ export interface ChartRepresentation {
   url: string;
 }
 
-interface VisualPiece {
-  gte: number;
-  lte: number;
-  color: string;
-  colorAlpha: number;
-}
+// interface VisualPiece {
+//   gte: number;
+//   lte: number;
+//   color: string;
+//   colorAlpha: number;
+// }
 
-const isVisualPiece = (obj: unknown): obj is VisualPiece =>
-  !!obj && typeof obj === 'object' && 'color' in obj;
+// const isVisualPiece = (obj: unknown): obj is VisualPiece =>
+//   !!obj && typeof obj === 'object' && 'color' in obj;
 
 export interface TestHistoryDataPoint {
   isAnomaly: boolean;
@@ -51,10 +51,10 @@ export class GenerateChart
       IConnectionPool
     >
 {
-  readonly #defaultYAxis: YAXisComponentOption = {
-    type: 'value',
-    boundaryGap: [0, '30%'],
-  };
+  // readonly #defaultYAxis: YAXisComponentOption = {
+  //   type: 'value',
+  //   boundaryGap: [0, '30%'],
+  // };
 
   readonly #querySnowflake: QuerySnowflake;
 
@@ -62,250 +62,250 @@ export class GenerateChart
     this.#querySnowflake = querySnowflake;
   }
 
-  #buildDefaultOption = (
-    yAxis: YAXisComponentOption,
-    data: TestHistoryDataPoint[]
-  ): EChartsOption => {
-    const hasAnomolies = data.some(
-      (el) =>
-        el.isAnomaly &&
-        (el.userFeedbackIsAnomaly === -1 || el.userFeedbackIsAnomaly === 1)
-    );
+  // #buildDefaultOption = (
+  //   yAxis: YAXisComponentOption,
+  //   data: TestHistoryDataPoint[]
+  // ): EChartsOption => {
+  //   const hasAnomolies = data.some(
+  //     (el) =>
+  //       el.isAnomaly &&
+  //       (el.userFeedbackIsAnomaly === -1 || el.userFeedbackIsAnomaly === 1)
+  //   );
 
-    const { xAxis, values, upperBounds, lowerBounds } = data.reduce(
-      (
-        accumulation: {
-          xAxis: string[];
-          values: number[];
-          upperBounds: number[];
-          lowerBounds: number[];
-        },
-        el: TestHistoryDataPoint
-      ) => {
-        const localAcc = accumulation;
+  //   const { xAxis, values, upperBounds, lowerBounds } = data.reduce(
+  //     (
+  //       accumulation: {
+  //         xAxis: string[];
+  //         values: number[];
+  //         upperBounds: number[];
+  //         lowerBounds: number[];
+  //       },
+  //       el: TestHistoryDataPoint
+  //     ) => {
+  //       const localAcc = accumulation;
 
-        localAcc.xAxis.push(el.timestamp);
-        localAcc.values.push(el.value);
-        localAcc.upperBounds.push(el.valueUpperBound);
-        localAcc.lowerBounds.push(el.valueLowerBound);
+  //       localAcc.xAxis.push(el.timestamp);
+  //       localAcc.values.push(el.value);
+  //       localAcc.upperBounds.push(el.valueUpperBound);
+  //       localAcc.lowerBounds.push(el.valueLowerBound);
 
-        return localAcc;
-      },
-      { xAxis: [], values: [], upperBounds: [], lowerBounds: [] }
-    );
+  //       return localAcc;
+  //     },
+  //     { xAxis: [], values: [], upperBounds: [], lowerBounds: [] }
+  //   );
 
-    return {
-      xAxis: {
-        type: 'category',
-        boundaryGap: false,
-        data: xAxis,
-      },
-      yAxis,
-      toolbox: {
-        feature: {
-          saveAsImage: {},
-        },
-      },
-      visualMap: hasAnomolies
-        ? {
-            show: false,
-            dimension: 0,
-            pieces: data
-              .map((el, index) =>
-                el.isAnomaly &&
-                (el.userFeedbackIsAnomaly === 1 ||
-                  el.userFeedbackIsAnomaly === -1)
-                  ? {
-                      gte: index === 0 ? index : index - 1,
-                      lte: index + 1,
-                      color: 'red',
-                      colorAlpha: 0.2,
-                    }
-                  : undefined
-              )
-              .filter(isVisualPiece),
-          }
-        : undefined,
-      series: [
-        {
-          name: 'Lower Threshold',
-          type: 'line',
-          smooth: true,
-          showSymbol: false,
-          lineStyle: {
-            type: 'dotted',
-            color: 'grey',
-            // width: 2
-          },
-          itemStyle: {
-            color: 'grey',
-          },
-          data: lowerBounds,
-        },
-        {
-          name: 'Upper Threshold',
-          type: 'line',
-          smooth: true,
-          showSymbol: false,
-          lineStyle: {
-            type: 'dashed',
-            color: 'grey',
-            // width: 2
-          },
-          itemStyle: {
-            color: 'grey',
-          },
-          data: upperBounds,
-        },
-        {
-          name: 'Measurements',
-          type: 'line',
-          smooth: true,
-          lineStyle: {
-            color: '#6f47ef',
-            // width: 2
-          },
-          itemStyle: {
-            color: '#6f47ef',
-          },
-          areaStyle: hasAnomolies ? {} : undefined,
-          data: values,
-        },
-      ],
-      tooltip: {
-        trigger: 'axis',
-      },
-    };
-  };
+  //   return {
+  //     xAxis: {
+  //       type: 'category',
+  //       boundaryGap: false,
+  //       data: xAxis,
+  //     },
+  //     yAxis,
+  //     toolbox: {
+  //       feature: {
+  //         saveAsImage: {},
+  //       },
+  //     },
+  //     visualMap: hasAnomolies
+  //       ? {
+  //           show: false,
+  //           dimension: 0,
+  //           pieces: data
+  //             .map((el, index) =>
+  //               el.isAnomaly &&
+  //               (el.userFeedbackIsAnomaly === 1 ||
+  //                 el.userFeedbackIsAnomaly === -1)
+  //                 ? {
+  //                     gte: index === 0 ? index : index - 1,
+  //                     lte: index + 1,
+  //                     color: 'red',
+  //                     colorAlpha: 0.2,
+  //                   }
+  //                 : undefined
+  //             )
+  //             .filter(isVisualPiece),
+  //         }
+  //       : undefined,
+  //     series: [
+  //       {
+  //         name: 'Lower Threshold',
+  //         type: 'line',
+  //         smooth: true,
+  //         showSymbol: false,
+  //         lineStyle: {
+  //           type: 'dotted',
+  //           color: 'grey',
+  //           // width: 2
+  //         },
+  //         itemStyle: {
+  //           color: 'grey',
+  //         },
+  //         data: lowerBounds,
+  //       },
+  //       {
+  //         name: 'Upper Threshold',
+  //         type: 'line',
+  //         smooth: true,
+  //         showSymbol: false,
+  //         lineStyle: {
+  //           type: 'dashed',
+  //           color: 'grey',
+  //           // width: 2
+  //         },
+  //         itemStyle: {
+  //           color: 'grey',
+  //         },
+  //         data: upperBounds,
+  //       },
+  //       {
+  //         name: 'Measurements',
+  //         type: 'line',
+  //         smooth: true,
+  //         lineStyle: {
+  //           color: '#6f47ef',
+  //           // width: 2
+  //         },
+  //         itemStyle: {
+  //           color: '#6f47ef',
+  //         },
+  //         areaStyle: hasAnomolies ? {} : undefined,
+  //         data: values,
+  //       },
+  //     ],
+  //     tooltip: {
+  //       trigger: 'axis',
+  //     },
+  //   };
+  // };
 
-  #toTestHistoryDataPoint = (queryResultEntry: {
-    [key: string]: unknown;
-  }): TestHistoryDataPoint => {
-    const {
-      VALUE: value,
-      TEST_SUITE_ID: testSuiteId,
-      EXECUTED_ON: executedOn,
-      VALUE_UPPER_BOUND: valueUpperBound,
-      VALUE_LOWER_BOUND: valueLowerBound,
-      IS_ANOMALY: isAnomaly,
-      USER_FEEDBACK_IS_ANOMALY: userFeedbackIsAnomaly,
-    } = queryResultEntry;
+  // #toTestHistoryDataPoint = (queryResultEntry: {
+  //   [key: string]: unknown;
+  // }): TestHistoryDataPoint => {
+  //   const {
+  //     VALUE: value,
+  //     TEST_SUITE_ID: testSuiteId,
+  //     EXECUTED_ON: executedOn,
+  //     VALUE_UPPER_BOUND: valueUpperBound,
+  //     VALUE_LOWER_BOUND: valueLowerBound,
+  //     IS_ANOMALY: isAnomaly,
+  //     USER_FEEDBACK_IS_ANOMALY: userFeedbackIsAnomaly,
+  //   } = queryResultEntry;
 
-    const isOptionalOfType = <T>(
-      val: unknown,
-      targetType:
-        | 'string'
-        | 'number'
-        | 'bigint'
-        | 'boolean'
-        | 'symbol'
-        | 'undefined'
-        | 'object'
-        | 'function'
-    ): val is T => val === null || typeof val === targetType;
+  //   const isOptionalOfType = <T>(
+  //     val: unknown,
+  //     targetType:
+  //       | 'string'
+  //       | 'number'
+  //       | 'bigint'
+  //       | 'boolean'
+  //       | 'symbol'
+  //       | 'undefined'
+  //       | 'object'
+  //       | 'function'
+  //   ): val is T => val === null || typeof val === targetType;
 
-    const isTimestamp = (obj: unknown): obj is Date =>
-      !!obj && typeof obj === 'object' && obj.constructor.name === 'Date';
-    if (
-      typeof value !== 'number' ||
-      typeof testSuiteId !== 'string' ||
-      !(typeof executedOn === 'string' || isTimestamp(executedOn)) ||
-      typeof isAnomaly !== 'boolean' ||
-      typeof userFeedbackIsAnomaly !== 'number' ||
-      !isOptionalOfType<number>(valueLowerBound, 'number') ||
-      !isOptionalOfType<number>(valueUpperBound, 'number')
-    )
-      throw new Error('Received unexpected type');
+  //   const isTimestamp = (obj: unknown): obj is Date =>
+  //     !!obj && typeof obj === 'object' && obj.constructor.name === 'Date';
+  //   if (
+  //     typeof value !== 'number' ||
+  //     typeof testSuiteId !== 'string' ||
+  //     !(typeof executedOn === 'string' || isTimestamp(executedOn)) ||
+  //     typeof isAnomaly !== 'boolean' ||
+  //     typeof userFeedbackIsAnomaly !== 'number' ||
+  //     !isOptionalOfType<number>(valueLowerBound, 'number') ||
+  //     !isOptionalOfType<number>(valueUpperBound, 'number')
+  //   )
+  //     throw new Error('Received unexpected type');
 
-    const datapoint = {
-      isAnomaly,
-      userFeedbackIsAnomaly,
-      timestamp:
-        typeof executedOn === 'string' ? executedOn : executedOn.toISOString(),
-      valueLowerBound,
-      valueUpperBound,
-      value,
-    };
+  //   const datapoint = {
+  //     isAnomaly,
+  //     userFeedbackIsAnomaly,
+  //     timestamp:
+  //       typeof executedOn === 'string' ? executedOn : executedOn.toISOString(),
+  //     valueLowerBound,
+  //     valueUpperBound,
+  //     value,
+  //   };
 
-    return datapoint;
-  };
+  //   return datapoint;
+  // };
 
-  #queryTestHistory = async (
-    testSuiteId: string,
-    connPool: IConnectionPool
-  ): Promise<TestHistoryDataPoint[]> => {
-    const binds: Binds = [testSuiteId];
+  // #queryTestHistory = async (
+  //   testSuiteId: string,
+  //   connPool: IConnectionPool
+  // ): Promise<TestHistoryDataPoint[]> => {
+  //   const binds: Binds = [testSuiteId];
 
-    const whereCondition = `test_history.test_suite_id = ?`;
+  //   const whereCondition = `test_history.test_suite_id = ?`;
 
-    const queryText = `select 
-        test_history.test_suite_id as test_suite_id,
-        test_history.value as value,
-        test_executions.executed_on as executed_on,
-        test_results.expected_value_upper_bound as value_upper_bound,
-        test_results.expected_value_lower_bound as value_lower_bound,
-        test_history.is_anomaly as is_anomaly,
-        test_history.user_feedback_is_anomaly as user_feedback_is_anomaly 
-      from cito.observability.test_history as test_history
-      inner join cito.observability.test_executions as test_executions
-        on test_history.execution_id = test_executions.id
-      left join cito.observability.test_results as test_results
-        on test_history.execution_id = test_results.execution_id
-      where ${whereCondition}
-      order by test_executions.executed_on desc limit 200;`;
+  //   const queryText = `select
+  //       test_history.test_suite_id as test_suite_id,
+  //       test_history.value as value,
+  //       test_executions.executed_on as executed_on,
+  //       test_results.expected_value_upper_bound as value_upper_bound,
+  //       test_results.expected_value_lower_bound as value_lower_bound,
+  //       test_history.is_anomaly as is_anomaly,
+  //       test_history.user_feedback_is_anomaly as user_feedback_is_anomaly
+  //     from cito.observability.test_history as test_history
+  //     inner join cito.observability.test_executions as test_executions
+  //       on test_history.execution_id = test_executions.id
+  //     left join cito.observability.test_results as test_results
+  //       on test_history.execution_id = test_results.execution_id
+  //     where ${whereCondition}
+  //     order by test_executions.executed_on desc limit 200;`;
 
-    const queryResult = await this.#querySnowflake.execute({
-      req: { queryText, binds },
-      connPool,
-    });
+  //   const queryResult = await this.#querySnowflake.execute({
+  //     req: { queryText, binds },
+  //     connPool,
+  //   });
 
-    if (!queryResult.success) throw new Error(queryResult.error);
-    if (!queryResult.value)
-      throw new Error('Missing history data point query value');
+  //   if (!queryResult.success) throw new Error(queryResult.error);
+  //   if (!queryResult.value)
+  //     throw new Error('Missing history data point query value');
 
-    const historyDataPoints = queryResult.value
-      .reverse()
-      .map(
-        (el: { [key: string]: unknown }): TestHistoryDataPoint =>
-          this.#toTestHistoryDataPoint(el)
-      );
+  //   const historyDataPoints = queryResult.value
+  //     .reverse()
+  //     .map(
+  //       (el: { [key: string]: unknown }): TestHistoryDataPoint =>
+  //         this.#toTestHistoryDataPoint(el)
+  //     );
 
-    return historyDataPoints;
-  };
+  //   return historyDataPoints;
+  // };
 
-  #buildChart = (datapoints: TestHistoryDataPoint[]): Canvas => {
-    const canvas = createCanvas(800, 600);
+  // #buildChart = (datapoints: TestHistoryDataPoint[]): Canvas => {
+  //   const canvas = createCanvas(800, 600);
 
-    const chart = init(canvas);
+  //   const chart = init(canvas);
 
-    chart.setOption(this.#buildDefaultOption(this.#defaultYAxis, datapoints));
+  //   chart.setOption(this.#buildDefaultOption(this.#defaultYAxis, datapoints));
 
-    return canvas;
-  };
+  //   return canvas;
+  // };
 
-  #storeChart = async (
-    chart: Canvas,
-    testSuiteId: string
-  ): Promise<ChartRepresentation> => {
-    const client = new S3Client({
-      region: appConfig.cloud.region,
-    });
-    const command = new PutObjectCommand({
-      ACL: 'public-read',
-      Key: `${testSuiteId}.jpeg`,
-      Bucket: 'slack-charts',
-      Body: chart.toBuffer('image/jpeg'),
-      ContentType: 'image/jpeg',
-    });
-    const response = await client.send(command);
+  // #storeChart = async (
+  //   chart: Canvas,
+  //   testSuiteId: string
+  // ): Promise<ChartRepresentation> => {
+  //   const client = new S3Client({
+  //     region: appConfig.cloud.region,
+  //   });
+  //   const command = new PutObjectCommand({
+  //     ACL: 'public-read',
+  //     Key: `${testSuiteId}.jpeg`,
+  //     Bucket: 'slack-charts',
+  //     Body: chart.toBuffer('image/jpeg'),
+  //     ContentType: 'image/jpeg',
+  //   });
+  //   const response = await client.send(command);
 
-    if (response.$metadata.httpStatusCode !== 200)
-      throw new Error('Problem ocurred while uploading chart');
+  //   if (response.$metadata.httpStatusCode !== 200)
+  //     throw new Error('Problem ocurred while uploading chart');
 
-    const url = `https://slack-charts.s3.eu-central-1.amazonaws.com/${testSuiteId}.jpeg`;
+  //   const url = `https://slack-charts.s3.eu-central-1.amazonaws.com/${testSuiteId}.jpeg`;
 
-    return { url };
-  };
+  //   return { url };
+  // };
 
   async execute(props: {
     req: GenerateChartRequestDto;
@@ -314,14 +314,18 @@ export class GenerateChart
     const { req, connPool } = props;
 
     try {
-      const historyDataPoints = await this.#queryTestHistory(
-        req.testSuiteId,
-        connPool
-      );
+      // const historyDataPoints = await this.#queryTestHistory(
+      //   req.testSuiteId,
+      //   connPool
+      // );
 
-      const chart = this.#buildChart(historyDataPoints);
+      // const chart = this.#buildChart(historyDataPoints);
 
-      const representation = await this.#storeChart(chart, req.testSuiteId);
+      // const representation = await this.#storeChart(chart, req.testSuiteId);
+      console.log(req);
+      console.log(connPool);
+
+      const representation = { url: 'placeholder' };
 
       return Result.ok(representation);
     } catch (error: unknown) {
