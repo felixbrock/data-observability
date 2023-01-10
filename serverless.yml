@@ -8,7 +8,7 @@ provider:
   region: eu-central-1
   timeout: 65
   memorySize: 256
-  architecture: arm64
+  architecture: x86_64
   ecr:
     images:
       latest:

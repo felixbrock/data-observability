@@ -5,14 +5,14 @@ import { appConfig } from './config';
 
 let serverlessExpressInstance: any;
 
-const asyncTask = (): Promise<Application> => {
+const startExpressApp = (): Promise<Application> => {
   const expressApp = new ExpressApp(appConfig.express);
 
   return expressApp.start(false);
 };
 
 const setup = async (event: any, context: any): Promise<any> => {
-  const app = await asyncTask();
+  const app = await startExpressApp();
   serverlessExpressInstance = serverlessExpress({ app });
   return serverlessExpressInstance(event, context);
 };
