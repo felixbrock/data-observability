@@ -16,19 +16,21 @@ const readQualTestSuiteController = new ReadQualTestSuiteController(
   getSnowflakeProfile
 );
 
-const triggerQualTestSuiteExecutionController = new TriggerQualTestSuiteExecutionController(
-  app.resolve('triggerQualTestSuiteExecution'),
-  getAccounts,
-  getSnowflakeProfile,
-  dbo
-);
+const triggerQualTestSuiteExecutionController =
+  new TriggerQualTestSuiteExecutionController(
+    app.resolve('triggerQualTestSuiteExecution'),
+    getAccounts,
+    getSnowflakeProfile,
+    dbo
+  );
 
-const handleQualTestExecutionResultController = new HandleQualTestExecutionResultController(
-  app.resolve('handleQualTestExecutionResult'),
-  getAccounts,
-  getSnowflakeProfile,
-  dbo
-);
+const handleQualTestExecutionResultController =
+  new HandleQualTestExecutionResultController(
+    app.resolve('handleQualTestExecutionResult'),
+    getAccounts,
+    getSnowflakeProfile,
+    dbo
+  );
 
 qualTestSuiteRoutes.get('/:id', (req, res) => {
   readQualTestSuiteController.execute(req, res);
@@ -38,7 +40,7 @@ qualTestSuiteRoutes.post('/:id/execute', (req, res) => {
   triggerQualTestSuiteExecutionController.execute(req, res);
 });
 
-qualTestSuiteRoutes.post('/execution/result/handle', (req, res) => {
+qualTestSuiteRoutes.post('/:id/result', (req, res) => {
   handleQualTestExecutionResultController.execute(req, res);
 });
 

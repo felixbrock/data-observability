@@ -115,9 +115,10 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
   #buildRequestDto = (
     httpRequest: Request
   ): HandleQuantTestExecutionResultRequestDto => {
+    const { testSuiteId } = httpRequest.params;
+
     const {
       executionId,
-      testSuiteId,
       isWarmup,
       testData,
       alertData,
@@ -134,7 +135,6 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
       throw new Error('Incorrect alertData obj provided');
 
     if (
-      typeof testSuiteId !== 'string' &&
       typeof executionId !== 'string' &&
       typeof isWarmup !== 'boolean' &&
       typeof targetResourceId !== 'string' &&
@@ -194,6 +194,10 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
         this.#buildRequestDto(req);
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
+
+      console.log(
+        `Handling execution result for quant test-suite ${requestDto.testSuiteId} of org ${requestDto.organizationId}`
+      );
 
       const connPool = await this.createConnectionPool(
         jwt,

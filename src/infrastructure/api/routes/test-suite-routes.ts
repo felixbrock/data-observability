@@ -40,7 +40,7 @@ testSuiteRoutes.post('/:id/execute', (req, res) => {
   triggerTestSuiteExecutionController.execute(req, res);
 });
 
-testSuiteRoutes.post('/execution/result/handle', (req, res) => {
+testSuiteRoutes.post('/:id/result', (req, res) => {
   handleQuantTestExecutionResultController.execute(req, res);
 });
 

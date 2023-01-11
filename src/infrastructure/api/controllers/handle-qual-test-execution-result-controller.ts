@@ -115,8 +115,9 @@ export default class HandleQualTestExecutionResultController extends BaseControl
   #buildRequestDto = (
     httpRequest: Request
   ): HandleQualTestExecutionResultRequestDto => {
+    const { testSuiteId } = httpRequest.params;
+
     const {
-      testSuiteId,
       executionId,
       testData,
       alertData,
@@ -133,7 +134,6 @@ export default class HandleQualTestExecutionResultController extends BaseControl
       throw new Error('Incorrect alertData obj provided');
 
     if (
-      typeof testSuiteId !== 'string' &&
       typeof executionId !== 'string' &&
       typeof targetResourceId !== 'string' &&
       typeof organizationId !== 'string'
@@ -191,6 +191,10 @@ export default class HandleQualTestExecutionResultController extends BaseControl
         this.#buildRequestDto(req);
 
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
+
+      console.log(
+        `Handling execution result for qual test-suite ${requestDto.testSuiteId} of org ${requestDto.organizationId}`
+      );
 
       const connPool = await this.createConnectionPool(
         jwt,
