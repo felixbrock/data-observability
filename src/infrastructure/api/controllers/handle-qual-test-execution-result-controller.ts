@@ -1,6 +1,7 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
+import { appConfig } from '../../../config';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   parseQualTestType,
@@ -115,7 +116,7 @@ export default class HandleQualTestExecutionResultController extends BaseControl
   #buildRequestDto = (
     httpRequest: Request
   ): HandleQualTestExecutionResultRequestDto => {
-    const { testSuiteId } = httpRequest.params;
+    const { id: testSuiteId } = httpRequest.params;
 
     const {
       executionId,
@@ -193,7 +194,7 @@ export default class HandleQualTestExecutionResultController extends BaseControl
       const authDto = this.#buildAuthDto(getUserAccountInfoResult.value, jwt);
 
       console.log(
-        `Handling execution result for qual test-suite ${requestDto.testSuiteId} of org ${requestDto.organizationId}`
+        `Running in ${appConfig.express.mode}: Handling execution result for qual test-suite ${requestDto.testSuiteId} of org ${requestDto.organizationId}`
       );
 
       const connPool = await this.createConnectionPool(
