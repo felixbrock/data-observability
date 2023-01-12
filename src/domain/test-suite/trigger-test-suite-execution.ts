@@ -78,17 +78,17 @@ export class TriggerTestSuiteExecution
 
       const testSuite = readTestSuiteResult.value;
 
-      if (req.executionType === 'automatic') {
-        const wasAltered = await this.wasAltered(
-          {
-            databaseName: testSuite.target.databaseName,
-            schemaName: testSuite.target.schemaName,
-            matName: testSuite.target.materializationName,
-          },
-          db.sfConnPool
-        );
-        if (!wasAltered) return Result.ok();
-      }
+      const wasAltered = await this.wasAltered(
+        {
+          databaseName: testSuite.target.databaseName,
+          schemaName: testSuite.target.schemaName,
+          matName: testSuite.target.materializationName,
+        },
+        req.executionType === 'automatic' ? 5 : 60,
+        db.sfConnPool
+      );
+
+      if (!wasAltered) return Result.ok();
 
       await this.#executeTest.execute({
         req: {

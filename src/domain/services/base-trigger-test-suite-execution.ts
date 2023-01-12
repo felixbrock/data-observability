@@ -9,19 +9,18 @@ export default abstract class BaseTriggerTestSuiteExecution {
   }
 
   wasAltered = async (
-    props: {
+    targetProps: {
       databaseName: string;
       schemaName: string;
       matName: string;
     },
+    executionFrequency: number,
     connPool: IConnectionPool
   ): Promise<boolean> => {
-    const { databaseName, schemaName, matName } = props;
-
-    const automaticExecutionFrequency = 5;
+    const { databaseName, schemaName, matName } = targetProps;
 
     // todo - get last test execution time
-    const wasAlteredClause = `timediff(minute, convert_timezone('UTC', last_altered)::timestamp_ntz, sysdate()) < ${automaticExecutionFrequency}`;
+    const wasAlteredClause = `timediff(minute, convert_timezone('UTC', last_altered)::timestamp_ntz, sysdate()) < ${executionFrequency}`;
 
     const binds: Binds = [databaseName, schemaName, matName];
 
