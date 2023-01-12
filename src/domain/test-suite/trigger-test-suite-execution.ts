@@ -88,7 +88,11 @@ export class TriggerTestSuiteExecution
         db.sfConnPool
       );
 
-      if (!wasAltered) return Result.ok();
+      if (!wasAltered) {
+        console.log('Target mat not altered. Quant test not executed');
+
+        return Result.ok();
+      }
 
       await this.#executeTest.execute({
         req: {

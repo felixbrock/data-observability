@@ -83,7 +83,11 @@ export class TriggerQualTestSuiteExecution
         db.sfConnPool
       );
 
-      if (!wasAltered) return Result.ok();
+      if (!wasAltered) {
+        console.log('Target mat not altered. Qual test not executed');
+
+        return Result.ok();
+      }
 
       await this.#executeTest.execute({
         req: {
