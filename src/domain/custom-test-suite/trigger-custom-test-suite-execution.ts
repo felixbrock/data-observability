@@ -86,7 +86,8 @@ export class TriggerCustomTestSuiteExecution
           testType: 'Custom',
           targetOrgId: req.targetOrgId,
         },
-        auth: { jwt: auth.jwt },
+        auth: { jwt: auth.jwt, isSystemInternal: auth.isSystemInternal },
+        db,
       });
 
       return Result.ok();
