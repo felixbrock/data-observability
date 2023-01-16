@@ -8,6 +8,35 @@ export default abstract class BaseTriggerTestSuiteExecution {
     this.#querySnowflake = querySnowflake;
   }
 
+  #getLastExecutionDate = async (
+    connPool: IConnectionPool,
+    testSuiteId: string
+  ): Promise<string> => {
+    const queryText = `select executed_on from cito.observability.test_executions where test_suite_id = ${testSuiteId} order by executed_on desc limit 1;`;
+
+    const binds: Binds = [];
+
+    const querySnowflakeResult = await this.#querySnowflake.execute({
+      req: { queryText, binds },
+      connPool,
+    });
+
+    if (!querySnowflakeResult.success)
+      throw new Error(querySnowflakeResult.error);
+
+    const result = querySnowflakeResult.value;
+    if (!result) throw new Error(`"Was altered" query failed`);
+
+    if (result.length !== 1)
+      throw new Error('No or multiple was altered results received found');
+
+    const wasAltered = result[0].WAS_ALTERED;
+    if (typeof wasAltered !== 'boolean')
+      throw new Error('Received non-bool was altered val');
+
+    return wasAltered;
+  };
+
   wasAltered = async (
     targetProps: {
       databaseName: string;
