@@ -83,9 +83,10 @@ export class TriggerTestSuiteExecution
           databaseName: testSuite.target.databaseName,
           schemaName: testSuite.target.schemaName,
           matName: testSuite.target.materializationName,
+          testSuiteId: testSuite.id,
         },
-        req.executionType === 'automatic' ? 5 : 60,
-        db.sfConnPool
+        db.sfConnPool,
+        req.executionType === 'automatic' ? 5 : undefined
       );
 
       if (!wasAltered) {
