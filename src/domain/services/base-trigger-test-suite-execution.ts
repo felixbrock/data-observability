@@ -35,7 +35,7 @@ export default abstract class BaseTriggerTestSuiteExecution {
       );
 
     const isDate = (obj: unknown): obj is Date =>
-      !!obj && (typeof obj !== 'object' || obj.constructor.name !== 'Date');
+      !!obj && typeof obj === 'object' && obj.constructor.name === 'Date';
 
     const lastExecutedOn = result[0].EXECUTED_ON;
 
