@@ -82,7 +82,13 @@ export default abstract class BaseTriggerTestSuiteExecution {
     const minutes =
       executionFrequency || (await this.#getTimeDiff(testSuiteId, connPool));
 
-    if (!minutes) return true;
+    if (!minutes) {
+      console.log('Not able to determine last test execution');
+
+      return true;
+    }
+
+    console.log(`Last test execution ${minutes} minutes ago`);
 
     const wasAlteredClause = `timediff(minute, convert_timezone('UTC', last_altered)::timestamp_ntz, sysdate()) < ${minutes}`;
 
