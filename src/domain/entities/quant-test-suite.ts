@@ -112,7 +112,8 @@ export class TestSuite implements BaseQuantTestSuite {
     const { type, target, ...remainingProps } = props;
 
     if (!remainingProps.id) throw new TypeError('TestSuite must have id');
-    if (!remainingProps.cron) throw new TypeError('TestSuite must have cron expression');
+    if (!remainingProps.cron)
+      throw new TypeError('TestSuite must have cron expression');
     if (!remainingProps.executionType)
       throw new TypeError('Test suite must have execution type');
     if (matTestTypes.includes(type) && target.columnName)

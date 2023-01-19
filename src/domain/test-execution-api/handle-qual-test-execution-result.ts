@@ -6,6 +6,7 @@ import { QualTestAlertDto } from '../integration-api/slack/qual-test-alert-dto';
 import { SendQualTestSlackAlert } from '../integration-api/slack/send-qual-test-alert';
 import { QualTestExecutionResultDto } from './qual-test-execution-result-dto';
 import { CreateQualTestResult } from '../qual-test-result/create-qual-test-result';
+import { QualTestType } from '../entities/qual-test-suite';
 
 export type HandleQualTestExecutionResultRequestDto =
   QualTestExecutionResultDto;
@@ -40,6 +41,21 @@ export class HandleQualTestExecutionResult
     this.#createQualTestResult = createQualTestResult;
   }
 
+  #explain = (
+    testType: QualTestType,
+    target: { type: 'materialization' | 'column'; templateUrl: string }
+  ): string => {
+    const targetIdentifier = `${target.type} ${target.templateUrl}`;
+    const explanationPrefix = `in ${targetIdentifier} detected`;
+
+    switch (testType) {
+      case 'MaterializationSchemaChange':
+        return `Schema change ${explanationPrefix}.`;
+      default:
+        throw new Error('Received unexpected qual test type');
+    }
+  };
+
   #sendAlert = async (
     testExecutionResult: QualTestExecutionResultDto,
     jwt: string
@@ -58,7 +74,10 @@ export class HandleQualTestExecutionResult
       databaseName: testExecutionResult.alertData.databaseName,
       schemaName: testExecutionResult.alertData.schemaName,
       materializationName: testExecutionResult.alertData.materializationName,
-      message: testExecutionResult.alertData.message,
+      message: this.#explain(testExecutionResult.testType, {
+        type: 'materialization',
+        templateUrl: testExecutionResult.alertData.message,
+      }),
       resourceId: testExecutionResult.targetResourceId,
       deviations: testExecutionResult.testData.deviations,
     };

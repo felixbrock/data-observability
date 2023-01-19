@@ -7,6 +7,7 @@ import {
 import { SendAlertResultDto } from './send-alert-result-dto';
 import { QuantTestAlertDto } from './quant-test-alert-dto';
 import { appConfig } from '../../../config';
+import { TestType } from '../../entities/quant-test-suite';
 
 export type SendQuantSlackAlertRequestDto = {
   alertDto: QuantTestAlertDto;
@@ -33,16 +34,24 @@ export class SendQuantTestSlackAlert
     this.#integrationApiRepo = integrationApiRepo;
   }
 
+  static #buildHeader = (testType: TestType, deviation: number): string => {
+    let prefix = testType.replaceAll(/column/gi, 'Col.');
+
+    prefix = testType.replaceAll(/materialization/gi, 'Mat.');
+
+    return `${prefix} Alert - ${(deviation * 100).toFixed(2)}% Deviation`;
+  };
+
   static #buildAlertMessageConfig = (
     quantAlertDto: QuantTestAlertDto
   ): AlertMessageConfig => ({
     alertId: quantAlertDto.alertId,
     testType: quantAlertDto.testType,
     occurredOn: `${quantAlertDto.detectedOn} (UTC)`,
-    anomalyMessagePart: `${quantAlertDto.testType.replaceAll(
-      /column|materialization/gi,
-      ''
-    )} Alert - ${(quantAlertDto.deviation * 100).toFixed(2)}% Deviation`,
+    anomalyMessagePart: this.#buildHeader(
+      quantAlertDto.testType,
+      quantAlertDto.deviation
+    ),
     detectedValuePart: `*Detected Value:*\n${quantAlertDto.value} (${(
       quantAlertDto.deviation * 100
     ).toFixed(2)}% deviation)`,

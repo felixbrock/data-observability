@@ -14,6 +14,7 @@ export interface QuantTestAlertData {
   value: number;
   expectedUpperBound: number;
   expectedLowerBound: number;
+  expectedValue: number;
   databaseName: string;
   schemaName: string;
   materializationName: string;

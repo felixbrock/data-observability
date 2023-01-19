@@ -6,9 +6,9 @@ import { QuantTestAlertDto } from '../integration-api/slack/quant-test-alert-dto
 import { SendQuantTestSlackAlert } from '../integration-api/slack/send-quant-test-alert';
 import { QuantTestExecutionResultDto } from './quant-test-execution-result-dto';
 import { CreateQuantTestResult } from '../quant-test-result/create-quant-test-result';
-import { QuerySnowflake } from '../snowflake-api/query-snowflake';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { GenerateChart } from '../integration-api/slack/chart/generate-chart';
+import { TestType } from '../entities/quant-test-suite';
 
 export type HandleQuantTestExecutionResultRequestDto =
   QuantTestExecutionResultDto;
@@ -35,19 +35,71 @@ export class HandleQuantTestExecutionResult
 
   readonly #generateChart: GenerateChart;
 
-  readonly #querySnowflake: QuerySnowflake;
-
   constructor(
     sendQuantTestSlackAlert: SendQuantTestSlackAlert,
     createQuantTestResult: CreateQuantTestResult,
-    generateChart: GenerateChart,
-    querySnowflake: QuerySnowflake
+    generateChart: GenerateChart
   ) {
     this.#sendQuantTestSlackAlert = sendQuantTestSlackAlert;
     this.#createQuantTestResult = createQuantTestResult;
     this.#generateChart = generateChart;
-    this.#querySnowflake = querySnowflake;
   }
+
+  #explain = (
+    testType: TestType,
+    value: number,
+    deviation: number,
+    expectedValue: number,
+    target: { type: 'materialization' | 'column'; templateUrl: string }
+  ): string => {
+    const targetIdentifier = `${target.type} ${target.templateUrl}`;
+    const explanationPrefix = `in ${targetIdentifier} detected`;
+    const buildAnomalyExplanation = (characteristic: string): string =>
+      `That's unusually ${characteristic}, with a deviation of ${(
+        deviation * 100
+      ).toFixed(2)} based on an expected average value of ${expectedValue}`;
+
+    switch (testType) {
+      case 'MaterializationRowCount':
+        return `${value} rows ${explanationPrefix}. ${buildAnomalyExplanation(
+          deviation >= 0 ? 'high' : 'low'
+        )}.`;
+      case 'MaterializationColumnCount':
+        return `${value} columns ${explanationPrefix}. ${buildAnomalyExplanation(
+          deviation >= 0 ? 'high' : 'low'
+        )}.`;
+      case 'MaterializationFreshness':
+        return `${targetIdentifier} was modified ${value} minutes ago. ${buildAnomalyExplanation(
+          deviation >= 0 ? 'early' : 'late'
+        )}.`;
+      case 'ColumnFreshness':
+        return `The most recent timestamp in ${targetIdentifier} is representing an event that occurred ${value} min ago. ${buildAnomalyExplanation(
+          deviation >= 0 ? 'early' : 'late'
+        )}.`;
+      case 'ColumnCardinality':
+        return `${value} unique values ${explanationPrefix}. ${buildAnomalyExplanation(
+          deviation >= 0 ? 'high' : 'low'
+        )}.`;
+      case 'ColumnUniqueness':
+        return `${targetIdentifier} holds ${
+          value * 100
+        }% unique values. ${buildAnomalyExplanation(
+          deviation >= 0 ? 'high' : 'low'
+        )}.`;
+      case 'ColumnNullness':
+        return `${targetIdentifier} holds ${
+          value * 100
+        }% null values. ${buildAnomalyExplanation(
+          deviation >= 0 ? 'high' : 'low'
+        )}`;
+      case 'ColumnDistribution':
+        return `An average value of ${value} was detected for ${targetIdentifier}. ${buildAnomalyExplanation(
+          deviation >= 0 ? 'high' : 'low'
+        )}.`;
+      default:
+        throw new Error('Received unexpected quant test type');
+    }
+  };
 
   #sendAlert = async (
     testExecutionResult: QuantTestExecutionResultDto,
@@ -81,7 +133,18 @@ export class HandleQuantTestExecutionResult
       schemaName: testExecutionResult.alertData.schemaName,
       materializationName: testExecutionResult.alertData.materializationName,
       columnName: testExecutionResult.alertData.columnName,
-      message: testExecutionResult.alertData.message,
+      message: this.#explain(
+        testExecutionResult.testType,
+        testExecutionResult.alertData.value,
+        testExecutionResult.testData.deviation,
+        testExecutionResult.alertData.expectedValue,
+        {
+          type: testExecutionResult.alertData.columnName
+            ? 'column'
+            : 'materialization',
+          templateUrl: testExecutionResult.alertData.message,
+        }
+      ),
       value: testExecutionResult.alertData.value,
       resourceId: testExecutionResult.targetResourceId,
       chartUrl: generateChartRes.value.url,
