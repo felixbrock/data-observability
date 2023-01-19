@@ -52,7 +52,9 @@ export class HandleQuantTestExecutionResult
     expectedValue: number,
     target: { type: 'materialization' | 'column'; templateUrl: string }
   ): string => {
-    const targetIdentifier = `${target.type} ${target.templateUrl}`;
+    const targetIdentifier = `${
+      target.type[0].toUpperCase() + target.type.slice(1)
+    } ${target.templateUrl}`;
     const explanationPrefix = `in ${targetIdentifier} detected`;
     const buildAnomalyExplanation = (characteristic: string): string =>
       `That's unusually ${characteristic}, with a deviation of ${(
