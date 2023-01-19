@@ -1,6 +1,8 @@
 import { Binds, IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { QuerySnowflake } from '../snowflake-api/query-snowflake';
 
+type TestCategory = 'qual' | 'quant';
+
 export default abstract class BaseTriggerTestSuiteExecution {
   #querySnowflake: QuerySnowflake;
 
@@ -10,9 +12,12 @@ export default abstract class BaseTriggerTestSuiteExecution {
 
   #getLastExecutionDate = async (
     connPool: IConnectionPool,
-    testSuiteId: string
+    testSuiteId: string,
+    testCategory: TestCategory
   ): Promise<Date | undefined> => {
-    const queryText = `select executed_on from cito.observability.test_executions where test_suite_id = '${testSuiteId}' order by executed_on desc limit 1;`;
+    const queryText = `select executed_on from cito.observability.${
+      testCategory === 'quant' ? 'test_executions' : 'test_executions_qual'
+    } where test_suite_id = '${testSuiteId}' order by executed_on desc limit 1;`;
 
     const binds: Binds = [];
 
@@ -55,11 +60,13 @@ export default abstract class BaseTriggerTestSuiteExecution {
 
   #getTimeDiff = async (
     testSuiteId: string,
-    connPool: IConnectionPool
+    connPool: IConnectionPool,
+    testCategory: TestCategory
   ): Promise<number | undefined> => {
     const lastExecutedOn = await this.#getLastExecutionDate(
       connPool,
-      testSuiteId
+      testSuiteId,
+      testCategory
     );
 
     if (!lastExecutedOn) return undefined;
@@ -73,14 +80,17 @@ export default abstract class BaseTriggerTestSuiteExecution {
       schemaName: string;
       matName: string;
       testSuiteId: string;
+      testCategory: TestCategory;
     },
     connPool: IConnectionPool,
     executionFrequency?: number
   ): Promise<boolean> => {
-    const { databaseName, schemaName, matName, testSuiteId } = targetProps;
+    const { databaseName, schemaName, matName, testSuiteId, testCategory } =
+      targetProps;
 
     const minutes =
-      executionFrequency || (await this.#getTimeDiff(testSuiteId, connPool));
+      executionFrequency ||
+      (await this.#getTimeDiff(testSuiteId, connPool, testCategory));
 
     if (!minutes) {
       console.log('Not able to determine last test execution');

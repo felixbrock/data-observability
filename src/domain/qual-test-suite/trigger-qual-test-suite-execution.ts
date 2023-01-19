@@ -79,6 +79,7 @@ export class TriggerQualTestSuiteExecution
           schemaName: testSuite.target.schemaName,
           matName: testSuite.target.materializationName,
           testSuiteId: testSuite.id,
+          testCategory: 'qual',
         },
         db.sfConnPool,
         req.executionType === 'automatic' ? 5 : undefined
