@@ -57,7 +57,9 @@ export class HandleQuantTestExecutionResult
     const buildAnomalyExplanation = (characteristic: string): string =>
       `That's unusually ${characteristic}, with a deviation of ${(
         deviation * 100
-      ).toFixed(2)} based on an expected average value of ${expectedValue}`;
+      ).toFixed(
+        2
+      )}% based on an expected average value of ${expectedValue.toFixed(2)}`;
 
     switch (testType) {
       case 'MaterializationRowCount':

@@ -35,9 +35,10 @@ export class SendQuantTestSlackAlert
   }
 
   static #buildHeader = (testType: TestType, deviation: number): string => {
-    let prefix = testType.replaceAll(/column/gi, 'Col.');
-
-    prefix = testType.replaceAll(/materialization/gi, 'Mat.');
+    const colRegex = /column/gi;
+    const prefix = colRegex.test(testType)
+      ? testType.replace(colRegex, 'Col. ')
+      : testType.replace(/materialization/gi, 'Mat. ');
 
     return `${prefix} Alert - ${(deviation * 100).toFixed(2)}% Deviation`;
   };
