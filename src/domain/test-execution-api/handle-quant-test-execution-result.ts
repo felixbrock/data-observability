@@ -52,52 +52,54 @@ export class HandleQuantTestExecutionResult
     expectedValue: number,
     target: { type: 'materialization' | 'column'; templateUrl: string }
   ): string => {
-    const targetIdentifier = `${
-      target.type[0].toUpperCase() + target.type.slice(1)
-    } ${target.templateUrl}`;
+    const fixedValue = value % 1 !== 0 ? value.toFixed(4) : value;
+    const fixedDeviation =
+      deviation % 1 !== 0 ? (deviation * 100).toFixed(4) : deviation * 100;
+    const fixedExpectedValue =
+      expectedValue % 1 !== 0 ? expectedValue.toFixed(4) : expectedValue;
+
+    const targetIdentifier = `${target.type} ${target.templateUrl}`;
     const explanationPrefix = `in ${targetIdentifier} detected`;
     const buildAnomalyExplanation = (characteristic: string): string =>
-      `That's unusually ${characteristic}, with a deviation of ${(
-        deviation * 100
-      ).toFixed(
-        2
-      )}% based on an expected average value of ${expectedValue.toFixed(2)}`;
+      `That's unusually ${characteristic}, with a deviation of ${fixedDeviation}% based on an expected average value of ${fixedExpectedValue}`;
 
     switch (testType) {
       case 'MaterializationRowCount':
-        return `${value} rows ${explanationPrefix}. ${buildAnomalyExplanation(
+        return `${fixedExpectedValue} rows ${explanationPrefix}. ${buildAnomalyExplanation(
           deviation >= 0 ? 'high' : 'low'
         )}.`;
       case 'MaterializationColumnCount':
-        return `${value} columns ${explanationPrefix}. ${buildAnomalyExplanation(
+        return `${fixedValue} columns ${explanationPrefix}. ${buildAnomalyExplanation(
           deviation >= 0 ? 'high' : 'low'
         )}.`;
       case 'MaterializationFreshness':
-        return `${targetIdentifier} was modified ${value} minutes ago. ${buildAnomalyExplanation(
+        return `${
+          targetIdentifier[0].toUpperCase() + targetIdentifier.slice(1)
+        } was modified ${fixedValue} minutes ago. ${buildAnomalyExplanation(
           deviation >= 0 ? 'early' : 'late'
         )}.`;
       case 'ColumnFreshness':
-        return `The most recent timestamp in ${targetIdentifier} is representing an event that occurred ${value} min ago. ${buildAnomalyExplanation(
+        return `The most recent timestamp in ${targetIdentifier} is representing an event that occurred ${fixedValue} min ago. ${buildAnomalyExplanation(
           deviation >= 0 ? 'early' : 'late'
         )}.`;
       case 'ColumnCardinality':
-        return `${value} unique values ${explanationPrefix}. ${buildAnomalyExplanation(
+        return `${fixedValue} unique values ${explanationPrefix}. ${buildAnomalyExplanation(
           deviation >= 0 ? 'high' : 'low'
         )}.`;
       case 'ColumnUniqueness':
-        return `${targetIdentifier} holds ${
-          value * 100
-        }% unique values. ${buildAnomalyExplanation(
+        return `${
+          targetIdentifier[0].toUpperCase() + targetIdentifier.slice(1)
+        } holds ${fixedValue}% unique values. ${buildAnomalyExplanation(
           deviation >= 0 ? 'high' : 'low'
         )}.`;
       case 'ColumnNullness':
-        return `${targetIdentifier} holds ${
-          value * 100
-        }% null values. ${buildAnomalyExplanation(
+        return `${
+          targetIdentifier[0].toUpperCase() + targetIdentifier.slice(1)
+        } holds ${fixedValue}% null values. ${buildAnomalyExplanation(
           deviation >= 0 ? 'high' : 'low'
         )}`;
       case 'ColumnDistribution':
-        return `An average value of ${value} was detected for ${targetIdentifier}. ${buildAnomalyExplanation(
+        return `An average value of ${fixedValue} was detected for ${targetIdentifier}. ${buildAnomalyExplanation(
           deviation >= 0 ? 'high' : 'low'
         )}.`;
       default:

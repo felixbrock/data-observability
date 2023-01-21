@@ -81,6 +81,7 @@ export default abstract class BaseTriggerTestSuiteExecution {
       matName: string;
       testSuiteId: string;
       testCategory: TestCategory;
+      cron: string;
     },
     connPool: IConnectionPool,
     executionFrequency?: number
@@ -93,12 +94,14 @@ export default abstract class BaseTriggerTestSuiteExecution {
       (await this.#getTimeDiff(testSuiteId, connPool, testCategory));
 
     if (!minutes) {
-      console.log('Not able to determine last test execution');
+      console.log(`Not able to determine last test execution`);
 
       return true;
     }
 
-    console.log(`Last test execution ${minutes} minutes ago`);
+    console.log(
+      `Last test execution ${minutes} minutes ago (cron schedule: ${targetProps.cron})`
+    );
 
     const wasAlteredClause = `timediff(minute, convert_timezone('UTC', last_altered)::timestamp_ntz, sysdate()) < ${minutes}`;
 
