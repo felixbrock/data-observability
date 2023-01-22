@@ -80,6 +80,7 @@ export class TriggerQualTestSuiteExecution
           matName: testSuite.target.materializationName,
           testSuiteId: testSuite.id,
           testCategory: 'qual',
+          cron: testSuite.cron,
         },
         db.sfConnPool,
         req.executionType === 'automatic' ? 5 : undefined

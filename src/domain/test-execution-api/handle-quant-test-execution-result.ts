@@ -107,6 +107,11 @@ export class HandleQuantTestExecutionResult
     }
   };
 
+  #buildDeviaton = (decimalDeviation: number): string =>
+    decimalDeviation % 1 !== 0
+      ? (decimalDeviation * 100).toFixed(2)
+      : (decimalDeviation * 100).toString();
+
   #sendAlert = async (
     testExecutionResult: QuantTestExecutionResultDto,
     jwt: string,
@@ -132,9 +137,15 @@ export class HandleQuantTestExecutionResult
       alertId: testExecutionResult.alertData.alertId,
       testType: testExecutionResult.testType,
       detectedOn: testExecutionResult.testData.executedOn,
-      deviation: testExecutionResult.testData.deviation,
-      expectedLowerBound: testExecutionResult.alertData.expectedLowerBound,
-      expectedUpperBound: testExecutionResult.alertData.expectedUpperBound,
+      deviation: this.#buildDeviaton(testExecutionResult.testData.deviation),
+      expectedLowerBound:
+        testExecutionResult.alertData.expectedLowerBound % 1 !== 0
+          ? testExecutionResult.alertData.expectedLowerBound.toFixed(4)
+          : testExecutionResult.alertData.expectedLowerBound.toString(),
+      expectedUpperBound:
+        testExecutionResult.alertData.expectedUpperBound % 1 !== 0
+          ? testExecutionResult.alertData.expectedUpperBound.toFixed(4)
+          : testExecutionResult.alertData.expectedUpperBound.toString(),
       databaseName: testExecutionResult.alertData.databaseName,
       schemaName: testExecutionResult.alertData.schemaName,
       materializationName: testExecutionResult.alertData.materializationName,
@@ -151,7 +162,10 @@ export class HandleQuantTestExecutionResult
           templateUrl: testExecutionResult.alertData.message,
         }
       ),
-      value: testExecutionResult.alertData.value,
+      value:
+        testExecutionResult.alertData.value % 1 !== 0
+          ? testExecutionResult.alertData.value.toFixed(4)
+          : testExecutionResult.alertData.value.toString(),
       resourceId: testExecutionResult.targetResourceId,
       chartUrl: generateChartRes.value.url,
     };

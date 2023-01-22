@@ -2,17 +2,17 @@ import { TestType } from '../../entities/quant-test-suite';
 
 export interface QuantTestAlertDto {
   alertId: string;
-  value: number;
+  value: string;
   testType: TestType;
   message: string;
-  expectedUpperBound: number;
-  expectedLowerBound: number;
+  expectedUpperBound: string;
+  expectedLowerBound: string;
   detectedOn: string;
   databaseName: string;
   schemaName: string;
   materializationName: string;
   columnName?: string;
-  deviation: number;
+  deviation: string;
   resourceId: string;
   chartUrl: string;
 }

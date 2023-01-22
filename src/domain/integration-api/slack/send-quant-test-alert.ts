@@ -34,13 +34,13 @@ export class SendQuantTestSlackAlert
     this.#integrationApiRepo = integrationApiRepo;
   }
 
-  static #buildHeader = (testType: TestType, deviation: number): string => {
+  static #buildHeader = (testType: TestType, deviation: string): string => {
     const colRegex = /column/gi;
     const prefix = colRegex.test(testType)
       ? testType.replace(colRegex, 'Col. ')
       : testType.replace(/materialization/gi, 'Mat. ');
 
-    return `${prefix} Alert - ${(deviation * 100).toFixed(2)}% Deviation`;
+    return `${prefix} Alert: ${deviation}% Deviation`;
   };
 
   static #buildAlertMessageConfig = (
@@ -53,12 +53,8 @@ export class SendQuantTestSlackAlert
       quantAlertDto.testType,
       quantAlertDto.deviation
     ),
-    detectedValuePart: `*Detected Value:*\n${quantAlertDto.value} (${(
-      quantAlertDto.deviation * 100
-    ).toFixed(2)}% deviation)`,
-    expectedRangePart: `*Expected Range:*\n${quantAlertDto.expectedLowerBound.toFixed(
-      2
-    )} - ${quantAlertDto.expectedUpperBound.toFixed(2)}`,
+    detectedValuePart: `*Detected Value:*\n${quantAlertDto.value} (${quantAlertDto.deviation}% deviation)`,
+    expectedRangePart: `*Expected Range:*\n${quantAlertDto.expectedLowerBound} : ${quantAlertDto.expectedUpperBound}`,
     summaryPart: quantAlertDto.message.replace(
       '__base_url__',
       appConfig.slack.callbackRoot
