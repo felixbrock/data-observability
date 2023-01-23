@@ -68,6 +68,7 @@ export class CreateTestSuites
           },
           cron: el.cron,
           executionType: el.executionType,
+          importanceSensitivity: -1,
         })
       );
 

@@ -13,7 +13,10 @@ import {
   relationPath,
 } from './shared/query';
 import { QuerySnowflake } from '../../domain/snowflake-api/query-snowflake';
-import { Binds, SnowflakeEntity } from '../../domain/snowflake-api/i-snowflake-api-repo';
+import {
+  Binds,
+  SnowflakeEntity,
+} from '../../domain/snowflake-api/i-snowflake-api-repo';
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
 
@@ -38,6 +41,7 @@ export default class CustomTestSuiteRepo
     { name: 'target_resource_ids', selectType: 'parse_json', nullable: false },
     { name: 'cron', nullable: false },
     { name: 'execution_type', nullable: false },
+    { name: 'importance_sensitivity', nullable: false },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -56,15 +60,20 @@ export default class CustomTestSuiteRepo
       TARGET_RESOURCE_IDS: targetResourceIds,
       CRON: cron,
       EXECUTION_TYPE: executionType,
+      IMPORTANCE_SENSITIVITY: importanceSensitivity,
     } = sfEntity;
 
     if (
-      typeof id !== 'string' || typeof activated !== 'boolean' || typeof threshold !== 'number' || 
-      typeof name !== 'string' || 
+      typeof id !== 'string' ||
+      typeof activated !== 'boolean' ||
+      typeof threshold !== 'number' ||
+      typeof name !== 'string' ||
       !CustomTestSuiteRepo.isOptionalOfType<string>(description, 'string') ||
       typeof sqlLogic !== 'string' ||
       !CustomTestSuiteRepo.isStringArray(targetResourceIds) ||
-      typeof cron !== 'string' || typeof executionType !== 'string' 
+      typeof cron !== 'string' ||
+      typeof executionType !== 'string' ||
+      typeof importanceSensitivity !== 'number'
     )
       throw new Error(
         'Retrieved unexpected custom test suite field types from persistence'
@@ -80,6 +89,7 @@ export default class CustomTestSuiteRepo
       targetResourceIds,
       cron,
       executionType: parseExecutionType(executionType),
+      importanceSensitivity,
     };
   };
 
@@ -108,6 +118,7 @@ export default class CustomTestSuiteRepo
     JSON.stringify(entity.targetResourceIds),
     entity.cron || 'null',
     entity.executionType,
+    entity.importanceSensitivity,
   ];
 
   buildUpdateQuery = (
@@ -148,6 +159,10 @@ export default class CustomTestSuiteRepo
     if (updateDto.executionType) {
       colDefinitions.push(this.getDefinition('execution_type'));
       binds.push(updateDto.executionType);
+    }
+    if (updateDto.importanceSensitivity) {
+      colDefinitions.push(this.getDefinition('importance_sensitivity'));
+      binds.push(updateDto.importanceSensitivity);
     }
 
     const text = getUpdateQueryText(this.matName, colDefinitions, [

@@ -7,6 +7,7 @@ export interface TestSuiteUpdateDto {
   threshold?: number;
   cron?: string;
   executionType?: ExecutionType;
+  importanceSensitivity?: number;
 }
 
 export interface TestSuiteQueryDto {

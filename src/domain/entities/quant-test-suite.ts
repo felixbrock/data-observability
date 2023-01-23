@@ -53,6 +53,7 @@ export interface TestSuiteDto {
   target: TestTarget;
   cron: string;
   executionType: ExecutionType;
+  importanceSensitivity: number;
 }
 
 export class TestSuite implements BaseQuantTestSuite {
@@ -69,6 +70,8 @@ export class TestSuite implements BaseQuantTestSuite {
   #cron: string;
 
   #executionType: ExecutionType;
+
+  #importanceSensitivity: number;
 
   get id(): string {
     return this.#id;
@@ -98,6 +101,10 @@ export class TestSuite implements BaseQuantTestSuite {
     return this.#executionType;
   }
 
+  get importanceSensitivity(): number {
+    return this.#importanceSensitivity;
+  }
+
   private constructor(props: TestSuiteProps) {
     this.#id = props.id;
     this.#activated = props.activated;
@@ -106,6 +113,7 @@ export class TestSuite implements BaseQuantTestSuite {
     this.#target = props.target;
     this.#cron = props.cron;
     this.#executionType = props.executionType;
+    this.#importanceSensitivity = props.importanceSensitivity;
   }
 
   static create = (props: TestSuiteProps): TestSuite => {
@@ -144,5 +152,6 @@ export class TestSuite implements BaseQuantTestSuite {
     target: this.#target,
     cron: this.#cron,
     executionType: this.#executionType,
+    importanceSensitivity: this.#importanceSensitivity,
   });
 }
