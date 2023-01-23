@@ -16,6 +16,7 @@ import {
   HandleQuantTestExecutionResultResponseDto,
 } from '../../../domain/test-execution-api/handle-quant-test-execution-result';
 import {
+  AnomalyData,
   QuantTestAlertData,
   QuantTestTestData,
 } from '../../../domain/test-execution-api/quant-test-execution-result-dto';
@@ -54,16 +55,22 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
   #isTestData = (obj: unknown): obj is QuantTestTestData => {
     if (!this.#isObj(obj)) return false;
 
-    const { executedOn, isAnomolous, modifiedZScore, deviation } = obj;
+    const isAnomalyObj = (unknownObj: unknown): unknownObj is AnomalyData =>
+      !!unknownObj &&
+      typeof unknownObj === 'object' &&
+      'isAnomaly' in unknownObj &&
+      'importance' in unknownObj;
+
+    const { executedOn, anomaly, modifiedZScore, deviation } = obj;
 
     if (
       !executedOn ||
       typeof executedOn !== 'string' ||
-      typeof isAnomolous !== 'boolean' ||
       !modifiedZScore ||
       typeof modifiedZScore !== 'number' ||
       !deviation ||
-      typeof deviation !== 'number'
+      typeof deviation !== 'number' ||
+      !isAnomalyObj(anomaly)
     )
       return false;
 

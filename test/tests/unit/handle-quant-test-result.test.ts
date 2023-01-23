@@ -77,7 +77,7 @@ test('lineage creation', async () => {
     isWarmup: false,
     testData: {
       executedOn: '2023-01-19T18:57:12.113965',
-      isAnomolous: true,
+      anomaly: { isAnomaly: true, importance: 0.393 },
       modifiedZScore: 0.2447081854888046,
       deviation: 0.023391812865497075,
     },

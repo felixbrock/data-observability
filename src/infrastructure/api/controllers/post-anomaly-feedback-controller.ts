@@ -4,11 +4,11 @@ import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
-  UpdateTestHistoryEntry,
-  UpdateTestHistoryEntryAuthDto,
-  UpdateTestHistoryEntryRequestDto,
-  UpdateTestHistoryEntryResponseDto,
-} from '../../../domain/snowflake-api/update-test-history-entry';
+  PostAnomalyFeedback,
+  PostAnomalyFeedbackAuthDto,
+  PostAnomalyFeedbackRequestDto,
+  PostAnomalyFeedbackResponseDto,
+} from '../../../domain/snowflake-api/post-anomaly-feedback';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -17,30 +17,29 @@ import {
   UserAccountInfo,
 } from './shared/base-controller';
 
-export default class UpdateTestHistoryEntryController extends BaseController {
-  readonly #updateTestHistoryEntry: UpdateTestHistoryEntry;
+export default class PostAnomalyFeedbackController extends BaseController {
+  readonly #postAnomalyFeedback: PostAnomalyFeedback;
 
   constructor(
-    updateTestHistoryEntry: UpdateTestHistoryEntry,
+    postAnomalyFeedback: PostAnomalyFeedback,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
   ) {
     super(getAccounts, getSnowflakeProfile);
-    this.#updateTestHistoryEntry = updateTestHistoryEntry;
+    this.#postAnomalyFeedback = postAnomalyFeedback;
   }
 
-  #buildRequestDto = (
-    httpRequest: Request
-  ): UpdateTestHistoryEntryRequestDto => ({
-    alertId: httpRequest.params.alertId,
+  #buildRequestDto = (httpRequest: Request): PostAnomalyFeedbackRequestDto => ({
+    alertId: httpRequest.body.alertId,
     testType: httpRequest.body.testType,
     userFeedbackIsAnomaly: httpRequest.body.userFeedbackIsAnomaly,
+    importanceSensitivity: httpRequest.body.importanceSensitivity,
   });
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,
     jwt: string
-  ): UpdateTestHistoryEntryAuthDto => {
+  ): PostAnomalyFeedbackAuthDto => {
     if (!userAccountInfo.callerOrgId) throw new Error('callerOrgId missing');
     return {
       jwt,
@@ -54,10 +53,7 @@ export default class UpdateTestHistoryEntryController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return UpdateTestHistoryEntryController.unauthorized(
-          res,
-          'Unauthorized'
-        );
+        return PostAnomalyFeedbackController.unauthorized(res, 'Unauthorized');
 
       const jwt = authHeader.split(' ')[1];
 
@@ -65,24 +61,24 @@ export default class UpdateTestHistoryEntryController extends BaseController {
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return UpdateTestHistoryEntryController.unauthorized(
+        return PostAnomalyFeedbackController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
-      const requestDto: UpdateTestHistoryEntryRequestDto =
+      const requestDto: PostAnomalyFeedbackRequestDto =
         this.#buildRequestDto(req);
-      const authDto: UpdateTestHistoryEntryAuthDto = this.#buildAuthDto(
+      const authDto: PostAnomalyFeedbackAuthDto = this.#buildAuthDto(
         getUserAccountInfoResult.value,
         jwt
       );
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-      const useCaseResult: UpdateTestHistoryEntryResponseDto =
-        await this.#updateTestHistoryEntry.execute({
+      const useCaseResult: PostAnomalyFeedbackResponseDto =
+        await this.#postAnomalyFeedback.execute({
           req: requestDto,
           auth: authDto,
           connPool,
@@ -92,18 +88,18 @@ export default class UpdateTestHistoryEntryController extends BaseController {
       await connPool.clear();
 
       if (!useCaseResult.success) {
-        return UpdateTestHistoryEntryController.badRequest(res);
+        return PostAnomalyFeedbackController.badRequest(res);
       }
 
       const resultValue = useCaseResult.value;
 
-      return UpdateTestHistoryEntryController.ok(res, resultValue, CodeHttp.OK);
+      return PostAnomalyFeedbackController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
-      return UpdateTestHistoryEntryController.fail(
+      return PostAnomalyFeedbackController.fail(
         res,
-        'udpate test history - Unknown error occurred'
+        'post anomaly feedback - Unknown error occurred'
       );
     }
   }

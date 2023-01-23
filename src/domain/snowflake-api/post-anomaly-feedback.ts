@@ -7,13 +7,14 @@ import { QuerySnowflake } from './query-snowflake';
 import { Binds, IConnectionPool } from './i-snowflake-api-repo';
 import BaseAuth from '../services/base-auth';
 
-export interface UpdateTestHistoryEntryRequestDto {
+export interface PostAnomalyFeedbackRequestDto {
   alertId: string;
   testType: TestType | QualTestType;
   userFeedbackIsAnomaly: number;
+  importanceSensitivity: number;
 }
 
-export interface UpdateTestHistoryEntryAuthDto
+export interface PostAnomalyFeedbackAuthDto
   extends Omit<BaseAuth, 'callerOrgId'> {
   callerOrgId: string;
 }
@@ -43,14 +44,14 @@ export const parseCitoMaterializationName = (
   throw new Error('Provision of invalid type');
 };
 
-export type UpdateTestHistoryEntryResponseDto = Result<string>;
+export type PostAnomalyFeedbackResponseDto = Result<string>;
 
-export class UpdateTestHistoryEntry
+export class PostAnomalyFeedback
   implements
     IUseCase<
-      UpdateTestHistoryEntryRequestDto,
-      UpdateTestHistoryEntryResponseDto,
-      UpdateTestHistoryEntryAuthDto,
+      PostAnomalyFeedbackRequestDto,
+      PostAnomalyFeedbackResponseDto,
+      PostAnomalyFeedbackAuthDto,
       IConnectionPool
     >
 {
@@ -61,10 +62,10 @@ export class UpdateTestHistoryEntry
   }
 
   async execute(props: {
-    req: UpdateTestHistoryEntryRequestDto;
-    auth: UpdateTestHistoryEntryAuthDto;
+    req: PostAnomalyFeedbackRequestDto;
+    auth: PostAnomalyFeedbackAuthDto;
     connPool: IConnectionPool;
-  }): Promise<UpdateTestHistoryEntryResponseDto> {
+  }): Promise<PostAnomalyFeedbackResponseDto> {
     try {
       const { req, connPool } = props;
 

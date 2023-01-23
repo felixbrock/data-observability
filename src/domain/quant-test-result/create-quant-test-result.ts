@@ -11,7 +11,7 @@ export interface CreateQuantTestResultRequestDto {
   isWarmup: boolean;
   testData?: {
     executedOn: string;
-    isAnomolous: boolean;
+    anomaly: { isAnomaly: boolean; importance?: number };
     modifiedZScore: number;
     deviation: number;
   };

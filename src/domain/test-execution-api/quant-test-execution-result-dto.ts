@@ -1,11 +1,16 @@
 import { TestType } from '../entities/quant-test-suite';
 import { MaterializationType } from '../value-types/materialization-type';
 
+export interface AnomalyData {
+  isAnomaly: boolean;
+  importance?: number;
+}
+
 export interface QuantTestTestData {
   executedOn: string;
-  isAnomolous: boolean;
   modifiedZScore: number;
   deviation: number;
+  anomaly: AnomalyData;
 }
 
 export interface QuantTestAlertData {

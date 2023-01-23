@@ -12,7 +12,7 @@ interface QuantTestResultPersistence {
   isWarmup: boolean;
   testData?: {
     executedOn: string;
-    isAnomolous: boolean;
+    anomaly: { isAnomaly: boolean; importance?: number };
     modifiedZScore: number;
     deviation: number;
   };
@@ -36,17 +36,21 @@ export default class QuantTestResultRepo implements IQuantTestResultRepo {
         .insertOne(await this.#toPersistence(sanitize(quantTestResult)));
 
       if (!result.acknowledged)
-        throw new Error('QuantTestResult creation failed. Insert not acknowledged');
+        throw new Error(
+          'QuantTestResult creation failed. Insert not acknowledged'
+        );
 
       return result.insertedId.toHexString();
     } catch (error: unknown) {
-      if(error instanceof Error ) console.error(error.stack); 
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Promise.reject(new Error(''));
     }
   };
 
-  #toPersistence = async (quantTestResult: QuantTestResult): Promise<Document> => {
+  #toPersistence = async (
+    quantTestResult: QuantTestResult
+  ): Promise<Document> => {
     const persistenceObject: QuantTestResultPersistence = {
       ...quantTestResult,
     };

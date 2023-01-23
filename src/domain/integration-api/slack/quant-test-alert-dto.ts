@@ -15,4 +15,5 @@ export interface QuantTestAlertDto {
   deviation: string;
   resourceId: string;
   chartUrl: string;
+  importance: string;
 }

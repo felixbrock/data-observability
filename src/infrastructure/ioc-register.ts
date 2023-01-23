@@ -15,7 +15,7 @@ import { ExecuteTest } from '../domain/test-execution-api/execute-test';
 import QuantTestResultRepo from './persistence/quant-test-result-repo';
 import { SendQuantTestSlackAlert } from '../domain/integration-api/slack/send-quant-test-alert';
 import { SendQualTestSlackAlert } from '../domain/integration-api/slack/send-qual-test-alert';
-import { UpdateTestHistoryEntry } from '../domain/snowflake-api/update-test-history-entry';
+import { PostAnomalyFeedback } from '../domain/snowflake-api/post-anomaly-feedback';
 import { CreateCustomTestSuite } from '../domain/custom-test-suite/create-custom-test-suite';
 import { ReadCustomTestSuite } from '../domain/custom-test-suite/read-custom-test-suite';
 import { ReadCustomTestSuites } from '../domain/custom-test-suite/read-custom-test-suites';
@@ -67,7 +67,7 @@ iocRegister.register({
   handleQuantTestExecutionResult: asClass(HandleQuantTestExecutionResult),
   handleQualTestExecutionResult: asClass(HandleQualTestExecutionResult),
 
-  updateTestHistoryEntry: asClass(UpdateTestHistoryEntry),
+  postAnomalyFeedback: asClass(PostAnomalyFeedback),
   executeTest: asClass(ExecuteTest),
 
   getAccounts: asClass(GetAccounts),

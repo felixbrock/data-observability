@@ -119,6 +119,8 @@ export class HandleQuantTestExecutionResult
   ): Promise<void> => {
     if (!testExecutionResult.testData)
       throw new Error('Missing test data. Previous checks indicated test data');
+    if (!testExecutionResult.testData.anomaly.importance)
+      throw new Error('Missing anomaly importance. Cannot send anomaly alert');
     if (!testExecutionResult.alertData)
       throw new Error(
         'Missing alert data. Previous checks indicated alert data'
@@ -168,6 +170,10 @@ export class HandleQuantTestExecutionResult
           : testExecutionResult.alertData.value.toString(),
       resourceId: testExecutionResult.targetResourceId,
       chartUrl: generateChartRes.value.url,
+      importance:
+        testExecutionResult.testData.anomaly.importance % 1 !== 0
+          ? testExecutionResult.testData.anomaly.importance.toFixed(4)
+          : testExecutionResult.testData.anomaly.importance.toString(),
     };
 
     const sendSlackAlertResult = await this.#sendQuantTestSlackAlert.execute({
@@ -220,7 +226,7 @@ export class HandleQuantTestExecutionResult
     try {
       await this.#createTestResult(req, db.mongoConn);
 
-      if (!req.testData || (!req.testData.isAnomolous && !req.alertData))
+      if (!req.testData || (!req.testData.anomaly.isAnomaly && !req.alertData))
         return Result.ok();
 
       await this.#sendAlert(req, auth.jwt, db.sfConnPool);

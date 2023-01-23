@@ -1,4 +1,3 @@
-
 // todo - evaluate. approach to replace tedious work of working with classes. Imo does not violate Clean architecture & DDD
 export interface QuantTestResult {
   testSuiteId: string;
@@ -6,7 +5,7 @@ export interface QuantTestResult {
   isWarmup: boolean;
   testData?: {
     executedOn: string;
-    isAnomolous: boolean;
+    anomaly: { isAnomaly: boolean; importance?: number };
     modifiedZScore: number;
     deviation: number;
   };
