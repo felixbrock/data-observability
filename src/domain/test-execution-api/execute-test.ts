@@ -65,6 +65,8 @@ export class ExecuteTest
         req.targetOrgId
       );
 
+      console.log(`Successfuly executed test ${req.testSuiteId}`);
+
       const instanceOfQuantTestExecutionResultDto = (
         obj: unknown
       ): obj is QuantTestExecutionResultDto =>
