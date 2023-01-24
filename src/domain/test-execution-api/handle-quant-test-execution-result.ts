@@ -89,13 +89,17 @@ export class HandleQuantTestExecutionResult
       case 'ColumnUniqueness':
         return `${
           targetIdentifier[0].toUpperCase() + targetIdentifier.slice(1)
-        } holds ${fixedValue}% unique values. ${buildAnomalyExplanation(
+        } holds ${
+          value % 1 !== 0 ? (value * 100).toFixed(2) : value * 100
+        }% unique values. ${buildAnomalyExplanation(
           deviation >= 0 ? 'high' : 'low'
         )}.`;
       case 'ColumnNullness':
         return `${
           targetIdentifier[0].toUpperCase() + targetIdentifier.slice(1)
-        } holds ${fixedValue}% null values. ${buildAnomalyExplanation(
+        } holds ${
+          value % 1 !== 0 ? (value * 100).toFixed(2) : value * 100
+        }% null values. ${buildAnomalyExplanation(
           deviation >= 0 ? 'high' : 'low'
         )}`;
       case 'ColumnDistribution':
