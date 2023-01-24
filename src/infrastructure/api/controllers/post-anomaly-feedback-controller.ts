@@ -33,7 +33,8 @@ export default class PostAnomalyFeedbackController extends BaseController {
     alertId: httpRequest.body.alertId,
     testType: httpRequest.body.testType,
     userFeedbackIsAnomaly: httpRequest.body.userFeedbackIsAnomaly,
-    importanceSensitivity: httpRequest.body.importanceSensitivity,
+    importance: httpRequest.body.importance,
+    testSuiteId: httpRequest.body.testSuiteId,
   });
 
   #buildAuthDto = (

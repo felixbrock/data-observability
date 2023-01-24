@@ -1,17 +1,16 @@
 import IUseCase from '../services/use-case';
 import Result from '../value-types/transient-types/result';
-
 import { TestType } from '../entities/quant-test-suite';
-import { QualTestType } from '../entities/qual-test-suite';
 import { QuerySnowflake } from './query-snowflake';
 import { Binds, IConnectionPool } from './i-snowflake-api-repo';
 import BaseAuth from '../services/base-auth';
 
 export interface PostAnomalyFeedbackRequestDto {
   alertId: string;
-  testType: TestType | QualTestType;
+  testType: TestType;
   userFeedbackIsAnomaly: number;
-  importanceSensitivity: number;
+  importance?: number;
+  testSuiteId?: string;
 }
 
 export interface PostAnomalyFeedbackAuthDto
@@ -61,22 +60,20 @@ export class PostAnomalyFeedback
     this.#querySnowflake = querySnowflake;
   }
 
-  async execute(props: {
-    req: PostAnomalyFeedbackRequestDto;
-    auth: PostAnomalyFeedbackAuthDto;
-    connPool: IConnectionPool;
-  }): Promise<PostAnomalyFeedbackResponseDto> {
+  #updateTestSuite = async (
+    importance: number,
+    testSuiteId: string,
+    connPool: IConnectionPool
+  ): Promise<void> => {
+    const binds: Binds = [importance, testSuiteId];
+
+    const queryText = `
+  update cito.observability.test_suites
+  set importance_threshold = ?
+  where id = ?;
+  `;
+
     try {
-      const { req, connPool } = props;
-
-      const binds: Binds = [req.userFeedbackIsAnomaly, req.alertId];
-
-      const queryText = `
-      update cito.observability.test_history
-      set user_feedback_is_anomaly = ?
-      where alert_id = ?;
-      `;
-
       const querySnowflakeResult = await this.#querySnowflake.execute({
         req: { queryText, binds },
         connPool,
@@ -87,6 +84,70 @@ export class PostAnomalyFeedback
 
       const result = querySnowflakeResult.value;
       if (!result) throw new Error(`"Update Test History" query failed`);
+    } catch (error: unknown) {
+      if (error instanceof Error) console.error(error.stack);
+      else if (error) console.trace(error);
+    }
+  };
+
+  #updateTestHistory = async (
+    userFeedbackIsAnomaly: number,
+    alertId: string,
+    connPool: IConnectionPool
+  ): Promise<void> => {
+    const binds: Binds = [userFeedbackIsAnomaly, alertId];
+
+    const queryText = `
+  update cito.observability.test_history
+  set user_feedback_is_anomaly = ?
+  where alert_id = ?;
+  `;
+
+    try {
+      const querySnowflakeResult = await this.#querySnowflake.execute({
+        req: { queryText, binds },
+        connPool,
+      });
+
+      if (!querySnowflakeResult.success)
+        throw new Error(querySnowflakeResult.error);
+
+      const result = querySnowflakeResult.value;
+      if (!result) throw new Error(`"Update Test History" query failed`);
+    } catch (error: unknown) {
+      if (error instanceof Error) console.error(error.stack);
+      else if (error) console.trace(error);
+    }
+  };
+
+  async execute(props: {
+    req: PostAnomalyFeedbackRequestDto;
+    auth: PostAnomalyFeedbackAuthDto;
+    connPool: IConnectionPool;
+  }): Promise<PostAnomalyFeedbackResponseDto> {
+    try {
+      const { req, connPool } = props;
+
+      if (
+        req.userFeedbackIsAnomaly === 0 &&
+        !(typeof req.importance === 'number' && req.testSuiteId)
+      )
+        throw new Error(
+          'Feedback indicates false-positive but importance and test suite id are missing. Cannot perform operation.'
+        );
+
+      await this.#updateTestHistory(
+        req.userFeedbackIsAnomaly,
+        req.alertId,
+        connPool
+      );
+
+      if (
+        req.userFeedbackIsAnomaly === 0 &&
+        typeof req.importance === 'number' &&
+        req.testSuiteId
+      )
+        await this.#updateTestSuite(req.importance, req.testSuiteId, connPool);
 
       return Result.ok(req.alertId);
     } catch (error: unknown) {

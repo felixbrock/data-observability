@@ -16,4 +16,5 @@ export interface QuantTestAlertDto {
   resourceId: string;
   chartUrl: string;
   importance: string;
+  testSuiteId: string;
 }

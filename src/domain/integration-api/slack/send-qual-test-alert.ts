@@ -1,8 +1,8 @@
 import Result from '../../value-types/transient-types/result';
 import IUseCase from '../../services/use-case';
 import {
-  AlertMessageConfig,
   IIntegrationApiRepo,
+  QualAlertMsgConfig,
 } from '../i-integration-api-repo';
 import { SendAlertResultDto } from './send-alert-result-dto';
 import { QualTestAlertDto } from './qual-test-alert-dto';
@@ -35,13 +35,12 @@ export class SendQualTestSlackAlert
 
   #buildAlertMessageConfig = (
     alertDto: QualTestAlertDto
-  ): AlertMessageConfig => ({
+  ): QualAlertMsgConfig => ({
     alertId: alertDto.alertId,
     testType: alertDto.testType,
     occurredOn: `${alertDto.detectedOn} (UTC)`,
     anomalyMessagePart: `Schema Change Alert`,
     detectedValuePart: `*Detected Schema Change:*\n${alertDto.deviations}`,
-    expectedRangePart: ``,
     summaryPart: alertDto.message.replace(
       '__base_url__',
       appConfig.slack.callbackRoot
@@ -58,7 +57,7 @@ export class SendQualTestSlackAlert
       const messageConfig = this.#buildAlertMessageConfig(req.alertDto);
 
       const sendSlackAlertResponse: SendAlertResultDto =
-        await this.#integrationApiRepo.sendSlackAlert(
+        await this.#integrationApiRepo.sendQualSlackAlert(
           messageConfig,
           req.targetOrgId,
           auth.jwt

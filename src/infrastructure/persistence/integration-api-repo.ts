@@ -1,7 +1,8 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import {
-  AlertMessageConfig,
   IIntegrationApiRepo,
+  QualAlertMsgConfig,
+  QuantAlertMsgConfig,
   SnowflakeProfileDto,
 } from '../../domain/integration-api/i-integration-api-repo';
 import { SendAlertResultDto } from '../../domain/integration-api/slack/send-alert-result-dto';
@@ -14,8 +15,8 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
 
   #apiRoot = appConfig.express.apiRoot;
 
-  sendSlackAlert = async (
-    messageConfig: AlertMessageConfig,
+  sendQuantSlackAlert = async (
+    messageConfig: QuantAlertMsgConfig,
     targetOrgId: string,
     jwt: string
   ): Promise<SendAlertResultDto> => {
@@ -30,7 +31,7 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
       };
 
       const response = await axios.post(
-        `${this.#baseUrl}/${this.#apiRoot}/${this.#version}/slack/alert`,
+        `${this.#baseUrl}/${this.#apiRoot}/${this.#version}/slack/alert/quant`,
         data,
         config
       );
@@ -38,7 +39,37 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
       if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
+      else if (error) console.trace(error);
+      return Promise.reject(new Error(''));
+    }
+  };
+
+  sendQualSlackAlert = async (
+    messageConfig: QualAlertMsgConfig,
+    targetOrgId: string,
+    jwt: string
+  ): Promise<SendAlertResultDto> => {
+    try {
+      const data = {
+        messageConfig,
+        targetOrgId,
+      };
+
+      const config: AxiosRequestConfig = {
+        headers: { Authorization: `Bearer ${jwt}` },
+      };
+
+      const response = await axios.post(
+        `${this.#baseUrl}/${this.#apiRoot}/${this.#version}/slack/alert/qual`,
+        data,
+        config
+      );
+      const jsonResponse = response.data;
+      if (response.status === 201) return jsonResponse;
+      throw new Error(jsonResponse.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Promise.reject(new Error(''));
     }
@@ -49,10 +80,9 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
     targetOrgId?: string
   ): Promise<SnowflakeProfileDto> => {
     try {
-
       const config: AxiosRequestConfig = {
         headers: { Authorization: `Bearer ${jwt}` },
-        params: targetOrgId ? new URLSearchParams({targetOrgId}): undefined
+        params: targetOrgId ? new URLSearchParams({ targetOrgId }) : undefined,
       };
 
       const response = await axios.get(
@@ -63,7 +93,7 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
       if (response.status === 200) return jsonResponse;
       throw new Error(jsonResponse.message);
     } catch (error: unknown) {
-      if (error instanceof Error ) console.error(error.stack);
+      if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Promise.reject(new Error());
     }

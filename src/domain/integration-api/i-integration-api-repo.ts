@@ -9,7 +9,16 @@ export interface SnowflakeProfileDto {
   warehouseName: string;
 }
 
-export interface AlertMessageConfig {
+export interface QualAlertMsgConfig {
+  anomalyMessagePart: string;
+  occurredOn: string;
+  alertId: string;
+  testType: string;
+  summaryPart: string;
+  detectedValuePart: string;
+}
+
+export interface QuantAlertMsgConfig {
   anomalyMessagePart: string;
   occurredOn: string;
   alertId: string;
@@ -17,11 +26,18 @@ export interface AlertMessageConfig {
   summaryPart: string;
   expectedRangePart: string;
   detectedValuePart: string;
-  imageUrl?: string;
+  importance: string;
+  testSuiteId: string;
+  imageUrl: string;
 }
 export interface IIntegrationApiRepo {
-  sendSlackAlert(
-    messageConfig: AlertMessageConfig,
+  sendQualSlackAlert(
+    messageConfig: QualAlertMsgConfig,
+    targetOrgId: string,
+    jwt: string
+  ): Promise<SendAlertResultDto>;
+  sendQuantSlackAlert(
+    messageConfig: QuantAlertMsgConfig,
     targetOrgId: string,
     jwt: string
   ): Promise<SendAlertResultDto>;

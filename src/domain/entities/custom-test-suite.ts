@@ -45,7 +45,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   #executionType: ExecutionType;
 
-  #importanceSensitivity: number;
+  #importanceThreshold: number;
 
   get id(): string {
     return this.#id;
@@ -83,8 +83,8 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     return this.#executionType;
   }
 
-  get importanceSensitivity(): number {
-    return this.#importanceSensitivity;
+  get importanceThreshold(): number {
+    return this.#importanceThreshold;
   }
 
   private constructor(props: CustomTestSuiteProps) {
@@ -97,7 +97,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     this.#targetResourceIds = props.targetResourceIds;
     this.#cron = props.cron;
     this.#executionType = props.executionType;
-    this.#importanceSensitivity = props.importanceSensitivity;
+    this.#importanceThreshold = props.importanceThreshold;
   }
 
   static create = (props: CustomTestSuiteProps): CustomTestSuite => {
@@ -124,6 +124,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     threshold: this.#threshold,
     cron: this.#cron,
     executionType: this.#executionType,
-    importanceSensitivity: this.#importanceSensitivity,
+    importanceThreshold: this.#importanceThreshold,
   });
 }

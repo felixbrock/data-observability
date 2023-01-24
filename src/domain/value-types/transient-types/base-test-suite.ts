@@ -9,7 +9,7 @@ interface BaseTestSuite {
 
 export interface BaseQuantTestSuite extends BaseTestSuite {
   threshold: number;
-  importanceSensitivity: number;
+  importanceThreshold: number;
 }
 
 export type BaseQualTestSuite = BaseTestSuite;

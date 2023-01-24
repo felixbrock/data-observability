@@ -1,8 +1,8 @@
 import Result from '../../value-types/transient-types/result';
 import IUseCase from '../../services/use-case';
 import {
-  AlertMessageConfig,
   IIntegrationApiRepo,
+  QuantAlertMsgConfig,
 } from '../i-integration-api-repo';
 import { SendAlertResultDto } from './send-alert-result-dto';
 import { QuantTestAlertDto } from './quant-test-alert-dto';
@@ -45,7 +45,7 @@ export class SendQuantTestSlackAlert
 
   static #buildAlertMessageConfig = (
     quantAlertDto: QuantTestAlertDto
-  ): AlertMessageConfig => ({
+  ): QuantAlertMsgConfig => ({
     alertId: quantAlertDto.alertId,
     testType: quantAlertDto.testType,
     occurredOn: `${quantAlertDto.detectedOn} (UTC)`,
@@ -60,6 +60,8 @@ export class SendQuantTestSlackAlert
       appConfig.slack.callbackRoot
     ),
     imageUrl: quantAlertDto.chartUrl,
+    importance: quantAlertDto.importance,
+    testSuiteId: quantAlertDto.testSuiteId,
   });
 
   async execute(props: {
@@ -74,7 +76,7 @@ export class SendQuantTestSlackAlert
       );
 
       const sendQuantSlackAlertResponse: SendAlertResultDto =
-        await this.#integrationApiRepo.sendSlackAlert(
+        await this.#integrationApiRepo.sendQuantSlackAlert(
           messageConfig,
           req.targetOrgId,
           auth.jwt

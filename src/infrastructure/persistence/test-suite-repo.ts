@@ -46,7 +46,7 @@ export default class TestSuiteRepo
     { name: 'target_resource_id', nullable: false },
     { name: 'cron', nullable: false },
     { name: 'execution_type', nullable: false },
-    { name: 'importance_sensitivity', nullable: false },
+    { name: 'importance_threshold', nullable: false },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -68,7 +68,7 @@ export default class TestSuiteRepo
       TARGET_RESOURCE_ID: targetResourceId,
       CRON: cron,
       EXECUTION_TYPE: executionType,
-      IMPORTANCE_SENSITIVITY: importanceSensitivity,
+      IMPORTANCE_THRESHOLD: importanceThreshold,
     } = sfEntity;
 
     if (
@@ -84,7 +84,7 @@ export default class TestSuiteRepo
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
-      typeof importanceSensitivity !== 'number'
+      typeof importanceThreshold !== 'number'
     )
       throw new Error(
         'Retrieved unexpected test suite field types from persistence'
@@ -105,7 +105,7 @@ export default class TestSuiteRepo
       type: parseTestType(type),
       cron,
       executionType: parseExecutionType(executionType),
-      importanceSensitivity,
+      importanceThreshold,
     };
   };
 
@@ -122,7 +122,7 @@ export default class TestSuiteRepo
     entity.target.targetResourceId,
     entity.cron || 'null',
     entity.executionType,
-    entity.importanceSensitivity,
+    entity.importanceThreshold,
   ];
 
   buildFindByQuery = (queryDto: TestSuiteQueryDto): Query => {
@@ -175,9 +175,9 @@ export default class TestSuiteRepo
       colDefinitions.push(this.getDefinition('execution_type'));
       binds.push(updateDto.executionType);
     }
-    if (updateDto.importanceSensitivity) {
-      colDefinitions.push(this.getDefinition('importance_sensitivity'));
-      binds.push(updateDto.importanceSensitivity);
+    if (updateDto.importanceThreshold) {
+      colDefinitions.push(this.getDefinition('importance_threshold'));
+      binds.push(updateDto.importanceThreshold);
     }
     const text = getUpdateQueryText(this.matName, colDefinitions, [
       `(${binds.map(() => '?').join(', ')})`,

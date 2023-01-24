@@ -174,6 +174,7 @@ export class HandleQuantTestExecutionResult
         testExecutionResult.testData.anomaly.importance % 1 !== 0
           ? testExecutionResult.testData.anomaly.importance.toFixed(4)
           : testExecutionResult.testData.anomaly.importance.toString(),
+      testSuiteId: testExecutionResult.testSuiteId,
     };
 
     const sendSlackAlertResult = await this.#sendQuantTestSlackAlert.execute({
