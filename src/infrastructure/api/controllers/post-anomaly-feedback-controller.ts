@@ -29,13 +29,29 @@ export default class PostAnomalyFeedbackController extends BaseController {
     this.#postAnomalyFeedback = postAnomalyFeedback;
   }
 
-  #buildRequestDto = (httpRequest: Request): PostAnomalyFeedbackRequestDto => ({
-    alertId: httpRequest.body.alertId,
-    testType: httpRequest.body.testType,
-    userFeedbackIsAnomaly: httpRequest.body.userFeedbackIsAnomaly,
-    importance: httpRequest.body.importance,
-    testSuiteId: httpRequest.body.testSuiteId,
-  });
+  #buildRequestDto = (httpRequest: Request): PostAnomalyFeedbackRequestDto => {
+    const {
+      alertId,
+      testType,
+      userFeedbackIsAnomaly,
+      importance,
+      testSuiteId,
+    } = httpRequest.body;
+
+    if (
+      Number.isNaN(Number(userFeedbackIsAnomaly)) ||
+      Number.isNaN(Number(importance))
+    )
+      throw new Error('Provided NaN numerical input data');
+
+    return {
+      alertId,
+      testType,
+      userFeedbackIsAnomaly: parseInt(userFeedbackIsAnomaly, 10),
+      importance: parseFloat(importance),
+      testSuiteId,
+    };
+  };
 
   #buildAuthDto = (
     userAccountInfo: UserAccountInfo,

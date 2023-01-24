@@ -54,7 +54,7 @@ export class HandleQuantTestExecutionResult
   ): string => {
     const fixedValue = value % 1 !== 0 ? value.toFixed(4) : value;
     const fixedDeviation =
-      deviation % 1 !== 0 ? (deviation * 100).toFixed(4) : deviation * 100;
+      deviation % 1 !== 0 ? (deviation * 100).toFixed(2) : deviation * 100;
     const fixedExpectedValue =
       expectedValue % 1 !== 0 ? expectedValue.toFixed(4) : expectedValue;
 

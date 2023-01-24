@@ -65,6 +65,10 @@ export class PostAnomalyFeedback
     testSuiteId: string,
     connPool: IConnectionPool
   ): Promise<void> => {
+    console.log(
+      `Updating anomaly importance ${importance} for test suite ${testSuiteId}`
+    );
+
     const binds: Binds = [importance, testSuiteId];
 
     const queryText = `
@@ -95,6 +99,8 @@ export class PostAnomalyFeedback
     alertId: string,
     connPool: IConnectionPool
   ): Promise<void> => {
+    console.log(`Updating test history based on alert ${alertId}`);
+
     const binds: Binds = [userFeedbackIsAnomaly, alertId];
 
     const queryText = `
