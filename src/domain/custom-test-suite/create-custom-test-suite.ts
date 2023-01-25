@@ -57,6 +57,7 @@ export class CreateCustomTestSuite
         threshold: req.entityProps.threshold,
         targetResourceIds: req.entityProps.targetResourceIds,
         importanceThreshold: -1,
+        boundsIntervalRelative: 0,
       });
 
       await this.#repo.insertOne(customTestSuite, connPool);

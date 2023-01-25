@@ -12,7 +12,11 @@ interface QuantTestResultPersistence {
   isWarmup: boolean;
   testData?: {
     executedOn: string;
-    anomaly: { isAnomaly: boolean; importance?: number };
+    anomaly: {
+      isAnomaly: boolean;
+      importance?: number;
+      boundsIntervalRelative?: number;
+    };
     modifiedZScore: number;
     deviation: number;
   };

@@ -8,6 +8,7 @@ export interface TestSuiteUpdateDto {
   cron?: string;
   executionType?: ExecutionType;
   importanceThreshold?: number;
+  boundsIntervalRelative?: number;
 }
 
 export interface TestSuiteQueryDto {

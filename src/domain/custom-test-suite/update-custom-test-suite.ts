@@ -17,6 +17,7 @@ export interface UpdateCustomTestSuiteRequestDto {
     cron?: string;
     executionType?: ExecutionType;
     importanceThreshold?: number;
+    boundsIntervalRelative?: number;
   };
 }
 

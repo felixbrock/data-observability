@@ -47,6 +47,7 @@ export default class TestSuiteRepo
     { name: 'cron', nullable: false },
     { name: 'execution_type', nullable: false },
     { name: 'importance_threshold', nullable: false },
+    { name: 'bounds_interval_relative', nullable: false },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -69,6 +70,7 @@ export default class TestSuiteRepo
       CRON: cron,
       EXECUTION_TYPE: executionType,
       IMPORTANCE_THRESHOLD: importanceThreshold,
+      BOUNDS_INTERVAL_RELATIVE: boundsIntervalRelative,
     } = sfEntity;
 
     if (
@@ -84,7 +86,8 @@ export default class TestSuiteRepo
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
-      typeof importanceThreshold !== 'number'
+      typeof importanceThreshold !== 'number' ||
+      typeof boundsIntervalRelative !== 'number'
     )
       throw new Error(
         'Retrieved unexpected test suite field types from persistence'
@@ -106,6 +109,7 @@ export default class TestSuiteRepo
       cron,
       executionType: parseExecutionType(executionType),
       importanceThreshold,
+      boundsIntervalRelative,
     };
   };
 
@@ -123,6 +127,7 @@ export default class TestSuiteRepo
     entity.cron || 'null',
     entity.executionType,
     entity.importanceThreshold,
+    entity.boundsIntervalRelative,
   ];
 
   buildFindByQuery = (queryDto: TestSuiteQueryDto): Query => {
@@ -179,6 +184,11 @@ export default class TestSuiteRepo
       colDefinitions.push(this.getDefinition('importance_threshold'));
       binds.push(updateDto.importanceThreshold);
     }
+    if (updateDto.boundsIntervalRelative) {
+      colDefinitions.push(this.getDefinition('bounds_interval_relative'));
+      binds.push(updateDto.boundsIntervalRelative);
+    }
+
     const text = getUpdateQueryText(this.matName, colDefinitions, [
       `(${binds.map(() => '?').join(', ')})`,
     ]);

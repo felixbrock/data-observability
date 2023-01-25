@@ -47,6 +47,8 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   #importanceThreshold: number;
 
+  #boundsIntervalRelative: number;
+
   get id(): string {
     return this.#id;
   }
@@ -87,6 +89,10 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     return this.#importanceThreshold;
   }
 
+  get boundsIntervalRelative(): number {
+    return this.#boundsIntervalRelative;
+  }
+
   private constructor(props: CustomTestSuiteProps) {
     this.#id = props.id;
     this.#activated = props.activated;
@@ -98,6 +104,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     this.#cron = props.cron;
     this.#executionType = props.executionType;
     this.#importanceThreshold = props.importanceThreshold;
+    this.#boundsIntervalRelative = props.boundsIntervalRelative;
   }
 
   static create = (props: CustomTestSuiteProps): CustomTestSuite => {
@@ -125,5 +132,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     cron: this.#cron,
     executionType: this.#executionType,
     importanceThreshold: this.#importanceThreshold,
+    boundsIntervalRelative: this.#boundsIntervalRelative,
   });
 }

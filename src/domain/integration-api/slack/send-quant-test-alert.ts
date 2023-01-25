@@ -61,6 +61,7 @@ export class SendQuantTestSlackAlert
     ),
     imageUrl: quantAlertDto.chartUrl,
     importance: quantAlertDto.importance,
+    boundsIntervalRelative: quantAlertDto.boundsIntervalRelative,
     testSuiteId: quantAlertDto.testSuiteId,
   });
 

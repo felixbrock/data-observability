@@ -125,6 +125,10 @@ export class HandleQuantTestExecutionResult
       throw new Error('Missing test data. Previous checks indicated test data');
     if (!testExecutionResult.testData.anomaly.importance)
       throw new Error('Missing anomaly importance. Cannot send anomaly alert');
+    if (!testExecutionResult.testData.anomaly.boundsIntervalRelative)
+      throw new Error(
+        'Missing anomaly boundsIntervalRelative. Cannot send anomaly alert'
+      );
     if (!testExecutionResult.alertData)
       throw new Error(
         'Missing alert data. Previous checks indicated alert data'
@@ -178,6 +182,12 @@ export class HandleQuantTestExecutionResult
         testExecutionResult.testData.anomaly.importance % 1 !== 0
           ? testExecutionResult.testData.anomaly.importance.toFixed(4)
           : testExecutionResult.testData.anomaly.importance.toString(),
+      boundsIntervalRelative:
+        testExecutionResult.testData.anomaly.boundsIntervalRelative % 1 !== 0
+          ? testExecutionResult.testData.anomaly.boundsIntervalRelative.toFixed(
+              4
+            )
+          : testExecutionResult.testData.anomaly.boundsIntervalRelative.toString(),
       testSuiteId: testExecutionResult.testSuiteId,
     };
 

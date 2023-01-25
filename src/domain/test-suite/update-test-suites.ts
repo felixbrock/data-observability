@@ -14,6 +14,7 @@ interface UpdateObject {
     cron?: string;
     executionType?: ExecutionType;
     importanceThreshold?: number;
+    boundsIntervalRelative?: number;
   };
 }
 
@@ -57,6 +58,9 @@ export class UpdateTestSuites
       cron: updateObj.props.cron || testSuite.cron,
       importanceThreshold:
         updateObj.props.importanceThreshold || testSuite.importanceThreshold,
+      boundsIntervalRelative:
+        updateObj.props.boundsIntervalRelative ||
+        testSuite.boundsIntervalRelative,
     });
 
   async execute(props: {

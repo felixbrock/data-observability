@@ -54,6 +54,7 @@ export interface TestSuiteDto {
   cron: string;
   executionType: ExecutionType;
   importanceThreshold: number;
+  boundsIntervalRelative: number;
 }
 
 export class TestSuite implements BaseQuantTestSuite {
@@ -72,6 +73,8 @@ export class TestSuite implements BaseQuantTestSuite {
   #executionType: ExecutionType;
 
   #importanceThreshold: number;
+
+  #boundsIntervalRelative: number;
 
   get id(): string {
     return this.#id;
@@ -105,6 +108,10 @@ export class TestSuite implements BaseQuantTestSuite {
     return this.#importanceThreshold;
   }
 
+  get boundsIntervalRelative(): number {
+    return this.#boundsIntervalRelative;
+  }
+
   private constructor(props: TestSuiteProps) {
     this.#id = props.id;
     this.#activated = props.activated;
@@ -114,6 +121,7 @@ export class TestSuite implements BaseQuantTestSuite {
     this.#cron = props.cron;
     this.#executionType = props.executionType;
     this.#importanceThreshold = props.importanceThreshold;
+    this.#boundsIntervalRelative = props.boundsIntervalRelative;
   }
 
   static create = (props: TestSuiteProps): TestSuite => {
@@ -153,5 +161,6 @@ export class TestSuite implements BaseQuantTestSuite {
     cron: this.#cron,
     executionType: this.#executionType,
     importanceThreshold: this.#importanceThreshold,
+    boundsIntervalRelative: this.#boundsIntervalRelative,
   });
 }

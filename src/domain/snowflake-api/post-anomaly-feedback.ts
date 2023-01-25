@@ -10,6 +10,7 @@ export interface PostAnomalyFeedbackRequestDto {
   testType: TestType;
   userFeedbackIsAnomaly: number;
   importance?: number;
+  boundsIntervalRelative?: number;
   testSuiteId?: string;
 }
 
@@ -62,18 +63,19 @@ export class PostAnomalyFeedback
 
   #updateTestSuite = async (
     importance: number,
+    boundsIntervalRelative: number,
     testSuiteId: string,
     connPool: IConnectionPool
   ): Promise<void> => {
     console.log(
-      `Updating anomaly importance ${importance} for test suite ${testSuiteId}`
+      `Updating anomaly importance threshold (importance: ${importance}, boundsIntervalRelative: ${boundsIntervalRelative}) for test suite ${testSuiteId}`
     );
 
-    const binds: Binds = [importance, testSuiteId];
+    const binds: Binds = [importance, boundsIntervalRelative, testSuiteId];
 
     const queryText = `
   update cito.observability.test_suites
-  set importance_threshold = ?
+  set importance_threshold = ?, bounds_interval_relative = ?
   where id = ?;
   `;
 
@@ -136,10 +138,14 @@ export class PostAnomalyFeedback
 
       if (
         req.userFeedbackIsAnomaly === 0 &&
-        !(typeof req.importance === 'number' && req.testSuiteId)
+        !(
+          typeof req.importance === 'number' &&
+          typeof req.boundsIntervalRelative === 'number' &&
+          req.testSuiteId
+        )
       )
         throw new Error(
-          'Feedback indicates false-positive but importance and test suite id are missing. Cannot perform operation.'
+          'Feedback indicates false-positive but importance, boundsIntervalRelative and/or test suite id are missing. Cannot perform operation.'
         );
 
       await this.#updateTestHistory(
@@ -151,9 +157,15 @@ export class PostAnomalyFeedback
       if (
         req.userFeedbackIsAnomaly === 0 &&
         typeof req.importance === 'number' &&
+        typeof req.boundsIntervalRelative === 'number' &&
         req.testSuiteId
       )
-        await this.#updateTestSuite(req.importance, req.testSuiteId, connPool);
+        await this.#updateTestSuite(
+          req.importance,
+          req.boundsIntervalRelative,
+          req.testSuiteId,
+          connPool
+        );
 
       return Result.ok(req.alertId);
     } catch (error: unknown) {
