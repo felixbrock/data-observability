@@ -17,6 +17,21 @@ import {
 import { appConfig } from '../../config';
 import { ExecutionType } from '../value-types/execution-type';
 
+interface CreateTestSuiteScheduleObj {
+  executionType: ExecutionType;
+  cron: string;
+  id: string;
+}
+
+interface UpdateTestSuiteScheduleObj {
+  id: string;
+  props: {
+    executionType?: ExecutionType;
+    cron?: string;
+    activated?: boolean;
+  };
+}
+
 export const testSuiteTypes = ['test', 'custom-test', 'nominal-test'] as const;
 
 export type TestSuiteType = typeof testSuiteTypes[number];
@@ -236,27 +251,22 @@ const updateSchedule = async (
     );
 };
 
-export const handleScheduleCreation = async <
-  Dto extends {
-    executionType: ExecutionType;
-    cron: string;
-    id: string;
-  }
->(
+const executeThrottleSensitive = async (
+  dtos: CreateTestSuiteScheduleObj[],
   orgId: string,
   testSuiteType: TestSuiteType,
-  testSuiteDtos: Dto[]
+  delayMulitplicator: number,
+  schedulerClient: SchedulerClient
 ): Promise<void> => {
-  const schedulerClient = new SchedulerClient({
-    region: appConfig.cloud.region,
-  });
+  await new Promise((resolve) =>
+    // eslint-disable-next-line no-promise-executor-return
+    setTimeout(resolve, 1000 + delayMulitplicator * 1000)
+  );
 
-  const scheduleGroupExists = await groupExists(orgId, schedulerClient);
-
-  if (!scheduleGroupExists) await createScheduleGroup(orgId, schedulerClient);
+  console.log(`Creating ${dtos.length} schedules`);
 
   await Promise.all(
-    testSuiteDtos.map(async (el) => {
+    dtos.map(async (el) => {
       await createSchedule(
         el.cron,
         el.id,
@@ -269,8 +279,82 @@ export const handleScheduleCreation = async <
       );
     })
   );
+};
+
+const sliceJobs = <T>(jobs: T[], batchSize: number): T[][] => {
+  const batches: T[][] = [];
+  for (let i = 0; i < jobs.length; i += batchSize) {
+    const batch = jobs.slice(i, i + batchSize);
+    batches.push(batch);
+  }
+  return batches;
+};
+
+export const handleScheduleCreation = async (
+  orgId: string,
+  testSuiteType: TestSuiteType,
+  testSuiteDtos: CreateTestSuiteScheduleObj[]
+): Promise<void> => {
+  const schedulerClient = new SchedulerClient({
+    region: appConfig.cloud.region,
+  });
+
+  const scheduleGroupExists = await groupExists(orgId, schedulerClient);
+
+  if (!scheduleGroupExists) await createScheduleGroup(orgId, schedulerClient);
+
+  const testSuiteDtoBatches = sliceJobs(testSuiteDtos, 45);
+
+  await Promise.all(
+    testSuiteDtoBatches.map(async (el, i) => {
+      await executeThrottleSensitive(
+        el,
+        orgId,
+        testSuiteType,
+        i,
+        schedulerClient
+      );
+    })
+  );
 
   schedulerClient.destroy();
+};
+
+const updateThrottleSensitive = async (
+  dtos: UpdateTestSuiteScheduleObj[],
+  orgId: string,
+  delayMulitplicator: number,
+  schedulerClient: SchedulerClient
+): Promise<void> => {
+  await new Promise((resolve) =>
+    // eslint-disable-next-line no-promise-executor-return
+    setTimeout(resolve, 1000 + delayMulitplicator * 1000)
+  );
+
+  console.log(`Updating ${dtos.length} schedules`);
+
+  await Promise.all(
+    dtos.map(async (el) => {
+      const { id } = el;
+      const { cron, executionType, activated } = el.props;
+
+      const updateProps: ScheduleUpdateProps = {};
+
+      if (cron) updateProps.cron = cron;
+      if (activated !== undefined) updateProps.toBeActivated = activated;
+      if (executionType)
+        updateProps.target = updateProps.target
+          ? {
+              ...updateProps.target,
+              executionType,
+            }
+          : { executionType };
+
+      if (!Object.keys(updateProps).length) return;
+
+      await updateSchedule(id, orgId, updateProps, schedulerClient);
+    })
+  );
 };
 
 export const handleScheduleUpdate = async <
@@ -290,26 +374,11 @@ export const handleScheduleUpdate = async <
     region: appConfig.cloud.region,
   });
 
+  const updateObjBatches = sliceJobs(updateObjects, 45);
+
   await Promise.all(
-    updateObjects.map(async (el) => {
-      const { id } = el;
-      const { cron, executionType, activated } = el.props;
-
-      const updateProps: ScheduleUpdateProps = {};
-
-      if (cron) updateProps.cron = cron;
-      if (activated !== undefined) updateProps.toBeActivated = activated;
-      if (executionType)
-        updateProps.target = updateProps.target
-          ? {
-              ...updateProps.target,
-              executionType,
-            }
-          : { executionType };
-
-      if (!Object.keys(updateProps).length) return;
-
-      await updateSchedule(id, orgId, updateProps, schedulerClient);
+    updateObjBatches.map(async (el, i) => {
+      await updateThrottleSensitive(el, orgId, i, schedulerClient);
     })
   );
 
