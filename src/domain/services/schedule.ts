@@ -76,6 +76,9 @@ For AWS Eventbridge schedule s to be working the lambda target needs correspondi
 aws lambda add-permission --function-name "test-suite-execution--production-app" --action 'lambda:InvokeFunction' --principal events.amazonaws.com --statement-id "test-suite-schedule-rule-wildcard-policy"
 */
 
+const generateMessageGroupId = (numPossibleChoices = 50): string =>
+  `message-group-${Math.floor(Math.random() * numPossibleChoices).toString()}`;
+
 const getScheduleName = (testSuiteId: string): string =>
   `${schedulePrefix}-${testSuiteId}`;
 
@@ -139,7 +142,7 @@ const createSchedule = async (
         targetOrgId: orgId,
         ...targetInputPrototype,
       }),
-      SqsParameters: { MessageGroupId: orgId },
+      SqsParameters: { MessageGroupId: generateMessageGroupId() },
     },
   };
 
@@ -239,7 +242,9 @@ const updateSchedule = async (
     });
   }
 
-  commandInput.Target.SqsParameters = { MessageGroupId: orgId };
+  commandInput.Target.SqsParameters = {
+    MessageGroupId: generateMessageGroupId(),
+  };
 
   const command = new UpdateScheduleCommand(commandInput);
 
