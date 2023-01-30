@@ -1,10 +1,12 @@
 import { ExecutionType } from '../execution-type';
 
-interface BaseTestSuite {
+export interface BaseTestSuite {
   id: string;
   activated: boolean;
   cron: string;
   executionType: ExecutionType;
+  deleted: boolean;
+  deletedAt?: string;
 }
 
 export interface BaseQuantTestSuite extends BaseTestSuite {
@@ -12,5 +14,3 @@ export interface BaseQuantTestSuite extends BaseTestSuite {
   importanceThreshold: number;
   boundsIntervalRelative: number;
 }
-
-export type BaseQualTestSuite = BaseTestSuite;

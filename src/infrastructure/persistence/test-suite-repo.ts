@@ -101,6 +101,8 @@ export default class TestSuiteRepo
       EXECUTION_TYPE: executionType,
       IMPORTANCE_THRESHOLD: importanceThreshold,
       BOUNDS_INTERVAL_RELATIVE: boundsIntervalRelative,
+      DELETED: deleted,
+      DELETED_AT: deletedAt,
     } = sfEntity;
 
     if (
@@ -117,7 +119,9 @@ export default class TestSuiteRepo
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
       typeof importanceThreshold !== 'number' ||
-      typeof boundsIntervalRelative !== 'number'
+      typeof boundsIntervalRelative !== 'number' ||
+      typeof deleted !== 'boolean' ||
+      !TestSuiteRepo.isOptionalOfType<string>(deletedAt, 'string')
     )
       throw new Error(
         'Retrieved unexpected test suite field types from persistence'
@@ -140,6 +144,8 @@ export default class TestSuiteRepo
       executionType: parseExecutionType(executionType),
       importanceThreshold,
       boundsIntervalRelative,
+      deleted,
+      deletedAt,
     };
   };
 
