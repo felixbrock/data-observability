@@ -4,7 +4,6 @@ import { TestSuite, TestType } from '../entities/quant-test-suite';
 import { MaterializationType } from '../value-types/materialization-type';
 import { ExecutionType } from '../value-types/execution-type';
 import { ITestSuiteRepo } from './i-test-suite-repo';
-import TestSuiteRepo from '../../infrastructure/persistence/test-suite-repo';
 import IUseCase from '../services/use-case';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { createSchedules } from '../services/schedule';
@@ -42,7 +41,7 @@ export class CreateTestSuites
 {
   readonly #repo: ITestSuiteRepo;
 
-  constructor(testSuiteRepo: TestSuiteRepo) {
+  constructor(testSuiteRepo: ITestSuiteRepo) {
     this.#repo = testSuiteRepo;
   }
 

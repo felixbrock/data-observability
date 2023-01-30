@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
-import QualTestSuiteRepo from '../../infrastructure/persistence/qual-test-suite-repo';
 import { QualTestSuite, QualTestType } from '../entities/qual-test-suite';
+import { createSchedules } from '../services/schedule';
 import IUseCase from '../services/use-case';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { ExecutionType } from '../value-types/execution-type';
@@ -25,7 +25,9 @@ export interface CreateQualTestSuitesRequestDto {
   createObjects: CreateObject[];
 }
 
-export type CreateQualTestSuitesAuthDto = null;
+export type CreateQualTestSuitesAuthDto = {
+  callerOrgId: string;
+};
 
 export type CreateQualTestSuitesResponseDto = Result<QualTestSuite[]>;
 
@@ -40,15 +42,16 @@ export class CreateQualTestSuites
 {
   readonly #repo: IQualTestSuiteRepo;
 
-  constructor(qualTestSuiteRepo: QualTestSuiteRepo) {
+  constructor(qualTestSuiteRepo: IQualTestSuiteRepo) {
     this.#repo = qualTestSuiteRepo;
   }
 
   async execute(props: {
     req: CreateQualTestSuitesRequestDto;
+    auth: CreateQualTestSuitesAuthDto;
     connPool: IConnectionPool;
   }): Promise<CreateQualTestSuitesResponseDto> {
-    const { req, connPool } = props;
+    const { req, auth, connPool } = props;
 
     try {
       const testSuites = req.createObjects.map((createObject) =>
@@ -70,6 +73,8 @@ export class CreateQualTestSuites
       );
 
       await this.#repo.insertMany(testSuites, connPool);
+
+      await createSchedules(auth.callerOrgId, 'nominal-test', testSuites);
 
       return Result.ok(testSuites);
     } catch (error: unknown) {

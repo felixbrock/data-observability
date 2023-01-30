@@ -13,6 +13,8 @@ import {
   CreateScheduleGroupCommand,
   ListScheduleGroupsCommand,
   ListScheduleGroupsCommandInput,
+  DeleteScheduleCommandInput,
+  DeleteScheduleCommand,
 } from '@aws-sdk/client-scheduler';
 import { appConfig } from '../../config';
 import { ExecutionType } from '../value-types/execution-type';
@@ -325,6 +327,43 @@ export const createSchedules = async (
   schedulerClient.destroy();
 };
 
+const deleteSchedule = async (
+  testSuiteId: string,
+  client: SchedulerClient
+): Promise<void> => {
+  const scheduleName = getScheduleName(testSuiteId);
+
+  const commandInput: DeleteScheduleCommandInput = {
+    Name: scheduleName,
+  };
+
+  const command = new DeleteScheduleCommand(commandInput);
+
+  const res = await client.send(command);
+
+  if (!res.$metadata.httpStatusCode)
+    throw new Error('Deletion of schedule failed');
+};
+
+const deleteThrottleSensitive = async (
+  testSuiteIds: string[],
+  delayMulitplicator: number,
+  schedulerClient: SchedulerClient
+): Promise<void> => {
+  await new Promise((resolve) =>
+    // eslint-disable-next-line no-promise-executor-return
+    setTimeout(resolve, 1000 + delayMulitplicator * 1000)
+  );
+
+  console.log(`Deleting ${testSuiteIds.length} schedules`);
+
+  await Promise.all(
+    testSuiteIds.map(async (el) => {
+      await deleteSchedule(el, schedulerClient);
+    })
+  );
+};
+
 export const deleteSchedules = async (
   orgId: string,
   testSuiteIds: string[]
@@ -333,17 +372,11 @@ export const deleteSchedules = async (
     region: appConfig.cloud.region,
   });
 
-  const testSuiteDtoBatches = sliceJobs(testSuiteIds, 45);
+  const batches = sliceJobs(testSuiteIds, 45);
 
   await Promise.all(
-    testSuiteDtoBatches.map(async (el, i) => {
-      await createThrottleSensitive(
-        el,
-        orgId,
-        testSuiteType,
-        i,
-        schedulerClient
-      );
+    batches.map(async (el, i) => {
+      await deleteThrottleSensitive(el, i, schedulerClient);
     })
   );
 

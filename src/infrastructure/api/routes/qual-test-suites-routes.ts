@@ -3,6 +3,7 @@ import app from '../../ioc-register';
 import ReadQualTestSuitesController from '../controllers/read-qual-test-suites-controller';
 import UpdateQualTestSuitesController from '../controllers/update-qual-test-suites-controller';
 import CreateQualTestSuitesController from '../controllers/create-qual-test-suites-controller';
+import DeleteQualTestSuitesController from '../controllers/delete-qual-test-suites-controller';
 
 const qualTestSuitesRoutes = Router();
 
@@ -27,6 +28,12 @@ const updateQualTestSuitesController = new UpdateQualTestSuitesController(
   getSnowflakeProfile
 );
 
+const deleteQualTestSuitesController = new DeleteQualTestSuitesController(
+  app.resolve('deleteQualTestSuites'),
+  getAccounts,
+  getSnowflakeProfile
+);
+
 qualTestSuitesRoutes.get('/', (req, res) => {
   readQualTestSuitesController.execute(req, res);
 });
@@ -37,6 +44,10 @@ qualTestSuitesRoutes.post('/', (req, res) => {
 
 qualTestSuitesRoutes.patch('/', (req, res) => {
   updateQualTestSuitesController.execute(req, res);
+});
+
+qualTestSuitesRoutes.delete('/', (req, res) => {
+  deleteQualTestSuitesController.execute(req, res);
 });
 
 export default qualTestSuitesRoutes;

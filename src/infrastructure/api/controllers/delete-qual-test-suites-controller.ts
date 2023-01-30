@@ -1,12 +1,15 @@
+// TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
+
 import {
-  CreateQualTestSuites,
-  CreateQualTestSuitesRequestDto,
-  CreateQualTestSuitesResponseDto,
-} from '../../../domain/qual-test-suite/create-qual-test-suites';
+  DeleteQualTestSuites,
+  DeleteQualTestSuitesRequestDto,
+  DeleteQualTestSuitesResponseDto,
+  parseMode,
+} from '../../../domain/qual-test-suite/delete-qual-test-suites';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -15,30 +18,39 @@ import {
   UserAccountInfo,
 } from './shared/base-controller';
 
-export default class CreateQualTestSuitesController extends BaseController {
-  readonly #createQualTestSuites: CreateQualTestSuites;
+export default class DeleteQualTestSuitesController extends BaseController {
+  readonly #deletequalTestSuites: DeleteQualTestSuites;
 
   constructor(
-    createQualTestSuites: CreateQualTestSuites,
+    deletequalTestSuites: DeleteQualTestSuites,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
   ) {
     super(getAccounts, getSnowflakeProfile);
-    this.#createQualTestSuites = createQualTestSuites;
+
+    this.#deletequalTestSuites = deletequalTestSuites;
   }
 
-  #buildRequestDto = (
-    httpRequest: Request
-  ): CreateQualTestSuitesRequestDto => ({
-    createObjects: httpRequest.body.createObjects,
-  });
+  #buildRequestDto = (httpRequest: Request): DeleteQualTestSuitesRequestDto => {
+    const { targetResourceId, mode } = httpRequest.query;
+
+    if (typeof targetResourceId !== 'string' || typeof mode !== 'string')
+      throw new Error(
+        'Received test suite deletion req params in invalid format'
+      );
+
+    return {
+      targetResourceId,
+      mode: parseMode(mode),
+    };
+  };
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return CreateQualTestSuitesController.unauthorized(
+        return DeleteQualTestSuitesController.unauthorized(
           res,
           'Unauthorized - auth-header missing'
         );
@@ -49,7 +61,7 @@ export default class CreateQualTestSuitesController extends BaseController {
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return CreateQualTestSuitesController.unauthorized(
+        return DeleteQualTestSuitesController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
@@ -59,13 +71,13 @@ export default class CreateQualTestSuitesController extends BaseController {
       if (!getUserAccountInfoResult.value.callerOrgId)
         throw new Error('Unauthorized - Caller organization id missing');
 
-      const requestDto: CreateQualTestSuitesRequestDto =
+      const requestDto: DeleteQualTestSuitesRequestDto =
         this.#buildRequestDto(req);
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-      const useCaseResult: CreateQualTestSuitesResponseDto =
-        await this.#createQualTestSuites.execute({
+      const useCaseResult: DeleteQualTestSuitesResponseDto =
+        await this.#deletequalTestSuites.execute({
           req: requestDto,
           auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
           connPool,
@@ -75,25 +87,19 @@ export default class CreateQualTestSuitesController extends BaseController {
       await connPool.clear();
 
       if (!useCaseResult.success) {
-        return CreateQualTestSuitesController.badRequest(res);
+        return DeleteQualTestSuitesController.badRequest(res);
       }
 
       if (!useCaseResult.value)
-        throw new Error('Missing create test suite result value');
+        throw new Error('Missing deletequal test suite result value');
 
-      const resultValues = useCaseResult.value.map((el) => el.toDto());
-
-      return CreateQualTestSuitesController.ok(
-        res,
-        resultValues,
-        CodeHttp.CREATED
-      );
+      return DeleteQualTestSuitesController.ok(res, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
-      return CreateQualTestSuitesController.fail(
+      return DeleteQualTestSuitesController.fail(
         res,
-        'create qual test suites - Unknown error occurred'
+        'deletequal test suites - Internal error occurred'
       );
     }
   }

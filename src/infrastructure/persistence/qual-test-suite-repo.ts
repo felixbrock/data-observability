@@ -11,6 +11,7 @@ import {
 import { QuerySnowflake } from '../../domain/snowflake-api/query-snowflake';
 import {
   Binds,
+  IConnectionPool,
   SnowflakeEntity,
 } from '../../domain/snowflake-api/i-snowflake-api-repo';
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
@@ -21,6 +22,7 @@ import {
   QualTestSuiteUpdateDto,
 } from '../../domain/qual-test-suite/i-qual-test-suite-repo';
 import { parseMaterializationType } from '../../domain/value-types/materialization-type';
+import { appConfig } from '../../config';
 
 export default class QualTestSuiteRepo
   extends BaseSfRepo<
@@ -51,6 +53,34 @@ export default class QualTestSuiteRepo
   constructor(querySnowflake: QuerySnowflake) {
     super(querySnowflake);
   }
+
+  softDeleteMany = async (
+    targetResourceId: string,
+    connPool: IConnectionPool
+  ): Promise<void> => {
+    try {
+      const binds = [targetResourceId];
+
+      const queryText = `update ${appConfig.snowflake.databaseName}.${
+        appConfig.snowflake.schemaName
+      }.${
+        this.matName
+      } set deleted = true, deleted_at = ${new Date().toISOString()}
+      where target_id = ?
+      `;
+
+      const res = await this.querySnowflake.execute({
+        req: { queryText, binds },
+        connPool,
+      });
+
+      if (!res.success) throw new Error(res.error);
+      if (!res.value) throw new Error('Missing sf query value');
+    } catch (error: unknown) {
+      if (error instanceof Error) console.error(error.stack);
+      else if (error) console.trace(error);
+    }
+  };
 
   buildEntityProps = (sfEntity: SnowflakeEntity): QualTestSuiteProps => {
     const {
@@ -133,6 +163,13 @@ export default class QualTestSuiteRepo
         ? whereClause.concat(`and ${whereCondition} `)
         : whereCondition;
     }
+    if (queryDto.targetResourceId) {
+      binds.push(queryDto.targetResourceId);
+      const whereCondition = 'target_resource_id = ?';
+      whereClause = whereClause
+        ? whereClause.concat(`and ${whereCondition} `)
+        : whereCondition;
+    }
 
     const text = `select * from ${relationPath}.${this.matName}
         ${whereClause ? 'where' : ''}  ${whereClause};`;
@@ -140,10 +177,7 @@ export default class QualTestSuiteRepo
     return { text, binds };
   };
 
-  buildUpdateQuery = (
-    id: string,
-    updateDto: QualTestSuiteUpdateDto
-  ): Query => {
+  buildUpdateQuery = (id: string, updateDto: QualTestSuiteUpdateDto): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
     const binds: Binds = [id];
 
@@ -167,7 +201,6 @@ export default class QualTestSuiteRepo
     return { text, binds, colDefinitions };
   };
 
-  toEntity = (
-    qualtestsuiteProperties: QualTestSuiteProps
-  ): QualTestSuite => QualTestSuite.create(qualtestsuiteProperties);
+  toEntity = (qualtestsuiteProperties: QualTestSuiteProps): QualTestSuite =>
+    QualTestSuite.create(qualtestsuiteProperties);
 }

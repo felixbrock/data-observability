@@ -178,8 +178,8 @@ export default class TestSuiteRepo
         ? whereClause.concat(`and ${whereCondition} `)
         : whereCondition;
     }
-    if (queryDto.targetResourceId !== undefined) {
-      binds.push(queryDto.targetResourceId.toString());
+    if (queryDto.targetResourceId) {
+      binds.push(queryDto.targetResourceId);
       const whereCondition = 'target_resource_id = ?';
       whereClause = whereClause
         ? whereClause.concat(`and ${whereCondition} `)

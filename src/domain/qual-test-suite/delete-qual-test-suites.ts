@@ -1,8 +1,8 @@
 import Result from '../value-types/transient-types/result';
-import { ITestSuiteRepo } from './i-test-suite-repo';
 import IUseCase from '../services/use-case';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { deleteSchedules } from '../services/schedule';
+import { IQualTestSuiteRepo } from './i-qual-test-suite-repo';
 
 export type Mode = 'soft' | 'hard';
 
@@ -19,37 +19,37 @@ export const parseMode = (obj: unknown): Mode => {
   }
 };
 
-export interface DeleteTestSuitesRequestDto {
+export interface DeleteQualTestSuitesRequestDto {
   targetResourceId: string;
   mode: Mode;
 }
 
-export type DeleteTestSuitesAuthDto = {
+export type DeleteQualTestSuitesAuthDto = {
   callerOrgId: string;
 };
 
-export type DeleteTestSuitesResponseDto = Result<null>;
+export type DeleteQualTestSuitesResponseDto = Result<null>;
 
-export class DeleteTestSuites
+export class DeleteQualTestSuites
   implements
     IUseCase<
-      DeleteTestSuitesRequestDto,
-      DeleteTestSuitesResponseDto,
-      DeleteTestSuitesAuthDto,
+      DeleteQualTestSuitesRequestDto,
+      DeleteQualTestSuitesResponseDto,
+      DeleteQualTestSuitesAuthDto,
       IConnectionPool
     >
 {
-  readonly #repo: ITestSuiteRepo;
+  readonly #repo: IQualTestSuiteRepo;
 
-  constructor(testSuiteRepo: ITestSuiteRepo) {
-    this.#repo = testSuiteRepo;
+  constructor(qualTestSuiteRepo: IQualTestSuiteRepo) {
+    this.#repo = qualTestSuiteRepo;
   }
 
   async execute(props: {
-    req: DeleteTestSuitesRequestDto;
-    auth: DeleteTestSuitesAuthDto;
+    req: DeleteQualTestSuitesRequestDto;
+    auth: DeleteQualTestSuitesAuthDto;
     connPool: IConnectionPool;
-  }): Promise<DeleteTestSuitesResponseDto> {
+  }): Promise<DeleteQualTestSuitesResponseDto> {
     const { req, auth, connPool } = props;
 
     try {
