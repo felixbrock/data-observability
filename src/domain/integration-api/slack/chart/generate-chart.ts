@@ -54,6 +54,7 @@ export class GenerateChart
   readonly #defaultYAxis: YAXisComponentOption = {
     type: 'value',
     boundaryGap: [0, '30%'],
+    min: 'dataMin',
   };
 
   readonly #querySnowflake: QuerySnowflake;
@@ -99,6 +100,7 @@ export class GenerateChart
         type: 'category',
         boundaryGap: false,
         data: xAxis,
+        min: 'dataMin',
       },
       yAxis,
       toolbox: {
