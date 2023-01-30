@@ -109,8 +109,7 @@ export const appConfig = {
       'arn:aws:iam::966593446935:role/SchedulerExecutionRole',
   },
   snowflake: {
-    applicationName:
-      process.env.SNOWFLAKE_APPLICATION_NAME || 'snowflake-connector',
+    applicationName: process.env.SNOWFLAKE_APPLICATION_NAME || 'Cito_CitoApp',
     schemaName: 'observability',
     databaseName: 'cito',
   },
