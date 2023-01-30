@@ -9,7 +9,7 @@ import {
   CreateCustomTestSuiteResponseDto,
 } from '../../../domain/custom-test-suite/create-custom-test-suite';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
-import { handleScheduleCreation } from '../../../domain/services/schedule';
+import { createSchedules } from '../../../domain/services/schedule';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -103,7 +103,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
           'Custom test suite not created. Internal error.'
         );
 
-      await handleScheduleCreation(result.id, 'custom-test', [result]);
+      await createSchedules(result.id, 'custom-test', [result]);
 
       return CreateCustomTestSuiteController.ok(
         res,

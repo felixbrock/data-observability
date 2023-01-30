@@ -102,7 +102,7 @@ const groupExists = async (
   return !!(res.ScheduleGroups && res.ScheduleGroups.length);
 };
 
-const createScheduleGroup = async (
+const createGroup = async (
   orgId: string,
   client: SchedulerClient
 ): Promise<void> => {
@@ -256,7 +256,7 @@ const updateSchedule = async (
     );
 };
 
-const executeThrottleSensitive = async (
+const createThrottleSensitive = async (
   dtos: CreateTestSuiteScheduleObj[],
   orgId: string,
   testSuiteType: TestSuiteType,
@@ -295,7 +295,7 @@ const sliceJobs = <T>(jobs: T[], batchSize: number): T[][] => {
   return batches;
 };
 
-export const handleScheduleCreation = async (
+export const createSchedules = async (
   orgId: string,
   testSuiteType: TestSuiteType,
   testSuiteDtos: CreateTestSuiteScheduleObj[]
@@ -306,13 +306,38 @@ export const handleScheduleCreation = async (
 
   const scheduleGroupExists = await groupExists(orgId, schedulerClient);
 
-  if (!scheduleGroupExists) await createScheduleGroup(orgId, schedulerClient);
+  if (!scheduleGroupExists) await createGroup(orgId, schedulerClient);
 
   const testSuiteDtoBatches = sliceJobs(testSuiteDtos, 45);
 
   await Promise.all(
     testSuiteDtoBatches.map(async (el, i) => {
-      await executeThrottleSensitive(
+      await createThrottleSensitive(
+        el,
+        orgId,
+        testSuiteType,
+        i,
+        schedulerClient
+      );
+    })
+  );
+
+  schedulerClient.destroy();
+};
+
+export const deleteSchedules = async (
+  orgId: string,
+  testSuiteIds: string[]
+): Promise<void> => {
+  const schedulerClient = new SchedulerClient({
+    region: appConfig.cloud.region,
+  });
+
+  const testSuiteDtoBatches = sliceJobs(testSuiteIds, 45);
+
+  await Promise.all(
+    testSuiteDtoBatches.map(async (el, i) => {
+      await createThrottleSensitive(
         el,
         orgId,
         testSuiteType,
@@ -362,7 +387,7 @@ const updateThrottleSensitive = async (
   );
 };
 
-export const handleScheduleUpdate = async <
+export const updateSchedules = async <
   UpdateObject extends {
     id: string;
     props: {

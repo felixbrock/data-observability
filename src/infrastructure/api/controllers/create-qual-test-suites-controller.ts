@@ -7,7 +7,7 @@ import {
   CreateQualTestSuitesRequestDto,
   CreateQualTestSuitesResponseDto,
 } from '../../../domain/qual-test-suite/create-qual-test-suites';
-import { handleScheduleCreation } from '../../../domain/services/schedule';
+import { createSchedules } from '../../../domain/services/schedule';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -83,7 +83,7 @@ export default class CreateQualTestSuitesController extends BaseController {
 
       const resultValues = useCaseResult.value.map((el) => el.toDto());
 
-      await handleScheduleCreation(
+      await createSchedules(
         getUserAccountInfoResult.value.callerOrgId,
         'nominal-test',
         resultValues

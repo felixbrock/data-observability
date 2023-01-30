@@ -3,7 +3,6 @@ import { Request, Response } from 'express';
 import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
-import { handleScheduleCreation } from '../../../domain/services/schedule';
 
 import {
   CreateTestSuites,
@@ -68,6 +67,7 @@ export default class CreateTestSuitesController extends BaseController {
       const useCaseResult: CreateTestSuitesResponseDto =
         await this.#createTestSuites.execute({
           req: requestDto,
+          auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
           connPool,
         });
 
@@ -82,12 +82,6 @@ export default class CreateTestSuitesController extends BaseController {
         throw new Error('Missing create test suite result value');
 
       const resultValues = useCaseResult.value.map((el) => el.toDto());
-
-      await handleScheduleCreation(
-        getUserAccountInfoResult.value.callerOrgId,
-        'test',
-        resultValues
-      );
 
       return CreateTestSuitesController.ok(res, resultValues, CodeHttp.CREATED);
     } catch (error: unknown) {

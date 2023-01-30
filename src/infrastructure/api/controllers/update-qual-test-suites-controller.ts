@@ -14,7 +14,7 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from './shared/base-controller';
-import { handleScheduleUpdate } from '../../../domain/services/schedule';
+import { updateSchedules } from '../../../domain/services/schedule';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
 export default class UpdateQualTestSuitesController extends BaseController {
@@ -86,7 +86,7 @@ export default class UpdateQualTestSuitesController extends BaseController {
           'Update of test suites failed. Internal error.'
         );
 
-      await handleScheduleUpdate(
+      await updateSchedules(
         getUserAccountInfoResult.value.callerOrgId,
         requestDto.updateObjects
       );
