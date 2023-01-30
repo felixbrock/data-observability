@@ -55,6 +55,7 @@ export class GenerateChart
     type: 'value',
     boundaryGap: [0, '30%'],
     min: 'dataMin',
+    max: 'dataMax',
   };
 
   readonly #querySnowflake: QuerySnowflake;
@@ -101,6 +102,7 @@ export class GenerateChart
         boundaryGap: false,
         data: xAxis,
         min: 'dataMin',
+        max: 'dataMax',
       },
       yAxis,
       toolbox: {
