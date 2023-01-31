@@ -58,7 +58,6 @@ export class CreateCustomTestSuite
         targetResourceIds: req.entityProps.targetResourceIds,
         importanceThreshold: -1,
         boundsIntervalRelative: 0,
-        deleted: false,
       });
 
       await this.#repo.insertOne(customTestSuite, connPool);

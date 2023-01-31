@@ -48,8 +48,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   #boundsIntervalRelative: number;
 
-  #deleted: boolean;
-
   #deletedAt?: string;
 
   get id(): string {
@@ -96,10 +94,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     return this.#boundsIntervalRelative;
   }
 
-  get deleted(): boolean {
-    return this.#deleted;
-  }
-
   get deletedAt(): string | undefined {
     return this.#deletedAt;
   }
@@ -116,7 +110,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     this.#executionType = props.executionType;
     this.#importanceThreshold = props.importanceThreshold;
     this.#boundsIntervalRelative = props.boundsIntervalRelative;
-    this.#deleted = props.deleted;
     this.#deletedAt = props.deletedAt;
   }
 
@@ -146,7 +139,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     executionType: this.#executionType,
     importanceThreshold: this.#importanceThreshold,
     boundsIntervalRelative: this.#boundsIntervalRelative,
-    deleted: this.#deleted,
     deletedAt: this.#deletedAt,
   });
 }

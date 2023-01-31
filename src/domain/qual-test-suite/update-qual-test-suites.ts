@@ -52,7 +52,6 @@ export class UpdateQualTestSuites
           : testSuite.activated,
       executionType: updateObj.props.executionType || testSuite.executionType,
       cron: updateObj.props.cron || testSuite.cron,
-      deleted: testSuite.deleted,
     });
 
   async execute(props: {

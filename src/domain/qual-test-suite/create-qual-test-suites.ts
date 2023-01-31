@@ -69,7 +69,6 @@ export class CreateQualTestSuites
           },
           cron: createObject.cron,
           executionType: createObject.executionType,
-          deleted: false,
         })
       );
 

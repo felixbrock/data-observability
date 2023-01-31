@@ -66,8 +66,6 @@ export class TestSuite {
 
   #boundsIntervalRelative: number;
 
-  #deleted: boolean;
-
   #deletedAt?: string;
 
   get id(): string {
@@ -106,10 +104,6 @@ export class TestSuite {
     return this.#boundsIntervalRelative;
   }
 
-  get deleted(): boolean {
-    return this.#deleted;
-  }
-
   get deletedAt(): string | undefined {
     return this.#deletedAt;
   }
@@ -124,7 +118,6 @@ export class TestSuite {
     this.#executionType = props.executionType;
     this.#importanceThreshold = props.importanceThreshold;
     this.#boundsIntervalRelative = props.boundsIntervalRelative;
-    this.#deleted = props.deleted;
     this.#deletedAt = props.deletedAt;
   }
 
@@ -166,7 +159,6 @@ export class TestSuite {
     executionType: this.#executionType,
     importanceThreshold: this.#importanceThreshold,
     boundsIntervalRelative: this.#boundsIntervalRelative,
-    deleted: this.#deleted,
     deletedAt: this.#deletedAt,
   });
 }

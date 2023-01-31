@@ -5,7 +5,6 @@ export interface BaseTestSuite {
   activated: boolean;
   cron: string;
   executionType: ExecutionType;
-  deleted: boolean;
   deletedAt?: string;
 }
 

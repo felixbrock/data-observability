@@ -50,6 +50,7 @@ export default class TestSuiteRepo
     { name: 'execution_type', nullable: false },
     { name: 'importance_threshold', nullable: false },
     { name: 'bounds_interval_relative', nullable: false },
+    { name: 'deleted_at', nullable: true },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -66,9 +67,7 @@ export default class TestSuiteRepo
 
       const queryText = `update ${appConfig.snowflake.databaseName}.${
         appConfig.snowflake.schemaName
-      }.${
-        this.matName
-      } set deleted = true, deleted_at = ${new Date().toISOString()}
+      }.${this.matName} set deleted_at = ${new Date().toISOString()}
       where target_id = ?
       `;
 
@@ -101,7 +100,6 @@ export default class TestSuiteRepo
       EXECUTION_TYPE: executionType,
       IMPORTANCE_THRESHOLD: importanceThreshold,
       BOUNDS_INTERVAL_RELATIVE: boundsIntervalRelative,
-      DELETED: deleted,
       DELETED_AT: deletedAt,
     } = sfEntity;
 
@@ -120,7 +118,6 @@ export default class TestSuiteRepo
       typeof executionType !== 'string' ||
       typeof importanceThreshold !== 'number' ||
       typeof boundsIntervalRelative !== 'number' ||
-      typeof deleted !== 'boolean' ||
       !TestSuiteRepo.isOptionalOfType<string>(deletedAt, 'string')
     )
       throw new Error(
@@ -144,7 +141,6 @@ export default class TestSuiteRepo
       executionType: parseExecutionType(executionType),
       importanceThreshold,
       boundsIntervalRelative,
-      deleted,
       deletedAt,
     };
   };
@@ -164,6 +160,7 @@ export default class TestSuiteRepo
     entity.executionType,
     entity.importanceThreshold,
     entity.boundsIntervalRelative,
+    entity.deletedAt || 'null',
   ];
 
   buildFindByQuery = (queryDto: TestSuiteQueryDto): Query => {

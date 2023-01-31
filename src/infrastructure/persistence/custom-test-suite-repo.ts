@@ -43,6 +43,7 @@ export default class CustomTestSuiteRepo
     { name: 'execution_type', nullable: false },
     { name: 'importance_threshold', nullable: false },
     { name: 'bounds_interval_relative', nullable: false },
+    { name: 'deleted_at', nullable: true },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -63,6 +64,7 @@ export default class CustomTestSuiteRepo
       EXECUTION_TYPE: executionType,
       IMPORTANCE_THRESHOLD: importanceThreshold,
       BOUNDS_INTERVAL_RELATIVE: boundsIntervalRelative,
+      DELETED_AT: deletedAt,
     } = sfEntity;
 
     if (
@@ -76,7 +78,8 @@ export default class CustomTestSuiteRepo
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
       typeof importanceThreshold !== 'number' ||
-      typeof boundsIntervalRelative !== 'number'
+      typeof boundsIntervalRelative !== 'number' ||
+      !CustomTestSuiteRepo.isOptionalOfType<string>(deletedAt, 'string')
     )
       throw new Error(
         'Retrieved unexpected custom test suite field types from persistence'
@@ -94,6 +97,7 @@ export default class CustomTestSuiteRepo
       executionType: parseExecutionType(executionType),
       importanceThreshold,
       boundsIntervalRelative,
+      deletedAt,
     };
   };
 
@@ -124,6 +128,7 @@ export default class CustomTestSuiteRepo
     entity.executionType,
     entity.importanceThreshold,
     entity.boundsIntervalRelative,
+    entity.deletedAt || 'null',
   ];
 
   buildUpdateQuery = (

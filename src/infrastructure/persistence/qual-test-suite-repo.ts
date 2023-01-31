@@ -47,6 +47,7 @@ export default class QualTestSuiteRepo
     { name: 'target_resource_id', nullable: false },
     { name: 'cron', nullable: false },
     { name: 'execution_type', nullable: false },
+    { name: 'deleted_at', nullable: true },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -63,9 +64,7 @@ export default class QualTestSuiteRepo
 
       const queryText = `update ${appConfig.snowflake.databaseName}.${
         appConfig.snowflake.schemaName
-      }.${
-        this.matName
-      } set deleted = true, deleted_at = ${new Date().toISOString()}
+      }.${this.matName} set deleted_at = ${new Date().toISOString()}
       where target_id = ?
       `;
 
@@ -95,6 +94,7 @@ export default class QualTestSuiteRepo
       TARGET_RESOURCE_ID: targetResourceId,
       CRON: cron,
       EXECUTION_TYPE: executionType,
+      DELETED_AT: deletedAt,
     } = sfEntity;
 
     if (
@@ -108,7 +108,8 @@ export default class QualTestSuiteRepo
       !QualTestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
-      typeof executionType !== 'string'
+      typeof executionType !== 'string' ||
+      !QualTestSuiteRepo.isOptionalOfType<string>(deletedAt, 'string')
     )
       throw new Error(
         'Retrieved unexpected qual test suite field types from persistence'
@@ -128,6 +129,7 @@ export default class QualTestSuiteRepo
       type: parseQualTestType(type),
       cron,
       executionType: parseExecutionType(executionType),
+      deletedAt,
     };
   };
 
@@ -143,6 +145,7 @@ export default class QualTestSuiteRepo
     entity.target.targetResourceId,
     entity.cron || 'null',
     entity.executionType,
+    entity.deletedAt || 'null',
   ];
 
   buildFindByQuery = (queryDto: QualTestSuiteQueryDto): Query => {

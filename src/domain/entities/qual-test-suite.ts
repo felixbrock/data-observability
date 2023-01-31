@@ -42,7 +42,6 @@ export interface QualTestSuiteDto {
   target: TestTarget;
   cron: string;
   executionType: ExecutionType;
-  deleted: boolean;
   deletedAt?: string;
 }
 
@@ -58,8 +57,6 @@ export class QualTestSuite {
   #cron: string;
 
   #executionType: ExecutionType;
-
-  #deleted: boolean;
 
   #deletedAt?: string;
 
@@ -87,10 +84,6 @@ export class QualTestSuite {
     return this.#executionType;
   }
 
-  get deleted(): boolean {
-    return this.#deleted;
-  }
-
   get deletedAt(): string | undefined {
     return this.#deletedAt;
   }
@@ -102,7 +95,6 @@ export class QualTestSuite {
     this.#target = props.target;
     this.#cron = props.cron;
     this.#executionType = props.executionType;
-    this.#deleted = props.deleted;
     this.#deletedAt = props.deletedAt;
   }
 
@@ -140,7 +132,6 @@ export class QualTestSuite {
     target: this.#target,
     cron: this.#cron,
     executionType: this.#executionType,
-    deleted: this.#deleted,
     deletedAt: this.#deletedAt,
   });
 }
