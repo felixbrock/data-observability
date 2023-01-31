@@ -13,7 +13,7 @@ export interface QuantTestAlertDto {
   materializationName: string;
   columnName?: string;
   deviation: string;
-  resourceId: string;
+  targetResourceId: string;
   chartUrl: string;
   importance: string;
   boundsIntervalRelative: string;

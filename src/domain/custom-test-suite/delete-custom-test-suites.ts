@@ -1,5 +1,5 @@
 import Result from '../value-types/transient-types/result';
-import { ITestSuiteRepo } from './i-test-suite-repo';
+import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
 import IUseCase from '../services/use-case';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { deleteSchedules } from '../services/schedule';
@@ -19,37 +19,37 @@ export const parseMode = (obj: unknown): Mode => {
   }
 };
 
-export interface DeleteTestSuitesRequestDto {
+export interface DeleteCustomTestSuitesRequestDto {
   targetResourceIds: string[];
   mode: Mode;
 }
 
-export type DeleteTestSuitesAuthDto = {
+export type DeleteCustomTestSuitesAuthDto = {
   callerOrgId: string;
 };
 
-export type DeleteTestSuitesResponseDto = Result<null>;
+export type DeleteCustomTestSuitesResponseDto = Result<null>;
 
-export class DeleteTestSuites
+export class DeleteCustomTestSuites
   implements
     IUseCase<
-      DeleteTestSuitesRequestDto,
-      DeleteTestSuitesResponseDto,
-      DeleteTestSuitesAuthDto,
+      DeleteCustomTestSuitesRequestDto,
+      DeleteCustomTestSuitesResponseDto,
+      DeleteCustomTestSuitesAuthDto,
       IConnectionPool
     >
 {
-  readonly #repo: ITestSuiteRepo;
+  readonly #repo: ICustomTestSuiteRepo;
 
-  constructor(testSuiteRepo: ITestSuiteRepo) {
+  constructor(testSuiteRepo: ICustomTestSuiteRepo) {
     this.#repo = testSuiteRepo;
   }
 
   async execute(props: {
-    req: DeleteTestSuitesRequestDto;
-    auth: DeleteTestSuitesAuthDto;
+    req: DeleteCustomTestSuitesRequestDto;
+    auth: DeleteCustomTestSuitesAuthDto;
     connPool: IConnectionPool;
-  }): Promise<DeleteTestSuitesResponseDto> {
+  }): Promise<DeleteCustomTestSuitesResponseDto> {
     const { req, auth, connPool } = props;
 
     try {

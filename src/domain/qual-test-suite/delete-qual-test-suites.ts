@@ -20,7 +20,7 @@ export const parseMode = (obj: unknown): Mode => {
 };
 
 export interface DeleteQualTestSuitesRequestDto {
-  targetResourceId: string;
+  targetResourceIds: string[];
   mode: Mode;
 }
 
@@ -55,7 +55,7 @@ export class DeleteQualTestSuites
     try {
       switch (req.mode) {
         case 'soft':
-          await this.#repo.softDeleteMany(req.targetResourceId, connPool);
+          await this.#repo.softDeleteMany(req.targetResourceIds, connPool);
           break;
         case 'hard':
           throw new Error('Hard delete not implemented yet');
@@ -66,7 +66,7 @@ export class DeleteQualTestSuites
       const testSuiteIds = (
         await this.#repo.findBy(
           {
-            targetResourceId: req.targetResourceId,
+            targetResourceIds: req.targetResourceIds,
           },
           connPool
         )

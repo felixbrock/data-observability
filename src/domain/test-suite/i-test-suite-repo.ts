@@ -1,6 +1,5 @@
 import { TestSuite } from '../entities/quant-test-suite';
 import { IServiceRepo } from '../services/i-service-repo';
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { ExecutionType } from '../value-types/execution-type';
 
 export interface TestSuiteUpdateDto {
@@ -15,16 +14,11 @@ export interface TestSuiteUpdateDto {
 export interface TestSuiteQueryDto {
   activated?: boolean;
   ids?: string[];
-  targetResourceId?: string;
+  targetResourceIds?: string[];
 }
 
 export type ITestSuiteRepo = IServiceRepo<
   TestSuite,
   TestSuiteQueryDto,
   TestSuiteUpdateDto
-> & {
-  softDeleteMany(
-    targetResourceId: string,
-    connPool: IConnectionPool
-  ): Promise<void>;
-};
+>;

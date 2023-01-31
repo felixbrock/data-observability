@@ -12,4 +12,8 @@ export interface IServiceRepo<Entity, QueryDto, UpdateDto> {
     connPool: IConnectionPool
   ): Promise<string>;
   replaceMany(entities: Entity[], connPool: IConnectionPool): Promise<number>;
+  softDeleteMany(
+    targetResourceIds: string[],
+    connPool: IConnectionPool
+  ): Promise<void>;
 }

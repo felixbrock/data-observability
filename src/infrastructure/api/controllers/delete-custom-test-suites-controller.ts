@@ -5,11 +5,11 @@ import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
 import {
-  DeleteQualTestSuites,
-  DeleteQualTestSuitesRequestDto,
-  DeleteQualTestSuitesResponseDto,
+  DeleteCustomTestSuites,
+  DeleteCustomTestSuitesRequestDto,
+  DeleteCustomTestSuitesResponseDto,
   parseMode,
-} from '../../../domain/qual-test-suite/delete-qual-test-suites';
+} from '../../../domain/custom-test-suite/delete-custom-test-suites';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -18,20 +18,22 @@ import {
   UserAccountInfo,
 } from './shared/base-controller';
 
-export default class DeleteQualTestSuitesController extends BaseController {
-  readonly #deletequalTestSuites: DeleteQualTestSuites;
+export default class DeleteCustomTestSuitesController extends BaseController {
+  readonly #deleteCustomTestSuites: DeleteCustomTestSuites;
 
   constructor(
-    deletequalTestSuites: DeleteQualTestSuites,
+    deleteCustomTestSuites: DeleteCustomTestSuites,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
   ) {
     super(getAccounts, getSnowflakeProfile);
 
-    this.#deletequalTestSuites = deletequalTestSuites;
+    this.#deleteCustomTestSuites = deleteCustomTestSuites;
   }
 
-  #buildRequestDto = (httpRequest: Request): DeleteQualTestSuitesRequestDto => {
+  #buildRequestDto = (
+    httpRequest: Request
+  ): DeleteCustomTestSuitesRequestDto => {
     const { targetResourceIds, mode } = httpRequest.query;
 
     if (typeof targetResourceIds !== 'string' || typeof mode !== 'string')
@@ -41,6 +43,7 @@ export default class DeleteQualTestSuitesController extends BaseController {
 
     return {
       targetResourceIds: targetResourceIds.split(','),
+
       mode: parseMode(mode),
     };
   };
@@ -50,7 +53,7 @@ export default class DeleteQualTestSuitesController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return DeleteQualTestSuitesController.unauthorized(
+        return DeleteCustomTestSuitesController.unauthorized(
           res,
           'Unauthorized - auth-header missing'
         );
@@ -61,7 +64,7 @@ export default class DeleteQualTestSuitesController extends BaseController {
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return DeleteQualTestSuitesController.unauthorized(
+        return DeleteCustomTestSuitesController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
@@ -71,13 +74,13 @@ export default class DeleteQualTestSuitesController extends BaseController {
       if (!getUserAccountInfoResult.value.callerOrgId)
         throw new Error('Unauthorized - Caller organization id missing');
 
-      const requestDto: DeleteQualTestSuitesRequestDto =
+      const requestDto: DeleteCustomTestSuitesRequestDto =
         this.#buildRequestDto(req);
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-      const useCaseResult: DeleteQualTestSuitesResponseDto =
-        await this.#deletequalTestSuites.execute({
+      const useCaseResult: DeleteCustomTestSuitesResponseDto =
+        await this.#deleteCustomTestSuites.execute({
           req: requestDto,
           auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
           connPool,
@@ -87,19 +90,19 @@ export default class DeleteQualTestSuitesController extends BaseController {
       await connPool.clear();
 
       if (!useCaseResult.success) {
-        return DeleteQualTestSuitesController.badRequest(res);
+        return DeleteCustomTestSuitesController.badRequest(res);
       }
 
       if (!useCaseResult.value)
-        throw new Error('Missing deletequal test suite result value');
+        throw new Error('Missing delete test suite result value');
 
-      return DeleteQualTestSuitesController.ok(res, CodeHttp.OK);
+      return DeleteCustomTestSuitesController.ok(res, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
-      return DeleteQualTestSuitesController.fail(
+      return DeleteCustomTestSuitesController.fail(
         res,
-        'deletequal test suites - Internal error occurred'
+        'delete test suites - Internal error occurred'
       );
     }
   }
