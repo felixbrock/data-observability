@@ -86,7 +86,7 @@ export class GenerateChart
       ) => {
         const localAcc = accumulation;
 
-        localAcc.xAxis.push(el.timestamp);
+        localAcc.xAxis.push(el.timestamp.slice(0, 10));
         localAcc.values.push(el.value);
         localAcc.upperBounds.push(el.valueUpperBound);
         localAcc.lowerBounds.push(el.valueLowerBound);
