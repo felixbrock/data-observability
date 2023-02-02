@@ -32,7 +32,7 @@ export default class DeleteTestSuitesController extends BaseController {
   }
 
   #buildRequestDto = (httpRequest: Request): DeleteTestSuitesRequestDto => {
-    const { targetResourceId: targetResourceIds, mode } = httpRequest.query;
+    const { targetResourceIds, mode } = httpRequest.query;
 
     if (typeof targetResourceIds !== 'string' || typeof mode !== 'string')
       throw new Error(

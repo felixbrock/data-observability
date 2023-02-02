@@ -67,6 +67,9 @@ export default class CustomTestSuiteRepo
       DELETED_AT: deletedAt,
     } = sfEntity;
 
+    const isOptionalDateField = (obj: unknown): obj is Date | undefined =>
+      !obj || obj instanceof Date;
+
     if (
       typeof id !== 'string' ||
       typeof activated !== 'boolean' ||
@@ -79,7 +82,7 @@ export default class CustomTestSuiteRepo
       typeof executionType !== 'string' ||
       typeof importanceThreshold !== 'number' ||
       typeof boundsIntervalRelative !== 'number' ||
-      !CustomTestSuiteRepo.isOptionalOfType<string>(deletedAt, 'string')
+      !isOptionalDateField(deletedAt)
     )
       throw new Error(
         'Retrieved unexpected custom test suite field types from persistence'
@@ -97,7 +100,7 @@ export default class CustomTestSuiteRepo
       executionType: parseExecutionType(executionType),
       importanceThreshold,
       boundsIntervalRelative,
-      deletedAt,
+      deletedAt: deletedAt ? deletedAt.toISOString() : undefined,
     };
   };
 

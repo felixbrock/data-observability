@@ -329,7 +329,7 @@ export default abstract class BaseSfRepo<
 
       const queryText = `update ${appConfig.snowflake.databaseName}.${
         appConfig.snowflake.schemaName
-      }.${this.matName} set deleted_at = ${new Date().toISOString()}
+      }.${this.matName} set deleted_at = '${new Date().toISOString()}'
       where array_contains(target_resource_id::variant, array_construct(${Array.from(
         { length: targetResourceIds.length },
         () => '?'

@@ -89,6 +89,7 @@ export abstract class BaseController {
       password: profile.password,
       username: profile.username,
       warehouse: profile.warehouseName,
+      application: appConfig.snowflake.applicationName,
     };
 
     return createPool(options, {

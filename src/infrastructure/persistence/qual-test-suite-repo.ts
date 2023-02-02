@@ -69,6 +69,9 @@ export default class QualTestSuiteRepo
       DELETED_AT: deletedAt,
     } = sfEntity;
 
+    const isOptionalDateField = (obj: unknown): obj is Date | undefined =>
+      !obj || obj instanceof Date;
+
     if (
       typeof id !== 'string' ||
       typeof type !== 'string' ||
@@ -81,7 +84,7 @@ export default class QualTestSuiteRepo
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
-      !QualTestSuiteRepo.isOptionalOfType<string>(deletedAt, 'string')
+      !isOptionalDateField(deletedAt)
     )
       throw new Error(
         'Retrieved unexpected qual test suite field types from persistence'
@@ -101,7 +104,7 @@ export default class QualTestSuiteRepo
       type: parseQualTestType(type),
       cron,
       executionType: parseExecutionType(executionType),
-      deletedAt,
+      deletedAt: deletedAt ? deletedAt.toISOString() : undefined,
     };
   };
 
