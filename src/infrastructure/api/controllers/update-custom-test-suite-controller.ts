@@ -7,7 +7,7 @@ import {
   UpdateCustomTestSuiteResponseDto,
 } from '../../../domain/custom-test-suite/update-custom-test-suite';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
-import { handleScheduleUpdate } from '../../../domain/services/schedule';
+import { updateSchedules } from '../../../domain/services/schedule';
 import { parseExecutionType } from '../../../domain/value-types/execution-type';
 import Result from '../../../domain/value-types/transient-types/result';
 
@@ -109,7 +109,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
         );
 
       if (requestDto.props && Object.keys(requestDto.props).length)
-        await handleScheduleUpdate(getUserAccountInfoResult.value.callerOrgId, [
+        await updateSchedules(getUserAccountInfoResult.value.callerOrgId, [
           {
             id: requestDto.id,
             props: {

@@ -48,6 +48,7 @@ export default class TestSuiteRepo
     { name: 'execution_type', nullable: false },
     { name: 'importance_threshold', nullable: false },
     { name: 'bounds_interval_relative', nullable: false },
+    { name: 'deleted_at', nullable: true },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -71,7 +72,11 @@ export default class TestSuiteRepo
       EXECUTION_TYPE: executionType,
       IMPORTANCE_THRESHOLD: importanceThreshold,
       BOUNDS_INTERVAL_RELATIVE: boundsIntervalRelative,
+      DELETED_AT: deletedAt,
     } = sfEntity;
+
+    const isOptionalDateField = (obj: unknown): obj is Date | undefined =>
+      !obj || obj instanceof Date;
 
     if (
       typeof id !== 'string' ||
@@ -87,7 +92,8 @@ export default class TestSuiteRepo
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
       typeof importanceThreshold !== 'number' ||
-      typeof boundsIntervalRelative !== 'number'
+      typeof boundsIntervalRelative !== 'number' ||
+      !isOptionalDateField(deletedAt)
     )
       throw new Error(
         'Retrieved unexpected test suite field types from persistence'
@@ -110,6 +116,7 @@ export default class TestSuiteRepo
       executionType: parseExecutionType(executionType),
       importanceThreshold,
       boundsIntervalRelative,
+      deletedAt: deletedAt ? deletedAt.toISOString() : undefined,
     };
   };
 
@@ -128,6 +135,7 @@ export default class TestSuiteRepo
     entity.executionType,
     entity.importanceThreshold,
     entity.boundsIntervalRelative,
+    entity.deletedAt || 'null',
   ];
 
   buildFindByQuery = (queryDto: TestSuiteQueryDto): Query => {
@@ -142,6 +150,15 @@ export default class TestSuiteRepo
     if (queryDto.ids && queryDto.ids.length) {
       binds.push(...queryDto.ids);
       const whereCondition = `array_contains(id::variant, array_construct(${queryDto.ids
+        .map(() => '?')
+        .join(',')}))`;
+      whereClause = whereClause
+        ? whereClause.concat(`and ${whereCondition} `)
+        : whereCondition;
+    }
+    if (queryDto.targetResourceIds && queryDto.targetResourceIds.length) {
+      binds.push(...queryDto.targetResourceIds);
+      const whereCondition = `array_contains(target_resource_id::variant, array_construct(${queryDto.targetResourceIds
         .map(() => '?')
         .join(',')}))`;
       whereClause = whereClause

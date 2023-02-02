@@ -11,6 +11,7 @@ export interface QualTestSuiteUpdateDto {
 export interface QualTestSuiteQueryDto {
   activated?: boolean;
   ids?: string[];
+  targetResourceIds?: string[];
 }
 
 export type IQualTestSuiteRepo = IServiceRepo<

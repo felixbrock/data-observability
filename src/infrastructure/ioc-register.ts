@@ -37,6 +37,9 @@ import SnowflakeApiRepo from './persistence/snowflake-api-repo';
 import { HandleQuantTestExecutionResult } from '../domain/test-execution-api/handle-quant-test-execution-result';
 import { HandleQualTestExecutionResult } from '../domain/test-execution-api/handle-qual-test-execution-result';
 import { GenerateChart } from '../domain/integration-api/slack/chart/generate-chart';
+import { DeleteTestSuites } from '../domain/test-suite/delete-test-suites';
+import { DeleteQualTestSuites } from '../domain/qual-test-suite/delete-qual-test-suites';
+import { DeleteCustomTestSuites } from '../domain/custom-test-suite/delete-custom-test-suites';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
@@ -59,6 +62,10 @@ iocRegister.register({
   updateTestSuites: asClass(UpdateTestSuites),
   updateQualTestSuites: asClass(UpdateQualTestSuites),
   updateCustomTestSuite: asClass(UpdateCustomTestSuite),
+
+  deleteTestSuites: asClass(DeleteTestSuites),
+  deleteQualTestSuites: asClass(DeleteQualTestSuites),
+  deleteCustomTestSuites: asClass(DeleteCustomTestSuites),
 
   triggerTestSuiteExecution: asClass(TriggerTestSuiteExecution),
   triggerQualTestSuiteExecution: asClass(TriggerQualTestSuiteExecution),

@@ -12,4 +12,5 @@ export type DbOptions = {
   username: string;
   password: string;
   warehouse: string;
+  application: string;
 };

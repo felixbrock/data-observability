@@ -7,7 +7,6 @@ import {
   CreateQualTestSuitesRequestDto,
   CreateQualTestSuitesResponseDto,
 } from '../../../domain/qual-test-suite/create-qual-test-suites';
-import { handleScheduleCreation } from '../../../domain/services/schedule';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -68,6 +67,7 @@ export default class CreateQualTestSuitesController extends BaseController {
       const useCaseResult: CreateQualTestSuitesResponseDto =
         await this.#createQualTestSuites.execute({
           req: requestDto,
+          auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
           connPool,
         });
 
@@ -82,12 +82,6 @@ export default class CreateQualTestSuitesController extends BaseController {
         throw new Error('Missing create test suite result value');
 
       const resultValues = useCaseResult.value.map((el) => el.toDto());
-
-      await handleScheduleCreation(
-        getUserAccountInfoResult.value.callerOrgId,
-        'nominal-test',
-        resultValues
-      );
 
       return CreateQualTestSuitesController.ok(
         res,

@@ -3,9 +3,9 @@ import { appConfig } from '../../../config';
 import customTestSuiteRoutes from './custom-test-suite-routes';
 import customTestSuitesRoutes from './custom-test-suites-routes';
 import testDataRoutes from './anomaly-routes';
-import qualTestSuiteRoutes from './test-suite-qual-routes';
+import qualTestSuiteRoutes from './qual-test-suite-routes';
 import testSuiteRoutes from './test-suite-routes';
-import qualTestSuitesRoutes from './test-suites-qual-routes';
+import qualTestSuitesRoutes from './qual-test-suites-routes';
 import testSuitesRoutes from './test-suites-routes';
 
 const version = 'v1';

@@ -45,6 +45,7 @@ export default class QualTestSuiteRepo
     { name: 'target_resource_id', nullable: false },
     { name: 'cron', nullable: false },
     { name: 'execution_type', nullable: false },
+    { name: 'deleted_at', nullable: true },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -65,7 +66,11 @@ export default class QualTestSuiteRepo
       TARGET_RESOURCE_ID: targetResourceId,
       CRON: cron,
       EXECUTION_TYPE: executionType,
+      DELETED_AT: deletedAt,
     } = sfEntity;
+
+    const isOptionalDateField = (obj: unknown): obj is Date | undefined =>
+      !obj || obj instanceof Date;
 
     if (
       typeof id !== 'string' ||
@@ -78,7 +83,8 @@ export default class QualTestSuiteRepo
       !QualTestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
-      typeof executionType !== 'string'
+      typeof executionType !== 'string' ||
+      !isOptionalDateField(deletedAt)
     )
       throw new Error(
         'Retrieved unexpected qual test suite field types from persistence'
@@ -98,6 +104,7 @@ export default class QualTestSuiteRepo
       type: parseQualTestType(type),
       cron,
       executionType: parseExecutionType(executionType),
+      deletedAt: deletedAt ? deletedAt.toISOString() : undefined,
     };
   };
 
@@ -113,6 +120,7 @@ export default class QualTestSuiteRepo
     entity.target.targetResourceId,
     entity.cron || 'null',
     entity.executionType,
+    entity.deletedAt || 'null',
   ];
 
   buildFindByQuery = (queryDto: QualTestSuiteQueryDto): Query => {
@@ -133,6 +141,15 @@ export default class QualTestSuiteRepo
         ? whereClause.concat(`and ${whereCondition} `)
         : whereCondition;
     }
+    if (queryDto.targetResourceIds && queryDto.targetResourceIds.length) {
+      binds.push(...queryDto.targetResourceIds);
+      const whereCondition = `array_contains(target_resource_id::variant, array_construct(${queryDto.targetResourceIds
+        .map(() => '?')
+        .join(',')}))`;
+      whereClause = whereClause
+        ? whereClause.concat(`and ${whereCondition} `)
+        : whereCondition;
+    }
 
     const text = `select * from ${relationPath}.${this.matName}
         ${whereClause ? 'where' : ''}  ${whereClause};`;
@@ -140,10 +157,7 @@ export default class QualTestSuiteRepo
     return { text, binds };
   };
 
-  buildUpdateQuery = (
-    id: string,
-    updateDto: QualTestSuiteUpdateDto
-  ): Query => {
+  buildUpdateQuery = (id: string, updateDto: QualTestSuiteUpdateDto): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
     const binds: Binds = [id];
 
@@ -167,7 +181,6 @@ export default class QualTestSuiteRepo
     return { text, binds, colDefinitions };
   };
 
-  toEntity = (
-    qualtestsuiteProperties: QualTestSuiteProps
-  ): QualTestSuite => QualTestSuite.create(qualtestsuiteProperties);
+  toEntity = (qualtestsuiteProperties: QualTestSuiteProps): QualTestSuite =>
+    QualTestSuite.create(qualtestsuiteProperties);
 }

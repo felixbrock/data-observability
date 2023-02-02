@@ -3,7 +3,7 @@ import {
   MaterializationType,
   parseMaterializationType,
 } from '../value-types/materialization-type';
-import { BaseQualTestSuite } from '../value-types/transient-types/base-test-suite';
+import { BaseTestSuite } from '../value-types/transient-types/base-test-suite';
 
 export interface TestTarget {
   targetResourceId: string;
@@ -30,7 +30,7 @@ export const parseQualTestType = (testType: unknown): QualTestType => {
   throw new Error('Provision of invalid type');
 };
 
-export interface QualTestSuiteProps extends BaseQualTestSuite {
+export interface QualTestSuiteProps extends BaseTestSuite {
   type: QualTestType;
   target: TestTarget;
 }
@@ -42,9 +42,10 @@ export interface QualTestSuiteDto {
   target: TestTarget;
   cron: string;
   executionType: ExecutionType;
+  deletedAt?: string;
 }
 
-export class QualTestSuite implements BaseQualTestSuite {
+export class QualTestSuite {
   #id: string;
 
   #activated: boolean;
@@ -56,6 +57,8 @@ export class QualTestSuite implements BaseQualTestSuite {
   #cron: string;
 
   #executionType: ExecutionType;
+
+  #deletedAt?: string;
 
   get id(): string {
     return this.#id;
@@ -81,6 +84,10 @@ export class QualTestSuite implements BaseQualTestSuite {
     return this.#executionType;
   }
 
+  get deletedAt(): string | undefined {
+    return this.#deletedAt;
+  }
+
   private constructor(props: QualTestSuiteProps) {
     this.#id = props.id;
     this.#activated = props.activated;
@@ -88,6 +95,7 @@ export class QualTestSuite implements BaseQualTestSuite {
     this.#target = props.target;
     this.#cron = props.cron;
     this.#executionType = props.executionType;
+    this.#deletedAt = props.deletedAt;
   }
 
   static create = (props: QualTestSuiteProps): QualTestSuite => {
@@ -124,5 +132,6 @@ export class QualTestSuite implements BaseQualTestSuite {
     target: this.#target,
     cron: this.#cron,
     executionType: this.#executionType,
+    deletedAt: this.#deletedAt,
   });
 }

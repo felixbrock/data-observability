@@ -1,4 +1,5 @@
 import { Blob } from 'node:buffer';
+import { appConfig } from '../../../config';
 import { IServiceRepo } from '../../../domain/services/i-service-repo';
 import {
   Bind,
@@ -316,6 +317,34 @@ export default abstract class BaseSfRepo<
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Promise.reject(new Error());
+    }
+  };
+
+  softDeleteMany = async (
+    targetResourceIds: string[],
+    connPool: IConnectionPool
+  ): Promise<void> => {
+    try {
+      const binds = [...targetResourceIds];
+
+      const queryText = `update ${appConfig.snowflake.databaseName}.${
+        appConfig.snowflake.schemaName
+      }.${this.matName} set deleted_at = '${new Date().toISOString()}'
+      where array_contains(target_resource_id::variant, array_construct(${Array.from(
+        { length: targetResourceIds.length },
+        () => '?'
+      ).join(',')}))`;
+
+      const res = await this.querySnowflake.execute({
+        req: { queryText, binds },
+        connPool,
+      });
+
+      if (!res.success) throw new Error(res.error);
+      if (!res.value) throw new Error('Missing sf query value');
+    } catch (error: unknown) {
+      if (error instanceof Error) console.error(error.stack);
+      else if (error) console.trace(error);
     }
   };
 

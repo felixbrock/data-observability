@@ -13,6 +13,8 @@ import {
   CreateScheduleGroupCommand,
   ListScheduleGroupsCommand,
   ListScheduleGroupsCommandInput,
+  DeleteScheduleCommandInput,
+  DeleteScheduleCommand,
 } from '@aws-sdk/client-scheduler';
 import { appConfig } from '../../config';
 import { ExecutionType } from '../value-types/execution-type';
@@ -102,7 +104,7 @@ const groupExists = async (
   return !!(res.ScheduleGroups && res.ScheduleGroups.length);
 };
 
-const createScheduleGroup = async (
+const createGroup = async (
   orgId: string,
   client: SchedulerClient
 ): Promise<void> => {
@@ -256,7 +258,7 @@ const updateSchedule = async (
     );
 };
 
-const executeThrottleSensitive = async (
+const createThrottleSensitive = async (
   dtos: CreateTestSuiteScheduleObj[],
   orgId: string,
   testSuiteType: TestSuiteType,
@@ -295,7 +297,7 @@ const sliceJobs = <T>(jobs: T[], batchSize: number): T[][] => {
   return batches;
 };
 
-export const handleScheduleCreation = async (
+export const createSchedules = async (
   orgId: string,
   testSuiteType: TestSuiteType,
   testSuiteDtos: CreateTestSuiteScheduleObj[]
@@ -306,19 +308,78 @@ export const handleScheduleCreation = async (
 
   const scheduleGroupExists = await groupExists(orgId, schedulerClient);
 
-  if (!scheduleGroupExists) await createScheduleGroup(orgId, schedulerClient);
+  if (!scheduleGroupExists) await createGroup(orgId, schedulerClient);
 
   const testSuiteDtoBatches = sliceJobs(testSuiteDtos, 45);
 
   await Promise.all(
     testSuiteDtoBatches.map(async (el, i) => {
-      await executeThrottleSensitive(
+      await createThrottleSensitive(
         el,
         orgId,
         testSuiteType,
         i,
         schedulerClient
       );
+    })
+  );
+
+  schedulerClient.destroy();
+};
+
+const deleteSchedule = async (
+  testSuiteId: string,
+  orgId: string,
+  client: SchedulerClient
+): Promise<void> => {
+  const scheduleName = getScheduleName(testSuiteId);
+
+  const commandInput: DeleteScheduleCommandInput = {
+    Name: scheduleName,
+    GroupName: getGroupName(orgId),
+  };
+
+  const command = new DeleteScheduleCommand(commandInput);
+
+  const res = await client.send(command);
+
+  if (!res.$metadata.httpStatusCode)
+    throw new Error('Deletion of schedule failed');
+};
+
+const deleteThrottleSensitive = async (
+  testSuiteIds: string[],
+  orgId: string,
+  delayMulitplicator: number,
+  schedulerClient: SchedulerClient
+): Promise<void> => {
+  await new Promise((resolve) =>
+    // eslint-disable-next-line no-promise-executor-return
+    setTimeout(resolve, 1000 + delayMulitplicator * 1000)
+  );
+
+  console.log(`Deleting ${testSuiteIds.length} schedules`);
+
+  await Promise.all(
+    testSuiteIds.map(async (el) => {
+      await deleteSchedule(el, orgId, schedulerClient);
+    })
+  );
+};
+
+export const deleteSchedules = async (
+  orgId: string,
+  testSuiteIds: string[]
+): Promise<void> => {
+  const schedulerClient = new SchedulerClient({
+    region: appConfig.cloud.region,
+  });
+
+  const batches = sliceJobs(testSuiteIds, 45);
+
+  await Promise.all(
+    batches.map(async (el, i) => {
+      await deleteThrottleSensitive(el, orgId, i, schedulerClient);
     })
   );
 
@@ -362,7 +423,7 @@ const updateThrottleSensitive = async (
   );
 };
 
-export const handleScheduleUpdate = async <
+export const updateSchedules = async <
   UpdateObject extends {
     id: string;
     props: {

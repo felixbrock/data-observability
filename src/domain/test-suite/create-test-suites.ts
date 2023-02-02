@@ -4,9 +4,9 @@ import { TestSuite, TestType } from '../entities/quant-test-suite';
 import { MaterializationType } from '../value-types/materialization-type';
 import { ExecutionType } from '../value-types/execution-type';
 import { ITestSuiteRepo } from './i-test-suite-repo';
-import TestSuiteRepo from '../../infrastructure/persistence/test-suite-repo';
 import IUseCase from '../services/use-case';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
+import { createSchedules } from '../services/schedule';
 
 interface CreateObject {
   activated: boolean;
@@ -26,7 +26,7 @@ export interface CreateTestSuitesRequestDto {
   createObjects: CreateObject[];
 }
 
-export type CreateTestSuitesAuthDto = null;
+export type CreateTestSuitesAuthDto = { callerOrgId: string };
 
 export type CreateTestSuitesResponseDto = Result<TestSuite[]>;
 
@@ -41,15 +41,16 @@ export class CreateTestSuites
 {
   readonly #repo: ITestSuiteRepo;
 
-  constructor(testSuiteRepo: TestSuiteRepo) {
+  constructor(testSuiteRepo: ITestSuiteRepo) {
     this.#repo = testSuiteRepo;
   }
 
   async execute(props: {
     req: CreateTestSuitesRequestDto;
+    auth: CreateTestSuitesAuthDto;
     connPool: IConnectionPool;
   }): Promise<CreateTestSuitesResponseDto> {
-    const { req, connPool } = props;
+    const { req, auth, connPool } = props;
 
     try {
       const testSuites = req.createObjects.map((el) =>
@@ -74,6 +75,8 @@ export class CreateTestSuites
       );
 
       await this.#repo.insertMany(testSuites, connPool);
+
+      await createSchedules(auth.callerOrgId, 'test', testSuites);
 
       return Result.ok(testSuites);
     } catch (error: unknown) {

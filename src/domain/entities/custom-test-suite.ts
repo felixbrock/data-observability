@@ -16,7 +16,6 @@ export const parseCustomTestType = (testType: unknown): CustomTestType => {
 };
 
 export interface CustomTestSuiteProps extends BaseQuantTestSuite {
-  id: string;
   name: string;
   description: string;
   sqlLogic: string;
@@ -48,6 +47,8 @@ export class CustomTestSuite implements CustomTestSuiteDto {
   #importanceThreshold: number;
 
   #boundsIntervalRelative: number;
+
+  #deletedAt?: string;
 
   get id(): string {
     return this.#id;
@@ -93,6 +94,10 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     return this.#boundsIntervalRelative;
   }
 
+  get deletedAt(): string | undefined {
+    return this.#deletedAt;
+  }
+
   private constructor(props: CustomTestSuiteProps) {
     this.#id = props.id;
     this.#activated = props.activated;
@@ -105,6 +110,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     this.#executionType = props.executionType;
     this.#importanceThreshold = props.importanceThreshold;
     this.#boundsIntervalRelative = props.boundsIntervalRelative;
+    this.#deletedAt = props.deletedAt;
   }
 
   static create = (props: CustomTestSuiteProps): CustomTestSuite => {
@@ -133,5 +139,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     executionType: this.#executionType,
     importanceThreshold: this.#importanceThreshold,
     boundsIntervalRelative: this.#boundsIntervalRelative,
+    deletedAt: this.#deletedAt,
   });
 }

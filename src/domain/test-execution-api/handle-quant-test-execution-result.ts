@@ -176,7 +176,7 @@ export class HandleQuantTestExecutionResult
         testExecutionResult.alertData.value % 1 !== 0
           ? testExecutionResult.alertData.value.toFixed(4)
           : testExecutionResult.alertData.value.toString(),
-      resourceId: testExecutionResult.targetResourceId,
+      targetResourceId: testExecutionResult.targetResourceId,
       chartUrl: generateChartRes.value.url,
       importance:
         testExecutionResult.testData.anomaly.importance % 1 !== 0

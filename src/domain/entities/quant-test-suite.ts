@@ -45,19 +45,9 @@ export interface TestSuiteProps extends BaseQuantTestSuite {
   target: TestTarget;
 }
 
-export interface TestSuiteDto {
-  id: string;
-  activated: boolean;
-  type: TestType;
-  threshold: number;
-  target: TestTarget;
-  cron: string;
-  executionType: ExecutionType;
-  importanceThreshold: number;
-  boundsIntervalRelative: number;
-}
+export type TestSuiteDto = TestSuiteProps;
 
-export class TestSuite implements BaseQuantTestSuite {
+export class TestSuite {
   #id: string;
 
   #activated: boolean;
@@ -75,6 +65,8 @@ export class TestSuite implements BaseQuantTestSuite {
   #importanceThreshold: number;
 
   #boundsIntervalRelative: number;
+
+  #deletedAt?: string;
 
   get id(): string {
     return this.#id;
@@ -112,6 +104,10 @@ export class TestSuite implements BaseQuantTestSuite {
     return this.#boundsIntervalRelative;
   }
 
+  get deletedAt(): string | undefined {
+    return this.#deletedAt;
+  }
+
   private constructor(props: TestSuiteProps) {
     this.#id = props.id;
     this.#activated = props.activated;
@@ -122,6 +118,7 @@ export class TestSuite implements BaseQuantTestSuite {
     this.#executionType = props.executionType;
     this.#importanceThreshold = props.importanceThreshold;
     this.#boundsIntervalRelative = props.boundsIntervalRelative;
+    this.#deletedAt = props.deletedAt;
   }
 
   static create = (props: TestSuiteProps): TestSuite => {
@@ -162,5 +159,6 @@ export class TestSuite implements BaseQuantTestSuite {
     executionType: this.#executionType,
     importanceThreshold: this.#importanceThreshold,
     boundsIntervalRelative: this.#boundsIntervalRelative,
+    deletedAt: this.#deletedAt,
   });
 }

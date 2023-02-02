@@ -3,6 +3,7 @@ import app from '../../ioc-register';
 import ReadTestSuitesController from '../controllers/read-test-suites-controller';
 import UpdateTestSuitesController from '../controllers/update-test-suites-controller';
 import CreateTestSuitesController from '../controllers/create-test-suites-controller';
+import DeleteTestSuitesController from '../controllers/delete-test-suites-controller';
 
 const testSuitesRoutes = Router();
 
@@ -27,6 +28,12 @@ const updateTestSuitesController = new UpdateTestSuitesController(
   getSnowflakeProfile
 );
 
+const deleteTestSuitesController = new DeleteTestSuitesController(
+  app.resolve('deleteTestSuites'),
+  getAccounts,
+  getSnowflakeProfile
+);
+
 testSuitesRoutes.get('/', (req, res) => {
   readTestSuitesController.execute(req, res);
 });
@@ -37,6 +44,10 @@ testSuitesRoutes.post('/', (req, res) => {
 
 testSuitesRoutes.patch('/', (req, res) => {
   updateTestSuitesController.execute(req, res);
+});
+
+testSuitesRoutes.delete('/', (req, res) => {
+  deleteTestSuitesController.execute(req, res);
 });
 
 export default testSuitesRoutes;

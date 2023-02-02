@@ -14,6 +14,7 @@ export interface TestSuiteUpdateDto {
 export interface TestSuiteQueryDto {
   activated?: boolean;
   ids?: string[];
+  targetResourceIds?: string[];
 }
 
 export type ITestSuiteRepo = IServiceRepo<

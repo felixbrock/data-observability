@@ -5,10 +5,11 @@ import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
 import {
-  CreateTestSuites,
-  CreateTestSuitesRequestDto,
-  CreateTestSuitesResponseDto,
-} from '../../../domain/test-suite/create-test-suites';
+  DeleteCustomTestSuites,
+  DeleteCustomTestSuitesRequestDto,
+  DeleteCustomTestSuitesResponseDto,
+  parseMode,
+} from '../../../domain/custom-test-suite/delete-custom-test-suites';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -17,29 +18,42 @@ import {
   UserAccountInfo,
 } from './shared/base-controller';
 
-export default class CreateTestSuitesController extends BaseController {
-  readonly #createTestSuites: CreateTestSuites;
+export default class DeleteCustomTestSuitesController extends BaseController {
+  readonly #deleteCustomTestSuites: DeleteCustomTestSuites;
 
   constructor(
-    createTestSuites: CreateTestSuites,
+    deleteCustomTestSuites: DeleteCustomTestSuites,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile
   ) {
     super(getAccounts, getSnowflakeProfile);
 
-    this.#createTestSuites = createTestSuites;
+    this.#deleteCustomTestSuites = deleteCustomTestSuites;
   }
 
-  #buildRequestDto = (httpRequest: Request): CreateTestSuitesRequestDto => ({
-    createObjects: httpRequest.body.createObjects,
-  });
+  #buildRequestDto = (
+    httpRequest: Request
+  ): DeleteCustomTestSuitesRequestDto => {
+    const { targetResourceIds, mode } = httpRequest.query;
+
+    if (typeof targetResourceIds !== 'string' || typeof mode !== 'string')
+      throw new Error(
+        'Received test suite deletion req params in invalid format'
+      );
+
+    return {
+      targetResourceIds: targetResourceIds.split(','),
+
+      mode: parseMode(mode),
+    };
+  };
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
     try {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return CreateTestSuitesController.unauthorized(
+        return DeleteCustomTestSuitesController.unauthorized(
           res,
           'Unauthorized - auth-header missing'
         );
@@ -50,7 +64,7 @@ export default class CreateTestSuitesController extends BaseController {
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return CreateTestSuitesController.unauthorized(
+        return DeleteCustomTestSuitesController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
@@ -60,12 +74,13 @@ export default class CreateTestSuitesController extends BaseController {
       if (!getUserAccountInfoResult.value.callerOrgId)
         throw new Error('Unauthorized - Caller organization id missing');
 
-      const requestDto: CreateTestSuitesRequestDto = this.#buildRequestDto(req);
+      const requestDto: DeleteCustomTestSuitesRequestDto =
+        this.#buildRequestDto(req);
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
-      const useCaseResult: CreateTestSuitesResponseDto =
-        await this.#createTestSuites.execute({
+      const useCaseResult: DeleteCustomTestSuitesResponseDto =
+        await this.#deleteCustomTestSuites.execute({
           req: requestDto,
           auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
           connPool,
@@ -75,21 +90,16 @@ export default class CreateTestSuitesController extends BaseController {
       await connPool.clear();
 
       if (!useCaseResult.success) {
-        return CreateTestSuitesController.badRequest(res);
+        return DeleteCustomTestSuitesController.badRequest(res);
       }
 
-      if (!useCaseResult.value)
-        throw new Error('Missing create test suite result value');
-
-      const resultValues = useCaseResult.value.map((el) => el.toDto());
-
-      return CreateTestSuitesController.ok(res, resultValues, CodeHttp.CREATED);
+      return DeleteCustomTestSuitesController.ok(res, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
-      return CreateTestSuitesController.fail(
+      return DeleteCustomTestSuitesController.fail(
         res,
-        'create test suites - Internal error occurred'
+        'delete test suites - Internal error occurred'
       );
     }
   }
