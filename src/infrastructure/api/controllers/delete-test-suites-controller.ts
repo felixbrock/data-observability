@@ -90,9 +90,6 @@ export default class DeleteTestSuitesController extends BaseController {
         return DeleteTestSuitesController.badRequest(res);
       }
 
-      if (!useCaseResult.value)
-        throw new Error('Missing delete test suite result value');
-
       return DeleteTestSuitesController.ok(res, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);

@@ -329,12 +329,14 @@ export const createSchedules = async (
 
 const deleteSchedule = async (
   testSuiteId: string,
+  orgId: string,
   client: SchedulerClient
 ): Promise<void> => {
   const scheduleName = getScheduleName(testSuiteId);
 
   const commandInput: DeleteScheduleCommandInput = {
     Name: scheduleName,
+    GroupName: getGroupName(orgId),
   };
 
   const command = new DeleteScheduleCommand(commandInput);
@@ -347,6 +349,7 @@ const deleteSchedule = async (
 
 const deleteThrottleSensitive = async (
   testSuiteIds: string[],
+  orgId: string,
   delayMulitplicator: number,
   schedulerClient: SchedulerClient
 ): Promise<void> => {
@@ -359,7 +362,7 @@ const deleteThrottleSensitive = async (
 
   await Promise.all(
     testSuiteIds.map(async (el) => {
-      await deleteSchedule(el, schedulerClient);
+      await deleteSchedule(el, orgId, schedulerClient);
     })
   );
 };
@@ -376,7 +379,7 @@ export const deleteSchedules = async (
 
   await Promise.all(
     batches.map(async (el, i) => {
-      await deleteThrottleSensitive(el, i, schedulerClient);
+      await deleteThrottleSensitive(el, orgId, i, schedulerClient);
     })
   );
 

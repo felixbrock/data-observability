@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.245.0",
-    "@aws-sdk/client-scheduler": "^3.216.0",
+    "@aws-sdk/client-scheduler": "^3.264.0",
     "@vendia/serverless-express": "^4.10.1",
     "awilix": "^6.1.0",
     "axios": "^0.26.0",

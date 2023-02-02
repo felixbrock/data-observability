@@ -90,9 +90,6 @@ export default class DeleteQualTestSuitesController extends BaseController {
         return DeleteQualTestSuitesController.badRequest(res);
       }
 
-      if (!useCaseResult.value)
-        throw new Error('Missing deletequal test suite result value');
-
       return DeleteQualTestSuitesController.ok(res, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
