@@ -51,18 +51,36 @@ export class GenerateChart
       IConnectionPool
     >
 {
-  readonly #defaultYAxis: YAXisComponentOption = {
+  #getDefaultYAxis = (
+    minBase: number,
+    maxBase: number
+  ): YAXisComponentOption => ({
     type: 'value',
     boundaryGap: [0, '30%'],
-    min: 'dataMin',
-    max: 'dataMax',
-  };
+    min: `${minBase - (maxBase - minBase) * 0.5}`,
+    max: `${maxBase + (maxBase - minBase) * 0.5}`,
+  });
 
   readonly #querySnowflake: QuerySnowflake;
 
   constructor(querySnowflake: QuerySnowflake) {
     this.#querySnowflake = querySnowflake;
   }
+
+  #getHistoryMinMax = (
+    historyDataSet: TestHistoryDataPoint[]
+  ): [number, number] =>
+    historyDataSet.reduce<[number, number]>(
+      (acc, curr) => {
+        const localAcc = acc;
+
+        if (curr.value < localAcc[0]) localAcc[0] = curr.value;
+        if (curr.value > localAcc[1]) localAcc[1] = curr.value;
+
+        return localAcc;
+      },
+      [historyDataSet[0].value, historyDataSet[0].value]
+    );
 
   #buildDefaultOption = (
     yAxis: YAXisComponentOption,
@@ -282,7 +300,12 @@ export class GenerateChart
 
     const chart = init(canvas);
 
-    chart.setOption(this.#buildDefaultOption(this.#defaultYAxis, datapoints));
+    chart.setOption(
+      this.#buildDefaultOption(
+        this.#getDefaultYAxis(...this.#getHistoryMinMax(datapoints)),
+        datapoints
+      )
+    );
 
     return canvas;
   };
