@@ -19,19 +19,11 @@ import {
 import { appConfig } from '../../config';
 import { ExecutionType } from '../value-types/execution-type';
 
-interface CreateTestSuiteScheduleObj {
+interface TestSuiteScheduleObj {
   executionType: ExecutionType;
   cron: string;
-  id: string;
-}
-
-interface UpdateTestSuiteScheduleObj {
-  id: string;
-  props: {
-    executionType?: ExecutionType;
-    cron?: string;
-    activated?: boolean;
-  };
+  toBeActivated: boolean;
+  testSuiteId: string;
 }
 
 export const testSuiteTypes = ['test', 'custom-test', 'nominal-test'] as const;
@@ -59,16 +51,15 @@ interface Schedule {
   };
 }
 
-interface BaseTargetInputPrototype {
+interface TargetInputPrototype {
   executionType: ExecutionType;
-}
-
-export interface CreateScheduleTargetInputPrototype
-  extends BaseTargetInputPrototype {
   testSuiteType: TestSuiteType;
 }
 
-export type UpdateScheduleTargetInputPrototype = BaseTargetInputPrototype;
+export interface ScheduleProps {
+  cron: string;
+  toBeActivated: boolean;
+}
 
 const schedulePrefix = 's';
 const groupPrefix = 'g';
@@ -121,10 +112,10 @@ const createGroup = async (
 };
 
 const createSchedule = async (
-  cron: string,
+  scheduleProps: ScheduleProps,
   testSuiteId: string,
   orgId: string,
-  targetInputPrototype: CreateScheduleTargetInputPrototype,
+  targetInputPrototype: TargetInputPrototype,
   client: SchedulerClient
 ): Promise<void> => {
   const scheduleName = getScheduleName(testSuiteId);
@@ -133,9 +124,11 @@ const createSchedule = async (
   const commandInput: CreateScheduleCommandInput = {
     Name: scheduleName,
     GroupName: groupName,
-    ScheduleExpression: `cron(${cron})`,
+    ScheduleExpression: `cron(${scheduleProps.cron})`,
     FlexibleTimeWindow: { Mode: FlexibleTimeWindowMode.OFF },
-    State: ScheduleState.ENABLED,
+    State: scheduleProps.toBeActivated
+      ? ScheduleState.ENABLED
+      : ScheduleState.DISABLED,
     Target: {
       Arn: appConfig.cloud.scheduleQueueArn,
       RoleArn: appConfig.cloud.testExecutionJobRoleArn,
@@ -160,87 +153,78 @@ const getCurrentSchedule = async (
   name: string,
   orgId: string,
   client: SchedulerClient
-): Promise<Schedule> => {
+): Promise<Schedule | undefined> => {
   const getCommandInput: GetScheduleCommandInput = {
     GroupName: getGroupName(orgId),
     Name: name,
   };
 
-  const getCommand = new GetScheduleCommand(getCommandInput);
+  try {
+    const getCommand = new GetScheduleCommand(getCommandInput);
+    const schedule = await client.send(getCommand);
 
-  const schedule = await client.send(getCommand);
+    const {
+      Name,
+      GroupName,
+      State,
+      ScheduleExpression,
+      FlexibleTimeWindow: flexibleTimeWindow,
+      Target,
+    } = schedule;
 
-  const {
-    Name,
-    GroupName,
-    State,
-    ScheduleExpression,
-    FlexibleTimeWindow: flexibleTimeWindow,
-    Target,
-  } = schedule;
+    const isScheduleState = (state: unknown): state is ScheduleState =>
+      typeof state === 'string' && state in ScheduleState;
 
-  const isScheduleState = (state: unknown): state is ScheduleState =>
-    typeof state === 'string' && state in ScheduleState;
+    if (
+      !Name ||
+      !GroupName ||
+      !State ||
+      !isScheduleState(State) ||
+      !ScheduleExpression ||
+      !flexibleTimeWindow ||
+      !Target
+    )
+      throw new Error('Unable to retrieve schedule schedule');
 
-  if (
-    !Name ||
-    !GroupName ||
-    !State ||
-    !isScheduleState(State) ||
-    !ScheduleExpression ||
-    !flexibleTimeWindow ||
-    !Target
-  )
-    throw new Error('Unable to retrieve schedule schedule');
+    const { Arn, RoleArn, Input } = Target;
+    if (!Arn || !RoleArn || !Input)
+      throw new Error('Missing target properties');
 
-  const { Arn, RoleArn, Input } = Target;
-  if (!Arn || !RoleArn || !Input) throw new Error('Missing target properties');
-
-  return {
-    Name,
-    GroupName,
-    State,
-    ScheduleExpression,
-    FlexibleTimeWindow: flexibleTimeWindow,
-    Target: { Arn, RoleArn, Input },
-  };
+    return {
+      Name,
+      GroupName,
+      State,
+      ScheduleExpression,
+      FlexibleTimeWindow: flexibleTimeWindow,
+      Target: { Arn, RoleArn, Input },
+    };
+  } catch (error) {
+    return undefined;
+  }
 };
-
-export interface ScheduleUpdateProps {
-  cron?: string;
-  toBeActivated?: boolean;
-  target?: {
-    executionType: ExecutionType;
-  };
-}
 
 const updateSchedule = async (
   testSuiteId: string,
   orgId: string,
-  updateProps: ScheduleUpdateProps,
+  scheduleProps: ScheduleProps,
+  targetInputPrototype: TargetInputPrototype,
+  schedule: Schedule,
   client: SchedulerClient
 ): Promise<void> => {
-  if (!Object.keys(updateProps).length)
-    throw new Error(`No input provided for updating schedule `);
-
-  const scheduleName = getScheduleName(testSuiteId);
-  const schedule = await getCurrentSchedule(scheduleName, orgId, client);
-
   const commandInput: UpdateScheduleCommandInput = schedule;
-  if (updateProps.cron)
-    commandInput.ScheduleExpression = `cron(${updateProps.cron})`;
+  commandInput.ScheduleExpression = `cron(${scheduleProps.cron})`;
 
-  if (updateProps.toBeActivated) commandInput.State = ScheduleState.ENABLED;
-  else if (updateProps.toBeActivated !== undefined)
+  if (scheduleProps.toBeActivated) commandInput.State = ScheduleState.ENABLED;
+  else if (scheduleProps.toBeActivated !== undefined)
     commandInput.State = ScheduleState.DISABLED;
 
   if (!commandInput.Target)
     throw new Error('Current schedule is missing target input');
 
-  if (updateProps.target && updateProps.target.executionType) {
+  if (targetInputPrototype && targetInputPrototype.executionType) {
     commandInput.Target.Input = JSON.stringify({
       ...JSON.parse(schedule.Target.Input),
-      executionType: updateProps.target.executionType,
+      executionType: targetInputPrototype.executionType,
     });
   }
 
@@ -259,7 +243,7 @@ const updateSchedule = async (
 };
 
 const createThrottleSensitive = async (
-  dtos: CreateTestSuiteScheduleObj[],
+  dtos: TestSuiteScheduleObj[],
   orgId: string,
   testSuiteType: TestSuiteType,
   delayMulitplicator: number,
@@ -275,8 +259,8 @@ const createThrottleSensitive = async (
   await Promise.all(
     dtos.map(async (el) => {
       await createSchedule(
-        el.cron,
-        el.id,
+        { cron: el.cron, toBeActivated: el.toBeActivated },
+        el.testSuiteId,
         orgId,
         {
           testSuiteType,
@@ -300,7 +284,7 @@ const sliceJobs = <T>(jobs: T[], batchSize: number): T[][] => {
 export const createSchedules = async (
   orgId: string,
   testSuiteType: TestSuiteType,
-  testSuiteDtos: CreateTestSuiteScheduleObj[]
+  testSuiteDtos: TestSuiteScheduleObj[]
 ): Promise<void> => {
   const schedulerClient = new SchedulerClient({
     region: appConfig.cloud.region,
@@ -387,8 +371,9 @@ export const deleteSchedules = async (
 };
 
 const updateThrottleSensitive = async (
-  dtos: UpdateTestSuiteScheduleObj[],
+  dtos: TestSuiteScheduleObj[],
   orgId: string,
+  testSuiteType: TestSuiteType,
   delayMulitplicator: number,
   schedulerClient: SchedulerClient
 ): Promise<void> => {
@@ -401,40 +386,53 @@ const updateThrottleSensitive = async (
 
   await Promise.all(
     dtos.map(async (el) => {
-      const { id } = el;
-      const { cron, executionType, activated } = el.props;
+      const { testSuiteId } = el;
 
-      const updateProps: ScheduleUpdateProps = {};
+      const scheduleName = getScheduleName(testSuiteId);
+      let schedule: Schedule | undefined;
+      try {
+        schedule = await getCurrentSchedule(
+          scheduleName,
+          orgId,
+          schedulerClient
+        );
+      } catch (error) {
+        console.log('Schedule not found, creating new one');
 
-      if (cron) updateProps.cron = cron;
-      if (activated !== undefined) updateProps.toBeActivated = activated;
-      if (executionType)
-        updateProps.target = updateProps.target
-          ? {
-              ...updateProps.target,
-              executionType,
-            }
-          : { executionType };
+        schedule = undefined;
+      }
 
-      if (!Object.keys(updateProps).length) return;
+      const scheduleProps = { cron: el.cron, toBeActivated: el.toBeActivated };
+      const targetInputProps = {
+        executionType: el.executionType,
+        testSuiteType,
+      };
 
-      await updateSchedule(id, orgId, updateProps, schedulerClient);
+      if (!schedule)
+        await createSchedule(
+          scheduleProps,
+          testSuiteId,
+          orgId,
+          targetInputProps,
+          schedulerClient
+        );
+      else
+        await updateSchedule(
+          testSuiteId,
+          orgId,
+          scheduleProps,
+          targetInputProps,
+          schedule,
+          schedulerClient
+        );
     })
   );
 };
 
-export const updateSchedules = async <
-  UpdateObject extends {
-    id: string;
-    props: {
-      executionType?: ExecutionType;
-      cron?: string;
-      activated?: boolean;
-    };
-  }
->(
+export const updateSchedules = async (
   orgId: string,
-  updateObjects: UpdateObject[]
+  testSuiteType: TestSuiteType,
+  updateObjects: TestSuiteScheduleObj[]
 ): Promise<void> => {
   const schedulerClient = new SchedulerClient({
     region: appConfig.cloud.region,
@@ -444,7 +442,13 @@ export const updateSchedules = async <
 
   await Promise.all(
     updateObjBatches.map(async (el, i) => {
-      await updateThrottleSensitive(el, orgId, i, schedulerClient);
+      await updateThrottleSensitive(
+        el,
+        orgId,
+        testSuiteType,
+        i,
+        schedulerClient
+      );
     })
   );
 

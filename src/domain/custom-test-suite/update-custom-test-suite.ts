@@ -4,6 +4,7 @@ import IUseCase from '../services/use-case';
 import CustomTestSuiteRepo from '../../infrastructure/persistence/custom-test-suite-repo';
 import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
+import { updateSchedules } from '../services/schedule';
 
 export interface UpdateCustomTestSuiteRequestDto {
   id: string;
@@ -21,7 +22,7 @@ export interface UpdateCustomTestSuiteRequestDto {
   };
 }
 
-export type UpdateCustomTestSuiteAuthDto = null;
+export type UpdateCustomTestSuiteAuthDto = { callerOrgId: string };
 
 export type UpdateCustomTestSuiteResponseDto = Result<string>;
 
@@ -43,8 +44,9 @@ export class UpdateCustomTestSuite
   async execute(props: {
     req: UpdateCustomTestSuiteRequestDto;
     connPool: IConnectionPool;
+    auth: UpdateCustomTestSuiteAuthDto;
   }): Promise<UpdateCustomTestSuiteResponseDto> {
-    const { req, connPool } = props;
+    const { req, connPool, auth } = props;
 
     try {
       if (!req.props) return Result.ok(req.id);
@@ -58,6 +60,15 @@ export class UpdateCustomTestSuite
         req.props,
         connPool
       );
+
+      await updateSchedules(auth.callerOrgId, 'custom-test', [
+        {
+          cron: req.props.cron || testSuite.cron,
+          executionType: req.props.executionType || testSuite.executionType,
+          testSuiteId: req.id,
+          toBeActivated: req.props.activated || testSuite.activated,
+        },
+      ]);
 
       return Result.ok(updateResult);
     } catch (error: unknown) {

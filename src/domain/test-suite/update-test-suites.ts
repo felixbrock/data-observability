@@ -5,6 +5,7 @@ import { ITestSuiteRepo } from './i-test-suite-repo';
 import TestSuiteRepo from '../../infrastructure/persistence/test-suite-repo';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { TestSuite } from '../entities/quant-test-suite';
+import { updateSchedules } from '../services/schedule';
 
 interface UpdateObject {
   id: string;
@@ -22,7 +23,7 @@ export interface UpdateTestSuitesRequestDto {
   updateObjects: UpdateObject[];
 }
 
-export type UpdateTestSuitesAuthDto = null;
+export type UpdateTestSuitesAuthDto = { callerOrgId: string };
 
 export type UpdateTestSuitesResponseDto = Result<number>;
 
@@ -66,8 +67,9 @@ export class UpdateTestSuites
   async execute(props: {
     req: UpdateTestSuitesRequestDto;
     connPool: IConnectionPool;
+    auth: UpdateTestSuitesAuthDto;
   }): Promise<UpdateTestSuitesResponseDto> {
-    const { req, connPool } = props;
+    const { req, connPool, auth } = props;
 
     try {
       if (req.updateObjects.every((el) => !el.props)) return Result.ok();
@@ -93,6 +95,17 @@ export class UpdateTestSuites
       const replaceResult = await this.#repo.replaceMany(
         replacements,
         connPool
+      );
+
+      await updateSchedules(
+        auth.callerOrgId,
+        'test',
+        replacements.map((el) => ({
+          cron: el.cron,
+          testSuiteId: el.id,
+          executionType: el.executionType,
+          toBeActivated: el.activated,
+        }))
       );
 
       return Result.ok(replaceResult);

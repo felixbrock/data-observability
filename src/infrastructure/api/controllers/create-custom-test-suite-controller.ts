@@ -9,7 +9,6 @@ import {
   CreateCustomTestSuiteResponseDto,
 } from '../../../domain/custom-test-suite/create-custom-test-suite';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
-import { createSchedules } from '../../../domain/services/schedule';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -50,7 +49,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
   ): CreateCustomTestSuiteAuthDto => {
     if (!userAccountInfo.callerOrgId) throw new Error('Unauthorized');
 
-    return null;
+    return { callerOrgId: userAccountInfo.callerOrgId };
   };
 
   protected async executeImpl(req: Request, res: Response): Promise<Response> {
@@ -79,12 +78,13 @@ export default class CreateCustomTestSuiteController extends BaseController {
       const requestDto: CreateCustomTestSuiteRequestDto =
         this.#buildRequestDto(req);
 
-      this.#buildAuthDto(getUserAccountInfoResult.value);
+      const auth = this.#buildAuthDto(getUserAccountInfoResult.value);
 
       const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: CreateCustomTestSuiteResponseDto =
         await this.#createCustomTestSuite.execute({
+          auth,
           req: requestDto,
           connPool,
         });
@@ -102,8 +102,6 @@ export default class CreateCustomTestSuiteController extends BaseController {
           res,
           'Custom test suite not created. Internal error.'
         );
-
-      await createSchedules(result.id, 'custom-test', [result]);
 
       return CreateCustomTestSuiteController.ok(
         res,

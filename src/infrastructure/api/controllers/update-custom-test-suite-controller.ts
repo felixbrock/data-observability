@@ -7,7 +7,6 @@ import {
   UpdateCustomTestSuiteResponseDto,
 } from '../../../domain/custom-test-suite/update-custom-test-suite';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
-import { updateSchedules } from '../../../domain/services/schedule';
 import { parseExecutionType } from '../../../domain/value-types/execution-type';
 import Result from '../../../domain/value-types/transient-types/result';
 
@@ -90,6 +89,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
 
       const useCaseResult: UpdateCustomTestSuiteResponseDto =
         await this.#updateCustomTestSuite.execute({
+          auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
           req: requestDto,
           connPool,
         });
@@ -107,18 +107,6 @@ export default class UpdateCustomTestSuiteController extends BaseController {
           res,
           'Update failed. Internal error.'
         );
-
-      if (requestDto.props && Object.keys(requestDto.props).length)
-        await updateSchedules(getUserAccountInfoResult.value.callerOrgId, [
-          {
-            id: requestDto.id,
-            props: {
-              activated: requestDto.props.activated,
-              cron: requestDto.props.cron,
-              executionType: requestDto.props.executionType,
-            },
-          },
-        ]);
 
       return UpdateCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

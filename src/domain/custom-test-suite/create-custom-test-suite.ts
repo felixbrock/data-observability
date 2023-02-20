@@ -6,6 +6,7 @@ import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
 import IUseCase from '../services/use-case';
 import CustomTestSuiteRepo from '../../infrastructure/persistence/custom-test-suite-repo';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
+import { createSchedules } from '../services/schedule';
 
 export interface CreateCustomTestSuiteRequestDto {
   entityProps: {
@@ -20,7 +21,7 @@ export interface CreateCustomTestSuiteRequestDto {
   };
 }
 
-export type CreateCustomTestSuiteAuthDto = null;
+export type CreateCustomTestSuiteAuthDto = { callerOrgId: string };
 
 export type CreateCustomTestSuiteResponseDto = Result<CustomTestSuite>;
 
@@ -42,8 +43,9 @@ export class CreateCustomTestSuite
   async execute(props: {
     req: CreateCustomTestSuiteRequestDto;
     connPool: IConnectionPool;
+    auth: CreateCustomTestSuiteAuthDto;
   }): Promise<CreateCustomTestSuiteResponseDto> {
-    const { req, connPool } = props;
+    const { req, connPool, auth } = props;
 
     try {
       const customTestSuite = CustomTestSuite.create({
@@ -61,6 +63,15 @@ export class CreateCustomTestSuite
       });
 
       await this.#repo.insertOne(customTestSuite, connPool);
+
+      await createSchedules(auth.callerOrgId, 'custom-test', [
+        {
+          cron: customTestSuite.cron,
+          executionType: customTestSuite.executionType,
+          testSuiteId: customTestSuite.id,
+          toBeActivated: true,
+        },
+      ]);
 
       return Result.ok(customTestSuite);
     } catch (error: unknown) {

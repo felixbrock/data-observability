@@ -14,7 +14,6 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from './shared/base-controller';
-import { updateSchedules } from '../../../domain/services/schedule';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
 export default class UpdateQualTestSuitesController extends BaseController {
@@ -65,6 +64,7 @@ export default class UpdateQualTestSuitesController extends BaseController {
 
       const useCaseResult: UpdateQualTestSuitesResponseDto =
         await this.#updateQualTestSuites.execute({
+          auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
           req: requestDto,
           connPool,
         });
@@ -85,11 +85,6 @@ export default class UpdateQualTestSuitesController extends BaseController {
           res,
           'Update of test suites failed. Internal error.'
         );
-
-      await updateSchedules(
-        getUserAccountInfoResult.value.callerOrgId,
-        requestDto.updateObjects
-      );
 
       return UpdateQualTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

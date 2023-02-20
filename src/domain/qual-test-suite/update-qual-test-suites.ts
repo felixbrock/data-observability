@@ -5,6 +5,7 @@ import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { IQualTestSuiteRepo } from './i-qual-test-suite-repo';
 import QualTestSuiteRepo from '../../infrastructure/persistence/qual-test-suite-repo';
 import { QualTestSuite } from '../entities/qual-test-suite';
+import { updateSchedules } from '../services/schedule';
 
 interface UpdateObject {
   id: string;
@@ -19,7 +20,7 @@ export interface UpdateQualTestSuitesRequestDto {
   updateObjects: UpdateObject[];
 }
 
-export type UpdateQualTestSuitesAuthDto = null;
+export type UpdateQualTestSuitesAuthDto = { callerOrgId: string };
 
 export type UpdateQualTestSuitesResponseDto = Result<number>;
 
@@ -57,8 +58,9 @@ export class UpdateQualTestSuites
   async execute(props: {
     req: UpdateQualTestSuitesRequestDto;
     connPool: IConnectionPool;
+    auth: UpdateQualTestSuitesAuthDto;
   }): Promise<UpdateQualTestSuitesResponseDto> {
-    const { req, connPool } = props;
+    const { req, connPool, auth } = props;
 
     try {
       if (req.updateObjects.every((el) => !el.props)) return Result.ok();
@@ -84,6 +86,17 @@ export class UpdateQualTestSuites
       const replaceResult = await this.#repo.replaceMany(
         replacements,
         connPool
+      );
+
+      await updateSchedules(
+        auth.callerOrgId,
+        'nominal-test',
+        replacements.map((el) => ({
+          cron: el.cron,
+          testSuiteId: el.id,
+          executionType: el.executionType,
+          toBeActivated: el.activated,
+        }))
       );
 
       return Result.ok(replaceResult);

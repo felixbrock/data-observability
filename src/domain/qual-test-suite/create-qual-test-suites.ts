@@ -74,7 +74,16 @@ export class CreateQualTestSuites
 
       await this.#repo.insertMany(testSuites, connPool);
 
-      await createSchedules(auth.callerOrgId, 'nominal-test', testSuites);
+      await createSchedules(
+        auth.callerOrgId,
+        'nominal-test',
+        testSuites.map((testSuite) => ({
+          cron: testSuite.cron,
+          testSuiteId: testSuite.id,
+          executionType: testSuite.executionType,
+          toBeActivated: true,
+        }))
+      );
 
       return Result.ok(testSuites);
     } catch (error: unknown) {
