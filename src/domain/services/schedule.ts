@@ -389,18 +389,12 @@ const updateThrottleSensitive = async (
       const { testSuiteId } = el;
 
       const scheduleName = getScheduleName(testSuiteId);
-      let schedule: Schedule | undefined;
-      try {
-        schedule = await getCurrentSchedule(
-          scheduleName,
-          orgId,
-          schedulerClient
-        );
-      } catch (error) {
-        console.log('Schedule not found, creating new one');
 
-        schedule = undefined;
-      }
+      const schedule = await getCurrentSchedule(
+        scheduleName,
+        orgId,
+        schedulerClient
+      );
 
       const scheduleProps = { cron: el.cron, toBeActivated: el.toBeActivated };
       const targetInputProps = {
