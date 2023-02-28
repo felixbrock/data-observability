@@ -40,6 +40,7 @@ import { GenerateChart } from '../domain/integration-api/slack/chart/generate-ch
 import { DeleteTestSuites } from '../domain/test-suite/delete-test-suites';
 import { DeleteQualTestSuites } from '../domain/qual-test-suite/delete-qual-test-suites';
 import { DeleteCustomTestSuites } from '../domain/custom-test-suite/delete-custom-test-suites';
+import { DeleteTestSuiteDuplicates } from '../domain/test-suite/delete-test-suite-duplicates';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
@@ -64,6 +65,7 @@ iocRegister.register({
   updateCustomTestSuite: asClass(UpdateCustomTestSuite),
 
   deleteTestSuites: asClass(DeleteTestSuites),
+  deleteTestSuiteDuplicates: asClass(DeleteTestSuiteDuplicates),
   deleteQualTestSuites: asClass(DeleteQualTestSuites),
   deleteCustomTestSuites: asClass(DeleteCustomTestSuites),
 

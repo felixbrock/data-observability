@@ -4,6 +4,7 @@ import ReadTestSuitesController from '../controllers/read-test-suites-controller
 import UpdateTestSuitesController from '../controllers/update-test-suites-controller';
 import CreateTestSuitesController from '../controllers/create-test-suites-controller';
 import DeleteTestSuitesController from '../controllers/delete-test-suites-controller';
+import DeleteTestSuiteDuplicatesController from '../controllers/delete-test-suite-duplicates-controller';
 
 const testSuitesRoutes = Router();
 
@@ -33,6 +34,12 @@ const deleteTestSuitesController = new DeleteTestSuitesController(
   getAccounts,
   getSnowflakeProfile
 );
+const deleteTestSuiteDuplicatesController =
+  new DeleteTestSuiteDuplicatesController(
+    app.resolve('deleteTestSuiteDuplicates'),
+    getAccounts,
+    getSnowflakeProfile
+  );
 
 testSuitesRoutes.get('/', (req, res) => {
   readTestSuitesController.execute(req, res);
@@ -48,6 +55,10 @@ testSuitesRoutes.patch('/', (req, res) => {
 
 testSuitesRoutes.delete('/', (req, res) => {
   deleteTestSuitesController.execute(req, res);
+});
+
+testSuitesRoutes.delete('/duplicates', (req, res) => {
+  deleteTestSuiteDuplicatesController.execute(req, res);
 });
 
 export default testSuitesRoutes;

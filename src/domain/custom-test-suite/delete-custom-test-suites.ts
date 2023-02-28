@@ -55,7 +55,10 @@ export class DeleteCustomTestSuites
     try {
       switch (req.mode) {
         case 'soft':
-          await this.#repo.softDeleteMany(req.targetResourceIds, connPool);
+          await this.#repo.softDeleteMany(
+            { targetResourceIds: req.targetResourceIds, testSuiteIds: [] },
+            connPool
+          );
           break;
         case 'hard':
           throw new Error('Hard delete not implemented yet');

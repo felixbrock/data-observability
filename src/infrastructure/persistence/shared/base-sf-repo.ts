@@ -321,19 +321,35 @@ export default abstract class BaseSfRepo<
   };
 
   softDeleteMany = async (
-    targetResourceIds: string[],
+    where: { targetResourceIds: string[]; testSuiteIds: string[] },
     connPool: IConnectionPool
   ): Promise<void> => {
     try {
-      const binds = [...targetResourceIds];
+      if (!where.targetResourceIds.length && !where.testSuiteIds.length)
+        throw new Error('Missing where condition parameters');
+
+      const binds: Bind[] = [];
+      let whereCondition = '';
+      if (where.targetResourceIds.length) {
+        binds.push(...where.targetResourceIds);
+        whereCondition += `array_contains(target_resource_id::variant, array_construct(${Array.from(
+          { length: where.targetResourceIds.length },
+          () => '?'
+        ).join(',')}))`;
+      }
+      if (where.testSuiteIds.length) {
+        binds.push(...where.testSuiteIds);
+        if (whereCondition) whereCondition += ' and ';
+        whereCondition += `array_contains(id::variant, array_construct(${Array.from(
+          { length: where.testSuiteIds.length },
+          () => '?'
+        ).join(',')}))`;
+      }
 
       const queryText = `update ${appConfig.snowflake.databaseName}.${
         appConfig.snowflake.schemaName
       }.${this.matName} set deleted_at = '${new Date().toISOString()}'
-      where array_contains(target_resource_id::variant, array_construct(${Array.from(
-        { length: targetResourceIds.length },
-        () => '?'
-      ).join(',')}))`;
+      where ${whereCondition}`;
 
       const res = await this.querySnowflake.execute({
         req: { queryText, binds },
