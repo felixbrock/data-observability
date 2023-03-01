@@ -325,10 +325,17 @@ const deleteSchedule = async (
 
   const command = new DeleteScheduleCommand(commandInput);
 
-  const res = await client.send(command);
-
-  if (!res.$metadata.httpStatusCode)
-    throw new Error('Deletion of schedule failed');
+  try {
+    const res = await client.send(command);
+    if (!res.$metadata.httpStatusCode)
+      throw new Error('Deletion of schedule failed');
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'ResourceNotFoundException') {
+      console.log(`Schedule ${scheduleName} not found. Skipping deletion.`);
+      return;
+    }
+    throw error;
+  }
 };
 
 const deleteThrottleSensitive = async (

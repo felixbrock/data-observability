@@ -44,12 +44,12 @@ export class DeleteTestSuiteDuplicates
           el.target.columnName === ele.target.columnName
       );
 
-      const key = `${el.type}-${el.target.databaseName}.${
-        el.target.schemaName
-      }.${el.target.materializationName}.${el.target.columnName || ''}`;
-
-      if (matches.length > 1 && !localAcc[key])
-        localAcc[key] = matches.map((m) => m.id);
+      if (matches.length > 1) {
+        const key = `${el.type}-${el.target.databaseName}.${
+          el.target.schemaName
+        }.${el.target.materializationName}.${el.target.columnName || ''}`;
+        if (!localAcc[key]) localAcc[key] = matches.map((m) => m.id);
+      }
 
       return localAcc;
     }, {});
@@ -61,9 +61,10 @@ export class DeleteTestSuiteDuplicates
     const { req, connPool } = props;
 
     try {
-      const toDeleteIds: string[] = req.testSuiteIds;
+      let toDeleteIds: string[];
 
-      if (!req.testSuiteIds.length) {
+      if (req.testSuiteIds.length) toDeleteIds = req.testSuiteIds;
+      else {
         const testSuites = await this.#repo.all(connPool);
 
         const duplicateIds = this.#getDuplicateTestSuiteIds(testSuites);
@@ -78,8 +79,12 @@ export class DeleteTestSuiteDuplicates
           })
           .flat();
 
-        toDeleteIds.push(...testSuiteIds);
+        toDeleteIds = testSuiteIds;
       }
+      console.log(
+        `Removing ${toDeleteIds.length} test suites for org ${req.targetOrgId}`
+      );
+
       await this.#repo.softDeleteMany(
         { targetResourceIds: [], testSuiteIds: toDeleteIds },
         connPool
