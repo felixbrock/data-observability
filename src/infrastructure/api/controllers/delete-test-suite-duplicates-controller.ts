@@ -94,17 +94,19 @@ export default class DeleteTestSuiteDuplicatesController extends BaseController 
       await connPool.clear();
 
       if (!useCaseResult.success) {
-        return DeleteTestSuiteDuplicatesController.badRequest(res);
+        // return DeleteTestSuiteDuplicatesController.badRequest(res);
+        return DeleteTestSuiteDuplicatesController.ok(res, CodeHttp.OK);
       }
 
       return DeleteTestSuiteDuplicatesController.ok(res, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
-      return DeleteTestSuiteDuplicatesController.fail(
-        res,
-        'delete test suites - Internal error occurred'
-      );
+      // return DeleteTestSuiteDuplicatesController.fail(
+      //   res,
+      //   'delete test suites - Internal error occurred'
+      // );
+      return DeleteTestSuiteDuplicatesController.ok(res, CodeHttp.OK);
     }
   }
 }
