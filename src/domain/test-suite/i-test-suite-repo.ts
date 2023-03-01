@@ -15,6 +15,7 @@ export interface TestSuiteQueryDto {
   activated?: boolean;
   ids?: string[];
   targetResourceIds?: string[];
+  deleted: boolean;
 }
 
 export type ITestSuiteRepo = IServiceRepo<

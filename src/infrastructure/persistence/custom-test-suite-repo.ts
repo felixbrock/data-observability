@@ -106,15 +106,16 @@ export default class CustomTestSuiteRepo
 
   buildFindByQuery = (queryDto: CustomTestSuiteQueryDto): Query => {
     const binds: (string | number)[] = [];
-    let whereClause = '';
+    let whereClause = `deleted_at is ${queryDto.deleted ? 'not' : ''} null`;
 
     if (queryDto.activated !== undefined) {
       binds.push(queryDto.activated.toString());
       const whereCondition = 'activated = ?';
-      whereClause = whereCondition;
+      whereClause = `and ${whereCondition} `;
     }
+
     const text = `select * from ${relationPath}.${this.matName}
-    ${whereClause ? 'where' : ''}  ${whereClause};`;
+    where ${whereClause};`;
 
     return { text, binds };
   };

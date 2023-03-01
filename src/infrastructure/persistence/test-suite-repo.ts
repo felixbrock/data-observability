@@ -140,35 +140,29 @@ export default class TestSuiteRepo
 
   buildFindByQuery = (queryDto: TestSuiteQueryDto): Query => {
     const binds: (string | number)[] = [];
-    let whereClause = '';
+    let whereClause = `deleted_at is ${queryDto.deleted ? 'not' : ''} null`;
 
     if (queryDto.activated !== undefined) {
       binds.push(queryDto.activated.toString());
       const whereCondition = 'activated = ?';
-      whereClause = whereCondition;
+      whereClause = `and ${whereCondition} `;
     }
     if (queryDto.ids && queryDto.ids.length) {
       binds.push(...queryDto.ids);
       const whereCondition = `array_contains(id::variant, array_construct(${queryDto.ids
         .map(() => '?')
         .join(',')}))`;
-      whereClause = whereClause
-        ? whereClause.concat(`and ${whereCondition} `)
-        : whereCondition;
+      whereClause = `and ${whereCondition} `;
     }
     if (queryDto.targetResourceIds && queryDto.targetResourceIds.length) {
       binds.push(...queryDto.targetResourceIds);
       const whereCondition = `array_contains(target_resource_id::variant, array_construct(${queryDto.targetResourceIds
         .map(() => '?')
         .join(',')}))`;
-      whereClause = whereClause
-        ? whereClause.concat(`and ${whereCondition} `)
-        : whereCondition;
+      whereClause = `and ${whereCondition} `;
     }
 
-    const text = `select * from ${relationPath}.${this.matName} ${
-      whereClause ? 'where' : ''
-    }  ${whereClause};`;
+    const text = `select * from ${relationPath}.${this.matName} where ${whereClause};`;
 
     return { text, binds };
   };

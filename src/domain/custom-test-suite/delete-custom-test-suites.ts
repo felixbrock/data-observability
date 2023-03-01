@@ -70,6 +70,7 @@ export class DeleteCustomTestSuites
         await this.#repo.findBy(
           {
             targetResourceIds: req.targetResourceIds,
+            deleted: false,
           },
           connPool
         )

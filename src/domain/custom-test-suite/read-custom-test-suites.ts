@@ -44,6 +44,7 @@ export class ReadCustomTestSuites
       const testSuites = await this.#repo.findBy(
         {
           activated: req.activated,
+          deleted: false,
         },
         connPool
       );

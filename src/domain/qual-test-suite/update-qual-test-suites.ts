@@ -66,7 +66,7 @@ export class UpdateQualTestSuites
       if (req.updateObjects.every((el) => !el.props)) return Result.ok();
 
       const testSuites = await this.#repo.findBy(
-        { ids: req.updateObjects.map((el) => el.id) },
+        { ids: req.updateObjects.map((el) => el.id), deleted: false },
         connPool
       );
 
