@@ -57,11 +57,17 @@ export default class SnowflakeApiRepo implements ISnowflakeApiRepo {
       };
       try {
         connectionPool.use(async (clientConnection: any) => {
-          await clientConnection.execute({
-            sqlText: queryText,
-            binds,
-            complete,
-          });
+          try {
+            await clientConnection.execute({
+              sqlText: queryText,
+              binds,
+              complete,
+            });
+          } catch (error: unknown) {
+            if (error instanceof Error) reject(error);
+            if (typeof error === 'string') reject(new Error(error));
+            throw new Error('Sf query not properly handled');
+          }
         });
       } catch (error: unknown) {
         if (error instanceof Error) reject(error);
