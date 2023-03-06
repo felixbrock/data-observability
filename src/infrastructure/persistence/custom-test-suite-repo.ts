@@ -111,7 +111,7 @@ export default class CustomTestSuiteRepo
     if (queryDto.activated !== undefined) {
       binds.push(queryDto.activated.toString());
       const whereCondition = 'activated = ?';
-      whereClause = `and ${whereCondition} `;
+      whereClause += `and ${whereCondition} `;
     }
 
     const text = `select * from ${relationPath}.${this.matName}
