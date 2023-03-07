@@ -7,7 +7,6 @@ import IUseCase from '../services/use-case';
 import CustomTestSuiteRepo from '../../infrastructure/persistence/custom-test-suite-repo';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { createSchedules } from '../services/schedule';
-import { CustomThresholdMode } from '../value-types/custom-threshold-mode';
 
 export interface CreateCustomTestSuiteRequestDto {
   entityProps: {
@@ -18,8 +17,6 @@ export interface CreateCustomTestSuiteRequestDto {
     description: string;
     sqlLogic: string;
     targetResourceIds: string[];
-    customLowerThreshold?: { value: number; mode: CustomThresholdMode };
-    customUpperThreshold?: { value: number; mode: CustomThresholdMode };
   };
 }
 
@@ -58,18 +55,10 @@ export class CreateCustomTestSuite
         activated: req.entityProps.activated,
         cron: req.entityProps.cron,
         executionType: req.entityProps.executionType,
-        customLowerThreshold: req.entityProps.customLowerThreshold
-          ? req.entityProps.customLowerThreshold.value
-          : undefined,
-        customUpperThresholdMode: req.entityProps.customLowerThreshold
-          ? req.entityProps.customLowerThreshold.mode
-          : 'absolute',
-        customUpperThreshold: req.entityProps.customLowerThreshold
-          ? req.entityProps.customLowerThreshold.value
-          : undefined,
-        customLowerThresholdMode: req.entityProps.customLowerThreshold
-          ? req.entityProps.customLowerThreshold.mode
-          : 'absolute',
+        customLowerThreshold: undefined,
+        customUpperThreshold: undefined,
+        customLowerThresholdMode: 'absolute',
+        customUpperThresholdMode: 'absolute',
         targetResourceIds: req.entityProps.targetResourceIds,
         importanceThreshold: -1,
         boundsIntervalRelative: 0,

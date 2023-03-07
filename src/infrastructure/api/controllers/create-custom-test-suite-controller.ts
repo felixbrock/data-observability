@@ -40,8 +40,6 @@ export default class CreateCustomTestSuiteController extends BaseController {
       targetResourceIds: httpRequest.body.targetResourceIds,
       cron: httpRequest.body.cron,
       executionType: httpRequest.body.executionType,
-      customLowerThreshold: httpRequest.body.customLowerThreshold,
-      customUpperThreshold: httpRequest.body.customUpperThreshold,
     },
   });
 
