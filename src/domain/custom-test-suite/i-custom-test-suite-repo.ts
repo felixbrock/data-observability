@@ -1,10 +1,12 @@
 import { CustomTestSuite } from '../entities/custom-test-suite';
 import { IServiceRepo } from '../services/i-service-repo';
+import { CustomThresholdMode } from '../value-types/custom-threshold-mode';
 import { ExecutionType } from '../value-types/execution-type';
 
 export interface CustomTestSuiteUpdateDto {
   activated?: boolean;
-  threshold?: number;
+  customLowerThreshold?: { value: number; mode: CustomThresholdMode };
+  customUpperThreshold?: { value: number; mode: CustomThresholdMode };
   targetResourceIds?: string[];
   name?: string;
   description?: string;

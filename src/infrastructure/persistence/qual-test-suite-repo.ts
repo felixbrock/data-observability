@@ -130,21 +130,21 @@ export default class QualTestSuiteRepo
     if (queryDto.activated !== undefined) {
       binds.push(queryDto.activated.toString());
       const whereCondition = 'activated = ?';
-      whereClause += `and ${whereCondition} `;
+      whereClause += ` and ${whereCondition}`;
     }
     if (queryDto.ids && queryDto.ids.length) {
       binds.push(...queryDto.ids);
       const whereCondition = `array_contains(id::variant, array_construct(${queryDto.ids
         .map(() => '?')
         .join(',')}))`;
-      whereClause += `and ${whereCondition} `;
+      whereClause += ` and ${whereCondition}`;
     }
     if (queryDto.targetResourceIds && queryDto.targetResourceIds.length) {
       binds.push(...queryDto.targetResourceIds);
       const whereCondition = `array_contains(target_resource_id::variant, array_construct(${queryDto.targetResourceIds
         .map(() => '?')
         .join(',')}))`;
-      whereClause += `and ${whereCondition} `;
+      whereClause += ` and ${whereCondition}`;
     }
 
     const text = `select * from ${relationPath}.${this.matName}

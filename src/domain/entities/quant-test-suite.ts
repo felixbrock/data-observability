@@ -1,3 +1,4 @@
+import { CustomThresholdMode } from '../value-types/custom-threshold-mode';
 import { ExecutionType } from '../value-types/execution-type';
 import {
   MaterializationType,
@@ -56,7 +57,13 @@ export class TestSuite {
 
   #target: TestTarget;
 
-  #threshold: number;
+  #customUpperThreshold?: number;
+
+  #customLowerThreshold?: number;
+
+  #customUpperThresholdMode: CustomThresholdMode;
+
+  #customLowerThresholdMode: CustomThresholdMode;
 
   #cron: string;
 
@@ -84,8 +91,20 @@ export class TestSuite {
     return this.#target;
   }
 
-  get threshold(): number {
-    return this.#threshold;
+  get customUpperThreshold(): number | undefined {
+    return this.#customUpperThreshold;
+  }
+
+  get customLowerThreshold(): number | undefined {
+    return this.#customLowerThreshold;
+  }
+
+  get customUpperThresholdMode(): CustomThresholdMode {
+    return this.#customUpperThresholdMode;
+  }
+
+  get customLowerThresholdMode(): CustomThresholdMode {
+    return this.#customLowerThresholdMode;
   }
 
   get cron(): string {
@@ -112,7 +131,12 @@ export class TestSuite {
     this.#id = props.id;
     this.#activated = props.activated;
     this.#type = props.type;
-    this.#threshold = props.threshold;
+
+    this.#customLowerThreshold = props.customLowerThreshold;
+    this.#customUpperThreshold = props.customUpperThreshold;
+    this.#customLowerThresholdMode = props.customLowerThresholdMode;
+    this.#customUpperThresholdMode = props.customUpperThresholdMode;
+
     this.#target = props.target;
     this.#cron = props.cron;
     this.#executionType = props.executionType;
@@ -153,7 +177,10 @@ export class TestSuite {
     id: this.#id,
     activated: this.#activated,
     type: this.#type,
-    threshold: this.#threshold,
+    customLowerThreshold: this.#customLowerThreshold,
+    customUpperThreshold: this.#customUpperThreshold,
+    customLowerThresholdMode: this.#customLowerThresholdMode,
+    customUpperThresholdMode: this.#customUpperThresholdMode,
     target: this.#target,
     cron: this.#cron,
     executionType: this.#executionType,

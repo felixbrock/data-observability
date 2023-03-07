@@ -34,7 +34,6 @@ export default class CreateCustomTestSuiteController extends BaseController {
   ): CreateCustomTestSuiteRequestDto => ({
     entityProps: {
       activated: httpRequest.body.activated,
-      threshold: httpRequest.body.threshold,
       name: httpRequest.body.name,
       description: httpRequest.body.description,
       sqlLogic: httpRequest.body.sqlLogic,

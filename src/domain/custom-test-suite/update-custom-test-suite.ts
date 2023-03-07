@@ -5,12 +5,14 @@ import CustomTestSuiteRepo from '../../infrastructure/persistence/custom-test-su
 import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { updateSchedules } from '../services/schedule';
+import { CustomThresholdMode } from '../value-types/custom-threshold-mode';
 
 export interface UpdateCustomTestSuiteRequestDto {
   id: string;
   props?: {
     activated?: boolean;
-    threshold?: number;
+    customLowerThreshold?: { value: number; mode: CustomThresholdMode };
+    customUpperThreshold?: { value: number; mode: CustomThresholdMode };
     targetResourceIds?: string[];
     name?: string;
     description?: string;

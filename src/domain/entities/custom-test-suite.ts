@@ -1,3 +1,4 @@
+import { CustomThresholdMode } from '../value-types/custom-threshold-mode';
 import { ExecutionType } from '../value-types/execution-type';
 import { BaseQuantTestSuite } from '../value-types/transient-types/base-test-suite';
 
@@ -30,7 +31,13 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   #activated: boolean;
 
-  #threshold: number;
+  #customUpperThreshold?: number;
+
+  #customLowerThreshold?: number;
+
+  #customUpperThresholdMode: CustomThresholdMode;
+
+  #customLowerThresholdMode: CustomThresholdMode;
 
   #name: string;
 
@@ -58,8 +65,20 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     return this.#activated;
   }
 
-  get threshold(): number {
-    return this.#threshold;
+  get customUpperThreshold(): number | undefined {
+    return this.#customUpperThreshold;
+  }
+
+  get customUpperThresholdMode(): CustomThresholdMode {
+    return this.#customUpperThresholdMode;
+  }
+
+  get customLowerThreshold(): number | undefined {
+    return this.#customLowerThreshold;
+  }
+
+  get customLowerThresholdMode(): CustomThresholdMode {
+    return this.#customLowerThresholdMode;
   }
 
   get name(): string {
@@ -101,7 +120,10 @@ export class CustomTestSuite implements CustomTestSuiteDto {
   private constructor(props: CustomTestSuiteProps) {
     this.#id = props.id;
     this.#activated = props.activated;
-    this.#threshold = props.threshold;
+    this.#customLowerThreshold = props.customLowerThreshold;
+    this.#customUpperThreshold = props.customUpperThreshold;
+    this.#customLowerThresholdMode = props.customLowerThresholdMode;
+    this.#customUpperThresholdMode = props.customUpperThresholdMode;
     this.#name = props.name;
     this.#description = props.description;
     this.#sqlLogic = props.sqlLogic;
@@ -134,7 +156,10 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     name: this.#name,
     sqlLogic: this.#sqlLogic,
     targetResourceIds: this.#targetResourceIds,
-    threshold: this.#threshold,
+    customLowerThreshold: this.#customLowerThreshold,
+    customUpperThreshold: this.#customUpperThreshold,
+    customLowerThresholdMode: this.#customLowerThresholdMode,
+    customUpperThresholdMode: this.#customUpperThresholdMode,
     cron: this.#cron,
     executionType: this.#executionType,
     importanceThreshold: this.#importanceThreshold,

@@ -42,7 +42,8 @@ export default class UpdateCustomTestSuiteController extends BaseController {
       id: httpRequest.params.id,
       props: {
         activated: remainingBody.activated,
-        threshold: remainingBody.threshold,
+        customLowerThreshold: remainingBody.customLowerThreshold,
+        customUpperThreshold: remainingBody.customUpperThreshold,
         targetResourceIds: remainingBody.targetResourceIds,
         name: remainingBody.name,
         description: remainingBody.description,

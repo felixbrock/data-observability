@@ -11,7 +11,6 @@ import { createSchedules } from '../services/schedule';
 export interface CreateCustomTestSuiteRequestDto {
   entityProps: {
     activated: boolean;
-    threshold: number;
     cron: string;
     executionType: ExecutionType;
     name: string;
@@ -56,7 +55,10 @@ export class CreateCustomTestSuite
         activated: req.entityProps.activated,
         cron: req.entityProps.cron,
         executionType: req.entityProps.executionType,
-        threshold: req.entityProps.threshold,
+        customLowerThreshold: undefined,
+        customUpperThreshold: undefined,
+        customLowerThresholdMode: 'absolute',
+        customUpperThresholdMode: 'absolute',
         targetResourceIds: req.entityProps.targetResourceIds,
         importanceThreshold: -1,
         boundsIntervalRelative: 0,

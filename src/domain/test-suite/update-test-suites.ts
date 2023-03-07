@@ -6,12 +6,14 @@ import TestSuiteRepo from '../../infrastructure/persistence/test-suite-repo';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { TestSuite } from '../entities/quant-test-suite';
 import { updateSchedules } from '../services/schedule';
+import { CustomThresholdMode } from '../value-types/custom-threshold-mode';
 
 interface UpdateObject {
   id: string;
   props: {
     activated?: boolean;
-    threshold?: number;
+    customLowerThreshold?: { value: number; mode: CustomThresholdMode };
+    customUpperThreshold?: { value: number; mode: CustomThresholdMode };
     cron?: string;
     executionType?: ExecutionType;
     importanceThreshold?: number;
@@ -54,7 +56,18 @@ export class UpdateTestSuites
         updateObj.props.activated !== undefined
           ? updateObj.props.activated
           : testSuite.activated,
-      threshold: updateObj.props.threshold || testSuite.threshold,
+      customLowerThreshold: updateObj.props.customLowerThreshold
+        ? updateObj.props.customLowerThreshold.value
+        : testSuite.customLowerThreshold,
+      customUpperThreshold: updateObj.props.customUpperThreshold
+        ? updateObj.props.customUpperThreshold.value
+        : testSuite.customUpperThreshold,
+      customLowerThresholdMode: updateObj.props.customLowerThreshold
+        ? updateObj.props.customLowerThreshold.mode
+        : testSuite.customLowerThresholdMode,
+      customUpperThresholdMode: updateObj.props.customUpperThreshold
+        ? updateObj.props.customUpperThreshold.mode
+        : testSuite.customUpperThresholdMode,
       executionType: updateObj.props.executionType || testSuite.executionType,
       cron: updateObj.props.cron || testSuite.cron,
       importanceThreshold:

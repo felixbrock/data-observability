@@ -1,10 +1,12 @@
 import { TestSuite } from '../entities/quant-test-suite';
 import { IServiceRepo } from '../services/i-service-repo';
+import { CustomThresholdMode } from '../value-types/custom-threshold-mode';
 import { ExecutionType } from '../value-types/execution-type';
 
 export interface TestSuiteUpdateDto {
   activated?: boolean;
-  threshold?: number;
+  customLowerThreshold?: { value: number; mode: CustomThresholdMode };
+  customUpperThreshold?: { value: number; mode: CustomThresholdMode };
   cron?: string;
   executionType?: ExecutionType;
   importanceThreshold?: number;

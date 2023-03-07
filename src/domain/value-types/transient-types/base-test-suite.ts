@@ -1,3 +1,4 @@
+import { CustomThresholdMode } from '../custom-threshold-mode';
 import { ExecutionType } from '../execution-type';
 
 export interface BaseTestSuite {
@@ -9,7 +10,10 @@ export interface BaseTestSuite {
 }
 
 export interface BaseQuantTestSuite extends BaseTestSuite {
-  threshold: number;
+  customLowerThreshold?: number;
+  customUpperThreshold?: number;
+  customLowerThresholdMode: CustomThresholdMode;
+  customUpperThresholdMode: CustomThresholdMode;
   importanceThreshold: number;
   boundsIntervalRelative: number;
 }

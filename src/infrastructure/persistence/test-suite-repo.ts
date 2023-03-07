@@ -21,6 +21,7 @@ import {
   TestSuiteUpdateDto,
 } from '../../domain/test-suite/i-test-suite-repo';
 import { parseMaterializationType } from '../../domain/value-types/materialization-type';
+import { parseCustomThresholdMode } from '../../domain/value-types/custom-threshold-mode';
 
 export default class TestSuiteRepo
   extends BaseSfRepo<
@@ -37,7 +38,6 @@ export default class TestSuiteRepo
     { name: 'id', nullable: false },
     { name: 'test_type', nullable: false },
     { name: 'activated', nullable: false },
-    { name: 'threshold', nullable: false },
     { name: 'database_name', nullable: false },
     { name: 'schema_name', nullable: false },
     { name: 'materialization_name', nullable: false },
@@ -49,6 +49,16 @@ export default class TestSuiteRepo
     { name: 'importance_threshold', nullable: false },
     { name: 'bounds_interval_relative', nullable: false },
     { name: 'deleted_at', nullable: true },
+    { name: 'custom_lower_threshold', nullable: true },
+    {
+      name: 'custom_lower_threshold_mode',
+      nullable: false,
+    },
+    { name: 'custom_upper_threshold', nullable: true },
+    {
+      name: 'custom_upper_threshold_mode',
+      nullable: false,
+    },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -61,7 +71,6 @@ export default class TestSuiteRepo
       ID: id,
       TEST_TYPE: type,
       ACTIVATED: activated,
-      THRESHOLD: threshold,
       DATABASE_NAME: databaseName,
       SCHEMA_NAME: schemaName,
       MATERIALIZATION_NAME: materializationName,
@@ -73,6 +82,10 @@ export default class TestSuiteRepo
       IMPORTANCE_THRESHOLD: importanceThreshold,
       BOUNDS_INTERVAL_RELATIVE: boundsIntervalRelative,
       DELETED_AT: deletedAt,
+      CUSTOM_LOWER_THRESHOLD: customLowerThreshold,
+      CUSTOM_LOWER_THRESHOLD_MODE: customLowerThresholdMode,
+      CUSTOM_UPPER_THRESHOLD: customUpperThreshold,
+      CUSTOM_UPPER_THRESHOLD_MODE: customUpperThresholdMode,
     } = sfEntity;
 
     const isOptionalDateField = (obj: unknown): obj is Date | undefined =>
@@ -82,7 +95,6 @@ export default class TestSuiteRepo
       typeof id !== 'string' ||
       typeof type !== 'string' ||
       typeof activated !== 'boolean' ||
-      typeof threshold !== 'number' ||
       typeof databaseName !== 'string' ||
       typeof schemaName !== 'string' ||
       typeof materializationName !== 'string' ||
@@ -93,7 +105,9 @@ export default class TestSuiteRepo
       typeof executionType !== 'string' ||
       typeof importanceThreshold !== 'number' ||
       typeof boundsIntervalRelative !== 'number' ||
-      !isOptionalDateField(deletedAt)
+      !isOptionalDateField(deletedAt) ||
+      typeof customUpperThreshold !== 'number' ||
+      typeof customLowerThreshold !== 'number'
     )
       throw new Error(
         'Retrieved unexpected test suite field types from persistence'
@@ -102,7 +116,6 @@ export default class TestSuiteRepo
     return {
       id,
       activated,
-      threshold,
       target: {
         databaseName,
         materializationName,
@@ -117,6 +130,14 @@ export default class TestSuiteRepo
       importanceThreshold,
       boundsIntervalRelative,
       deletedAt: deletedAt ? deletedAt.toISOString() : undefined,
+      customLowerThreshold,
+      customLowerThresholdMode: parseCustomThresholdMode(
+        customLowerThresholdMode
+      ),
+      customUpperThreshold,
+      customUpperThresholdMode: parseCustomThresholdMode(
+        customUpperThresholdMode
+      ),
     };
   };
 
@@ -124,7 +145,6 @@ export default class TestSuiteRepo
     entity.id,
     entity.type,
     entity.activated.toString(),
-    entity.threshold,
     entity.target.databaseName,
     entity.target.schemaName,
     entity.target.materializationName,
@@ -136,6 +156,10 @@ export default class TestSuiteRepo
     entity.importanceThreshold,
     entity.boundsIntervalRelative,
     entity.deletedAt || 'null',
+    entity.customLowerThreshold || 'null',
+    entity.customLowerThresholdMode,
+    entity.customUpperThreshold || 'null',
+    entity.customUpperThresholdMode,
   ];
 
   buildFindByQuery = (queryDto: TestSuiteQueryDto): Query => {
@@ -145,21 +169,21 @@ export default class TestSuiteRepo
     if (queryDto.activated !== undefined) {
       binds.push(queryDto.activated.toString());
       const whereCondition = 'activated = ?';
-      whereClause += `and ${whereCondition} `;
+      whereClause += ` and ${whereCondition}`;
     }
     if (queryDto.ids && queryDto.ids.length) {
       binds.push(...queryDto.ids);
       const whereCondition = `array_contains(id::variant, array_construct(${queryDto.ids
         .map(() => '?')
         .join(',')}))`;
-      whereClause += `and ${whereCondition} `;
+      whereClause += ` and ${whereCondition}`;
     }
     if (queryDto.targetResourceIds && queryDto.targetResourceIds.length) {
       binds.push(...queryDto.targetResourceIds);
       const whereCondition = `array_contains(target_resource_id::variant, array_construct(${queryDto.targetResourceIds
         .map(() => '?')
         .join(',')}))`;
-      whereClause += `and ${whereCondition} `;
+      whereClause += ` and ${whereCondition}`;
     }
 
     const text = `select * from ${relationPath}.${this.matName} where ${whereClause};`;
@@ -174,10 +198,6 @@ export default class TestSuiteRepo
     if (updateDto.activated !== undefined) {
       colDefinitions.push(this.getDefinition('activated'));
       binds.push(updateDto.activated.toString());
-    }
-    if (updateDto.threshold) {
-      colDefinitions.push(this.getDefinition('threshold'));
-      binds.push(updateDto.threshold);
     }
     if (updateDto.cron) {
       colDefinitions.push(this.getDefinition('cron'));
@@ -198,6 +218,18 @@ export default class TestSuiteRepo
     if (updateDto.boundsIntervalRelative) {
       colDefinitions.push(this.getDefinition('bounds_interval_relative'));
       binds.push(updateDto.boundsIntervalRelative);
+    }
+    if (updateDto.customLowerThreshold) {
+      colDefinitions.push(this.getDefinition('custom_lower_threshold'));
+      binds.push(updateDto.customLowerThreshold.value);
+      colDefinitions.push(this.getDefinition('custom_lower_threshold_mode'));
+      binds.push(updateDto.customLowerThreshold.mode);
+    }
+    if (updateDto.customUpperThreshold) {
+      colDefinitions.push(this.getDefinition('custom_upper_threshold'));
+      binds.push(updateDto.customUpperThreshold.value);
+      colDefinitions.push(this.getDefinition('custom_upper_threshold_mode'));
+      binds.push(updateDto.customUpperThreshold.mode);
     }
 
     const text = getUpdateQueryText(this.matName, colDefinitions, [

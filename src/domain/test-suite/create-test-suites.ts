@@ -11,7 +11,6 @@ import { createSchedules } from '../services/schedule';
 interface CreateObject {
   activated: boolean;
   type: TestType;
-  threshold: number;
   databaseName: string;
   schemaName: string;
   materializationName: string;
@@ -58,7 +57,10 @@ export class CreateTestSuites
           id: uuidv4(),
           activated: el.activated,
           type: el.type,
-          threshold: el.threshold,
+          customLowerThreshold: undefined,
+          customUpperThreshold: undefined,
+          customLowerThresholdMode: 'absolute',
+          customUpperThresholdMode: 'absolute',
           target: {
             databaseName: el.databaseName,
             schemaName: el.schemaName,
