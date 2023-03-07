@@ -7,6 +7,7 @@ import { ITestSuiteRepo } from './i-test-suite-repo';
 import IUseCase from '../services/use-case';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { createSchedules } from '../services/schedule';
+import { CustomThresholdMode } from '../value-types/custom-threshold-mode';
 
 interface CreateObject {
   activated: boolean;
@@ -19,6 +20,8 @@ interface CreateObject {
   targetResourceId: string;
   cron: string;
   executionType: ExecutionType;
+  customLowerThreshold?: { value: number; mode: CustomThresholdMode };
+  customUpperThreshold?: { value: number; mode: CustomThresholdMode };
 }
 
 export interface CreateTestSuitesRequestDto {
@@ -57,10 +60,18 @@ export class CreateTestSuites
           id: uuidv4(),
           activated: el.activated,
           type: el.type,
-          customLowerThreshold: undefined,
-          customUpperThreshold: undefined,
-          customLowerThresholdMode: 'absolute',
-          customUpperThresholdMode: 'absolute',
+          customLowerThreshold: el.customLowerThreshold
+            ? el.customLowerThreshold.value
+            : undefined,
+          customUpperThresholdMode: el.customLowerThreshold
+            ? el.customLowerThreshold.mode
+            : 'absolute',
+          customUpperThreshold: el.customLowerThreshold
+            ? el.customLowerThreshold.value
+            : undefined,
+          customLowerThresholdMode: el.customLowerThreshold
+            ? el.customLowerThreshold.mode
+            : 'absolute',
           target: {
             databaseName: el.databaseName,
             schemaName: el.schemaName,
