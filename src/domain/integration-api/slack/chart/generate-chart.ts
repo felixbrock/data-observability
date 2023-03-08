@@ -84,7 +84,7 @@ export class GenerateChart
 
   #buildDefaultOption = (
     yAxis: YAXisComponentOption,
-    data: ddsTestHistoryDataPoint[]
+    data: TestHistoryDataPoint[]
   ): EChartsOption => {
     const hasAnomolies = data.some(
       (el) =>
