@@ -106,8 +106,8 @@ export default class TestSuiteRepo
       typeof importanceThreshold !== 'number' ||
       typeof boundsIntervalRelative !== 'number' ||
       !isOptionalDateField(deletedAt) ||
-      typeof customUpperThreshold !== 'number' ||
-      typeof customLowerThreshold !== 'number'
+      !TestSuiteRepo.isOptionalOfType<number>(customUpperThreshold, 'number') ||
+      !TestSuiteRepo.isOptionalOfType<number>(customLowerThreshold, 'number')
     )
       throw new Error(
         'Retrieved unexpected test suite field types from persistence'
