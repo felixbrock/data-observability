@@ -33,10 +33,13 @@ export default class DeleteTestSuiteDuplicatesController extends BaseController 
   #buildRequestDto = (
     httpRequest: Request
   ): DeleteTestSuiteDuplicatesRequestDto => {
-    const { testSuiteIds, targetOrgId } = httpRequest.query;
+    const { testSuiteIds, targetOrgId } = httpRequest.body;
+
+    const isStringArray = (obj: unknown): obj is string[] =>
+      Array.isArray(obj) && obj.every((item) => typeof item === 'string');
 
     if (
-      (testSuiteIds && typeof testSuiteIds !== 'string') ||
+      (testSuiteIds && !isStringArray(testSuiteIds)) ||
       typeof targetOrgId !== 'string'
     )
       throw new Error(

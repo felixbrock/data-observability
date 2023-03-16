@@ -32,15 +32,16 @@ export default class DeleteQualTestSuitesController extends BaseController {
   }
 
   #buildRequestDto = (httpRequest: Request): DeleteQualTestSuitesRequestDto => {
-    const { targetResourceIds, mode } = httpRequest.query;
-
-    if (typeof targetResourceIds !== 'string' || typeof mode !== 'string')
+    const { targetResourceIds, mode } = httpRequest.body;
+    const isStringArray = (obj: unknown): obj is string[] =>
+      Array.isArray(obj) && obj.every((item) => typeof item === 'string');
+    if (!isStringArray(targetResourceIds) || typeof mode !== 'string')
       throw new Error(
         'Received test suite deletion req params in invalid format'
       );
 
     return {
-      targetResourceIds: targetResourceIds.split(','),
+      targetResourceIds,
       mode: parseMode(mode),
     };
   };
