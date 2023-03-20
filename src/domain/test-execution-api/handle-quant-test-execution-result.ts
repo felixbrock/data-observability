@@ -244,6 +244,8 @@ export class HandleQuantTestExecutionResult
       if (!req.testData || (!req.testData.anomaly.isAnomaly && !req.alertData))
         return Result.ok();
 
+      console.log('Anomaly detected, sending alert');
+
       await this.#sendAlert(req, auth.jwt, db.sfConnPool);
 
       return Result.ok();
