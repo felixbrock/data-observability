@@ -71,8 +71,6 @@ export class TestSuite {
 
   #importanceThreshold: number;
 
-  #boundsIntervalRelative: number;
-
   #deletedAt?: string;
 
   get id(): string {
@@ -119,10 +117,6 @@ export class TestSuite {
     return this.#importanceThreshold;
   }
 
-  get boundsIntervalRelative(): number {
-    return this.#boundsIntervalRelative;
-  }
-
   get deletedAt(): string | undefined {
     return this.#deletedAt;
   }
@@ -141,7 +135,6 @@ export class TestSuite {
     this.#cron = props.cron;
     this.#executionType = props.executionType;
     this.#importanceThreshold = props.importanceThreshold;
-    this.#boundsIntervalRelative = props.boundsIntervalRelative;
     this.#deletedAt = props.deletedAt;
   }
 
@@ -185,7 +178,6 @@ export class TestSuite {
     cron: this.#cron,
     executionType: this.#executionType,
     importanceThreshold: this.#importanceThreshold,
-    boundsIntervalRelative: this.#boundsIntervalRelative,
     deletedAt: this.#deletedAt,
   });
 }

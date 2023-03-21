@@ -72,7 +72,6 @@ export class CreateTestSuites
           cron: el.cron,
           executionType: el.executionType,
           importanceThreshold: -1,
-          boundsIntervalRelative: 0,
         })
       );
 

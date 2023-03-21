@@ -14,7 +14,6 @@ export interface CreateQuantTestResultRequestDto {
     anomaly: {
       isAnomaly: boolean;
       importance?: number;
-      boundsIntervalRelative?: number;
     };
     modifiedZScore: number;
     deviation: number;

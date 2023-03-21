@@ -4,7 +4,6 @@ import { MaterializationType } from '../value-types/materialization-type';
 export interface AnomalyData {
   isAnomaly: boolean;
   importance?: number;
-  boundsIntervalRelative?: number;
 }
 
 export interface QuantTestTestData {

@@ -80,7 +80,6 @@ test('lineage creation', async () => {
       anomaly: {
         isAnomaly: true,
         importance: 0.393,
-        boundsIntervalRelative: 0.08,
       },
       modifiedZScore: 0.2447081854888046,
       deviation: 0.023391812865497075,

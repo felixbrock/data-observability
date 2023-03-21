@@ -35,14 +35,12 @@ export default class PostAnomalyFeedbackController extends BaseController {
       testType,
       userFeedbackIsAnomaly,
       importance,
-      boundsIntervalRelative,
       testSuiteId,
     } = httpRequest.body;
 
     if (
       Number.isNaN(Number(userFeedbackIsAnomaly)) ||
-      Number.isNaN(Number(importance)) ||
-      Number.isNaN(Number(boundsIntervalRelative))
+      Number.isNaN(Number(importance))
     )
       throw new Error('Provided NaN numerical input data');
 
@@ -51,7 +49,6 @@ export default class PostAnomalyFeedbackController extends BaseController {
       testType,
       userFeedbackIsAnomaly: parseInt(userFeedbackIsAnomaly, 10),
       importance: parseFloat(importance),
-      boundsIntervalRelative: parseFloat(boundsIntervalRelative),
       testSuiteId,
     };
   };

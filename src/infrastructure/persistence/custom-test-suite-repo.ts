@@ -42,7 +42,6 @@ export default class CustomTestSuiteRepo
     { name: 'cron', nullable: false },
     { name: 'execution_type', nullable: false },
     { name: 'importance_threshold', nullable: false },
-    { name: 'bounds_interval_relative', nullable: false },
     { name: 'deleted_at', nullable: true },
     { name: 'custom_lower_threshold', nullable: true },
     {
@@ -72,7 +71,6 @@ export default class CustomTestSuiteRepo
       CRON: cron,
       EXECUTION_TYPE: executionType,
       IMPORTANCE_THRESHOLD: importanceThreshold,
-      BOUNDS_INTERVAL_RELATIVE: boundsIntervalRelative,
       DELETED_AT: deletedAt,
       CUSTOM_LOWER_THRESHOLD: customLowerThreshold,
       CUSTOM_LOWER_THRESHOLD_MODE: customLowerThresholdMode,
@@ -93,7 +91,6 @@ export default class CustomTestSuiteRepo
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
       typeof importanceThreshold !== 'number' ||
-      typeof boundsIntervalRelative !== 'number' ||
       !isOptionalDateField(deletedAt) ||
       typeof customUpperThreshold !== 'number' ||
       typeof customLowerThreshold !== 'number'
@@ -112,7 +109,6 @@ export default class CustomTestSuiteRepo
       cron,
       executionType: parseExecutionType(executionType),
       importanceThreshold,
-      boundsIntervalRelative,
       deletedAt: deletedAt ? deletedAt.toISOString() : undefined,
       customLowerThreshold,
       customLowerThresholdMode: parseCustomThresholdMode(
@@ -151,7 +147,6 @@ export default class CustomTestSuiteRepo
     entity.cron || 'null',
     entity.executionType,
     entity.importanceThreshold,
-    entity.boundsIntervalRelative,
     entity.deletedAt || 'null',
     entity.customLowerThreshold || 'null',
     entity.customLowerThresholdMode,
@@ -197,10 +192,6 @@ export default class CustomTestSuiteRepo
     if (updateDto.importanceThreshold) {
       colDefinitions.push(this.getDefinition('importance_threshold'));
       binds.push(updateDto.importanceThreshold);
-    }
-    if (updateDto.boundsIntervalRelative) {
-      colDefinitions.push(this.getDefinition('bounds_interval_relative'));
-      binds.push(updateDto.boundsIntervalRelative);
     }
     if (updateDto.customLowerThreshold) {
       colDefinitions.push(this.getDefinition('custom_lower_threshold'));

@@ -59,8 +59,7 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
       !!unknownObj &&
       typeof unknownObj === 'object' &&
       'isAnomaly' in unknownObj &&
-      'importance' in unknownObj &&
-      'boundsIntervalRelative' in unknownObj;
+      'importance' in unknownObj;
 
     const { executedOn, anomaly, modifiedZScore, deviation } = obj;
 

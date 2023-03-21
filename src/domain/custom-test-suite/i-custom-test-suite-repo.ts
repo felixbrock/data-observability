@@ -14,7 +14,6 @@ export interface CustomTestSuiteUpdateDto {
   cron?: string;
   executionType?: ExecutionType;
   importanceThreshold?: number;
-  boundsIntervalRelative?: number;
 }
 
 export interface CustomTestSuiteQueryDto {
