@@ -19,6 +19,8 @@ export interface UpdateCustomTestSuiteRequestDto {
     sqlLogic?: string;
     cron?: string;
     executionType?: ExecutionType;
+    feedbackLowerThreshold?: number;
+    feedbackUpperThreshold?: number;
   };
 }
 

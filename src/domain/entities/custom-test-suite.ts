@@ -39,6 +39,10 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   #customLowerThresholdMode: CustomThresholdMode;
 
+  #feedbackUpperThreshold?: number;
+
+  #feedbackLowerThreshold?: number;
+
   #name: string;
 
   #description: string;
@@ -75,6 +79,14 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   get customLowerThresholdMode(): CustomThresholdMode {
     return this.#customLowerThresholdMode;
+  }
+
+  get feedbackLowerThreshold(): number | undefined {
+    return this.#feedbackLowerThreshold;
+  }
+
+  get feedbackUpperThreshold(): number | undefined {
+    return this.#feedbackUpperThreshold;
   }
 
   get name(): string {
@@ -118,6 +130,8 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     this.#targetResourceIds = props.targetResourceIds;
     this.#cron = props.cron;
     this.#executionType = props.executionType;
+    this.#feedbackLowerThreshold = props.feedbackLowerThreshold;
+    this.#feedbackUpperThreshold = props.feedbackUpperThreshold;
 
     this.#deletedAt = props.deletedAt;
   }
@@ -149,6 +163,8 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     customUpperThresholdMode: this.#customUpperThresholdMode,
     cron: this.#cron,
     executionType: this.#executionType,
+    feedbackLowerThreshold: this.#feedbackLowerThreshold,
+    feedbackUpperThreshold: this.#feedbackUpperThreshold,
 
     deletedAt: this.#deletedAt,
   });

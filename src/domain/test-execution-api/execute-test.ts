@@ -77,7 +77,7 @@ export class ExecuteTest
       if (instanceOfQuantTestExecutionResultDto(testExecutionResult)) {
         if (
           testExecutionResult.testData &&
-          testExecutionResult.testData.anomaly.isAnomaly &&
+          testExecutionResult.testData.anomaly &&
           !testExecutionResult.alertData
         )
           throw new Error('Quant test result obj structural mismatch');

@@ -9,6 +9,8 @@ export interface TestSuiteUpdateDto {
   customUpperThreshold?: { value: number; mode: CustomThresholdMode };
   cron?: string;
   executionType?: ExecutionType;
+  feedbackLowerThreshold?: number;
+  feedbackUpperThreshold?: number;
 }
 
 export interface TestSuiteQueryDto {

@@ -50,6 +50,8 @@ export default class UpdateCustomTestSuiteController extends BaseController {
         sqlLogic: remainingBody.sqlLogic,
         cron,
         executionType,
+        feedbackLowerThreshold: remainingBody.feedbackLowerThreshold,
+        feedbackUpperThreshold: remainingBody.feedbackUpperThreshold,
       },
     };
   };

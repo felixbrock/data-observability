@@ -1,7 +1,4 @@
-import {
-  Threshold,
-  ThresholdType,
-} from '../snowflake-api/post-anomaly-feedback';
+import { ThresholdType } from '../snowflake-api/post-anomaly-feedback';
 import { SendAlertResultDto } from './slack/send-alert-result-dto';
 
 export interface SnowflakeProfileDto {

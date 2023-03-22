@@ -69,6 +69,10 @@ export class TestSuite {
 
   #executionType: ExecutionType;
 
+  #feedbackUpperThreshold?: number;
+
+  #feedbackLowerThreshold?: number;
+
   #deletedAt?: string;
 
   get id(): string {
@@ -111,6 +115,14 @@ export class TestSuite {
     return this.#executionType;
   }
 
+  get feedbackUpperThreshold(): number | undefined {
+    return this.#feedbackUpperThreshold;
+  }
+
+  get feedbackLowerThreshold(): number | undefined {
+    return this.#feedbackLowerThreshold;
+  }
+
   get deletedAt(): string | undefined {
     return this.#deletedAt;
   }
@@ -128,6 +140,8 @@ export class TestSuite {
     this.#target = props.target;
     this.#cron = props.cron;
     this.#executionType = props.executionType;
+    this.#feedbackLowerThreshold = props.feedbackLowerThreshold;
+    this.#feedbackUpperThreshold = props.feedbackUpperThreshold;
     this.#deletedAt = props.deletedAt;
   }
 
@@ -170,6 +184,8 @@ export class TestSuite {
     target: this.#target,
     cron: this.#cron,
     executionType: this.#executionType,
+    feedbackLowerThreshold: this.#feedbackLowerThreshold,
+    feedbackUpperThreshold: this.#feedbackUpperThreshold,
     deletedAt: this.#deletedAt,
   });
 }

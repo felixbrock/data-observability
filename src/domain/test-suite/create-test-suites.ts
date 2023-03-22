@@ -71,6 +71,8 @@ export class CreateTestSuites
           },
           cron: el.cron,
           executionType: el.executionType,
+          feedbackLowerThreshold: undefined,
+          feedbackUpperThreshold: undefined,
         })
       );
 

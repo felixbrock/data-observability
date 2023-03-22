@@ -3,13 +3,13 @@ import { MaterializationType } from '../value-types/materialization-type';
 
 export interface AnomalyData {
   importance: number;
-  detectedValue: number;
-  expectedUpperBound: number;
-  expectedLowerBound: number;
 }
 
 export interface QuantTestTestData {
   executedOn: string;
+  detectedValue: number;
+  expectedUpperBound: number;
+  expectedLowerBound: number;
   modifiedZScore: number;
   deviation: number;
   anomaly: AnomalyData;

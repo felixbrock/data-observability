@@ -142,13 +142,13 @@ export class HandleQuantTestExecutionResult
 
     let thresholdType: ThresholdType;
     if (
-      testExecutionResult.testData.anomaly.detectedValue >
-      testExecutionResult.testData.anomaly.expectedUpperBound
+      testExecutionResult.testData.detectedValue >
+      testExecutionResult.testData.expectedUpperBound
     )
       thresholdType = 'upper';
     else if (
-      testExecutionResult.testData.anomaly.detectedValue >
-      testExecutionResult.testData.anomaly.expectedLowerBound
+      testExecutionResult.testData.detectedValue >
+      testExecutionResult.testData.expectedLowerBound
     )
       thresholdType = 'lower';
     else throw new Error('Invalid threshold type');
@@ -159,20 +159,20 @@ export class HandleQuantTestExecutionResult
       detectedOn: testExecutionResult.testData.executedOn,
       deviation: this.#buildDeviaton(testExecutionResult.testData.deviation),
       expectedLowerBound:
-        testExecutionResult.testData.anomaly.expectedLowerBound % 1 !== 0
-          ? testExecutionResult.testData.anomaly.expectedLowerBound.toFixed(4)
-          : testExecutionResult.testData.anomaly.expectedLowerBound.toString(),
+        testExecutionResult.testData.expectedLowerBound % 1 !== 0
+          ? testExecutionResult.testData.expectedLowerBound.toFixed(4)
+          : testExecutionResult.testData.expectedLowerBound.toString(),
       expectedUpperBound:
-        testExecutionResult.testData.anomaly.expectedUpperBound % 1 !== 0
-          ? testExecutionResult.testData.anomaly.expectedUpperBound.toFixed(4)
-          : testExecutionResult.testData.anomaly.expectedUpperBound.toString(),
+        testExecutionResult.testData.expectedUpperBound % 1 !== 0
+          ? testExecutionResult.testData.expectedUpperBound.toFixed(4)
+          : testExecutionResult.testData.expectedUpperBound.toString(),
       databaseName: testExecutionResult.alertData.databaseName,
       schemaName: testExecutionResult.alertData.schemaName,
       materializationName: testExecutionResult.alertData.materializationName,
       columnName: testExecutionResult.alertData.columnName,
       message: this.#explain(
         testExecutionResult.testType,
-        testExecutionResult.testData.anomaly.detectedValue,
+        testExecutionResult.testData.detectedValue,
         testExecutionResult.testData.deviation,
         testExecutionResult.alertData.expectedValue,
         {
@@ -182,8 +182,7 @@ export class HandleQuantTestExecutionResult
           templateUrl: testExecutionResult.alertData.message,
         }
       ),
-      detectedValue:
-        testExecutionResult.testData.anomaly.detectedValue.toString(),
+      detectedValue: testExecutionResult.testData.detectedValue.toString(),
       thresholdType,
       targetResourceId: testExecutionResult.targetResourceId,
       chartUrl: generateChartRes.value.url,

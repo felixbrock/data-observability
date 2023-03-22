@@ -52,6 +52,8 @@ export default class CustomTestSuiteRepo
       name: 'custom_upper_threshold_mode',
       nullable: false,
     },
+    { name: 'feedback_lower_threshold', nullable: true },
+    { name: 'feedback_upper_threshold', nullable: true },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -74,6 +76,8 @@ export default class CustomTestSuiteRepo
       CUSTOM_LOWER_THRESHOLD_MODE: customLowerThresholdMode,
       CUSTOM_UPPER_THRESHOLD: customUpperThreshold,
       CUSTOM_UPPER_THRESHOLD_MODE: customUpperThresholdMode,
+      FEEDBACK_LOWER_THRESHOLD: feedbackLowerThreshold,
+      FEEDBACK_UPPER_THRESHOLD: feedbackUpperThreshold,
     } = sfEntity;
 
     const isOptionalDateField = (obj: unknown): obj is Date | undefined =>
@@ -88,8 +92,11 @@ export default class CustomTestSuiteRepo
       !CustomTestSuiteRepo.isStringArray(targetResourceIds) ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
+      !isOptionalDateField(deletedAt) ||
       typeof customUpperThreshold !== 'number' ||
-      typeof customLowerThreshold !== 'number'
+      typeof customLowerThreshold !== 'number' ||
+      typeof feedbackUpperThreshold !== 'number' ||
+      typeof feedbackLowerThreshold !== 'number'
     )
       throw new Error(
         'Retrieved unexpected custom test suite field types from persistence'
@@ -113,6 +120,8 @@ export default class CustomTestSuiteRepo
       customUpperThresholdMode: parseCustomThresholdMode(
         customUpperThresholdMode
       ),
+      feedbackLowerThreshold,
+      feedbackUpperThreshold,
     };
   };
 
@@ -146,6 +155,8 @@ export default class CustomTestSuiteRepo
     entity.customLowerThresholdMode,
     entity.customUpperThreshold || 'null',
     entity.customUpperThresholdMode,
+    entity.feedbackLowerThreshold || 'null',
+    entity.feedbackUpperThreshold || 'null',
   ];
 
   buildUpdateQuery = (
@@ -194,6 +205,14 @@ export default class CustomTestSuiteRepo
       binds.push(updateDto.customUpperThreshold.value);
       colDefinitions.push(this.getDefinition('custom_upper_threshold_mode'));
       binds.push(updateDto.customUpperThreshold.mode);
+    }
+    if (updateDto.feedbackLowerThreshold) {
+      colDefinitions.push(this.getDefinition('feedback_lower_threshold'));
+      binds.push(updateDto.feedbackLowerThreshold);
+    }
+    if (updateDto.feedbackUpperThreshold) {
+      colDefinitions.push(this.getDefinition('feedback_upper_threshold'));
+      binds.push(updateDto.feedbackUpperThreshold);
     }
 
     const text = getUpdateQueryText(this.matName, colDefinitions, [

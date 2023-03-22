@@ -59,6 +59,8 @@ export class CreateCustomTestSuite
         customUpperThreshold: undefined,
         customLowerThresholdMode: 'absolute',
         customUpperThresholdMode: 'absolute',
+        feedbackLowerThreshold: undefined,
+        feedbackUpperThreshold: undefined,
         targetResourceIds: req.entityProps.targetResourceIds,
       });
 

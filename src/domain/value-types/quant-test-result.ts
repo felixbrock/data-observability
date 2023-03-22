@@ -5,11 +5,11 @@ export interface QuantTestResult {
   isWarmup: boolean;
   testData?: {
     executedOn: string;
+    detectedValue: number;
+    expectedUpperBound: number;
+    expectedLowerBound: number;
     anomaly?: {
       importance: number;
-      detectedValue: number;
-      expectedUpperBound: number;
-      expectedLowerBound: number;
     };
     modifiedZScore: number;
     deviation: number;

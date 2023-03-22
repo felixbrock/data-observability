@@ -57,6 +57,8 @@ export default class TestSuiteRepo
       name: 'custom_upper_threshold_mode',
       nullable: false,
     },
+    { name: 'feedback_lower_threshold', nullable: true },
+    { name: 'feedback_upper_threshold', nullable: true },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -82,6 +84,8 @@ export default class TestSuiteRepo
       CUSTOM_LOWER_THRESHOLD_MODE: customLowerThresholdMode,
       CUSTOM_UPPER_THRESHOLD: customUpperThreshold,
       CUSTOM_UPPER_THRESHOLD_MODE: customUpperThresholdMode,
+      FEEDBACK_LOWER_THRESHOLD: feedbackLowerThreshold,
+      FEEDBACK_UPPER_THRESHOLD: feedbackUpperThreshold,
     } = sfEntity;
 
     const isOptionalDateField = (obj: unknown): obj is Date | undefined =>
@@ -101,7 +105,12 @@ export default class TestSuiteRepo
       typeof executionType !== 'string' ||
       !isOptionalDateField(deletedAt) ||
       !TestSuiteRepo.isOptionalOfType<number>(customUpperThreshold, 'number') ||
-      !TestSuiteRepo.isOptionalOfType<number>(customLowerThreshold, 'number')
+      !TestSuiteRepo.isOptionalOfType<number>(customLowerThreshold, 'number') ||
+      !TestSuiteRepo.isOptionalOfType<number>(
+        feedbackUpperThreshold,
+        'number'
+      ) ||
+      !TestSuiteRepo.isOptionalOfType<number>(feedbackLowerThreshold, 'number')
     )
       throw new Error(
         'Retrieved unexpected test suite field types from persistence'
@@ -130,6 +139,8 @@ export default class TestSuiteRepo
       customUpperThresholdMode: parseCustomThresholdMode(
         customUpperThresholdMode
       ),
+      feedbackLowerThreshold,
+      feedbackUpperThreshold,
     };
   };
 
@@ -150,6 +161,8 @@ export default class TestSuiteRepo
     entity.customLowerThresholdMode,
     entity.customUpperThreshold || 'null',
     entity.customUpperThresholdMode,
+    entity.feedbackLowerThreshold || 'null',
+    entity.feedbackUpperThreshold || 'null',
   ];
 
   buildFindByQuery = (queryDto: TestSuiteQueryDto): Query => {
@@ -212,6 +225,14 @@ export default class TestSuiteRepo
       binds.push(updateDto.customUpperThreshold.value);
       colDefinitions.push(this.getDefinition('custom_upper_threshold_mode'));
       binds.push(updateDto.customUpperThreshold.mode);
+    }
+    if (updateDto.feedbackLowerThreshold) {
+      colDefinitions.push(this.getDefinition('feedback_lower_threshold'));
+      binds.push(updateDto.feedbackLowerThreshold);
+    }
+    if (updateDto.feedbackUpperThreshold) {
+      colDefinitions.push(this.getDefinition('feedback_upper_threshold'));
+      binds.push(updateDto.feedbackUpperThreshold);
     }
 
     const text = getUpdateQueryText(this.matName, colDefinitions, [
