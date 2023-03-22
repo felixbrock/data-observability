@@ -60,7 +60,6 @@ export class CreateCustomTestSuite
         customLowerThresholdMode: 'absolute',
         customUpperThresholdMode: 'absolute',
         targetResourceIds: req.entityProps.targetResourceIds,
-        importanceThreshold: -1,
       });
 
       await this.#repo.insertOne(customTestSuite, connPool);

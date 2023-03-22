@@ -8,6 +8,7 @@ import {
   PostAnomalyFeedbackAuthDto,
   PostAnomalyFeedbackRequestDto,
   PostAnomalyFeedbackResponseDto,
+  ThresholdType,
 } from '../../../domain/snowflake-api/post-anomaly-feedback';
 import Result from '../../../domain/value-types/transient-types/result';
 
@@ -34,21 +35,32 @@ export default class PostAnomalyFeedbackController extends BaseController {
       alertId,
       testType,
       userFeedbackIsAnomaly,
-      importance,
+      detectedValue,
+      thresholdType,
       testSuiteId,
     } = httpRequest.body;
 
+    const isThresholdType = (obj: unknown): obj is ThresholdType =>
+      !!obj &&
+      typeof obj === 'string' &&
+      ['lower', 'upper'].includes(thresholdType);
+
     if (
       Number.isNaN(Number(userFeedbackIsAnomaly)) ||
-      Number.isNaN(Number(importance))
+      Number.isNaN(Number(detectedValue)) ||
+      !isThresholdType(thresholdType) ||
+      typeof thresholdType !== 'string'
     )
-      throw new Error('Provided NaN numerical input data');
+      throw new Error(
+        'Provision of invalid post anomaly feedback request params'
+      );
 
     return {
       alertId,
       testType,
       userFeedbackIsAnomaly: parseInt(userFeedbackIsAnomaly, 10),
-      importance: parseFloat(importance),
+      detectedValue: parseFloat(detectedValue),
+      thresholdType,
       testSuiteId,
     };
   };

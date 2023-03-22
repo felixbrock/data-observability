@@ -1,8 +1,8 @@
 import { TestType } from '../../entities/quant-test-suite';
+import { ThresholdType } from '../../snowflake-api/post-anomaly-feedback';
 
 export interface QuantTestAlertDto {
   alertId: string;
-  value: string;
   testType: TestType;
   message: string;
   expectedUpperBound: string;
@@ -15,7 +15,7 @@ export interface QuantTestAlertDto {
   deviation: string;
   targetResourceId: string;
   chartUrl: string;
-  importance: string;
-
   testSuiteId: string;
+  detectedValue: string;
+  thresholdType: ThresholdType;
 }

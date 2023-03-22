@@ -1,3 +1,7 @@
+import {
+  Threshold,
+  ThresholdType,
+} from '../snowflake-api/post-anomaly-feedback';
 import { SendAlertResultDto } from './slack/send-alert-result-dto';
 
 export interface SnowflakeProfileDto {
@@ -26,7 +30,8 @@ export interface QuantAlertMsgConfig {
   summaryPart: string;
   expectedRangePart: string;
   detectedValuePart: string;
-  importance: string;
+  detectedValue: string;
+  thresholdType: ThresholdType;
   testSuiteId: string;
   imageUrl: string;
 }

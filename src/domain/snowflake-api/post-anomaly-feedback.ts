@@ -5,12 +5,14 @@ import { QuerySnowflake } from './query-snowflake';
 import { Binds, IConnectionPool } from './i-snowflake-api-repo';
 import BaseAuth from '../services/base-auth';
 
+export type ThresholdType = 'lower' | 'upper';
+
 export interface PostAnomalyFeedbackRequestDto {
   alertId: string;
   testType: TestType;
   userFeedbackIsAnomaly: number;
-  importance?: number;
-
+  detectedValue: number;
+  thresholdType: ThresholdType;
   testSuiteId?: string;
 }
 
@@ -62,20 +64,20 @@ export class PostAnomalyFeedback
   }
 
   #updateTestSuite = async (
-    importance: number,
-
+    detectedValue: number,
+    thresholdType: ThresholdType,
     testSuiteId: string,
     connPool: IConnectionPool
   ): Promise<void> => {
     console.log(
-      `Updating anomaly importance threshold (importance: ${importance} for test suite ${testSuiteId}`
+      `Updating anomaly feedback threshold for test suite ${testSuiteId}`
     );
 
-    const binds: Binds = [importance, testSuiteId];
+    const binds: Binds = [detectedValue, testSuiteId];
 
     const queryText = `
   update cito.observability.test_suites
-  set importance_threshold = ?,
+  set feedback_${thresholdType}_threshold = ?,
   where id = ?;
   `;
 
@@ -138,10 +140,10 @@ export class PostAnomalyFeedback
 
       if (
         req.userFeedbackIsAnomaly === 0 &&
-        !(typeof req.importance === 'number' && req.testSuiteId)
+        !(req.detectedValue && req.thresholdType && req.testSuiteId)
       )
         throw new Error(
-          'Feedback indicates false-positive but importance and/or test suite id are missing. Cannot perform operation.'
+          'Feedback indicates false-positive but thresholdType, detectedValue and/or test suite id are missing. Cannot perform operation.'
         );
 
       await this.#updateTestHistory(
@@ -152,10 +154,16 @@ export class PostAnomalyFeedback
 
       if (
         req.userFeedbackIsAnomaly === 0 &&
-        typeof req.importance === 'number' &&
+        req.detectedValue &&
+        req.thresholdType &&
         req.testSuiteId
       )
-        await this.#updateTestSuite(req.importance, req.testSuiteId, connPool);
+        await this.#updateTestSuite(
+          req.detectedValue,
+          req.thresholdType,
+          req.testSuiteId,
+          connPool
+        );
 
       return Result.ok(req.alertId);
     } catch (error: unknown) {

@@ -9,7 +9,6 @@ export interface TestSuiteUpdateDto {
   customUpperThreshold?: { value: number; mode: CustomThresholdMode };
   cron?: string;
   executionType?: ExecutionType;
-  importanceThreshold?: number;
 }
 
 export interface TestSuiteQueryDto {

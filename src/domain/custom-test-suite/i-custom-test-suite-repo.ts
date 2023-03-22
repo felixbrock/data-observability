@@ -13,7 +13,6 @@ export interface CustomTestSuiteUpdateDto {
   sqlLogic?: string;
   cron?: string;
   executionType?: ExecutionType;
-  importanceThreshold?: number;
 }
 
 export interface CustomTestSuiteQueryDto {

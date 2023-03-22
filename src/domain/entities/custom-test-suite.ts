@@ -51,8 +51,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   #executionType: ExecutionType;
 
-  #importanceThreshold: number;
-
   #deletedAt?: string;
 
   get id(): string {
@@ -103,10 +101,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     return this.#executionType;
   }
 
-  get importanceThreshold(): number {
-    return this.#importanceThreshold;
-  }
-
   get deletedAt(): string | undefined {
     return this.#deletedAt;
   }
@@ -124,7 +118,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     this.#targetResourceIds = props.targetResourceIds;
     this.#cron = props.cron;
     this.#executionType = props.executionType;
-    this.#importanceThreshold = props.importanceThreshold;
+
     this.#deletedAt = props.deletedAt;
   }
 
@@ -155,7 +149,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     customUpperThresholdMode: this.#customUpperThresholdMode,
     cron: this.#cron,
     executionType: this.#executionType,
-    importanceThreshold: this.#importanceThreshold,
+
     deletedAt: this.#deletedAt,
   });
 }

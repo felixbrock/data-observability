@@ -2,8 +2,10 @@ import { TestType } from '../entities/quant-test-suite';
 import { MaterializationType } from '../value-types/materialization-type';
 
 export interface AnomalyData {
-  isAnomaly: boolean;
-  importance?: number;
+  importance: number;
+  detectedValue: number;
+  expectedUpperBound: number;
+  expectedLowerBound: number;
 }
 
 export interface QuantTestTestData {
@@ -16,9 +18,6 @@ export interface QuantTestTestData {
 export interface QuantTestAlertData {
   alertId: string;
   message: string;
-  value: number;
-  expectedUpperBound: number;
-  expectedLowerBound: number;
   expectedValue: number;
   databaseName: string;
   schemaName: string;

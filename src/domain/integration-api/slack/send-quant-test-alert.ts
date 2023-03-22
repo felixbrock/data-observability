@@ -45,25 +45,27 @@ export class SendQuantTestSlackAlert
 
   static #buildAlertMessageConfig = (
     quantAlertDto: QuantTestAlertDto
-  ): QuantAlertMsgConfig => ({
-    alertId: quantAlertDto.alertId,
-    testType: quantAlertDto.testType,
-    occurredOn: `${quantAlertDto.detectedOn} (UTC)`,
-    anomalyMessagePart: this.#buildHeader(
-      quantAlertDto.testType,
-      quantAlertDto.deviation
-    ),
-    detectedValuePart: `*Detected Value:*\n${quantAlertDto.value} (${quantAlertDto.deviation}% deviation)`,
-    expectedRangePart: `*Expected Range:*\n${quantAlertDto.expectedLowerBound} : ${quantAlertDto.expectedUpperBound}`,
-    summaryPart: quantAlertDto.message.replace(
-      '__base_url__',
-      appConfig.slack.callbackRoot
-    ),
-    imageUrl: quantAlertDto.chartUrl,
-    importance: quantAlertDto.importance,
-
-    testSuiteId: quantAlertDto.testSuiteId,
-  });
+  ): QuantAlertMsgConfig => {
+    return {
+      alertId: quantAlertDto.alertId,
+      testType: quantAlertDto.testType,
+      occurredOn: `${quantAlertDto.detectedOn} (UTC)`,
+      anomalyMessagePart: this.#buildHeader(
+        quantAlertDto.testType,
+        quantAlertDto.deviation
+      ),
+      detectedValuePart: `*Detected Value:*\n${quantAlertDto.detectedValue} (${quantAlertDto.deviation}% deviation)`,
+      expectedRangePart: `*Expected Range:*\n${quantAlertDto.expectedLowerBound} : ${quantAlertDto.expectedUpperBound}`,
+      summaryPart: quantAlertDto.message.replace(
+        '__base_url__',
+        appConfig.slack.callbackRoot
+      ),
+      imageUrl: quantAlertDto.chartUrl,
+      detectedValue: quantAlertDto.detectedValue,
+      thresholdType: quantAlertDto.thresholdType,
+      testSuiteId: quantAlertDto.testSuiteId,
+    };
+  };
 
   async execute(props: {
     req: SendQuantSlackAlertRequestDto;

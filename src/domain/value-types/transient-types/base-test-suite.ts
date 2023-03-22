@@ -14,5 +14,4 @@ export interface BaseQuantTestSuite extends BaseTestSuite {
   customUpperThreshold?: number;
   customLowerThresholdMode: CustomThresholdMode;
   customUpperThresholdMode: CustomThresholdMode;
-  importanceThreshold: number;
 }

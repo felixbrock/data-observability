@@ -69,8 +69,6 @@ export class TestSuite {
 
   #executionType: ExecutionType;
 
-  #importanceThreshold: number;
-
   #deletedAt?: string;
 
   get id(): string {
@@ -113,10 +111,6 @@ export class TestSuite {
     return this.#executionType;
   }
 
-  get importanceThreshold(): number {
-    return this.#importanceThreshold;
-  }
-
   get deletedAt(): string | undefined {
     return this.#deletedAt;
   }
@@ -134,7 +128,6 @@ export class TestSuite {
     this.#target = props.target;
     this.#cron = props.cron;
     this.#executionType = props.executionType;
-    this.#importanceThreshold = props.importanceThreshold;
     this.#deletedAt = props.deletedAt;
   }
 
@@ -177,7 +170,6 @@ export class TestSuite {
     target: this.#target,
     cron: this.#cron,
     executionType: this.#executionType,
-    importanceThreshold: this.#importanceThreshold,
     deletedAt: this.#deletedAt,
   });
 }

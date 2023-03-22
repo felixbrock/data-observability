@@ -9,6 +9,7 @@ import { CreateQuantTestResult } from '../quant-test-result/create-quant-test-re
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { GenerateChart } from '../integration-api/slack/chart/generate-chart';
 import { TestType } from '../entities/quant-test-suite';
+import { ThresholdType } from '../snowflake-api/post-anomaly-feedback';
 
 export type HandleQuantTestExecutionResultRequestDto =
   QuantTestExecutionResultDto;
@@ -123,8 +124,8 @@ export class HandleQuantTestExecutionResult
   ): Promise<void> => {
     if (!testExecutionResult.testData)
       throw new Error('Missing test data. Previous checks indicated test data');
-    if (!testExecutionResult.testData.anomaly.importance)
-      throw new Error('Missing anomaly importance. Cannot send anomaly alert');
+    if (!testExecutionResult.testData.anomaly)
+      throw new Error('Missing anomaly data. Cannot send anomaly alert');
     if (!testExecutionResult.alertData)
       throw new Error(
         'Missing alert data. Previous checks indicated alert data'
@@ -139,26 +140,39 @@ export class HandleQuantTestExecutionResult
     if (!generateChartRes.value)
       throw new Error('Missing gen chart response value');
 
+    let thresholdType: ThresholdType;
+    if (
+      testExecutionResult.testData.anomaly.detectedValue >
+      testExecutionResult.testData.anomaly.expectedUpperBound
+    )
+      thresholdType = 'upper';
+    else if (
+      testExecutionResult.testData.anomaly.detectedValue >
+      testExecutionResult.testData.anomaly.expectedLowerBound
+    )
+      thresholdType = 'lower';
+    else throw new Error('Invalid threshold type');
+
     const alertDto: QuantTestAlertDto = {
       alertId: testExecutionResult.alertData.alertId,
       testType: testExecutionResult.testType,
       detectedOn: testExecutionResult.testData.executedOn,
       deviation: this.#buildDeviaton(testExecutionResult.testData.deviation),
       expectedLowerBound:
-        testExecutionResult.alertData.expectedLowerBound % 1 !== 0
-          ? testExecutionResult.alertData.expectedLowerBound.toFixed(4)
-          : testExecutionResult.alertData.expectedLowerBound.toString(),
+        testExecutionResult.testData.anomaly.expectedLowerBound % 1 !== 0
+          ? testExecutionResult.testData.anomaly.expectedLowerBound.toFixed(4)
+          : testExecutionResult.testData.anomaly.expectedLowerBound.toString(),
       expectedUpperBound:
-        testExecutionResult.alertData.expectedUpperBound % 1 !== 0
-          ? testExecutionResult.alertData.expectedUpperBound.toFixed(4)
-          : testExecutionResult.alertData.expectedUpperBound.toString(),
+        testExecutionResult.testData.anomaly.expectedUpperBound % 1 !== 0
+          ? testExecutionResult.testData.anomaly.expectedUpperBound.toFixed(4)
+          : testExecutionResult.testData.anomaly.expectedUpperBound.toString(),
       databaseName: testExecutionResult.alertData.databaseName,
       schemaName: testExecutionResult.alertData.schemaName,
       materializationName: testExecutionResult.alertData.materializationName,
       columnName: testExecutionResult.alertData.columnName,
       message: this.#explain(
         testExecutionResult.testType,
-        testExecutionResult.alertData.value,
+        testExecutionResult.testData.anomaly.detectedValue,
         testExecutionResult.testData.deviation,
         testExecutionResult.alertData.expectedValue,
         {
@@ -168,16 +182,11 @@ export class HandleQuantTestExecutionResult
           templateUrl: testExecutionResult.alertData.message,
         }
       ),
-      value:
-        testExecutionResult.alertData.value % 1 !== 0
-          ? testExecutionResult.alertData.value.toFixed(4)
-          : testExecutionResult.alertData.value.toString(),
+      detectedValue:
+        testExecutionResult.testData.anomaly.detectedValue.toString(),
+      thresholdType,
       targetResourceId: testExecutionResult.targetResourceId,
       chartUrl: generateChartRes.value.url,
-      importance:
-        testExecutionResult.testData.anomaly.importance % 1 !== 0
-          ? testExecutionResult.testData.anomaly.importance.toFixed(4)
-          : testExecutionResult.testData.anomaly.importance.toString(),
       testSuiteId: testExecutionResult.testSuiteId,
     };
 
@@ -231,7 +240,7 @@ export class HandleQuantTestExecutionResult
     try {
       await this.#createTestResult(req, db.mongoConn);
 
-      if (!req.testData || (!req.testData.anomaly.isAnomaly && !req.alertData))
+      if (!req.testData || (!req.testData.anomaly && !req.alertData))
         return Result.ok();
 
       console.log('Anomaly detected, sending alert');

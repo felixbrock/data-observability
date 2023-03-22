@@ -5,23 +5,8 @@ import { IDbConnection } from '../services/i-db';
 import { QuantTestResult } from '../value-types/quant-test-result';
 import { IQuantTestResultRepo } from './i-quant-test-result-repo';
 
-export interface CreateQuantTestResultRequestDto {
-  testSuiteId: string;
-  executionId: string;
-  isWarmup: boolean;
-  testData?: {
-    executedOn: string;
-    anomaly: {
-      isAnomaly: boolean;
-      importance?: number;
-    };
-    modifiedZScore: number;
-    deviation: number;
-  };
-  alertData?: {
-    alertId: string;
-  };
-  targetResourceId: string;
+export interface CreateQuantTestResultRequestDto
+  extends Omit<QuantTestResult, 'organizationId'> {
   targetOrgId: string;
 }
 

@@ -16,7 +16,6 @@ interface UpdateObject {
     customUpperThreshold?: { value: number; mode: CustomThresholdMode };
     cron?: string;
     executionType?: ExecutionType;
-    importanceThreshold?: number;
   };
 }
 
@@ -69,8 +68,6 @@ export class UpdateTestSuites
         : testSuite.customUpperThresholdMode,
       executionType: updateObj.props.executionType || testSuite.executionType,
       cron: updateObj.props.cron || testSuite.cron,
-      importanceThreshold:
-        updateObj.props.importanceThreshold || testSuite.importanceThreshold,
     });
 
   async execute(props: {

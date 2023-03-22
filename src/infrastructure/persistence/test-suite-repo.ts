@@ -46,7 +46,6 @@ export default class TestSuiteRepo
     { name: 'target_resource_id', nullable: false },
     { name: 'cron', nullable: false },
     { name: 'execution_type', nullable: false },
-    { name: 'importance_threshold', nullable: false },
     { name: 'deleted_at', nullable: true },
     { name: 'custom_lower_threshold', nullable: true },
     {
@@ -78,7 +77,6 @@ export default class TestSuiteRepo
       TARGET_RESOURCE_ID: targetResourceId,
       CRON: cron,
       EXECUTION_TYPE: executionType,
-      IMPORTANCE_THRESHOLD: importanceThreshold,
       DELETED_AT: deletedAt,
       CUSTOM_LOWER_THRESHOLD: customLowerThreshold,
       CUSTOM_LOWER_THRESHOLD_MODE: customLowerThresholdMode,
@@ -101,7 +99,6 @@ export default class TestSuiteRepo
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
-      typeof importanceThreshold !== 'number' ||
       !isOptionalDateField(deletedAt) ||
       !TestSuiteRepo.isOptionalOfType<number>(customUpperThreshold, 'number') ||
       !TestSuiteRepo.isOptionalOfType<number>(customLowerThreshold, 'number')
@@ -124,7 +121,6 @@ export default class TestSuiteRepo
       type: parseTestType(type),
       cron,
       executionType: parseExecutionType(executionType),
-      importanceThreshold,
       deletedAt: deletedAt ? deletedAt.toISOString() : undefined,
       customLowerThreshold,
       customLowerThresholdMode: parseCustomThresholdMode(
@@ -149,7 +145,6 @@ export default class TestSuiteRepo
     entity.target.targetResourceId,
     entity.cron || 'null',
     entity.executionType,
-    entity.importanceThreshold,
     entity.deletedAt || 'null',
     entity.customLowerThreshold || 'null',
     entity.customLowerThresholdMode,
@@ -205,10 +200,6 @@ export default class TestSuiteRepo
     if (updateDto.executionType) {
       colDefinitions.push(this.getDefinition('execution_type'));
       binds.push(updateDto.executionType);
-    }
-    if (updateDto.importanceThreshold) {
-      colDefinitions.push(this.getDefinition('importance_threshold'));
-      binds.push(updateDto.importanceThreshold);
     }
     if (updateDto.customLowerThreshold) {
       colDefinitions.push(this.getDefinition('custom_lower_threshold'));
