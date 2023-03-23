@@ -77,7 +77,7 @@ export class PostAnomalyFeedback
 
     const queryText = `
   update cito.observability.test_suites
-  set feedback_${thresholdType}_threshold = ?,
+  set feedback_${thresholdType}_threshold = ?
   where id = ?;
   `;
 
