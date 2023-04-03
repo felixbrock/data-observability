@@ -64,10 +64,10 @@ export class CreateQualTestResult
         organizationId: req.targetOrgId,
       };
 
-      await this.#qualTestResultRepo.insertOne(
-        qualTestResult,
-        this.#dbConnection
-      );
+      // await this.#qualTestResultRepo.insertOne(
+      //   qualTestResult,
+      //   this.#dbConnection
+      // );
 
       return Result.ok(qualTestResult);
     } catch (error: unknown) {

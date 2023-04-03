@@ -45,10 +45,10 @@ export class CreateQuantTestResult
         organizationId: req.targetOrgId,
       };
 
-      await this.#quantTestResultRepo.insertOne(
-        quantTestResult,
-        this.#dbConnection
-      );
+      // await this.#quantTestResultRepo.insertOne(
+      //   quantTestResult,
+      //   this.#dbConnection
+      // );
 
       return Result.ok(quantTestResult);
     } catch (error: unknown) {
