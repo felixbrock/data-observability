@@ -147,7 +147,7 @@ export class HandleQuantTestExecutionResult
     )
       thresholdType = 'upper';
     else if (
-      testExecutionResult.testData.detectedValue >
+      testExecutionResult.testData.detectedValue <
       testExecutionResult.testData.expectedLowerBound
     )
       thresholdType = 'lower';
