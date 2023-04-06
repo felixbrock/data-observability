@@ -43,6 +43,7 @@ export interface QualTestSuiteDto {
   cron: string;
   executionType: ExecutionType;
   deletedAt?: string;
+  lastAlertSent?: string;
 }
 
 export class QualTestSuite {
@@ -59,6 +60,8 @@ export class QualTestSuite {
   #executionType: ExecutionType;
 
   #deletedAt?: string;
+
+  #lastAlertSent?: string;
 
   get id(): string {
     return this.#id;
@@ -88,6 +91,10 @@ export class QualTestSuite {
     return this.#deletedAt;
   }
 
+  get lastAlertSent(): string | undefined {
+    return this.#lastAlertSent;
+  }
+
   private constructor(props: QualTestSuiteProps) {
     this.#id = props.id;
     this.#activated = props.activated;
@@ -96,6 +103,7 @@ export class QualTestSuite {
     this.#cron = props.cron;
     this.#executionType = props.executionType;
     this.#deletedAt = props.deletedAt;
+    this.#lastAlertSent = props.lastAlertSent;
   }
 
   static create = (props: QualTestSuiteProps): QualTestSuite => {
@@ -133,5 +141,6 @@ export class QualTestSuite {
     cron: this.#cron,
     executionType: this.#executionType,
     deletedAt: this.#deletedAt,
+    lastAlertSent: this.#lastAlertSent,
   });
 }

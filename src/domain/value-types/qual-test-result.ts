@@ -12,4 +12,5 @@ export interface QualTestResult {
   };
   targetResourceId: string;
   organizationId: string;
+  lastAlertSent?: string;
 }

@@ -6,6 +6,7 @@ export interface QualTestSuiteUpdateDto {
   activated?: boolean;
   cron?: string;
   executionType?: ExecutionType;
+  lastAlertSent?: string;
 }
 
 export interface QualTestSuiteQueryDto {

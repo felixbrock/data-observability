@@ -75,6 +75,8 @@ export class TestSuite {
 
   #deletedAt?: string;
 
+  #lastAlertSent?: string;
+
   get id(): string {
     return this.#id;
   }
@@ -127,6 +129,10 @@ export class TestSuite {
     return this.#deletedAt;
   }
 
+  get lastAlertSent(): string | undefined {
+    return this.#lastAlertSent;
+  }
+
   private constructor(props: TestSuiteProps) {
     this.#id = props.id;
     this.#activated = props.activated;
@@ -143,6 +149,7 @@ export class TestSuite {
     this.#feedbackLowerThreshold = props.feedbackLowerThreshold;
     this.#feedbackUpperThreshold = props.feedbackUpperThreshold;
     this.#deletedAt = props.deletedAt;
+    this.#lastAlertSent = props.lastAlertSent;
   }
 
   static create = (props: TestSuiteProps): TestSuite => {
@@ -187,5 +194,6 @@ export class TestSuite {
     feedbackLowerThreshold: this.#feedbackLowerThreshold,
     feedbackUpperThreshold: this.#feedbackUpperThreshold,
     deletedAt: this.#deletedAt,
+    lastAlertSent: this.#lastAlertSent,
   });
 }

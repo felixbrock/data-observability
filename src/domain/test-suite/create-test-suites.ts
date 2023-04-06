@@ -73,6 +73,7 @@ export class CreateTestSuites
           executionType: el.executionType,
           feedbackLowerThreshold: undefined,
           feedbackUpperThreshold: undefined,
+          lastAlertSent: undefined,
         })
       );
 

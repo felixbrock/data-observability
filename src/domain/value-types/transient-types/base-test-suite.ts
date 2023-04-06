@@ -7,6 +7,7 @@ export interface BaseTestSuite {
   cron: string;
   executionType: ExecutionType;
   deletedAt?: string;
+  lastAlertSent?: string;
 }
 
 export interface BaseQuantTestSuite extends BaseTestSuite {
@@ -16,4 +17,5 @@ export interface BaseQuantTestSuite extends BaseTestSuite {
   customUpperThresholdMode: CustomThresholdMode;
   feedbackLowerThreshold?: number;
   feedbackUpperThreshold?: number;
+  lastAlertSent?: string;
 }
