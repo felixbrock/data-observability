@@ -15,6 +15,7 @@ export interface CustomTestSuiteUpdateDto {
   executionType?: ExecutionType;
   feedbackLowerThreshold?: number;
   feedbackUpperThreshold?: number;
+  lastAlertSent?: string;
 }
 
 export interface CustomTestSuiteQueryDto {

@@ -54,6 +54,7 @@ export default class CustomTestSuiteRepo
     },
     { name: 'feedback_lower_threshold', nullable: true },
     { name: 'feedback_upper_threshold', nullable: true },
+    { name: 'last_alert_sent', nullable: true},
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -78,6 +79,7 @@ export default class CustomTestSuiteRepo
       CUSTOM_UPPER_THRESHOLD_MODE: customUpperThresholdMode,
       FEEDBACK_LOWER_THRESHOLD: feedbackLowerThreshold,
       FEEDBACK_UPPER_THRESHOLD: feedbackUpperThreshold,
+      LAST_ALERT_SENT: lastAlertSent,
     } = sfEntity;
 
     const isOptionalDateField = (obj: unknown): obj is Date | undefined =>
@@ -96,7 +98,8 @@ export default class CustomTestSuiteRepo
       typeof customUpperThreshold !== 'number' ||
       typeof customLowerThreshold !== 'number' ||
       typeof feedbackUpperThreshold !== 'number' ||
-      typeof feedbackLowerThreshold !== 'number'
+      typeof feedbackLowerThreshold !== 'number' ||
+      typeof lastAlertSent !== 'string'
     )
       throw new Error(
         'Retrieved unexpected custom test suite field types from persistence'
@@ -122,6 +125,7 @@ export default class CustomTestSuiteRepo
       ),
       feedbackLowerThreshold,
       feedbackUpperThreshold,
+      lastAlertSent,
     };
   };
 
@@ -157,6 +161,7 @@ export default class CustomTestSuiteRepo
     entity.customUpperThresholdMode,
     entity.feedbackLowerThreshold || 'null',
     entity.feedbackUpperThreshold || 'null',
+    entity.lastAlertSent || 'null',
   ];
 
   buildUpdateQuery = (
@@ -213,6 +218,10 @@ export default class CustomTestSuiteRepo
     if (updateDto.feedbackUpperThreshold) {
       colDefinitions.push(this.getDefinition('feedback_upper_threshold'));
       binds.push(updateDto.feedbackUpperThreshold);
+    }
+    if (updateDto.lastAlertSent) {
+      colDefinitions.push(this.getDefinition('last_alert_sent'));
+      binds.push(updateDto.lastAlertSent);
     }
 
     const text = getUpdateQueryText(this.matName, colDefinitions, [

@@ -62,6 +62,7 @@ export class CreateCustomTestSuite
         feedbackLowerThreshold: undefined,
         feedbackUpperThreshold: undefined,
         targetResourceIds: req.entityProps.targetResourceIds,
+        lastAlertSent: undefined,
       });
 
       await this.#repo.insertOne(customTestSuite, connPool);
