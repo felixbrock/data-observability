@@ -21,31 +21,28 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
     jwt: string
   ): Promise<SendAlertResultDto> => {
     try {
-      console.log(messageConfig);
-      console.log(targetOrgId);
-      console.log(jwt);
-
-      // const data = {
-      //   messageConfig,
-      //   targetOrgId,
-      // };
-
-      // const config: AxiosRequestConfig = {
-      //   headers: { Authorization: `Bearer ${jwt}` },
-      // };
-
-      // const response = await axios.post(
-      //   `${this.#baseUrl}/${this.#apiRoot}/${this.#version}/slack/alert/quant`,
-      //   data,
-      //   config
-      // );
-      const response: {
-        data: { message: string; success: boolean };
-        status: number;
-      } = {
-        data: { message: 'test', success: true },
-        status: 201,
+      const data = {
+        messageConfig,
+        targetOrgId,
       };
+
+      const config: AxiosRequestConfig = {
+        headers: { Authorization: `Bearer ${jwt}` },
+      };
+
+      const response = await axios.post(
+        `${this.#baseUrl}/${this.#apiRoot}/${this.#version}/slack/alert/quant`,
+        data,
+        config
+      );
+
+      // const response: {
+      //   data: { message: string; success: boolean };
+      //   status: number;
+      // } = {
+      //   data: { message: 'test', success: true },
+      //   status: 201,
+      // };
       const jsonResponse = response.data;
       if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);
