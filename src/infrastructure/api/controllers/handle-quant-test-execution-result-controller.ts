@@ -142,6 +142,7 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
       alertData,
       targetResourceId,
       organizationId,
+      lastAlertSent,
     } = httpRequest.body;
 
     const testType: TestType = parseTestType(httpRequest.body.testType);
@@ -156,7 +157,8 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
       typeof executionId !== 'string' &&
       typeof isWarmup !== 'boolean' &&
       typeof targetResourceId !== 'string' &&
-      typeof organizationId !== 'string'
+      typeof organizationId !== 'string' &&
+      typeof lastAlertSent !== 'string'
     )
       throw new Error('Received invalid result values');
 
@@ -169,6 +171,7 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
       testSuiteId,
       alertData,
       testData,
+      lastAlertSent,
     };
   };
 

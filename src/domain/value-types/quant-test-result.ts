@@ -19,4 +19,5 @@ export interface QuantTestResult {
   };
   targetResourceId: string;
   organizationId: string;
+  lastAlertSent?: string;
 }

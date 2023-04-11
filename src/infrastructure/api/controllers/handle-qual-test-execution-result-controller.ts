@@ -124,6 +124,7 @@ export default class HandleQualTestExecutionResultController extends BaseControl
       alertData,
       targetResourceId,
       organizationId,
+      lastAlertSent,
     } = httpRequest.body;
 
     const testType: QualTestType = parseQualTestType(httpRequest.body.testType);
@@ -137,7 +138,8 @@ export default class HandleQualTestExecutionResultController extends BaseControl
     if (
       typeof executionId !== 'string' &&
       typeof targetResourceId !== 'string' &&
-      typeof organizationId !== 'string'
+      typeof organizationId !== 'string' &&
+      typeof lastAlertSent !== 'string'
     )
       throw new Error('Received invalid result values');
 
@@ -149,6 +151,7 @@ export default class HandleQualTestExecutionResultController extends BaseControl
       testSuiteId,
       alertData,
       testData,
+      lastAlertSent,
     };
   };
 

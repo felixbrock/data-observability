@@ -59,6 +59,7 @@ export default class TestSuiteRepo
     },
     { name: 'feedback_lower_threshold', nullable: true },
     { name: 'feedback_upper_threshold', nullable: true },
+    { name: 'last_alert_sent', nullable: true },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -86,6 +87,7 @@ export default class TestSuiteRepo
       CUSTOM_UPPER_THRESHOLD_MODE: customUpperThresholdMode,
       FEEDBACK_LOWER_THRESHOLD: feedbackLowerThreshold,
       FEEDBACK_UPPER_THRESHOLD: feedbackUpperThreshold,
+      LAST_ALERT_SENT: lastAlertSent,
     } = sfEntity;
 
     const isOptionalDateField = (obj: unknown): obj is Date | undefined =>
@@ -110,7 +112,8 @@ export default class TestSuiteRepo
         feedbackUpperThreshold,
         'number'
       ) ||
-      !TestSuiteRepo.isOptionalOfType<number>(feedbackLowerThreshold, 'number')
+      !TestSuiteRepo.isOptionalOfType<number>(feedbackLowerThreshold, 'number') ||
+      !isOptionalDateField(lastAlertSent)
     )
       throw new Error(
         'Retrieved unexpected test suite field types from persistence'
@@ -141,6 +144,7 @@ export default class TestSuiteRepo
       ),
       feedbackLowerThreshold,
       feedbackUpperThreshold,
+      lastAlertSent: lastAlertSent ? lastAlertSent.toISOString() : undefined,
     };
   };
 
@@ -163,6 +167,7 @@ export default class TestSuiteRepo
     entity.customUpperThresholdMode,
     entity.feedbackLowerThreshold || 'null',
     entity.feedbackUpperThreshold || 'null',
+    entity.lastAlertSent || 'null',
   ];
 
   buildFindByQuery = (queryDto: TestSuiteQueryDto): Query => {
@@ -233,6 +238,10 @@ export default class TestSuiteRepo
     if (updateDto.feedbackUpperThreshold) {
       colDefinitions.push(this.getDefinition('feedback_upper_threshold'));
       binds.push(updateDto.feedbackUpperThreshold);
+    }
+    if (updateDto.lastAlertSent) {
+      colDefinitions.push(this.getDefinition('last_alert_sent'));
+      binds.push(updateDto.lastAlertSent);
     }
 
     const text = getUpdateQueryText(this.matName, colDefinitions, [

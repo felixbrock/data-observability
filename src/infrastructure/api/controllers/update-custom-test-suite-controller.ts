@@ -52,6 +52,7 @@ export default class UpdateCustomTestSuiteController extends BaseController {
         executionType,
         feedbackLowerThreshold: remainingBody.feedbackLowerThreshold,
         feedbackUpperThreshold: remainingBody.feedbackUpperThreshold,
+        lastAlertSent: remainingBody.lastAlertSent,
       },
     };
   };

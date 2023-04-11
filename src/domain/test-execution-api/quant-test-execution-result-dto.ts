@@ -35,4 +35,5 @@ export interface QuantTestExecutionResultDto {
   alertData?: QuantTestAlertData;
   targetResourceId: string;
   organizationId: string;
+  lastAlertSent?: string;
 }

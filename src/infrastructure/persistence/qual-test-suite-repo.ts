@@ -46,6 +46,7 @@ export default class QualTestSuiteRepo
     { name: 'cron', nullable: false },
     { name: 'execution_type', nullable: false },
     { name: 'deleted_at', nullable: true },
+    { name: 'last_alert_sent', nullable: true},
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -67,6 +68,7 @@ export default class QualTestSuiteRepo
       CRON: cron,
       EXECUTION_TYPE: executionType,
       DELETED_AT: deletedAt,
+      LAST_ALERT_SENT: lastAlertSent,
     } = sfEntity;
 
     const isOptionalDateField = (obj: unknown): obj is Date | undefined =>
@@ -84,7 +86,8 @@ export default class QualTestSuiteRepo
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
-      !isOptionalDateField(deletedAt)
+      !isOptionalDateField(deletedAt) ||
+      !isOptionalDateField(lastAlertSent)
     )
       throw new Error(
         'Retrieved unexpected qual test suite field types from persistence'
@@ -105,6 +108,7 @@ export default class QualTestSuiteRepo
       cron,
       executionType: parseExecutionType(executionType),
       deletedAt: deletedAt ? deletedAt.toISOString() : undefined,
+      lastAlertSent: lastAlertSent ? lastAlertSent.toISOString() : undefined,
     };
   };
 
@@ -121,6 +125,7 @@ export default class QualTestSuiteRepo
     entity.cron || 'null',
     entity.executionType,
     entity.deletedAt || 'null',
+    entity.lastAlertSent || 'null',
   ];
 
   buildFindByQuery = (queryDto: QualTestSuiteQueryDto): Query => {
@@ -168,6 +173,10 @@ export default class QualTestSuiteRepo
     if (updateDto.executionType) {
       colDefinitions.push(this.getDefinition('execution_type'));
       binds.push(updateDto.executionType);
+    }
+    if (updateDto.lastAlertSent) {
+      colDefinitions.push(this.getDefinition('last_alert_sent'));
+      binds.push(updateDto.lastAlertSent);
     }
 
     const text = getUpdateQueryText(this.matName, colDefinitions, [

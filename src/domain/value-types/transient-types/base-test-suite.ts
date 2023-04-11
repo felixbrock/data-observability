@@ -7,6 +7,7 @@ export interface BaseTestSuite {
   cron: string;
   executionType: ExecutionType;
   deletedAt?: string;
+  lastAlertSent?: string;
 }
 
 export interface BaseQuantTestSuite extends BaseTestSuite {

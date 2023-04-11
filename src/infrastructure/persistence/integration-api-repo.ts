@@ -35,6 +35,14 @@ export default class IntegrationApiRepo implements IIntegrationApiRepo {
         data,
         config
       );
+
+      // const response: {
+      //   data: { message: string; success: boolean };
+      //   status: number;
+      // } = {
+      //   data: { message: 'test', success: true },
+      //   status: 201,
+      // };
       const jsonResponse = response.data;
       if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);

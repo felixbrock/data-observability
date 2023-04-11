@@ -32,4 +32,5 @@ export interface QualTestExecutionResultDto {
   alertData?: QualTestAlertData;
   targetResourceId: string;
   organizationId: string;
+  lastAlertSent?: string;
 }

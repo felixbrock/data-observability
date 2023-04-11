@@ -18,6 +18,7 @@ interface UpdateObject {
     executionType?: ExecutionType;
     feedbackLowerThreshold?: number;
     feedbackUpperThreshold?: number;
+    lastAlertSent?: string;
   };
 }
 
@@ -76,6 +77,9 @@ export class UpdateTestSuites
         ? updateObj.props.feedbackUpperThreshold
         : testSuite.feedbackUpperThreshold,
       cron: updateObj.props.cron || testSuite.cron,
+      lastAlertSent: updateObj.props.lastAlertSent
+        ? updateObj.props.lastAlertSent
+        : testSuite.lastAlertSent,
     });
 
   async execute(props: {

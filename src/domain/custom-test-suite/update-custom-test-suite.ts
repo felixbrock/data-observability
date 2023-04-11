@@ -21,6 +21,7 @@ export interface UpdateCustomTestSuiteRequestDto {
     executionType?: ExecutionType;
     feedbackLowerThreshold?: number;
     feedbackUpperThreshold?: number;
+    lastAlertSent?: string;
   };
 }
 
