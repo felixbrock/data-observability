@@ -93,7 +93,7 @@ export abstract class BaseController {
     };
 
     return createPool(options, {
-      max: 10,
+      max: 1,
       min: 0,
     });
   };
