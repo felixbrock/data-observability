@@ -99,7 +99,7 @@ export default class CustomTestSuiteRepo
       typeof customLowerThreshold !== 'number' ||
       typeof feedbackUpperThreshold !== 'number' ||
       typeof feedbackLowerThreshold !== 'number' ||
-      typeof lastAlertSent !== 'string'
+      !isOptionalDateField(lastAlertSent)
     )
       throw new Error(
         'Retrieved unexpected custom test suite field types from persistence'
@@ -125,7 +125,7 @@ export default class CustomTestSuiteRepo
       ),
       feedbackLowerThreshold,
       feedbackUpperThreshold,
-      lastAlertSent,
+      lastAlertSent: lastAlertSent ? lastAlertSent.toISOString() : undefined, 
     };
   };
 

@@ -57,7 +57,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   #deletedAt?: string;
 
-  #lastAlertString: string;
+  #lastAlertSent?: string;
 
   get id(): string {
     return this.#id;
@@ -120,7 +120,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
   }
 
   get lastAlertSent(): string | undefined {
-    return this.#lastAlertString;
+    return this.#lastAlertSent;
   }
 
   private constructor(props: CustomTestSuiteProps) {
@@ -140,7 +140,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     this.#feedbackUpperThreshold = props.feedbackUpperThreshold;
 
     this.#deletedAt = props.deletedAt;
-    this.#lastAlertString = props.lastAlertSent;
+    this.#lastAlertSent = props.lastAlertSent;
   }
 
   static create = (props: CustomTestSuiteProps): CustomTestSuite => {
@@ -174,6 +174,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     feedbackUpperThreshold: this.#feedbackUpperThreshold,
 
     deletedAt: this.#deletedAt,
-    lastAlertSent: this.#lastAlertString,
+    lastAlertSent: this.#lastAlertSent,
   });
 }

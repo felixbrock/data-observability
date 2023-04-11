@@ -103,15 +103,13 @@ export class ExecuteTest
         });
       }
 
-      // checks if last alert for this anomaly is over 24 hours ago - ignores result if it is 
       if (testExecutionResult.lastAlertSent) {
         const lastAlertTimestamp = new Date(testExecutionResult.lastAlertSent);
         const now = new Date();
-        const timeElapsedInMillis = now.getTime() - lastAlertTimestamp.getTime();
-        const timeElapsedInHrs = timeElapsedInMillis / (1000 * 60 * 60);
+        const timeElapsedMillis = now.getTime() - lastAlertTimestamp.getTime();
+        const timeElapsedHrs = timeElapsedMillis / (1000 * 60 * 60);
 
-        if (timeElapsedInHrs < 24) {
-          // find a way to ignore the results of the test - possible solution below
+        if (timeElapsedHrs < 24) {
           testExecutionResult.alertData = undefined;
           return Result.ok(testExecutionResult);
         }

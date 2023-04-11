@@ -113,7 +113,7 @@ export default class TestSuiteRepo
         'number'
       ) ||
       !TestSuiteRepo.isOptionalOfType<number>(feedbackLowerThreshold, 'number') ||
-      !TestSuiteRepo.isOptionalOfType<string>(lastAlertSent, 'string')
+      !isOptionalDateField(lastAlertSent)
     )
       throw new Error(
         'Retrieved unexpected test suite field types from persistence'
@@ -144,7 +144,7 @@ export default class TestSuiteRepo
       ),
       feedbackLowerThreshold,
       feedbackUpperThreshold,
-      lastAlertSent,
+      lastAlertSent: lastAlertSent ? lastAlertSent.toISOString() : undefined,
     };
   };
 

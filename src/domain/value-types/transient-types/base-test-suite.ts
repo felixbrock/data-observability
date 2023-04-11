@@ -17,5 +17,4 @@ export interface BaseQuantTestSuite extends BaseTestSuite {
   customUpperThresholdMode: CustomThresholdMode;
   feedbackLowerThreshold?: number;
   feedbackUpperThreshold?: number;
-  lastAlertSent?: string;
 }
