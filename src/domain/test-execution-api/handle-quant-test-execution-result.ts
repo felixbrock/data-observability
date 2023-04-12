@@ -239,7 +239,9 @@ export class HandleQuantTestExecutionResult
     try {
       await this.#createTestResult(req, db.mongoConn);
 
-      if (!req.testData || (!req.testData.anomaly && !req.alertData))
+      if (!req.testData || (!req.testData.anomaly && !req.alertData) || 
+        (req.testData.anomaly && req.lastAlertSent && !req.alertData))
+        
         return Result.ok();
 
       console.log('Anomaly detected, sending alert');

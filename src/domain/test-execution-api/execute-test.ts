@@ -59,7 +59,7 @@ export class ExecuteTest
 
     try {
       // const testExecutionResult = JSON.parse(
-      //   '{"testSuiteId": "f540b96d-2cd0-4424-b3d1-7d62e301acfc", "testType": "ColumnDistribution", "executionId": "bc817074-d266-4479-bc75-5a67e45ca534", "targetResourceId": "646bc8d9-cd15-42d0-85cb-87afd0440dc4", "organizationId": "631789bf27518f97cf1c82b7", "isWarmup": false, "testData": {"executedOn": "2023-04-03T10:02:16.625197", "detectedValue": 5005000, "expectedUpperBound": 1466.378624, "expectedLowerBound": 423.62137600000005, "modifiedZScore": 57586.42302911138, "deviation": 5022.126231317975, "anomaly": {"importance": 4798.368585759282}}, "alertData": {"alertId": "887ee5e0-edb9-46e1-95fd-3a8e278484fb", "message": "<__base_url__?targetResourceId=646bc8d9-cd15-42d0-85cb-87afd0440dc4&ampisColumn=True|TEST_DB.test_S.TEST_T.SOMENUMBER>", "databaseName": "TEST_DB", "schemaName": "test_S", "materializationName": "TEST_T", "materializationType": "Table", "expectedValue": 945.0, "columnName": "SOMENUMBER"}}'
+      // '{"lastAlertSent": "2023-04-12 09:08:24.848", "testSuiteId": "f540b96d-2cd0-4424-b3d1-7d62e301acfc", "testType": "ColumnDistribution", "executionId": "bc817074-d266-4479-bc75-5a67e45ca534", "targetResourceId": "646bc8d9-cd15-42d0-85cb-87afd0440dc4", "organizationId": "631789bf27518f97cf1c82b7", "isWarmup": false, "testData": {"executedOn": "2023-04-03T10:02:16.625197", "detectedValue": 5005000, "expectedUpperBound": 1466.378624, "expectedLowerBound": 423.62137600000005, "modifiedZScore": 57586.42302911138, "deviation": 5022.126231317975, "anomaly": {"importance": 4798.368585759282}}, "alertData": {"alertId": "887ee5e0-edb9-46e1-95fd-3a8e278484fb", "message": "<__base_url__?targetResourceId=646bc8d9-cd15-42d0-85cb-87afd0440dc4&ampisColumn=True|TEST_DB.test_S.TEST_T.SOMENUMBER>", "databaseName": "TEST_DB", "schemaName": "test_S", "materializationName": "TEST_T", "materializationType": "Table", "expectedValue": 945.0, "columnName": "SOMENUMBER"}}'
       // );
 
       const testExecutionResult = await this.#testExecutionApiRepo.executeTest(
@@ -77,10 +77,24 @@ export class ExecuteTest
       ): obj is QuantTestExecutionResultDto =>
         !!obj && typeof obj === 'object' && 'isWarmup' in obj;
 
+      let ignoreAlert = false;
+      if (testExecutionResult.lastAlertSent) {
+        const lastAlertTimestamp = new Date(testExecutionResult.lastAlertSent);
+        const now = new Date();
+        const timeElapsedMillis = now.getTime() - lastAlertTimestamp.getTime();
+        const timeElapsedHrs = timeElapsedMillis / (1000 * 60 * 60);
+
+        if (timeElapsedHrs < 24) {
+          testExecutionResult.alertData = undefined;
+          ignoreAlert = true;
+        }
+      }
+
       if (instanceOfQuantTestExecutionResultDto(testExecutionResult)) {
         if (
           testExecutionResult.testData &&
           testExecutionResult.testData.anomaly &&
+          !ignoreAlert &&
           !testExecutionResult.alertData
         )
           throw new Error('Quant test result obj structural mismatch');
@@ -93,6 +107,7 @@ export class ExecuteTest
         if (
           testExecutionResult.testData &&
           !testExecutionResult.testData.isIdentical &&
+          !ignoreAlert &&
           !testExecutionResult.alertData
         )
           throw new Error('Qual test result obj structural mismatch');
@@ -101,18 +116,6 @@ export class ExecuteTest
           auth,
           db,
         });
-      }
-
-      if (testExecutionResult.lastAlertSent) {
-        const lastAlertTimestamp = new Date(testExecutionResult.lastAlertSent);
-        const now = new Date();
-        const timeElapsedMillis = now.getTime() - lastAlertTimestamp.getTime();
-        const timeElapsedHrs = timeElapsedMillis / (1000 * 60 * 60);
-
-        if (timeElapsedHrs < 24) {
-          testExecutionResult.alertData = undefined;
-          return Result.ok(testExecutionResult);
-        }
       }
 
       return Result.ok(testExecutionResult);

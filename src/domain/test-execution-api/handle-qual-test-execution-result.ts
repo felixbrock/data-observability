@@ -129,7 +129,8 @@ export class HandleQualTestExecutionResult
 
       await this.#createTestResult(req);
 
-      if (!req.testData || (req.testData.isIdentical && !req.alertData))
+      if (!req.testData || (req.testData.isIdentical && !req.alertData) ||
+        (!req.testData.isIdentical && req.lastAlertSent && !req.alertData))
         return Result.ok();
 
       await this.#sendAlert(req, auth.jwt);
