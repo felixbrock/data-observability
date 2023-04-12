@@ -77,24 +77,10 @@ export class ExecuteTest
       ): obj is QuantTestExecutionResultDto =>
         !!obj && typeof obj === 'object' && 'isWarmup' in obj;
 
-      let ignoreAlert = false;
-      if (testExecutionResult.lastAlertSent) {
-        const lastAlertTimestamp = new Date(testExecutionResult.lastAlertSent);
-        const now = new Date();
-        const timeElapsedMillis = now.getTime() - lastAlertTimestamp.getTime();
-        const timeElapsedHrs = timeElapsedMillis / (1000 * 60 * 60);
-
-        if (timeElapsedHrs < 24) {
-          testExecutionResult.alertData = undefined;
-          ignoreAlert = true;
-        }
-      }
-
       if (instanceOfQuantTestExecutionResultDto(testExecutionResult)) {
         if (
           testExecutionResult.testData &&
           testExecutionResult.testData.anomaly &&
-          !ignoreAlert &&
           !testExecutionResult.alertData
         )
           throw new Error('Quant test result obj structural mismatch');
@@ -107,7 +93,6 @@ export class ExecuteTest
         if (
           testExecutionResult.testData &&
           !testExecutionResult.testData.isIdentical &&
-          !ignoreAlert &&
           !testExecutionResult.alertData
         )
           throw new Error('Qual test result obj structural mismatch');

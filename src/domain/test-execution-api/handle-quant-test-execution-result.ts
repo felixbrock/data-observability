@@ -229,6 +229,15 @@ export class HandleQuantTestExecutionResult
       throw new Error(createQuantTestResultResult.error);
   };
 
+  #sleepModeActive = (lastAlertSent: string): boolean => {
+    const lastAlertTimestamp = new Date(lastAlertSent);
+    const now = new Date();
+    const timeElapsedMillis = now.getTime() - lastAlertTimestamp.getTime();
+    const timeElapsedHrs = timeElapsedMillis / (1000 * 60 * 60);
+
+    return timeElapsedHrs < 24;
+  };
+
   async execute(props: {
     req: HandleQuantTestExecutionResultRequestDto;
     auth: HandleQuantTestExecutionResultAuthDto;
@@ -239,9 +248,12 @@ export class HandleQuantTestExecutionResult
     try {
       await this.#createTestResult(req, db.mongoConn);
 
-      if (!req.testData || (!req.testData.anomaly && !req.alertData) || 
-        (req.testData.anomaly && req.lastAlertSent && !req.alertData))
-        
+      if (
+        (req.lastAlertSent && this.#sleepModeActive(req.lastAlertSent)) ||
+        !req.testData ||
+        (!req.testData.anomaly && !req.alertData) ||
+        (req.testData.anomaly && !req.alertData)
+      )
         return Result.ok();
 
       console.log('Anomaly detected, sending alert');

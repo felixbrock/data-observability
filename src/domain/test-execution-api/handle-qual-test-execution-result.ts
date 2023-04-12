@@ -117,6 +117,15 @@ export class HandleQualTestExecutionResult
       throw new Error(createQualTestResultResult.error);
   };
 
+  #sleepModeActive = (lastAlertSent: string): boolean => {
+    const lastAlertTimestamp = new Date(lastAlertSent);
+    const now = new Date();
+    const timeElapsedMillis = now.getTime() - lastAlertTimestamp.getTime();
+    const timeElapsedHrs = timeElapsedMillis / (1000 * 60 * 60);
+
+    return timeElapsedHrs < 24;
+  };
+
   async execute(props: {
     req: HandleQualTestExecutionResultRequestDto;
     auth: HandleQualTestExecutionResultAuthDto;
@@ -129,8 +138,12 @@ export class HandleQualTestExecutionResult
 
       await this.#createTestResult(req);
 
-      if (!req.testData || (req.testData.isIdentical && !req.alertData) ||
-        (!req.testData.isIdentical && req.lastAlertSent && !req.alertData))
+      if (
+        (req.lastAlertSent && this.#sleepModeActive(req.lastAlertSent)) ||
+        !req.testData ||
+        (req.testData.isIdentical && !req.alertData) ||
+        (!req.testData.isIdentical && !req.alertData)
+      )
         return Result.ok();
 
       await this.#sendAlert(req, auth.jwt);
