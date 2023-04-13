@@ -138,8 +138,14 @@ export class HandleQualTestExecutionResult
 
       await this.#createTestResult(req);
 
+      if (req.lastAlertSent && this.#sleepModeActive(req.lastAlertSent)) {
+        console.log(
+          `Sleep mode active. Not sending alert for ${req.executionId}`
+        );
+        return Result.ok();
+      }
+
       if (
-        (req.lastAlertSent && this.#sleepModeActive(req.lastAlertSent)) ||
         !req.testData ||
         (req.testData.isIdentical && !req.alertData) ||
         (!req.testData.isIdentical && !req.alertData)

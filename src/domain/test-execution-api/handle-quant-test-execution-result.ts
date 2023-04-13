@@ -248,8 +248,14 @@ export class HandleQuantTestExecutionResult
     try {
       await this.#createTestResult(req, db.mongoConn);
 
+      if (req.lastAlertSent && this.#sleepModeActive(req.lastAlertSent)) {
+        console.log(
+          `Sleep mode active. Not sending alert for ${req.executionId}`
+        );
+        return Result.ok();
+      }
+
       if (
-        (req.lastAlertSent && this.#sleepModeActive(req.lastAlertSent)) ||
         !req.testData ||
         (!req.testData.anomaly && !req.alertData) ||
         (req.testData.anomaly && !req.alertData)
