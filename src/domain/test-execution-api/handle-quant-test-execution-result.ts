@@ -62,7 +62,7 @@ export class HandleQuantTestExecutionResult
     const targetIdentifier = `${target.type} ${target.templateUrl}`;
     const explanationPrefix = `in ${targetIdentifier} detected`;
     const buildAnomalyExplanation = (characteristic: string): string =>
-      `That's unusually ${characteristic}, with a deviation of ${fixedDeviation}% based on an expected average value of ${fixedExpectedValue}`;
+      `That's unusually ${characteristic}, with a deviation of ${fixedDeviation}% based on an expected average median value of ${fixedExpectedValue}`;
 
     switch (testType) {
       case 'MaterializationRowCount':
@@ -104,7 +104,7 @@ export class HandleQuantTestExecutionResult
           deviation >= 0 ? 'high' : 'low'
         )}`;
       case 'ColumnDistribution':
-        return `An average value of ${fixedValue} was detected for ${targetIdentifier}. ${buildAnomalyExplanation(
+        return `An average median value of ${fixedValue} was detected for ${targetIdentifier}. ${buildAnomalyExplanation(
           deviation >= 0 ? 'high' : 'low'
         )}.`;
       default:
