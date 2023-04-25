@@ -77,11 +77,11 @@ export class HandleQuantTestExecutionResult
         return `${
           targetIdentifier[0].toUpperCase() + targetIdentifier.slice(1)
         } was modified ${fixedValue} minutes ago. ${buildAnomalyExplanation(
-          deviation >= 0 ? 'early' : 'late'
+          deviation >= 0 ? 'long ago' : 'recent'
         )}.`;
       case 'ColumnFreshness':
         return `The most recent timestamp in ${targetIdentifier} is representing an event that occurred ${fixedValue} min ago. ${buildAnomalyExplanation(
-          deviation >= 0 ? 'early' : 'late'
+          deviation >= 0 ? 'long ago' : 'recent'
         )}.`;
       case 'ColumnCardinality':
         return `${fixedValue} unique values ${explanationPrefix}. ${buildAnomalyExplanation(
