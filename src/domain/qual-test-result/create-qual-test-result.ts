@@ -38,7 +38,7 @@ export class CreateQualTestResult
 {
   readonly #qualTestResultRepo: IQualTestResultRepo;
 
-  #dbConnection: IDbConnection;
+  #dbConnection?: IDbConnection;
 
   constructor(qualTestResultRepo: IQualTestResultRepo) {
     this.#qualTestResultRepo = qualTestResultRepo;

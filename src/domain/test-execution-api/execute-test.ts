@@ -1,7 +1,7 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { ITestExecutionApiRepo } from './i-test-execution-api-repo';
-import { IDb, IDbConnection } from '../services/i-db';
+import { IDb } from '../services/i-db';
 import { QualTestExecutionResultDto } from './qual-test-execution-result-dto';
 import { TestType } from '../entities/quant-test-suite';
 import { QualTestType } from '../entities/qual-test-suite';
@@ -31,7 +31,7 @@ export class ExecuteTest
       ExecuteTestRequestDto,
       ExecuteTestResponseDto,
       ExecuteTestAuthDto,
-      IDbConnection
+      IDb
     >
 {
   readonly #handleQuantTestExecutionResult: HandleQuantTestExecutionResult;
@@ -59,7 +59,7 @@ export class ExecuteTest
 
     try {
       // const testExecutionResult = JSON.parse(
-      // '{"lastAlertSent": "2023-04-12 09:08:24.848", "testSuiteId": "f540b96d-2cd0-4424-b3d1-7d62e301acfc", "testType": "ColumnDistribution", "executionId": "bc817074-d266-4479-bc75-5a67e45ca534", "targetResourceId": "646bc8d9-cd15-42d0-85cb-87afd0440dc4", "organizationId": "631789bf27518f97cf1c82b7", "isWarmup": false, "testData": {"executedOn": "2023-04-03T10:02:16.625197", "detectedValue": 5005000, "expectedUpperBound": 1466.378624, "expectedLowerBound": 423.62137600000005, "modifiedZScore": 57586.42302911138, "deviation": 5022.126231317975, "anomaly": {"importance": 4798.368585759282}}, "alertData": {"alertId": "887ee5e0-edb9-46e1-95fd-3a8e278484fb", "message": "<__base_url__?targetResourceId=646bc8d9-cd15-42d0-85cb-87afd0440dc4&ampisColumn=True|TEST_DB.test_S.TEST_T.SOMENUMBER>", "databaseName": "TEST_DB", "schemaName": "test_S", "materializationName": "TEST_T", "materializationType": "Table", "expectedValue": 945.0, "columnName": "SOMENUMBER"}}'
+      // '{"lastAlertSent": "2023-04-23T11:12:14.0585", "testSuiteId": "f540b96d-2cd0-4424-b3d1-7d62e301acfc", "testType": "ColumnDistribution", "executionId": "be69fc7c-c876-453b-994f-bb02df9cbaa4", "targetResourceId": "dbd1a1de-4eec-423b-8554-45d472585651", "organizationId": "someCustId", "isWarmup": false, "testData": {"executedOn": "2023-04-25T11:11:54.621388", "detectedValue": 5005000, "expectedUpperBound": 466.378624, "expectedLowerBound": 400.62137600000005, "deviation": 0, "anomaly": {"importance": 1.5301944509599927}}, "alertData": {"alertId": "0a291746-3ace-428b-a2e6-80520174bd35", "message": "<__base_url__?targetResourceId=dbd1a1de-4eec-423b-8554-45d472585651&ampisColumn=True|TEST_DB.test_S.TEST_T.SOMENUMBER>", "databaseName": "TEST_DB", "schemaName": "test_S", "materializationName": "TEST_T", "materializationType": "Table", "expectedValue": 567, "columnName": "SOMENUMBER"}}'
       // );
 
       const testExecutionResult = await this.#testExecutionApiRepo.executeTest(
@@ -101,7 +101,7 @@ export class ExecuteTest
         await this.#handleQuantTestExecutionResult.execute({
           req: testExecutionResult,
           auth,
-          db,
+          dbConnection: db.mongoConn,
         });
       } else {
         if (
@@ -114,7 +114,7 @@ export class ExecuteTest
         await this.#handleQualTestExecutionResult.execute({
           req: testExecutionResult,
           auth,
-          db,
+          dbConnection: db.mongoConn,
         });
       }
 

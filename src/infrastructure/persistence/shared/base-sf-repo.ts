@@ -1,24 +1,21 @@
 import { Blob } from 'node:buffer';
-import { appConfig } from '../../../config';
+import { Document } from 'mongodb';
 import { IServiceRepo } from '../../../domain/services/i-service-repo';
 import {
   Bind,
   Binds,
-  IConnectionPool,
-  SnowflakeEntity,
 } from '../../../domain/snowflake-api/i-snowflake-api-repo';
 import { QuerySnowflake } from '../../../domain/snowflake-api/query-snowflake';
 import {
   ColumnDefinition,
-  getInsertQueryText,
-  getUpdateQueryText,
-  relationPath,
 } from './query';
+import { IDbConnection } from '../../../domain/services/i-db';
 
 export interface Query {
-  text: string;
+  text?: string;
   binds: Bind[];
   colDefinitions?: ColumnDefinition[];
+  filter?: any
 }
 
 export default abstract class BaseSfRepo<
@@ -40,27 +37,17 @@ export default abstract class BaseSfRepo<
 
   findOne = async (
     id: string,
-    connPool: IConnectionPool
+    dbConnection: IDbConnection,
+    callerOrgId: string
   ): Promise<Entity | null> => {
     try {
-      const queryText = `select * from ${relationPath}.${this.matName}
-       where id = ?;`;
+      const result = await dbConnection
+      .collection(`${this.matName}_${callerOrgId}`)
+      .findOne({ id });
 
-      const binds: (string | number)[] = [id];
-
-      const result = await this.querySnowflake.execute({
-        req: { queryText, binds },
-        connPool,
-      });
-
-      if (!result.success) throw new Error(result.error);
-      if (!result.value) throw new Error('Missing sf query value');
-      if (result.value.length > 1)
-        throw new Error(`Multiple customtestsuite entities with id found`);
-
-      return !result.value.length
-        ? null
-        : this.toEntity(this.buildEntityProps(result.value[0]));
+      if (!result) return null;
+      
+      return this.toEntity(this.buildEntityProps(result));
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
@@ -72,23 +59,22 @@ export default abstract class BaseSfRepo<
 
   findBy = async (
     queryDto: QueryDto,
-    connPool: IConnectionPool
+    dbConnection: IDbConnection,
+    callerOrgId: string
   ): Promise<Entity[]> => {
     try {
       if (!queryDto || !Object.keys(queryDto).length)
-        return await this.all(connPool);
+        return await this.all(dbConnection, callerOrgId);
 
       const query = this.buildFindByQuery(queryDto);
 
-      const result = await this.querySnowflake.execute({
-        req: { queryText: query.text, binds: query.binds },
-        connPool,
-      });
+      const result = await dbConnection
+      .collection(`${this.matName}_${callerOrgId}`)
+      .find(query.filter).toArray();
 
-      if (!result.success) throw new Error(result.error);
-      if (!result.value) throw new Error('Missing sf query value');
+      if (!result) return [];
 
-      return result.value.map((el) => this.toEntity(this.buildEntityProps(el)));
+      return result.map((el) => this.toEntity(this.buildEntityProps(el)));
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
@@ -96,40 +82,36 @@ export default abstract class BaseSfRepo<
     }
   };
 
-  findByCustom = async (
-    query: { text: string; binds: Binds },
-    connPool: IConnectionPool
-  ): Promise<Entity[]> => {
+  // findByCustom = async (
+  //   query: { text: string; binds: Binds },
+  //   connPool: IConnectionPool
+  // ): Promise<Entity[]> => {
+  //   try {
+  //     const result = await this.querySnowflake.execute({
+  //       req: { queryText: query.text, binds: query.binds },
+  //       connPool,
+  //     });
+
+  //     if (!result.success) throw new Error(result.error);
+  //     if (!result.value) throw new Error('Missing sf query value');
+
+  //     return result.value.map((el) => this.toEntity(this.buildEntityProps(el)));
+  //   } catch (error: unknown) {
+  //     if (error instanceof Error) console.error(error.stack);
+  //     else if (error) console.trace(error);
+  //     return Promise.reject(new Error());
+  //   }
+  // };
+
+  all = async (dbConnection: IDbConnection, callerOrgId: string): Promise<Entity[]> => {
     try {
-      const result = await this.querySnowflake.execute({
-        req: { queryText: query.text, binds: query.binds },
-        connPool,
-      });
+      const result = await dbConnection
+      .collection(`${this.matName}_${callerOrgId}`)
+      .find({}).toArray();
 
-      if (!result.success) throw new Error(result.error);
-      if (!result.value) throw new Error('Missing sf query value');
+      if (!result) return [];
 
-      return result.value.map((el) => this.toEntity(this.buildEntityProps(el)));
-    } catch (error: unknown) {
-      if (error instanceof Error) console.error(error.stack);
-      else if (error) console.trace(error);
-      return Promise.reject(new Error());
-    }
-  };
-
-  all = async (connPool: IConnectionPool): Promise<Entity[]> => {
-    try {
-      const queryText = `select * from ${relationPath}.${this.matName};`;
-
-      const result = await this.querySnowflake.execute({
-        req: { queryText, binds: [] },
-        connPool,
-      });
-
-      if (!result.success) throw new Error(result.error);
-      if (!result.value) throw new Error('Missing sf query value');
-
-      return result.value.map((el) => this.toEntity(this.buildEntityProps(el)));
+      return result.map((el) => this.toEntity(this.buildEntityProps(el)));
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
@@ -141,24 +123,24 @@ export default abstract class BaseSfRepo<
 
   insertOne = async (
     entity: Entity,
-    connPool: IConnectionPool
+    dbConnection: IDbConnection,
+    callerOrgId: string
   ): Promise<string> => {
     try {
-      const binds = this.getBinds(entity);
+			const row = this.getBinds(entity);
 
-      const row = `(${binds.map(() => '?').join(', ')})`;
+			const document: any = {};
+			this.colDefinitions.forEach((column, index) => {
+        const value = row[index];
+				document[column.name] = column.nullable && value === 'null' ? null : value;
+			});
 
-      const queryText = getInsertQueryText(this.matName, this.colDefinitions, [
-        row,
-      ]);
+			const result = await dbConnection
+      .collection(`${this.matName}_${callerOrgId}`)
+      .insertOne(document);
 
-      const result = await this.querySnowflake.execute({
-        req: { queryText, binds },
-        connPool,
-      });
+      if (!result.acknowledged) throw new Error('Insert not acknowledged');
 
-      if (!result.success) throw new Error(result.error);
-      if (!result.value) throw new Error('Missing sf query value');
 
       return entity.id;
     } catch (error: unknown) {
@@ -202,34 +184,29 @@ export default abstract class BaseSfRepo<
 
   insertMany = async (
     entities: Entity[],
-    connPool: IConnectionPool
+    dbConnection: IDbConnection,
+    callerOrgId: string
   ): Promise<string[]> => {
     try {
-      const binds = entities.map((entity) => this.getBinds(entity));
+      const rows = entities.map((entity) => this.getBinds(entity));
 
-      const row = `(${this.colDefinitions.map(() => '?').join(', ')})`;
+			const documents = rows.map(row => {
+				const document: any = {};
+				this.colDefinitions.forEach((column, index) => {
+					const value = row[index];
+					document[column.name] = column.nullable && value === 'null' ? null : value;
+				});
 
-      const queryText = getInsertQueryText(this.matName, this.colDefinitions, [
-        row,
-      ]);
+				return document;
+			});
 
-      const bindSequences = this.#splitBinds(new Blob([queryText]).size, binds);
+			const results = await dbConnection
+      .collection(`${this.matName}_${callerOrgId}`)
+      .insertMany(documents);
 
-      const results = await Promise.all(
-        bindSequences.map(async (el) => {
-          const res = await this.querySnowflake.execute({
-            req: { queryText, binds: el },
-            connPool,
-          });
-
-          return res;
-        })
-      );
-
-      if (results.some((el) => !el.success))
-        throw new Error(results.filter((el) => !el.success)[0].error);
-      if (results.some((el) => !el.value))
-        throw new Error('Missing sf query value');
+      if (results.insertedCount !== documents.length) {
+        throw new Error('Failed to insert all documents successfully');
+      }
 
       return entities.map((el) => el.id);
     } catch (error: unknown) {
@@ -251,27 +228,32 @@ export default abstract class BaseSfRepo<
   updateOne = async (
     id: string,
     updateDto: UpdateDto,
-    connPool: IConnectionPool
+    dbConnection: IDbConnection,
+    callerOrgId: string
   ): Promise<string> => {
     try {
-      const query = this.buildUpdateQuery(id, updateDto);
+			const query = this.buildUpdateQuery(id, updateDto);
 
-      if (!query.colDefinitions)
-        throw new Error(
-          'No column definitions found. Cannot perform update operation'
-        );
+			if (!query.colDefinitions)
+        throw new Error('No column definitions found. Cannot perform update operation');
+			
+			const document: any = {};
+			query.colDefinitions.forEach((column, index) => {
+				const value = query.binds[index];
+				document[column.name] = column.nullable && value === 'null' ? null : value;
+			});
 
-      const queryText = getUpdateQueryText(this.matName, query.colDefinitions, [
-        `(${query.binds.map(() => '?').join(', ')})`,
-      ]);
+			const [docId, ...values] = Object.values(document);
+			const result = await dbConnection
+      .collection(`${this.matName}_${callerOrgId}`)
+			.updateOne(
+				{ id: docId },
+				{ $set: values }
+			);
 
-      const result = await this.querySnowflake.execute({
-        req: { queryText, binds: query.binds },
-        connPool,
-      });
-
-      if (!result.success) throw new Error(result.error);
-      if (!result.value) throw new Error('Missing sf query value');
+      if (result.matchedCount !== 1) {
+        throw new Error('Failed to insert document');
+      }
 
       return id;
     } catch (error: unknown) {
@@ -283,34 +265,36 @@ export default abstract class BaseSfRepo<
 
   replaceMany = async (
     entities: Entity[],
-    connPool: IConnectionPool
+    dbConnection: IDbConnection,
+    callerOrgId: string
   ): Promise<number> => {
     try {
       const binds = entities.map((column) => this.getBinds(column));
 
-      const row = `(${this.colDefinitions.map(() => '?').join(', ')})`;
+      const documents = binds.map((bind) => {
+				const document: any = {};
+				this.colDefinitions.forEach((column, index) => {
+					const value = bind[index];
+					document[column.name] = column.nullable && value === 'null' ? null : value; 
+				});
+				return document;
+			});
 
-      const queryText = getUpdateQueryText(this.matName, this.colDefinitions, [
-        row,
-      ]);
+			await Promise.all(documents.map(async (doc) => {
+				const [id, ...values] = Object.values(doc);
+				const res = await dbConnection
+        .collection(`${this.matName}_${callerOrgId}`)
+				.updateOne(
+					{ id },
+					{ $set: values }
+				);
 
-      const bindSequences = this.#splitBinds(new Blob([queryText]).size, binds);
-
-      const results = await Promise.all(
-        bindSequences.map(async (el) => {
-          const res = await this.querySnowflake.execute({
-            req: { queryText, binds: el },
-            connPool,
-          });
-
-          return res;
-        })
-      );
-
-      if (results.some((el) => !el.success))
-        throw new Error(results.filter((el) => !el.success)[0].error);
-      if (results.some((el) => !el.value))
-        throw new Error('Missing sf query value');
+        if (res.matchedCount !== 1) {
+          throw new Error('Failed to replace all documents');
+        }
+        
+				return res;
+			}));
 
       return entities.length;
     } catch (error: unknown) {
@@ -322,42 +306,29 @@ export default abstract class BaseSfRepo<
 
   softDeleteMany = async (
     where: { targetResourceIds: string[]; testSuiteIds: string[] },
-    connPool: IConnectionPool
+    dbConnection: IDbConnection,
+    callerOrgId: string
   ): Promise<void> => {
     try {
       if (!where.targetResourceIds.length && !where.testSuiteIds.length)
         throw new Error('Missing where condition parameters');
+      
+      const query: any = {};
 
-      const binds: Bind[] = [];
-      let whereCondition = '';
       if (where.targetResourceIds.length) {
-        binds.push(...where.targetResourceIds);
-        whereCondition += `array_contains(target_resource_id::variant, array_construct(${Array.from(
-          { length: where.targetResourceIds.length },
-          () => '?'
-        ).join(',')}))`;
+        query.target_resource_id = { $in: where.targetResourceIds };
       }
       if (where.testSuiteIds.length) {
-        binds.push(...where.testSuiteIds);
-        if (whereCondition) whereCondition += ' and ';
-        whereCondition += `array_contains(id::variant, array_construct(${Array.from(
-          { length: where.testSuiteIds.length },
-          () => '?'
-        ).join(',')}))`;
+        query.test_suite_id = { $in: where.testSuiteIds};
       }
 
-      const queryText = `update ${appConfig.snowflake.databaseName}.${
-        appConfig.snowflake.schemaName
-      }.${this.matName} set deleted_at = '${new Date().toISOString()}'
-      where ${whereCondition}`;
+      const result = await dbConnection
+      .collection(`${this.matName}_${callerOrgId}`)
+      .updateMany(query, { $set: { deleted_at: new Date().toISOString() } });
 
-      const res = await this.querySnowflake.execute({
-        req: { queryText, binds },
-        connPool,
-      });
-
-      if (!res.success) throw new Error(res.error);
-      if (!res.value) throw new Error('Missing sf query value');
+      if (result.matchedCount === 0) {
+        throw new Error('No documents were deleted');
+      }
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
@@ -380,7 +351,7 @@ export default abstract class BaseSfRepo<
   protected static isStringArray = (value: unknown): value is string[] =>
     Array.isArray(value) && value.every((el) => typeof el === 'string');
 
-  protected abstract buildEntityProps(sfEntity: SnowflakeEntity): EntityProps;
+  protected abstract buildEntityProps(document: Document): EntityProps;
 
   protected abstract toEntity(materializationProps: EntityProps): Entity;
 }

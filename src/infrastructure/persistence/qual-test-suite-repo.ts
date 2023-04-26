@@ -1,3 +1,4 @@
+import { Document } from 'mongodb';
 import {
   QualTestSuiteProps,
   parseQualTestType,
@@ -5,13 +6,10 @@ import {
 } from '../../domain/entities/qual-test-suite';
 import {
   ColumnDefinition,
-  getUpdateQueryText,
-  relationPath,
 } from './shared/query';
 import { QuerySnowflake } from '../../domain/snowflake-api/query-snowflake';
 import {
   Binds,
-  SnowflakeEntity,
 } from '../../domain/snowflake-api/i-snowflake-api-repo';
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
@@ -54,22 +52,29 @@ export default class QualTestSuiteRepo
     super(querySnowflake);
   }
 
-  buildEntityProps = (sfEntity: SnowflakeEntity): QualTestSuiteProps => {
+  buildEntityProps = (document: Document): QualTestSuiteProps => {
     const {
-      ID: id,
-      TEST_TYPE: type,
-      ACTIVATED: activated,
-      DATABASE_NAME: databaseName,
-      SCHEMA_NAME: schemaName,
-      MATERIALIZATION_NAME: materializationName,
-      MATERIALIZATION_TYPE: materializationType,
-      COLUMN_NAME: columnName,
-      TARGET_RESOURCE_ID: targetResourceId,
-      CRON: cron,
-      EXECUTION_TYPE: executionType,
-      DELETED_AT: deletedAt,
-      LAST_ALERT_SENT: lastAlertSent,
-    } = sfEntity;
+      id,
+      test_type: type,
+      activated,
+      database_name: databaseName,
+      schema_name: schemaName,
+      materialization_name: materializationName,
+      materialization_type: materializationType,
+      column_name: columnName,
+      target_resource_id: targetResourceId,
+      cron,
+      execution_type: executionType,
+      deleted_at: deletedAt,
+      last_alert_sent: lastAlertSent,
+    } = document;
+
+    let columnNameValue = columnName;
+    if (!columnName) columnNameValue = null;
+    
+    const deletedAtDate = deletedAt ? new Date(deletedAt) : undefined;
+
+    const lastAlertSentDate = lastAlertSent ? new Date(lastAlertSent) : undefined;
 
     const isOptionalDateField = (obj: unknown): obj is Date | undefined =>
       !obj || obj instanceof Date;
@@ -82,12 +87,12 @@ export default class QualTestSuiteRepo
       typeof schemaName !== 'string' ||
       typeof materializationName !== 'string' ||
       typeof materializationType !== 'string' ||
-      !QualTestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
+      !QualTestSuiteRepo.isOptionalOfType<string>(columnNameValue, 'string') ||
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
-      !isOptionalDateField(deletedAt) ||
-      !isOptionalDateField(lastAlertSent)
+      !isOptionalDateField(deletedAtDate) ||
+      !isOptionalDateField(lastAlertSentDate)
     )
       throw new Error(
         'Retrieved unexpected qual test suite field types from persistence'
@@ -102,13 +107,13 @@ export default class QualTestSuiteRepo
         materializationType: parseMaterializationType(materializationType),
         schemaName,
         targetResourceId,
-        columnName,
+        columnName: columnNameValue,
       },
       type: parseQualTestType(type),
       cron,
       executionType: parseExecutionType(executionType),
-      deletedAt: deletedAt ? deletedAt.toISOString() : undefined,
-      lastAlertSent: lastAlertSent ? lastAlertSent.toISOString() : undefined,
+      deletedAt: deletedAtDate ? deletedAtDate.toISOString() : undefined,
+      lastAlertSent: lastAlertSentDate ? lastAlertSentDate.toISOString() : undefined,
     };
   };
 
@@ -130,60 +135,47 @@ export default class QualTestSuiteRepo
 
   buildFindByQuery = (queryDto: QualTestSuiteQueryDto): Query => {
     const binds: (string | number)[] = [];
-    let whereClause = `deleted_at is ${queryDto.deleted ? 'not' : ''} null`;
+    const filter: any = {};
+    filter.deleted_at = { deleted_at: queryDto.deleted ? { $ne: null } : null};
 
     if (queryDto.activated !== undefined) {
       binds.push(queryDto.activated.toString());
-      const whereCondition = 'activated = ?';
-      whereClause += ` and ${whereCondition}`;
+      filter.activated = queryDto.activated;
     }
     if (queryDto.ids && queryDto.ids.length) {
       binds.push(...queryDto.ids);
-      const whereCondition = `array_contains(id::variant, array_construct(${queryDto.ids
-        .map(() => '?')
-        .join(',')}))`;
-      whereClause += ` and ${whereCondition}`;
+      filter.id = { $in: queryDto.ids };
     }
     if (queryDto.targetResourceIds && queryDto.targetResourceIds.length) {
       binds.push(...queryDto.targetResourceIds);
-      const whereCondition = `array_contains(target_resource_id::variant, array_construct(${queryDto.targetResourceIds
-        .map(() => '?')
-        .join(',')}))`;
-      whereClause += ` and ${whereCondition}`;
+      filter.target_resource_id = { $in: queryDto.targetResourceIds };
     }
 
-    const text = `select * from ${relationPath}.${this.matName}
-    where ${whereClause};`;
-
-    return { text, binds };
+    return { binds, filter };
   };
 
   buildUpdateQuery = (id: string, updateDto: QualTestSuiteUpdateDto): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
     const binds: Binds = [id];
 
-    if (updateDto.activated !== undefined) {
-      colDefinitions.push(this.getDefinition('activated'));
-      binds.push(updateDto.activated.toString());
-    }
-    if (updateDto.cron) {
-      colDefinitions.push(this.getDefinition('cron'));
-      binds.push(updateDto.cron);
-    }
-    if (updateDto.executionType) {
-      colDefinitions.push(this.getDefinition('execution_type'));
-      binds.push(updateDto.executionType);
-    }
-    if (updateDto.lastAlertSent) {
-      colDefinitions.push(this.getDefinition('last_alert_sent'));
-      binds.push(updateDto.lastAlertSent);
-    }
+		if (updateDto.activated !== undefined) {
+			colDefinitions.push(this.getDefinition('activated'));
+			binds.push(updateDto.activated.toString());
+		}
+		if (updateDto.cron) {
+			colDefinitions.push(this.getDefinition('cron'));
+			binds.push(updateDto.cron);
+		}
+		if (updateDto.executionType) {
+			colDefinitions.push(this.getDefinition('execution_type'));
+			binds.push(updateDto.executionType);
+		}
+		if (updateDto.lastAlertSent) {
+			colDefinitions.push(this.getDefinition('last_alert_sent'));
+			binds.push(updateDto.lastAlertSent);
+		}
 
-    const text = getUpdateQueryText(this.matName, colDefinitions, [
-      `(${binds.map(() => '?').join(', ')})`,
-    ]);
-
-    return { text, binds, colDefinitions };
+		return { binds, colDefinitions };
   };
 
   toEntity = (qualtestsuiteProperties: QualTestSuiteProps): QualTestSuite =>

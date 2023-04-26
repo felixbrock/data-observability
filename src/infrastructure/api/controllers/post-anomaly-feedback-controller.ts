@@ -1,6 +1,5 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
-import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
@@ -17,17 +16,22 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from './shared/base-controller';
+import Dbo from '../../persistence/db/mongo-db';
 
 export default class PostAnomalyFeedbackController extends BaseController {
   readonly #postAnomalyFeedback: PostAnomalyFeedback;
 
+  readonly #dbo: Dbo;
+
   constructor(
     postAnomalyFeedback: PostAnomalyFeedback,
     getAccounts: GetAccounts,
-    getSnowflakeProfile: GetSnowflakeProfile
+    getSnowflakeProfile: GetSnowflakeProfile,
+    dbo: Dbo
   ) {
     super(getAccounts, getSnowflakeProfile);
     this.#postAnomalyFeedback = postAnomalyFeedback;
+    this.#dbo = dbo;
   }
 
   #buildRequestDto = (httpRequest: Request): PostAnomalyFeedbackRequestDto => {
@@ -104,17 +108,14 @@ export default class PostAnomalyFeedbackController extends BaseController {
         jwt
       );
 
-      const connPool = await this.createConnectionPool(jwt, createPool);
-
       const useCaseResult: PostAnomalyFeedbackResponseDto =
         await this.#postAnomalyFeedback.execute({
           req: requestDto,
           auth: authDto,
-          connPool,
+          dbConnection: this.#dbo.dbConnection
         });
 
-      await connPool.drain();
-      await connPool.clear();
+      await this.#dbo.releaseConnections();
 
       if (!useCaseResult.success) {
         return PostAnomalyFeedbackController.badRequest(res);

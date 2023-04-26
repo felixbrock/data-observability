@@ -42,6 +42,7 @@ export default class ExpressApp {
       return this.#expressApp;
     } catch (error: unknown) {
       if (error instanceof Error ) throw new Error(error.message);
+      // eslint-disable-next-line @typescript-eslint/no-throw-literal
       if (!(error instanceof Error) && error) throw error;
       throw new Error('starting express app - unknown error');
     }

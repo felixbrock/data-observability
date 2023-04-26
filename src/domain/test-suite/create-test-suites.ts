@@ -5,8 +5,8 @@ import { MaterializationType } from '../value-types/materialization-type';
 import { ExecutionType } from '../value-types/execution-type';
 import { ITestSuiteRepo } from './i-test-suite-repo';
 import IUseCase from '../services/use-case';
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { createSchedules } from '../services/schedule';
+import { IDbConnection } from '../services/i-db';
 
 interface CreateObject {
   activated: boolean;
@@ -35,7 +35,7 @@ export class CreateTestSuites
       CreateTestSuitesRequestDto,
       CreateTestSuitesResponseDto,
       CreateTestSuitesAuthDto,
-      IConnectionPool
+      IDbConnection
     >
 {
   readonly #repo: ITestSuiteRepo;
@@ -47,9 +47,9 @@ export class CreateTestSuites
   async execute(props: {
     req: CreateTestSuitesRequestDto;
     auth: CreateTestSuitesAuthDto;
-    connPool: IConnectionPool;
+    dbConnection: IDbConnection;
   }): Promise<CreateTestSuitesResponseDto> {
-    const { req, auth, connPool } = props;
+    const { req, auth, dbConnection } = props;
 
     try {
       const testSuites = req.createObjects.map((el) =>
@@ -77,7 +77,7 @@ export class CreateTestSuites
         })
       );
 
-      await this.#repo.insertMany(testSuites, connPool);
+      await this.#repo.insertMany(testSuites, dbConnection, auth.callerOrgId);
 
       await createSchedules(
         auth.callerOrgId,

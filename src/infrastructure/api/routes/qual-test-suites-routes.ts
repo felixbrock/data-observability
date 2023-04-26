@@ -9,29 +9,34 @@ const qualTestSuitesRoutes = Router();
 
 const getAccounts = app.resolve('getAccounts');
 const getSnowflakeProfile = app.resolve('getSnowflakeProfile');
+const dbo = app.resolve('dbo');
 
 const readQualTestSuitesController = new ReadQualTestSuitesController(
   app.resolve('readQualTestSuites'),
   getAccounts,
-  getSnowflakeProfile
+  getSnowflakeProfile,
+  dbo
 );
 
 const createQualTestSuitesController = new CreateQualTestSuitesController(
   app.resolve('createQualTestSuites'),
   getAccounts,
-  getSnowflakeProfile
+  getSnowflakeProfile,
+  dbo
 );
 
 const updateQualTestSuitesController = new UpdateQualTestSuitesController(
   app.resolve('updateQualTestSuites'),
   getAccounts,
-  getSnowflakeProfile
+  getSnowflakeProfile,
+  dbo
 );
 
 const deleteQualTestSuitesController = new DeleteQualTestSuitesController(
   app.resolve('deleteQualTestSuites'),
   getAccounts,
-  getSnowflakeProfile
+  getSnowflakeProfile,
+  dbo
 );
 
 qualTestSuitesRoutes.get('/', (req, res) => {

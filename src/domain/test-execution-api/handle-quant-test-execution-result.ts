@@ -1,12 +1,11 @@
 // todo - clean architecture violation
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { IDb, IDbConnection } from '../services/i-db';
+import { IDbConnection } from '../services/i-db';
 import { QuantTestAlertDto } from '../integration-api/slack/quant-test-alert-dto';
 import { SendQuantTestSlackAlert } from '../integration-api/slack/send-quant-test-alert';
 import { QuantTestExecutionResultDto } from './quant-test-execution-result-dto';
 import { CreateQuantTestResult } from '../quant-test-result/create-quant-test-result';
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { GenerateChart } from '../integration-api/slack/chart/generate-chart';
 import { TestType } from '../entities/quant-test-suite';
 import { ThresholdType } from '../snowflake-api/post-anomaly-feedback';
@@ -35,6 +34,8 @@ export class HandleQuantTestExecutionResult
   readonly #createQuantTestResult: CreateQuantTestResult;
 
   readonly #generateChart: GenerateChart;
+
+  #dbConnection?: IDbConnection;
 
   constructor(
     sendQuantTestSlackAlert: SendQuantTestSlackAlert,
@@ -120,8 +121,8 @@ export class HandleQuantTestExecutionResult
   #sendAlert = async (
     testExecutionResult: QuantTestExecutionResultDto,
     jwt: string,
-    connPool: IConnectionPool
-  ): Promise<void> => {
+    dbConnection: IDbConnection,
+    ): Promise<void> => {
     if (!testExecutionResult.testData)
       throw new Error('Missing test data. Previous checks indicated test data');
     if (!testExecutionResult.testData.anomaly)
@@ -133,7 +134,8 @@ export class HandleQuantTestExecutionResult
 
     const generateChartRes = await this.#generateChart.execute({
       req: { testSuiteId: testExecutionResult.testSuiteId },
-      connPool,
+      dbConnection,
+      callerOrgId: testExecutionResult.organizationId
     });
 
     if (!generateChartRes.success) throw new Error(generateChartRes.error);
@@ -232,12 +234,14 @@ export class HandleQuantTestExecutionResult
   async execute(props: {
     req: HandleQuantTestExecutionResultRequestDto;
     auth: HandleQuantTestExecutionResultAuthDto;
-    db: IDb;
+    dbConnection: IDbConnection;
   }): Promise<HandleQuantTestExecutionResultResponseDto> {
-    const { req, auth, db } = props;
+    const { req, auth, dbConnection } = props;
 
     try {
-      await this.#createTestResult(req, db.mongoConn);
+      this.#dbConnection = dbConnection;
+
+      await this.#createTestResult(req, dbConnection);
 
       if (!req.testData || (!req.testData.anomaly && !req.alertData) || 
         (req.testData.anomaly && req.lastAlertSent && !req.alertData))
@@ -246,7 +250,7 @@ export class HandleQuantTestExecutionResult
 
       console.log('Anomaly detected, sending alert');
 
-      await this.#sendAlert(req, auth.jwt, db.sfConnPool);
+      await this.#sendAlert(req, auth.jwt, dbConnection);
 
       return Result.ok();
     } catch (error: unknown) {

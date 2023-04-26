@@ -3,13 +3,15 @@ import { QualTestSuite } from '../entities/qual-test-suite';
 import IUseCase from '../services/use-case';
 import { IQualTestSuiteRepo } from './i-qual-test-suite-repo';
 import QualTestSuiteRepo from '../../infrastructure/persistence/qual-test-suite-repo';
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
+import { IDbConnection } from '../services/i-db';
 
 export interface ReadQualTestSuiteRequestDto {
   id: string;
 }
 
-export type ReadQualTestSuiteAuthDto = null;
+export type ReadQualTestSuiteAuthDto = {
+  callerOrgId: string;
+};
 
 export type ReadQualTestSuiteResponseDto = Result<QualTestSuite | null>;
 
@@ -19,7 +21,7 @@ export class ReadQualTestSuite
       ReadQualTestSuiteRequestDto,
       ReadQualTestSuiteResponseDto,
       ReadQualTestSuiteAuthDto,
-      IConnectionPool
+      IDbConnection
     >
 {
   readonly #repo: IQualTestSuiteRepo;
@@ -30,12 +32,13 @@ export class ReadQualTestSuite
 
   async execute(props: {
     req: ReadQualTestSuiteRequestDto;
-    connPool: IConnectionPool;
+    auth: ReadQualTestSuiteAuthDto;
+    dbConnection: IDbConnection;
   }): Promise<ReadQualTestSuiteResponseDto> {
-    const { req, connPool } = props;
+    const { req, auth, dbConnection } = props;
 
     try {
-      const testSuite = await this.#repo.findOne(req.id, connPool);
+      const testSuite = await this.#repo.findOne(req.id, dbConnection, auth.callerOrgId);
 
       return Result.ok(testSuite);
     } catch (error: unknown) {

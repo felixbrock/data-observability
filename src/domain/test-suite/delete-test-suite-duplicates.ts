@@ -1,9 +1,9 @@
 import Result from '../value-types/transient-types/result';
 import { ITestSuiteRepo } from './i-test-suite-repo';
 import IUseCase from '../services/use-case';
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { deleteSchedules } from '../services/schedule';
 import { TestSuite } from '../entities/quant-test-suite';
+import { IDbConnection } from '../services/i-db';
 
 export interface DeleteTestSuiteDuplicatesRequestDto {
   testSuiteIds: string[];
@@ -20,7 +20,7 @@ export class DeleteTestSuiteDuplicates
       DeleteTestSuiteDuplicatesRequestDto,
       DeleteTestSuiteDuplicatesResponseDto,
       DeleteTestSuiteDuplicatesAuthDto,
-      IConnectionPool
+      IDbConnection
     >
 {
   readonly #repo: ITestSuiteRepo;
@@ -56,9 +56,9 @@ export class DeleteTestSuiteDuplicates
 
   async execute(props: {
     req: DeleteTestSuiteDuplicatesRequestDto;
-    connPool: IConnectionPool;
+    dbConnection: IDbConnection;
   }): Promise<DeleteTestSuiteDuplicatesResponseDto> {
-    const { req, connPool } = props;
+    const { req, dbConnection } = props;
 
     try {
       let toDeleteIds: string[];
@@ -67,7 +67,7 @@ export class DeleteTestSuiteDuplicates
       else {
         const testSuites = await this.#repo.findBy(
           { deleted: false },
-          connPool
+          dbConnection, req.targetOrgId
         );
 
         const duplicateIds = this.#getDuplicateTestSuiteIds(testSuites);
@@ -90,7 +90,7 @@ export class DeleteTestSuiteDuplicates
 
       await this.#repo.softDeleteMany(
         { targetResourceIds: [], testSuiteIds: toDeleteIds },
-        connPool
+        dbConnection, req.targetOrgId
       );
 
       await deleteSchedules(req.targetOrgId, toDeleteIds);

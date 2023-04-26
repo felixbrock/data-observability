@@ -25,7 +25,7 @@ export class CreateQuantTestResult
 {
   readonly #quantTestResultRepo: IQuantTestResultRepo;
 
-  #dbConnection: IDbConnection;
+  #dbConnection?: IDbConnection;
 
   constructor(quantTestResultRepo: IQuantTestResultRepo) {
     this.#quantTestResultRepo = quantTestResultRepo;

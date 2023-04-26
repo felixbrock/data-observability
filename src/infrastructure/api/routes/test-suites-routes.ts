@@ -10,35 +10,41 @@ const testSuitesRoutes = Router();
 
 const getAccounts = app.resolve('getAccounts');
 const getSnowflakeProfile = app.resolve('getSnowflakeProfile');
+const dbo = app.resolve('dbo');
 
 const readTestSuitesController = new ReadTestSuitesController(
   app.resolve('readTestSuites'),
   getAccounts,
-  getSnowflakeProfile
+  getSnowflakeProfile,
+  dbo
 );
 
 const createTestSuitesController = new CreateTestSuitesController(
   app.resolve('createTestSuites'),
   getAccounts,
-  getSnowflakeProfile
+  getSnowflakeProfile,
+  dbo
 );
 
 const updateTestSuitesController = new UpdateTestSuitesController(
   app.resolve('updateTestSuites'),
   getAccounts,
-  getSnowflakeProfile
+  getSnowflakeProfile,
+  dbo
 );
 
 const deleteTestSuitesController = new DeleteTestSuitesController(
   app.resolve('deleteTestSuites'),
   getAccounts,
-  getSnowflakeProfile
+  getSnowflakeProfile,
+  dbo
 );
 const deleteTestSuiteDuplicatesController =
   new DeleteTestSuiteDuplicatesController(
     app.resolve('deleteTestSuiteDuplicates'),
     getAccounts,
-    getSnowflakeProfile
+    getSnowflakeProfile,
+    dbo
   );
 
 testSuitesRoutes.get('/', (req, res) => {

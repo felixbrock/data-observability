@@ -3,9 +3,9 @@ import { ExecutionType } from '../value-types/execution-type';
 import IUseCase from '../services/use-case';
 import CustomTestSuiteRepo from '../../infrastructure/persistence/custom-test-suite-repo';
 import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { updateSchedules } from '../services/schedule';
 import { CustomThresholdMode } from '../value-types/custom-threshold-mode';
+import { IDbConnection } from '../services/i-db';
 
 export interface UpdateCustomTestSuiteRequestDto {
   id: string;
@@ -35,7 +35,7 @@ export class UpdateCustomTestSuite
       UpdateCustomTestSuiteRequestDto,
       UpdateCustomTestSuiteResponseDto,
       UpdateCustomTestSuiteAuthDto,
-      IConnectionPool
+      IDbConnection
     >
 {
   readonly #repo: ICustomTestSuiteRepo;
@@ -46,22 +46,23 @@ export class UpdateCustomTestSuite
 
   async execute(props: {
     req: UpdateCustomTestSuiteRequestDto;
-    connPool: IConnectionPool;
     auth: UpdateCustomTestSuiteAuthDto;
+    dbConnection: IDbConnection;
   }): Promise<UpdateCustomTestSuiteResponseDto> {
-    const { req, connPool, auth } = props;
+    const { req, auth, dbConnection } = props;
 
     try {
       if (!req.props) return Result.ok(req.id);
 
-      const testSuite = await this.#repo.findOne(req.id, connPool);
+      const testSuite = await this.#repo.findOne(req.id, dbConnection, auth.callerOrgId);
 
       if (!testSuite) throw new Error('Test suite not found');
 
       const updateResult = await this.#repo.updateOne(
         req.id,
         req.props,
-        connPool
+        dbConnection,
+        auth.callerOrgId
       );
 
       await updateSchedules(auth.callerOrgId, 'custom-test', [

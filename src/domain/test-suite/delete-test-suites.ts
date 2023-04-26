@@ -1,8 +1,8 @@
 import Result from '../value-types/transient-types/result';
 import { ITestSuiteRepo } from './i-test-suite-repo';
 import IUseCase from '../services/use-case';
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { deleteSchedules } from '../services/schedule';
+import { IDbConnection } from '../services/i-db';
 
 export type Mode = 'soft' | 'hard';
 
@@ -36,7 +36,7 @@ export class DeleteTestSuites
       DeleteTestSuitesRequestDto,
       DeleteTestSuitesResponseDto,
       DeleteTestSuitesAuthDto,
-      IConnectionPool
+      IDbConnection
     >
 {
   readonly #repo: ITestSuiteRepo;
@@ -48,16 +48,16 @@ export class DeleteTestSuites
   async execute(props: {
     req: DeleteTestSuitesRequestDto;
     auth: DeleteTestSuitesAuthDto;
-    connPool: IConnectionPool;
+    dbConnection: IDbConnection;
   }): Promise<DeleteTestSuitesResponseDto> {
-    const { req, auth, connPool } = props;
+    const { req, auth, dbConnection } = props;
 
     try {
       switch (req.mode) {
         case 'soft':
           await this.#repo.softDeleteMany(
             { targetResourceIds: req.targetResourceIds, testSuiteIds: [] },
-            connPool
+            dbConnection, auth.callerOrgId
           );
           break;
         case 'hard':
@@ -72,7 +72,7 @@ export class DeleteTestSuites
             targetResourceIds: req.targetResourceIds,
             deleted: false,
           },
-          connPool
+          dbConnection, auth.callerOrgId
         )
       ).map((el) => el.id);
 

@@ -13,7 +13,8 @@ const dbo = app.resolve('dbo');
 const readQualTestSuiteController = new ReadQualTestSuiteController(
   app.resolve('readQualTestSuite'),
   getAccounts,
-  getSnowflakeProfile
+  getSnowflakeProfile,
+  dbo
 );
 
 const triggerQualTestSuiteExecutionController =

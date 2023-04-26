@@ -1,6 +1,5 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
-import { createPool } from 'snowflake-sdk';
 import {
   ReadCustomTestSuites,
   ReadCustomTestSuitesAuthDto,
@@ -16,17 +15,22 @@ import {
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import Result from '../../../domain/value-types/transient-types/result';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
+import Dbo from '../../persistence/db/mongo-db';
 
 export default class ReadCustomTestSuitesController extends BaseController {
   readonly #readCustomTestSuites: ReadCustomTestSuites;
 
+  readonly #dbo: Dbo;
+
   constructor(
     readCustomTestSuites: ReadCustomTestSuites,
     getAccounts: GetAccounts,
-    getSnowflakeProfile: GetSnowflakeProfile
+    getSnowflakeProfile: GetSnowflakeProfile,
+    dbo: Dbo
   ) {
     super(getAccounts, getSnowflakeProfile);
     this.#readCustomTestSuites = readCustomTestSuites;
+    this.#dbo = dbo;
   }
 
   #buildRequestDto = (httpRequest: Request): ReadCustomTestSuitesRequestDto => {
@@ -82,17 +86,15 @@ export default class ReadCustomTestSuitesController extends BaseController {
         getUserAccountInfoResult.value
       );
 
-      const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: ReadCustomTestSuitesResponseDto =
         await this.#readCustomTestSuites.execute({
           req: requestDto,
           auth: authDto,
-          connPool,
+          dbConnection: this.#dbo.dbConnection,
         });
 
-      await connPool.drain();
-      await connPool.clear();
+      await this.#dbo.releaseConnections();
 
       if (!useCaseResult.success) {
         return ReadCustomTestSuitesController.badRequest(res);

@@ -1,15 +1,17 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { TestSuite } from '../entities/quant-test-suite';
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { ITestSuiteRepo } from './i-test-suite-repo';
 import TestSuiteRepo from '../../infrastructure/persistence/test-suite-repo';
+import { IDbConnection } from '../services/i-db';
 
 export interface ReadTestSuiteRequestDto {
   id: string;
 }
 
-export type ReadTestSuiteAuthDto = null;
+export type ReadTestSuiteAuthDto = {
+  callerOrgId: string;
+};
 
 export type ReadTestSuiteResponseDto = Result<TestSuite | null>;
 
@@ -19,7 +21,7 @@ export class ReadTestSuite
       ReadTestSuiteRequestDto,
       ReadTestSuiteResponseDto,
       ReadTestSuiteAuthDto,
-      IConnectionPool
+      IDbConnection
     >
 {
   readonly #repo: ITestSuiteRepo;
@@ -30,12 +32,13 @@ export class ReadTestSuite
 
   async execute(props: {
     req: ReadTestSuiteRequestDto;
-    connPool: IConnectionPool;
+    auth: ReadTestSuiteAuthDto;
+    dbConnection: IDbConnection;
   }): Promise<ReadTestSuiteResponseDto> {
-    const { req, connPool } = props;
+    const { req, auth, dbConnection } = props;
 
     try {
-      const testSuite = await this.#repo.findOne(req.id, connPool);
+      const testSuite = await this.#repo.findOne(req.id, dbConnection, auth.callerOrgId);
 
       return Result.ok(testSuite);
     } catch (error: unknown) {

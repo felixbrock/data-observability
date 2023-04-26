@@ -1,6 +1,5 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
-import { createPool } from 'snowflake-sdk';
 import {
   ReadTestSuite,
   ReadTestSuiteRequestDto,
@@ -15,17 +14,22 @@ import {
 import Result from '../../../domain/value-types/transient-types/result';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
+import Dbo from '../../persistence/db/mongo-db';
 
 export default class ReadTestSuiteController extends BaseController {
   readonly #readTestSuite: ReadTestSuite;
 
+  readonly #dbo: Dbo;
+
   constructor(
     readTestSuite: ReadTestSuite,
     getAccounts: GetAccounts,
-    getSnowflakeProfile: GetSnowflakeProfile
+    getSnowflakeProfile: GetSnowflakeProfile,
+    dbo: Dbo
   ) {
     super(getAccounts, getSnowflakeProfile);
     this.#readTestSuite = readTestSuite;
+    this.#dbo = dbo;
   }
 
   #buildRequestDto = (httpRequest: Request): ReadTestSuiteRequestDto => {
@@ -56,18 +60,20 @@ export default class ReadTestSuiteController extends BaseController {
       if (!getUserAccountInfoResult.value)
         throw new ReferenceError('Authorization failed');
 
+      if (!getUserAccountInfoResult.value.callerOrgId)
+        throw new ReferenceError('Unauthorized - Caller organization id missing');
+
       const requestDto: ReadTestSuiteRequestDto = this.#buildRequestDto(req);
 
-      const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: ReadTestSuiteResponseDto =
         await this.#readTestSuite.execute({
           req: requestDto,
-          connPool,
+          auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
+          dbConnection: this.#dbo.dbConnection,
         });
 
-      await connPool.drain();
-      await connPool.clear();
+      await this.#dbo.releaseConnections();
 
       if (!useCaseResult.success) {
         return ReadTestSuiteController.badRequest(res);

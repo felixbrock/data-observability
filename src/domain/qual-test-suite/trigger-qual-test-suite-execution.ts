@@ -61,9 +61,18 @@ export class TriggerQualTestSuiteExecution
       );
 
     try {
+      let organizationId = '';
+
+      if (auth.callerOrgId) {
+        organizationId = auth.callerOrgId;
+      } else if (req.targetOrgId) {
+          organizationId = req.targetOrgId;
+      }
+
       const readTestSuiteResult = await this.#readQualTestSuite.execute({
         req: { id: req.id },
-        connPool: db.sfConnPool,
+        auth: { callerOrgId: organizationId },
+        dbConnection: db.mongoConn,
       });
 
       if (!readTestSuiteResult.success)
@@ -83,6 +92,8 @@ export class TriggerQualTestSuiteExecution
           cron: testSuite.cron,
         },
         db.sfConnPool,
+        db.mongoConn,
+        organizationId,
         req.executionType === 'automatic' ? 5 : undefined
       );
 

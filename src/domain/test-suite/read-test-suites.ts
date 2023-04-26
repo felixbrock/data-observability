@@ -3,8 +3,8 @@ import BaseAuth from '../services/base-auth';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import TestSuiteRepo from '../../infrastructure/persistence/test-suite-repo';
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { ITestSuiteRepo } from './i-test-suite-repo';
+import { IDbConnection } from '../services/i-db';
 
 export interface ReadTestSuitesRequestDto {
   activated?: boolean;
@@ -20,7 +20,7 @@ export class ReadTestSuites
       ReadTestSuitesRequestDto,
       ReadTestSuitesResponseDto,
       ReadTestSuitesAuthDto,
-      IConnectionPool
+      IDbConnection
     >
 {
   readonly #repo: ITestSuiteRepo;
@@ -32,9 +32,9 @@ export class ReadTestSuites
   async execute(props: {
     req: ReadTestSuitesRequestDto;
     auth: ReadTestSuitesAuthDto;
-    connPool: IConnectionPool;
+    dbConnection: IDbConnection;
   }): Promise<ReadTestSuitesResponseDto> {
-    const { req, auth, connPool } = props;
+    const { req, auth, dbConnection } = props;
 
     if (!auth.isSystemInternal && !auth.callerOrgId)
       throw new Error('Not authorized to perform operation');
@@ -45,7 +45,8 @@ export class ReadTestSuites
           activated: req.activated,
           deleted: false,
         },
-        connPool
+        dbConnection,
+        auth.callerOrgId ? auth.callerOrgId : '',
       );
 
       return Result.ok(testSuites);

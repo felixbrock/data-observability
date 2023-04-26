@@ -1,11 +1,11 @@
 import IUseCase from '../services/use-case';
 import Result from '../value-types/transient-types/result';
 import { ExecutionType } from '../value-types/execution-type';
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { IQualTestSuiteRepo } from './i-qual-test-suite-repo';
 import QualTestSuiteRepo from '../../infrastructure/persistence/qual-test-suite-repo';
 import { QualTestSuite } from '../entities/qual-test-suite';
 import { updateSchedules } from '../services/schedule';
+import { IDbConnection } from '../services/i-db';
 
 interface UpdateObject {
   id: string;
@@ -30,7 +30,7 @@ export class UpdateQualTestSuites
       UpdateQualTestSuitesRequestDto,
       UpdateQualTestSuitesResponseDto,
       UpdateQualTestSuitesAuthDto,
-      IConnectionPool
+      IDbConnection
     >
 {
   readonly #repo: IQualTestSuiteRepo;
@@ -57,17 +57,17 @@ export class UpdateQualTestSuites
 
   async execute(props: {
     req: UpdateQualTestSuitesRequestDto;
-    connPool: IConnectionPool;
     auth: UpdateQualTestSuitesAuthDto;
+    dbConnection: IDbConnection;
   }): Promise<UpdateQualTestSuitesResponseDto> {
-    const { req, connPool, auth } = props;
+    const { req, auth, dbConnection } = props;
 
     try {
       if (req.updateObjects.every((el) => !el.props)) return Result.ok();
 
       const testSuites = await this.#repo.findBy(
         { ids: req.updateObjects.map((el) => el.id), deleted: false },
-        connPool
+        dbConnection, auth.callerOrgId
       );
 
       if (req.updateObjects.length !== testSuites.length)
@@ -85,7 +85,8 @@ export class UpdateQualTestSuites
 
       const replaceResult = await this.#repo.replaceMany(
         replacements,
-        connPool
+        dbConnection,
+        auth.callerOrgId
       );
 
       await updateSchedules(

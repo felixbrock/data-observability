@@ -2,14 +2,12 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Canvas, createCanvas } from 'canvas';
 import { EChartsOption, init, YAXisComponentOption } from 'echarts';
+import { Db } from 'mongodb';
 import { appConfig } from '../../../../config';
 import IUseCase from '../../../services/use-case';
-import {
-  Binds,
-  IConnectionPool,
-} from '../../../snowflake-api/i-snowflake-api-repo';
 import { QuerySnowflake } from '../../../snowflake-api/query-snowflake';
 import Result from '../../../value-types/transient-types/result';
+import { IDbConnection } from '../../../services/i-db';
 
 export interface ChartRepresentation {
   url: string;
@@ -48,7 +46,7 @@ export class GenerateChart
       GenerateChartRequestDto,
       GenerateChartResponseDto,
       null,
-      IConnectionPool
+      IDbConnection
     >
 {
   #getDefaultYAxis = (
@@ -204,13 +202,13 @@ export class GenerateChart
     [key: string]: unknown;
   }): TestHistoryDataPoint => {
     const {
-      VALUE: value,
-      TEST_SUITE_ID: testSuiteId,
-      EXECUTED_ON: executedOn,
-      VALUE_UPPER_BOUND: valueUpperBound,
-      VALUE_LOWER_BOUND: valueLowerBound,
-      IS_ANOMALY: isAnomaly,
-      USER_FEEDBACK_IS_ANOMALY: userFeedbackIsAnomaly,
+      value,
+      test_suite_id: testSuiteId,
+      executed_on: executedOn,
+      value_upper_bound: valueUpperBound,
+      value_lower_bound: valueLowerBound,
+      is_anomaly: isAnomaly,
+      user_feedback_is_anomaly: userFeedbackIsAnomaly,
     } = queryResultEntry;
 
     const isOptionalOfType = <T>(
@@ -226,26 +224,32 @@ export class GenerateChart
         | 'function'
     ): val is T => val === null || typeof val === targetType;
 
+    const valueLowerBoundNum = valueLowerBound ? Number(valueLowerBound) : null;
+
+    const valueUpperBoundNum = valueUpperBound ? Number(valueUpperBound) : null;
+
+    const isAnomalyValue = typeof isAnomaly === 'string' ? JSON.parse(isAnomaly) : null;
+
     const isTimestamp = (obj: unknown): obj is Date =>
       !!obj && typeof obj === 'object' && obj.constructor.name === 'Date';
     if (
       typeof value !== 'number' ||
       typeof testSuiteId !== 'string' ||
       !(typeof executedOn === 'string' || isTimestamp(executedOn)) ||
-      typeof isAnomaly !== 'boolean' ||
+      typeof isAnomalyValue !== 'boolean' ||
       typeof userFeedbackIsAnomaly !== 'number' ||
-      !isOptionalOfType<number>(valueLowerBound, 'number') ||
-      !isOptionalOfType<number>(valueUpperBound, 'number')
+      !isOptionalOfType<number>(valueLowerBoundNum, 'number') ||
+      !isOptionalOfType<number>(valueUpperBoundNum, 'number')
     )
       throw new Error('Received unexpected type');
 
     const datapoint = {
-      isAnomaly,
+      isAnomaly: isAnomalyValue,
       userFeedbackIsAnomaly,
       timestamp:
         typeof executedOn === 'string' ? executedOn : executedOn.toISOString(),
-      valueLowerBound,
-      valueUpperBound,
+      valueLowerBound: valueLowerBoundNum,
+      valueUpperBound: valueUpperBoundNum,
       value,
     };
 
@@ -254,38 +258,71 @@ export class GenerateChart
 
   #queryTestHistory = async (
     testSuiteId: string,
-    connPool: IConnectionPool
+    dbConnection: IDbConnection,
+    callerOrgId: string
   ): Promise<TestHistoryDataPoint[]> => {
-    const binds: Binds = [testSuiteId];
 
-    const whereCondition = `test_history.test_suite_id = ?`;
+    const queryResult = await dbConnection
+    .collection(`test_history_${callerOrgId}`)
+    .aggregate([
+      {
+        $lookup: {
+          from: `test_executions_${callerOrgId}`,
+          localField: 'execution_id',
+          foreignField: 'id',
+          as: 'test_executions'
+        }
+      },
+      {
+        $unwind: {
+          path: '$test_executions',
+          preserveNullAndEmptyArrays: false
+        }
+      },
+      {
+        $lookup: {
+          from: `test_results_${callerOrgId}`,
+          localField: 'execution_id',
+          foreignField: 'execution_id',
+          as: 'test_results'
+        }
+      },
+      {
+        $unwind: {
+          path: '$test_results',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $match: {
+          test_suite_id: testSuiteId
+        }
+      },
+      {
+        $project: {
+          test_suite_id: 1,
+          value: 1,
+          executed_on: '$test_executions.executed_on',
+          value_upper_bound: '$test_results.expected_value_upper_bound',
+          value_lower_bound: '$test_results.expected_value_lower_bound',
+          is_anomaly: 1,
+          user_feedback_is_anomaly: 1
+        }
+      },
+      {
+        $sort: {
+          'execution_id': -1
+        }
+      },
+      {
+        $limit: 200
+      }
+    ]).toArray();
 
-    const queryText = `select 
-        test_history.test_suite_id as test_suite_id,
-        test_history.value as value,
-        test_executions.executed_on as executed_on,
-        test_results.expected_value_upper_bound as value_upper_bound,
-        test_results.expected_value_lower_bound as value_lower_bound,
-        test_history.is_anomaly as is_anomaly,
-        test_history.user_feedback_is_anomaly as user_feedback_is_anomaly 
-      from cito.observability.test_history as test_history
-      inner join cito.observability.test_executions as test_executions
-        on test_history.execution_id = test_executions.id
-      left join cito.observability.test_results as test_results
-        on test_history.execution_id = test_results.execution_id
-      where ${whereCondition}
-      order by test_executions.executed_on desc limit 200;`;
-
-    const queryResult = await this.#querySnowflake.execute({
-      req: { queryText, binds },
-      connPool,
-    });
-
-    if (!queryResult.success) throw new Error(queryResult.error);
-    if (!queryResult.value)
+    if (!queryResult)
       throw new Error('Missing history data point query value');
 
-    const historyDataPoints = queryResult.value
+    const historyDataPoints = queryResult
       .reverse()
       .map(
         (el: { [key: string]: unknown }): TestHistoryDataPoint =>
@@ -336,14 +373,16 @@ export class GenerateChart
 
   async execute(props: {
     req: GenerateChartRequestDto;
-    connPool: IConnectionPool;
+    dbConnection: Db,
+    callerOrgId: string
   }): Promise<GenerateChartResponseDto> {
-    const { req, connPool } = props;
+    const { req, dbConnection, callerOrgId } = props;
 
     try {
       const historyDataPoints = await this.#queryTestHistory(
         req.testSuiteId,
-        connPool
+        dbConnection,
+        callerOrgId
       );
 
       const chart = this.#buildChart(historyDataPoints);

@@ -15,19 +15,22 @@ const dbo = app.resolve('dbo');
 const readCustomTestSuiteController = new ReadCustomTestSuiteController(
   app.resolve('readCustomTestSuite'),
   getAccounts,
-  getSnowflakeProfile
+  getSnowflakeProfile,
+  dbo
 );
 
 const createCustomTestSuiteController = new CreateCustomTestSuiteController(
   app.resolve('createCustomTestSuite'),
   getAccounts,
-  getSnowflakeProfile
+  getSnowflakeProfile,
+  dbo
 );
 
 const updateCustomTestSuiteController = new UpdateCustomTestSuiteController(
   app.resolve('updateCustomTestSuite'),
   getAccounts,
-  getSnowflakeProfile
+  getSnowflakeProfile,
+  dbo
 );
 
 const triggerCustomTestSuiteExecutionController =
@@ -41,7 +44,8 @@ const triggerCustomTestSuiteExecutionController =
 const deleteCustomTestSuitesController = new DeleteCustomTestSuitesController(
   app.resolve('deleteCustomTestSuites'),
   getAccounts,
-  getSnowflakeProfile
+  getSnowflakeProfile,
+  dbo
 );
 
 customTestSuiteRoutes.get('/:id', (req, res) => {
