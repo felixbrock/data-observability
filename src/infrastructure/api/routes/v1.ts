@@ -7,6 +7,7 @@ import qualTestSuiteRoutes from './qual-test-suite-routes';
 import testSuiteRoutes from './test-suite-routes';
 import qualTestSuitesRoutes from './qual-test-suites-routes';
 import testSuitesRoutes from './test-suites-routes';
+import frontEndRoutes from './front-end-routes';
 
 const version = 'v1';
 
@@ -51,6 +52,11 @@ v1Router.use(
 v1Router.use(
   `/${appConfig.express.apiRoot}/${version}/custom-test-suites`,
   customTestSuitesRoutes
+);
+
+v1Router.use(
+  `/${appConfig.express.apiRoot}/${version}/front-end`,
+  frontEndRoutes
 );
 
 export default v1Router;
