@@ -225,6 +225,16 @@ export default abstract class BaseSfRepo<
 
   protected abstract buildUpdateQuery(id: string, dto: UpdateDto): Query;
 
+  #joinFieldsAndValues = (fields: string[], values: unknown[]): any => {
+    const result: any = {};
+
+    fields.forEach((field, index) => {
+        result[field] = values[index];
+    });
+
+    return result;
+  };
+
   updateOne = async (
     id: string,
     updateDto: UpdateDto,
@@ -243,12 +253,15 @@ export default abstract class BaseSfRepo<
 				document[column.name] = column.nullable && value === 'null' ? null : value;
 			});
 
+      const fields = this.colDefinitions.map((el) => el.name).slice(1);
+
 			const [docId, ...values] = Object.values(document);
+      const updatedFields = this.#joinFieldsAndValues(fields, values);
 			const result = await dbConnection
       .collection(`${this.matName}_${callerOrgId}`)
 			.updateOne(
 				{ id: docId },
-				{ $set: values }
+				{ $set: updatedFields }
 			);
 
       if (result.matchedCount !== 1) {
@@ -280,13 +293,16 @@ export default abstract class BaseSfRepo<
 				return document;
 			});
 
+      const fields = this.colDefinitions.map((el) => el.name).slice(1);
+
 			await Promise.all(documents.map(async (doc) => {
 				const [id, ...values] = Object.values(doc);
+        const updatedFields = this.#joinFieldsAndValues(fields, values);
 				const res = await dbConnection
         .collection(`${this.matName}_${callerOrgId}`)
 				.updateOne(
 					{ id },
-					{ $set: values }
+					{ $set: updatedFields }
 				);
 
         if (res.matchedCount !== 1) {
