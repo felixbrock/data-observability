@@ -88,6 +88,11 @@ export default class TestSuiteRepo
       last_alert_sent: lastAlertSent,
     } = document;
 
+    let columnNameValue = columnName;
+    if (!columnName) columnNameValue = null;
+
+    const activatedValue = JSON.parse(activated);
+
     const customLowerThresholdNum = customLowerThreshold ? Number(customLowerThreshold) : null;
 
     const customUpperThresholdNum = customUpperThreshold ? Number(customUpperThreshold) : null;
@@ -106,12 +111,12 @@ export default class TestSuiteRepo
     if (
       typeof id !== 'string' ||
       typeof type !== 'string' ||
-      typeof activated !== 'boolean' ||
+      typeof activatedValue !== 'boolean' ||
       typeof databaseName !== 'string' ||
       typeof schemaName !== 'string' ||
       typeof materializationName !== 'string' ||
       typeof materializationType !== 'string' ||
-      !TestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
+      !TestSuiteRepo.isOptionalOfType<string>(columnNameValue, 'string') ||
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
@@ -131,29 +136,29 @@ export default class TestSuiteRepo
 
     return {
       id,
-      activated,
+      activated: activatedValue,
       target: {
         databaseName,
         materializationName,
         materializationType: parseMaterializationType(materializationType),
         schemaName,
         targetResourceId,
-        columnName,
+        columnName: columnNameValue,
       },
       type: parseTestType(type),
       cron,
       executionType: parseExecutionType(executionType),
       deletedAt: deletedAtDate? deletedAtDate.toISOString(): undefined,
-      customLowerThreshold,
+      customLowerThreshold: customLowerThresholdNum,
       customLowerThresholdMode: parseCustomThresholdMode(
         customLowerThresholdMode
       ),
-      customUpperThreshold,
+      customUpperThreshold: customUpperThresholdNum,
       customUpperThresholdMode: parseCustomThresholdMode(
         customUpperThresholdMode
       ),
-      feedbackLowerThreshold,
-      feedbackUpperThreshold,
+      feedbackLowerThreshold: feedbackLowerThresholdNum,
+      feedbackUpperThreshold: feedbackUpperThresholdNum,
       lastAlertSent: lastAlertSentDate? lastAlertSentDate.toISOString() : undefined,
     };
   };
