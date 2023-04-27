@@ -87,7 +87,7 @@ export default class DeleteQualTestSuitesController extends BaseController {
           dbConnection: this.#dbo.dbConnection
         });
 
-      await this.#dbo.releaseConnections();
+      
 
       if (!useCaseResult.success) {
         return DeleteQualTestSuitesController.badRequest(res);

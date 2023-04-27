@@ -115,7 +115,7 @@ export default class PostAnomalyFeedbackController extends BaseController {
           dbConnection: this.#dbo.dbConnection
         });
 
-      await this.#dbo.releaseConnections();
+      
 
       if (!useCaseResult.success) {
         return PostAnomalyFeedbackController.badRequest(res);

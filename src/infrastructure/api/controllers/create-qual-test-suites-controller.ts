@@ -74,7 +74,7 @@ export default class CreateQualTestSuitesController extends BaseController {
           dbConnection: this.#dbo.dbConnection,
         });
 
-      await this.#dbo.releaseConnections();
+      
 
       if (!useCaseResult.success) {
         return CreateQualTestSuitesController.badRequest(res);

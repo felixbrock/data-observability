@@ -20,7 +20,7 @@ import Dbo from '../../persistence/db/mongo-db';
 export default class ReadQualTestSuitesController extends BaseController {
   readonly #readQualTestSuites: ReadQualTestSuites;
 
-  readonly dbo: Dbo;
+  readonly #dbo: Dbo;
 
   constructor(
     readQualTestSuites: ReadQualTestSuites,
@@ -30,7 +30,7 @@ export default class ReadQualTestSuitesController extends BaseController {
   ) {
     super(getAccounts, getSnowflakeProfile);
     this.#readQualTestSuites = readQualTestSuites;
-    this.dbo = dbo;
+    this.#dbo = dbo;
   }
 
   #buildRequestDto = (httpRequest: Request): ReadQualTestSuitesRequestDto => {
@@ -91,10 +91,10 @@ export default class ReadQualTestSuitesController extends BaseController {
         await this.#readQualTestSuites.execute({
           req: requestDto,
           auth: authDto,
-          dbConnection: this.dbo.dbConnection,
+          dbConnection: this.#dbo.dbConnection,
         });
 
-      await this.dbo.releaseConnections();
+      
 
       if (!useCaseResult.success) {
         return ReadQualTestSuitesController.badRequest(res);

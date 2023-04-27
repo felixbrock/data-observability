@@ -207,7 +207,7 @@ export default class HandleQualTestExecutionResultController extends BaseControl
           dbConnection: this.#dbo.dbConnection
         });
       
-      await this.#dbo.releaseConnections();
+      
 
       if (!useCaseResult.success) {
         return HandleQualTestExecutionResultController.badRequest(res);

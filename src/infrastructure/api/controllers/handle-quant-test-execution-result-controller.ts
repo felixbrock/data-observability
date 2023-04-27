@@ -227,7 +227,7 @@ export default class HandleQuantTestExecutionResultController extends BaseContro
           dbConnection: this.#dbo.dbConnection,
         });
 
-      await this.#dbo.releaseConnections();
+      
 
       if (!useCaseResult.success) {
         return HandleQuantTestExecutionResultController.badRequest(res);

@@ -92,7 +92,7 @@ export default class DeleteTestSuiteDuplicatesController extends BaseController 
           dbConnection: this.#dbo.dbConnection
         });
 
-      await this.#dbo.releaseConnections();
+      
 
       if (!useCaseResult.success) {
         // return DeleteTestSuiteDuplicatesController.badRequest(res);

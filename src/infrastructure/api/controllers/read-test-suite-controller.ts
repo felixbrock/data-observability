@@ -73,7 +73,7 @@ export default class ReadTestSuiteController extends BaseController {
           dbConnection: this.#dbo.dbConnection,
         });
 
-      await this.#dbo.releaseConnections();
+      
 
       if (!useCaseResult.success) {
         return ReadTestSuiteController.badRequest(res);
