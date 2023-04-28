@@ -85,8 +85,7 @@ export default class ReadSelectedTestSuiteController extends BaseController {
         return ReadSelectedTestSuiteController.badRequest(res);
       }
 
-      const resultValue = JSON.stringify(useCaseResult.value);
-      console.log(resultValue);
+      const resultValue = useCaseResult.value;
 
       return ReadSelectedTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

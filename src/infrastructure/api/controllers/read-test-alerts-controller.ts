@@ -41,7 +41,7 @@ export default class ReadTestAlertsController extends BaseController {
     const idsArray = JSON.parse(ids);
 
     return {
-      ids: idsArray,
+      ids: typeof idsArray === 'string' ? [idsArray] : idsArray,
     };
   };
 
@@ -84,8 +84,7 @@ export default class ReadTestAlertsController extends BaseController {
         return ReadTestAlertsController.badRequest(res);
       }
 
-      const resultValue = JSON.stringify(useCaseResult.value);
-      console.log(resultValue);
+      const resultValue = useCaseResult.value;
 
       return ReadTestAlertsController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {

@@ -67,6 +67,20 @@ export class ReadTestHistory
           },
         },
         {
+          $replaceRoot: {
+            newRoot: {
+              $mergeObjects: ['$test_results', '$$ROOT']
+            }
+          }
+        },
+        {
+          $replaceRoot: {
+            newRoot: {
+              $mergeObjects: ['$test_executions', '$$ROOT']
+            }
+          }
+        },
+        {
           $sort: { executed_on: -1 },
         },
         {

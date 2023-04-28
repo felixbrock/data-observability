@@ -4,7 +4,7 @@ import IUseCase from '../services/use-case';
 import { IDbConnection } from '../services/i-db';
 
 export interface ReadTestAlertsRequestDto {
-    ids: string
+    ids: string[]
 }
 
 export type ReadTestAlertsAuthDto = {
@@ -51,7 +51,7 @@ export class ReadTestAlerts
             $lookup: {
               from: `test_executions_${auth.callerOrgId}`,
               localField: 'execution_id',
-              foreignField: 'execution_id',
+              foreignField: 'id',
               as: 'test_executions'
             },
           },
@@ -63,14 +63,28 @@ export class ReadTestAlerts
           },
           {
             $match: {
-              'test_suite_id': { $in: testSuiteIds }
+              test_suite_id: { $in: testSuiteIds }
             },
+          },
+          {
+            $replaceRoot: {
+              newRoot: {
+                $mergeObjects: ['$test_results', '$$ROOT']
+              }
+            }
+          },
+          {
+            $replaceRoot: {
+              newRoot: {
+                $mergeObjects: ['$test_executions', '$$ROOT']
+              }
+            }
           },
           {
             $project: {
               test_suite_id: 1,
-              deviation: '$test_results.deviation',
-              executed_on: '$test_executions.executed_on'
+              deviation: 1,
+              executed_on: 1
             },
           },
           {

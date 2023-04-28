@@ -41,7 +41,7 @@ export default class ReadTestHistoryController extends BaseController {
     const idsArray = JSON.parse(ids);
 
     return {
-      ids: idsArray,
+      ids: typeof idsArray === 'string' ? [idsArray] : idsArray,
     };
   };
 
@@ -83,8 +83,7 @@ export default class ReadTestHistoryController extends BaseController {
         return ReadTestHistoryController.badRequest(res);
       }
 
-      const resultValue = JSON.stringify(useCaseResult.value);
-      console.log(resultValue);
+      const resultValue = useCaseResult.value;
 
       return ReadTestHistoryController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
