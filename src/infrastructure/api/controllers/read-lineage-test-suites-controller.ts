@@ -10,7 +10,7 @@ import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowfla
 import Dbo from '../../persistence/db/mongo-db';
 import { ReadTestSuite, ReadTestSuiteRequestDto, ReadTestSuiteResponseDto } from '../../../domain/test-suite/read-test-suite';
 
-export default class ReadSelectedTestSuiteController extends BaseController {
+export default class ReadLineageTestSuitesController extends BaseController {
   readonly #readTestSuite: ReadTestSuite;
 
   readonly #dbo: Dbo;
@@ -46,7 +46,7 @@ export default class ReadSelectedTestSuiteController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return ReadSelectedTestSuiteController.unauthorized(res, 'Unauthorized');
+        return ReadLineageTestSuitesController.unauthorized(res, 'Unauthorized');
 
       const jwt = authHeader.split(' ')[1];
 
@@ -54,7 +54,7 @@ export default class ReadSelectedTestSuiteController extends BaseController {
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return ReadSelectedTestSuiteController.unauthorized(
+        return ReadLineageTestSuitesController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
@@ -74,16 +74,16 @@ export default class ReadSelectedTestSuiteController extends BaseController {
         });
 
       if (!useCaseResult.success) {
-        return ReadSelectedTestSuiteController.badRequest(res);
+        return ReadLineageTestSuitesController.badRequest(res);
       }
 
       const resultValue = useCaseResult.value;
 
-      return ReadSelectedTestSuiteController.ok(res, resultValue, CodeHttp.OK);
+      return ReadLineageTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
-      return ReadSelectedTestSuiteController.fail(
+      return ReadLineageTestSuitesController.fail(
         res,
         'read test suite - Unknown error occurred'
       );
