@@ -2,7 +2,6 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Canvas, createCanvas } from 'canvas';
 import { EChartsOption, init, YAXisComponentOption } from 'echarts';
-import { Db } from 'mongodb';
 import { appConfig } from '../../../../config';
 import IUseCase from '../../../services/use-case';
 import GenerateChartRepo from '../../../../infrastructure/persistence/generate-chart-repo';
@@ -312,7 +311,7 @@ export class GenerateChart
 
   async execute(props: {
     req: GenerateChartRequestDto;
-    dbConnection: Db,
+    dbConnection: IDbConnection,
     callerOrgId: string
   }): Promise<GenerateChartResponseDto> {
     const { req, dbConnection, callerOrgId } = props;
