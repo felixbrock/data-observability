@@ -45,8 +45,9 @@ export class ReadQualTestSuites
           activated: req.activated,
           deleted: false,
         },
-        dbConnection, auth.callerOrgId ? auth.callerOrgId : ''
-      );
+        dbConnection, auth.callerOrgId ? auth.callerOrgId : '',
+        true
+      ) as QualTestSuite[];
 
       return Result.ok(testSuites);
     } catch (error: unknown) {

@@ -3,7 +3,7 @@ import {
   ReadTestAlerts,
   ReadTestAlertsRequestDto,
   ReadTestAlertsResponseDto,
-} from '../../../domain/front-end-api/read-test-alerts';
+} from '../../../domain/front-end-data-structure/read-test-alerts';
 
 import {
   BaseController,

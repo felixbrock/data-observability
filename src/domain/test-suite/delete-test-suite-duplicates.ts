@@ -67,8 +67,8 @@ export class DeleteTestSuiteDuplicates
       else {
         const testSuites = await this.#repo.findBy(
           { deleted: false },
-          dbConnection, req.targetOrgId
-        );
+          dbConnection, req.targetOrgId, true
+        ) as TestSuite[];
 
         const duplicateIds = this.#getDuplicateTestSuiteIds(testSuites);
 

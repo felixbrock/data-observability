@@ -15,6 +15,7 @@ import Result from '../../../domain/value-types/transient-types/result';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import Dbo from '../../persistence/db/mongo-db';
+import { TestSuite } from '../../../domain/entities/quant-test-suite';
 
 export default class ReadTestSuiteController extends BaseController {
   readonly #readTestSuite: ReadTestSuite;
@@ -75,7 +76,7 @@ export default class ReadTestSuiteController extends BaseController {
 
       
 
-      if (!useCaseResult.success) {
+      if (!useCaseResult.success || !(useCaseResult.value instanceof TestSuite)) {
         return ReadTestSuiteController.badRequest(res);
       }
 

@@ -94,8 +94,8 @@ export class UpdateTestSuites
 
       const testSuites = await this.#repo.findBy(
         { ids: req.updateObjects.map((el) => el.id), deleted: false },
-        dbConnection, auth.callerOrgId
-      );
+        dbConnection, auth.callerOrgId, true
+      ) as TestSuite[];
 
       if (req.updateObjects.length !== testSuites.length)
         throw new Error('Not all requested (to be updated) test suites found');

@@ -41,9 +41,8 @@ import { DeleteTestSuites } from '../domain/test-suite/delete-test-suites';
 import { DeleteQualTestSuites } from '../domain/qual-test-suite/delete-qual-test-suites';
 import { DeleteCustomTestSuites } from '../domain/custom-test-suite/delete-custom-test-suites';
 import { DeleteTestSuiteDuplicates } from '../domain/test-suite/delete-test-suite-duplicates';
-import { ReadTestHistory } from '../domain/front-end-api/read-test-history';
-import { ReadSelectedTestSuite } from '../domain/front-end-api/read-selected-test-suite';
-import { ReadTestAlerts } from '../domain/front-end-api/read-test-alerts';
+import { ReadTestHistory } from '../domain/front-end-data-structure/read-test-history';
+import { ReadTestAlerts } from '../domain/front-end-data-structure/read-test-alerts';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
@@ -101,7 +100,6 @@ iocRegister.register({
   testExecutionApiRepo: asClass(TestExecutionRepo),
 
   readTestHistory: asClass(ReadTestHistory),
-  readTestSuiteFrontEnd: asClass(ReadSelectedTestSuite),
   readTestAlerts: asClass(ReadTestAlerts),
 
   dbo: asClass(Dbo).singleton(),

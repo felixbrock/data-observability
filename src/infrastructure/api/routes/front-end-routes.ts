@@ -18,7 +18,7 @@ const readTestHistoryController = new ReadTestHistoryController(
 );
 
 const readSelectedTestSuiteController = new ReadSelectedTestSuiteController(
-    app.resolve('readTestSuiteFrontEnd'),
+    app.resolve('readTestSuite'),
     getAccounts,
     getSnowflakeProfile,
     dbo

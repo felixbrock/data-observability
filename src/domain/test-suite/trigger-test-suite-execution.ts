@@ -8,6 +8,7 @@ import { IDb } from '../services/i-db';
 import { ExecutionType } from '../value-types/execution-type';
 import { QuerySnowflake } from '../snowflake-api/query-snowflake';
 import BaseTriggerTestSuiteExecution from '../services/base-trigger-test-suite-execution';
+import { TestSuite } from '../entities/quant-test-suite';
 
 export interface TriggerTestSuiteExecutionRequestDto {
   id: string;
@@ -82,7 +83,7 @@ export class TriggerTestSuiteExecution
 
       if (!readTestSuiteResult.success)
         throw new Error(readTestSuiteResult.error);
-      if (!readTestSuiteResult.value)
+      if (!readTestSuiteResult.value || !(readTestSuiteResult.value instanceof TestSuite))
         throw new Error('Reading test suite failed');
 
       const testSuite = readTestSuiteResult.value;

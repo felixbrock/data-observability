@@ -60,8 +60,9 @@ export default abstract class BaseSfRepo<
   findBy = async (
     queryDto: QueryDto,
     dbConnection: IDbConnection,
-    callerOrgId: string
-  ): Promise<Entity[]> => {
+    callerOrgId: string,
+    returnEntity: boolean
+  ): Promise<Entity[] | Document[]> => {
     try {
       if (!queryDto || !Object.keys(queryDto).length)
         return await this.all(dbConnection, callerOrgId);
@@ -74,7 +75,7 @@ export default abstract class BaseSfRepo<
 
       if (!result) return [];
 
-      return result.map((el) => this.toEntity(this.buildEntityProps(el)));
+      return returnEntity ? result.map((el) => this.toEntity(this.buildEntityProps(el))) : result;
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);

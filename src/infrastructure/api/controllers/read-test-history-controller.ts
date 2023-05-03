@@ -3,7 +3,7 @@ import {
   ReadTestHistory,
   ReadTestHistoryRequestDto,
   ReadTestHistoryResponseDto
-} from '../../../domain/front-end-api/read-test-history';
+} from '../../../domain/front-end-data-structure/read-test-history';
 
 import {
   BaseController,

@@ -1,11 +1,5 @@
 import { Request, Response } from 'express';
 import {
-  ReadSelectedTestSuite,
-  ReadSelectedTestSuiteRequestDto,
-  ReadSelectedTestSuiteResponseDto,
-} from '../../../domain/front-end-api/read-selected-test-suite';
-
-import {
   BaseController,
   CodeHttp,
   UserAccountInfo,
@@ -14,24 +8,25 @@ import Result from '../../../domain/value-types/transient-types/result';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import Dbo from '../../persistence/db/mongo-db';
+import { ReadTestSuite, ReadTestSuiteRequestDto, ReadTestSuiteResponseDto } from '../../../domain/test-suite/read-test-suite';
 
 export default class ReadSelectedTestSuiteController extends BaseController {
-  readonly #readSelectedTestSuite: ReadSelectedTestSuite;
+  readonly #readTestSuite: ReadTestSuite;
 
   readonly #dbo: Dbo;
 
   constructor(
-    readSelectedTestSuite: ReadSelectedTestSuite,
+    readTestSuite: ReadTestSuite,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile,
     dbo: Dbo
   ) {
     super(getAccounts, getSnowflakeProfile);
-    this.#readSelectedTestSuite = readSelectedTestSuite;
+    this.#readTestSuite = readTestSuite;
     this.#dbo = dbo;
   }
 
-  #buildRequestDto = (httpRequest: Request): ReadSelectedTestSuiteRequestDto => {
+  #buildRequestDto = (httpRequest: Request): ReadTestSuiteRequestDto => {
     const { targetResourceId, activated } = httpRequest.query;
 
     if (targetResourceId === undefined || typeof targetResourceId !== 'string')
@@ -42,7 +37,7 @@ export default class ReadSelectedTestSuiteController extends BaseController {
 
     return {
       targetResourceId,
-      activated
+      activated: JSON.parse(activated)
     };
   };
 
@@ -69,17 +64,14 @@ export default class ReadSelectedTestSuiteController extends BaseController {
       if (!getUserAccountInfoResult.value.callerOrgId)
         throw new ReferenceError('Unauthorized - Caller organization id missing');
 
-      const requestDto: ReadSelectedTestSuiteRequestDto = this.#buildRequestDto(req);
+      const requestDto: ReadTestSuiteRequestDto = this.#buildRequestDto(req);
 
-
-      const useCaseResult: ReadSelectedTestSuiteResponseDto =
-        await this.#readSelectedTestSuite.execute({
+      const useCaseResult: ReadTestSuiteResponseDto =
+        await this.#readTestSuite.execute({
           req: requestDto,
           auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
           dbConnection: this.#dbo.dbConnection
         });
-
-      
 
       if (!useCaseResult.success) {
         return ReadSelectedTestSuiteController.badRequest(res);
