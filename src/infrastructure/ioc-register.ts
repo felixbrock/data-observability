@@ -45,6 +45,7 @@ import { ReadTestHistory } from '../domain/front-end-data-structure/read-test-hi
 import { ReadAlertHistory } from '../domain/front-end-data-structure/read-alert-history';
 import TestHistoryRepo from './persistence/test-history-repo';
 import AlertHistoryRepo from './persistence/alert-history-repo';
+import GenerateChartRepo from './persistence/generate-chart-repo';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
@@ -106,6 +107,7 @@ iocRegister.register({
 
   testHistoryRepo: asClass(TestHistoryRepo),
   alertHistoryRepo: asClass(AlertHistoryRepo),
+  generateChartRepo: asClass(GenerateChartRepo),
 
   dbo: asClass(Dbo).singleton(),
 });

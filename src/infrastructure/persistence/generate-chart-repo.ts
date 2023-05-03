@@ -73,5 +73,5 @@ export default class GenerateChartRepo {
             else if (error) console.trace(error);
             return Promise.reject(new Error(''));
         }
-    }
+    };
 }
