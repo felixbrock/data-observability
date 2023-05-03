@@ -8,9 +8,6 @@ import {
   ColumnDefinition,
 } from './shared/query';
 import { QuerySnowflake } from '../../domain/snowflake-api/query-snowflake';
-import {
-  Bind,
-} from '../../domain/snowflake-api/i-snowflake-api-repo';
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
 import {
@@ -114,7 +111,7 @@ export default class QualTestSuiteRepo
     };
   };
 
-  getBinds = (entity: QualTestSuite): (string | number | boolean)[] => [
+  getValues = (entity: QualTestSuite): (string | number | boolean)[] => [
     entity.id,
     entity.type,
     entity.activated,
@@ -131,48 +128,48 @@ export default class QualTestSuiteRepo
   ];
 
   buildFindByQuery = (queryDto: QualTestSuiteQueryDto): Query => {
-    const binds: (string | number | boolean)[] = [];
+    const values: (string | number | boolean)[] = [];
     const filter: any = {};
     filter.deleted_at = { deleted_at: queryDto.deleted ? { $ne: null } : null};
 
     if (queryDto.activated !== undefined) {
-      binds.push(queryDto.activated);
+      values.push(queryDto.activated);
       filter.activated = queryDto.activated;
     }
     if (queryDto.ids && queryDto.ids.length) {
-      binds.push(...queryDto.ids);
+      values.push(...queryDto.ids);
       filter.id = { $in: queryDto.ids };
     }
     if (queryDto.targetResourceIds && queryDto.targetResourceIds.length) {
-      binds.push(...queryDto.targetResourceIds);
+      values.push(...queryDto.targetResourceIds);
       filter.target_resource_id = { $in: queryDto.targetResourceIds };
     }
 
-    return { binds, filter };
+    return { values: values, filter };
   };
 
   buildUpdateQuery = (id: string, updateDto: QualTestSuiteUpdateDto): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
-    const binds: (Bind | boolean)[] = [id];
+    const values: (string | number | boolean)[] = [id];
 
 		if (updateDto.activated !== undefined) {
 			colDefinitions.push(this.getDefinition('activated'));
-			binds.push(updateDto.activated.toString());
+			values.push(updateDto.activated.toString());
 		}
 		if (updateDto.cron) {
 			colDefinitions.push(this.getDefinition('cron'));
-			binds.push(updateDto.cron);
+			values.push(updateDto.cron);
 		}
 		if (updateDto.executionType) {
 			colDefinitions.push(this.getDefinition('execution_type'));
-			binds.push(updateDto.executionType);
+			values.push(updateDto.executionType);
 		}
 		if (updateDto.lastAlertSent) {
 			colDefinitions.push(this.getDefinition('last_alert_sent'));
-			binds.push(updateDto.lastAlertSent);
+			values.push(updateDto.lastAlertSent);
 		}
 
-		return { binds, colDefinitions };
+		return { values, colDefinitions };
   };
 
   toEntity = (qualtestsuiteProperties: QualTestSuiteProps): QualTestSuite =>

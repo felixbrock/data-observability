@@ -13,7 +13,7 @@ import { IDbConnection } from '../../../domain/services/i-db';
 
 export interface Query {
   text?: string;
-  binds: (Bind | boolean)[];
+  values: (string | number | boolean)[];
   colDefinitions?: ColumnDefinition[];
   filter?: any
 }
@@ -120,7 +120,7 @@ export default abstract class BaseSfRepo<
     }
   };
 
-  protected abstract getBinds(entity: Entity): (string | number | boolean)[];
+  protected abstract getValues(entity: Entity): (string | number | boolean)[];
 
   insertOne = async (
     entity: Entity,
@@ -128,7 +128,7 @@ export default abstract class BaseSfRepo<
     callerOrgId: string
   ): Promise<string> => {
     try {
-			const row = this.getBinds(entity);
+			const row = this.getValues(entity);
 
 			const document: any = {};
 			this.colDefinitions.forEach((column, index) => {
@@ -189,7 +189,7 @@ export default abstract class BaseSfRepo<
     callerOrgId: string
   ): Promise<string[]> => {
     try {
-      const rows = entities.map((entity) => this.getBinds(entity));
+      const rows = entities.map((entity) => this.getValues(entity));
 
 			const documents = rows.map(row => {
 				const document: any = {};
@@ -250,7 +250,7 @@ export default abstract class BaseSfRepo<
 			
 			const document: any = {};
 			query.colDefinitions.forEach((column, index) => {
-				const value = query.binds[index];
+				const value = query.values[index];
 				document[column.name] = column.nullable && value === 'null' ? null : value;
 			});
 
@@ -283,12 +283,12 @@ export default abstract class BaseSfRepo<
     callerOrgId: string
   ): Promise<number> => {
     try {
-      const binds = entities.map((column) => this.getBinds(column));
+      const values = entities.map((column) => this.getValues(column));
 
-      const documents = binds.map((bind) => {
+      const documents = values.map((row) => {
 				const document: any = {};
 				this.colDefinitions.forEach((column, index) => {
-					const value = bind[index];
+					const value = row[index];
 					document[column.name] = column.nullable && value === 'null' ? null : value; 
 				});
 				return document;

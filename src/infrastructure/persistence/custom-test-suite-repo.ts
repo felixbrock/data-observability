@@ -12,9 +12,6 @@ import {
   ColumnDefinition,
 } from './shared/query';
 import { QuerySnowflake } from '../../domain/snowflake-api/query-snowflake';
-import {
-  Bind,
-} from '../../domain/snowflake-api/i-snowflake-api-repo';
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
 import { parseCustomThresholdMode } from '../../domain/value-types/custom-threshold-mode';
@@ -80,7 +77,6 @@ export default class CustomTestSuiteRepo
       last_alert_sent: lastAlertSent,
     } = document;
 
-    // maybe one for string array
     const targetResourceIdsArray = JSON.parse(targetResourceIds);
 
     const deletedAtDate = deletedAt ? new Date(deletedAt) : undefined;
@@ -135,19 +131,19 @@ export default class CustomTestSuiteRepo
   };
 
   buildFindByQuery = (queryDto: CustomTestSuiteQueryDto): Query => {
-    const binds: (string | number | boolean)[] = [];
+    const values: (string | number | boolean)[] = [];
     const filter: any = {};
     filter.deleted_at = queryDto.deleted ? { $ne: null } : null;
 
     if (queryDto.activated !== undefined) {
-      binds.push(queryDto.activated);
+      values.push(queryDto.activated);
       filter.activated = queryDto.activated;
     }
 
-    return { binds, filter };
+    return { values, filter };
   };
 
-  getBinds = (entity: CustomTestSuite): (string | number | boolean)[] => [
+  getValues = (entity: CustomTestSuite): (string | number | boolean)[] => [
     entity.id,
     entity.activated,
     entity.name,
@@ -171,62 +167,62 @@ export default class CustomTestSuiteRepo
     updateDto: CustomTestSuiteUpdateDto
   ): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
-    const binds: (Bind | boolean)[] = [id];
+    const values: (string | number | boolean)[] = [id];
 
     if (updateDto.activated !== undefined) {
       colDefinitions.push(this.getDefinition('activated'));
-      binds.push(updateDto.activated);
+      values.push(updateDto.activated);
     }
     if (updateDto.name) {
       colDefinitions.push(this.getDefinition('name'));
-      binds.push(updateDto.name);
+      values.push(updateDto.name);
     }
     if (updateDto.description) {
       colDefinitions.push(this.getDefinition('description'));
-      binds.push(updateDto.description);
+      values.push(updateDto.description);
     }
     if (updateDto.sqlLogic) {
       colDefinitions.push(this.getDefinition('sql_logic'));
-      binds.push(updateDto.sqlLogic);
+      values.push(updateDto.sqlLogic);
     }
     if (updateDto.targetResourceIds) {
       colDefinitions.push(this.getDefinition('target_resource_ids'));
-      binds.push(JSON.stringify(updateDto.targetResourceIds));
+      values.push(JSON.stringify(updateDto.targetResourceIds));
     }
     if (updateDto.cron) {
       colDefinitions.push(this.getDefinition('cron'));
-      binds.push(updateDto.cron);
+      values.push(updateDto.cron);
     }
     if (updateDto.executionType) {
       colDefinitions.push(this.getDefinition('execution_type'));
-      binds.push(updateDto.executionType);
+      values.push(updateDto.executionType);
     }
     if (updateDto.customLowerThreshold) {
       colDefinitions.push(this.getDefinition('custom_lower_threshold'));
-      binds.push(updateDto.customLowerThreshold.value);
+      values.push(updateDto.customLowerThreshold.value);
       colDefinitions.push(this.getDefinition('custom_lower_threshold_mode'));
-      binds.push(updateDto.customLowerThreshold.mode);
+      values.push(updateDto.customLowerThreshold.mode);
     }
     if (updateDto.customUpperThreshold) {
       colDefinitions.push(this.getDefinition('custom_upper_threshold'));
-      binds.push(updateDto.customUpperThreshold.value);
+      values.push(updateDto.customUpperThreshold.value);
       colDefinitions.push(this.getDefinition('custom_upper_threshold_mode'));
-      binds.push(updateDto.customUpperThreshold.mode);
+      values.push(updateDto.customUpperThreshold.mode);
     }
     if (updateDto.feedbackLowerThreshold) {
       colDefinitions.push(this.getDefinition('feedback_lower_threshold'));
-      binds.push(updateDto.feedbackLowerThreshold);
+      values.push(updateDto.feedbackLowerThreshold);
     }
     if (updateDto.feedbackUpperThreshold) {
       colDefinitions.push(this.getDefinition('feedback_upper_threshold'));
-      binds.push(updateDto.feedbackUpperThreshold);
+      values.push(updateDto.feedbackUpperThreshold);
     }
     if (updateDto.lastAlertSent) {
       colDefinitions.push(this.getDefinition('last_alert_sent'));
-      binds.push(updateDto.lastAlertSent);
+      values.push(updateDto.lastAlertSent);
     }
 
-    return { binds, colDefinitions };
+    return { values, colDefinitions };
   };
 
   toEntity = (
