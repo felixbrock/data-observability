@@ -9,7 +9,7 @@ import {
 } from './shared/query';
 import { QuerySnowflake } from '../../domain/snowflake-api/query-snowflake';
 import {
-  Binds,
+  Bind,
 } from '../../domain/snowflake-api/i-snowflake-api-repo';
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
@@ -117,10 +117,10 @@ export default class QualTestSuiteRepo
     };
   };
 
-  getBinds = (entity: QualTestSuite): (string | number)[] => [
+  getBinds = (entity: QualTestSuite): (string | number | boolean)[] => [
     entity.id,
     entity.type,
-    entity.activated.toString(),
+    entity.activated,
     entity.target.databaseName,
     entity.target.schemaName,
     entity.target.materializationName,
@@ -134,12 +134,12 @@ export default class QualTestSuiteRepo
   ];
 
   buildFindByQuery = (queryDto: QualTestSuiteQueryDto): Query => {
-    const binds: (string | number)[] = [];
+    const binds: (string | number | boolean)[] = [];
     const filter: any = {};
     filter.deleted_at = { deleted_at: queryDto.deleted ? { $ne: null } : null};
 
     if (queryDto.activated !== undefined) {
-      binds.push(queryDto.activated.toString());
+      binds.push(queryDto.activated);
       filter.activated = queryDto.activated;
     }
     if (queryDto.ids && queryDto.ids.length) {
@@ -156,7 +156,7 @@ export default class QualTestSuiteRepo
 
   buildUpdateQuery = (id: string, updateDto: QualTestSuiteUpdateDto): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
-    const binds: Binds = [id];
+    const binds: (Bind | boolean)[] = [id];
 
 		if (updateDto.activated !== undefined) {
 			colDefinitions.push(this.getDefinition('activated'));

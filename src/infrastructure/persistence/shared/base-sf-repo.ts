@@ -13,7 +13,7 @@ import { IDbConnection } from '../../../domain/services/i-db';
 
 export interface Query {
   text?: string;
-  binds: Bind[];
+  binds: (Bind | boolean)[];
   colDefinitions?: ColumnDefinition[];
   filter?: any
 }
@@ -119,7 +119,7 @@ export default abstract class BaseSfRepo<
     }
   };
 
-  protected abstract getBinds(entity: Entity): (string | number)[];
+  protected abstract getBinds(entity: Entity): (string | number | boolean)[];
 
   insertOne = async (
     entity: Entity,
