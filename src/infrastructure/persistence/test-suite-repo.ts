@@ -88,20 +88,10 @@ export default class TestSuiteRepo
       last_alert_sent: lastAlertSent,
     } = document;
 
-    let columnNameValue = columnName;
-    if (!columnName) columnNameValue = null;
 
-    const activatedValue = JSON.parse(activated);
-
-    const customLowerThresholdNum = customLowerThreshold ? Number(customLowerThreshold) : null;
-
-    const customUpperThresholdNum = customUpperThreshold ? Number(customUpperThreshold) : null;
 
     const deletedAtDate = deletedAt ? new Date(deletedAt) : undefined;
 
-    const feedbackLowerThresholdNum = feedbackLowerThreshold ? Number(feedbackLowerThreshold) : null;
-
-    const feedbackUpperThresholdNum = feedbackUpperThreshold ? Number(feedbackUpperThreshold) : null;
 
     const lastAlertSentDate = lastAlertSent ? new Date(lastAlertSent) : undefined;
 
@@ -111,23 +101,23 @@ export default class TestSuiteRepo
     if (
       typeof id !== 'string' ||
       typeof type !== 'string' ||
-      typeof activatedValue !== 'boolean' ||
+      typeof activated !== 'boolean' ||
       typeof databaseName !== 'string' ||
       typeof schemaName !== 'string' ||
       typeof materializationName !== 'string' ||
       typeof materializationType !== 'string' ||
-      !TestSuiteRepo.isOptionalOfType<string>(columnNameValue, 'string') ||
+      !TestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
       !isOptionalDateField(deletedAtDate) ||
-      !TestSuiteRepo.isOptionalOfType<number>(customUpperThresholdNum, 'number') ||
-      !TestSuiteRepo.isOptionalOfType<number>(customLowerThresholdNum, 'number') ||
+      !TestSuiteRepo.isOptionalOfType<number>(customUpperThreshold, 'number') ||
+      !TestSuiteRepo.isOptionalOfType<number>(customLowerThreshold, 'number') ||
       !TestSuiteRepo.isOptionalOfType<number>(
-        feedbackUpperThresholdNum,
+        feedbackUpperThreshold,
         'number'
       ) ||
-      !TestSuiteRepo.isOptionalOfType<number>(feedbackLowerThresholdNum, 'number') ||
+      !TestSuiteRepo.isOptionalOfType<number>(feedbackLowerThreshold, 'number') ||
       !isOptionalDateField(lastAlertSentDate)
     )
       throw new Error(
@@ -136,29 +126,29 @@ export default class TestSuiteRepo
 
     return {
       id,
-      activated: activatedValue,
+      activated,
       target: {
         databaseName,
         materializationName,
         materializationType: parseMaterializationType(materializationType),
         schemaName,
         targetResourceId,
-        columnName: columnNameValue,
+        columnName,
       },
       type: parseTestType(type),
       cron,
       executionType: parseExecutionType(executionType),
       deletedAt: deletedAtDate? deletedAtDate.toISOString(): undefined,
-      customLowerThreshold: customLowerThresholdNum,
+      customLowerThreshold,
       customLowerThresholdMode: parseCustomThresholdMode(
         customLowerThresholdMode
       ),
-      customUpperThreshold: customUpperThresholdNum,
+      customUpperThreshold,
       customUpperThresholdMode: parseCustomThresholdMode(
         customUpperThresholdMode
       ),
-      feedbackLowerThreshold: feedbackLowerThresholdNum,
-      feedbackUpperThreshold: feedbackUpperThresholdNum,
+      feedbackLowerThreshold,
+      feedbackUpperThreshold,
       lastAlertSent: lastAlertSentDate? lastAlertSentDate.toISOString() : undefined,
     };
   };

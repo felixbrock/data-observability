@@ -80,9 +80,6 @@ export default class CustomTestSuiteRepo
       last_alert_sent: lastAlertSent,
     } = document;
 
-    let descriptionValue = description;
-    if (!description) descriptionValue = null;
-
     // maybe one for string array
     const targetResourceIdsArray = JSON.parse(targetResourceIds);
 
@@ -97,7 +94,7 @@ export default class CustomTestSuiteRepo
       typeof id !== 'string' ||
       typeof activated !== 'boolean' ||
       typeof name !== 'string' ||
-      !CustomTestSuiteRepo.isOptionalOfType<string>(descriptionValue, 'string') ||
+      !CustomTestSuiteRepo.isOptionalOfType<string>(description, 'string') ||
       typeof sqlLogic !== 'string' ||
       !CustomTestSuiteRepo.isStringArray(targetResourceIdsArray) ||
       typeof cron !== 'string' ||
@@ -117,7 +114,7 @@ export default class CustomTestSuiteRepo
       id,
       activated,
       name,
-      description: descriptionValue,
+      description,
       sqlLogic,
       targetResourceIds: targetResourceIdsArray,
       cron,

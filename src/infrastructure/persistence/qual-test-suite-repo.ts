@@ -69,9 +69,6 @@ export default class QualTestSuiteRepo
       last_alert_sent: lastAlertSent,
     } = document;
 
-    let columnNameValue = columnName;
-    if (!columnName) columnNameValue = null;
-    
     const deletedAtDate = deletedAt ? new Date(deletedAt) : undefined;
 
     const lastAlertSentDate = lastAlertSent ? new Date(lastAlertSent) : undefined;
@@ -87,7 +84,7 @@ export default class QualTestSuiteRepo
       typeof schemaName !== 'string' ||
       typeof materializationName !== 'string' ||
       typeof materializationType !== 'string' ||
-      !QualTestSuiteRepo.isOptionalOfType<string>(columnNameValue, 'string') ||
+      !QualTestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
@@ -107,7 +104,7 @@ export default class QualTestSuiteRepo
         materializationType: parseMaterializationType(materializationType),
         schemaName,
         targetResourceId,
-        columnName: columnNameValue,
+        columnName,
       },
       type: parseQualTestType(type),
       cron,
