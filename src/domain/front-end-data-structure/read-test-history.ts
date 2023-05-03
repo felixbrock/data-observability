@@ -2,9 +2,10 @@ import { Document } from 'mongodb';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { IDbConnection } from '../services/i-db';
+import TestHistoryRepo from '../../infrastructure/persistence/test-history-repo';
 
 export interface ReadTestHistoryRequestDto {
-    ids: string
+  testSuiteIds: string[]
 }
 
 export type ReadTestHistoryAuthDto = {
@@ -23,6 +24,14 @@ export class ReadTestHistory
     >
 {
 
+  readonly #repo: TestHistoryRepo;
+
+  constructor(
+    testHistoryRepo: TestHistoryRepo
+  ) {
+    this.#repo = testHistoryRepo;
+  }
+
   async execute(props: {
     req: ReadTestHistoryRequestDto;
     auth: ReadTestHistoryAuthDto;
@@ -31,68 +40,10 @@ export class ReadTestHistory
     const { req, auth, dbConnection } = props;
 
     try {
-      const testSuiteIds = req.ids;
-      const pipeline = [
-        {
-          $lookup: {
-            from: `test_executions_${auth.callerOrgId}`,
-            localField: 'execution_id',
-            foreignField: 'id',
-            as: 'test_executions',
-          },
-        },
-        {
-          $unwind: {
-            path: '$test_executions',
-            preserveNullAndEmptyArrays: false
-          },
-        },
-        {
-          $lookup: {
-            from: `test_results_${auth.callerOrgId}`,
-            localField: 'execution_id',
-            foreignField: 'execution_id',
-            as: 'test_results'
-          },
-        },
-        {
-          $unwind: {
-            path: '$test_results',
-            preserveNullAndEmptyArrays: true
-          }
-        },
-        {
-          $match: {
-            test_suite_id: { $in: testSuiteIds }
-          },
-        },
-        {
-          $replaceRoot: {
-            newRoot: {
-              $mergeObjects: ['$test_results', '$$ROOT']
-            }
-          }
-        },
-        {
-          $replaceRoot: {
-            newRoot: {
-              $mergeObjects: ['$test_executions', '$$ROOT']
-            }
-          }
-        },
-        {
-          $sort: { executed_on: -1 },
-        },
-        {
-          $limit: 200,
-        },
-      ];
 
-      const testHistoryResults = await dbConnection
-      .collection(`test_history_${auth.callerOrgId}`)
-      .aggregate(pipeline).toArray();
+      const results = await this.#repo.readTestHistory(req.testSuiteIds, dbConnection, auth.callerOrgId);
 
-      return Result.ok(testHistoryResults);
+      return Result.ok(results);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);

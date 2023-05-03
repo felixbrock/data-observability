@@ -2,7 +2,7 @@ import { Router } from 'express';
 import app from '../../ioc-register';
 import ReadTestHistoryController from '../controllers/read-test-history-controller';
 import ReadSelectedTestSuiteController from '../controllers/read-selected-test-suite-controller';
-import ReadTestAlertsController from '../controllers/read-test-alerts-controller';
+import ReadAlertHistoryController from '../controllers/read-alert-history-controller';
 
 const frontEndRoutes = Router();
 
@@ -24,8 +24,8 @@ const readSelectedTestSuiteController = new ReadSelectedTestSuiteController(
     dbo
 );
 
-const readTestAlertsController = new ReadTestAlertsController(
-    app.resolve('readTestAlerts'),
+const readTestAlertsController = new ReadAlertHistoryController(
+    app.resolve('readAlertHistory'),
     getAccounts,
     getSnowflakeProfile,
     dbo
