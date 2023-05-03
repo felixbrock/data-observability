@@ -44,12 +44,16 @@ import { DeleteTestSuiteDuplicates } from '../domain/test-suite/delete-test-suit
 import { ReadTestHistory } from '../domain/front-end-api/read-test-history';
 import { ReadSelectedTestSuite } from '../domain/front-end-api/read-selected-test-suite';
 import { ReadTestAlerts } from '../domain/front-end-api/read-test-alerts';
+import { HandleCustomTestExecutionResult } from '../domain/test-execution-api/handle-custom-test-execution-result';
+import { SendCustomTestSlackAlert } from '../domain/integration-api/slack/send-custom-test-alert';
+import { CreateCustomTestResult } from '../domain/custom-test-result/create-custom-test-result';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
 iocRegister.register({
   createQuantTestResult: asClass(CreateQuantTestResult),
   createQualTestResult: asClass(CreateQualTestResult),
+  createCustomTestResult: asClass(CreateCustomTestResult),
 
   createTestSuites: asClass(CreateTestSuites),
   createCustomTestSuite: asClass(CreateCustomTestSuite),
@@ -78,6 +82,7 @@ iocRegister.register({
 
   handleQuantTestExecutionResult: asClass(HandleQuantTestExecutionResult),
   handleQualTestExecutionResult: asClass(HandleQualTestExecutionResult),
+  handleCustomTestExecutionResult: asClass(HandleCustomTestExecutionResult),
 
   postAnomalyFeedback: asClass(PostAnomalyFeedback),
   executeTest: asClass(ExecuteTest),
@@ -87,6 +92,7 @@ iocRegister.register({
   getSnowflakeProfile: asClass(GetSnowflakeProfile),
   sendQuantTestSlackAlert: asClass(SendQuantTestSlackAlert),
   sendQualTestSlackAlert: asClass(SendQualTestSlackAlert),
+  sendCustomTestSlackAlert: asClass(SendCustomTestSlackAlert),
   generateChart: asClass(GenerateChart),
 
   quantTestResultRepo: asClass(QuantTestResultRepo),

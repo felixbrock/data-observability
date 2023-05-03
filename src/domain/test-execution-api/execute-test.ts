@@ -9,6 +9,8 @@ import { CustomTestType } from '../entities/custom-test-suite';
 import { QuantTestExecutionResultDto } from './quant-test-execution-result-dto';
 import { HandleQuantTestExecutionResult } from './handle-quant-test-execution-result';
 import { HandleQualTestExecutionResult } from './handle-qual-test-execution-result';
+import { HandleCustomTestExecutionResult } from './handle-custom-test-execution-result';
+import { CustomTestExecutionResultDto } from './custom-test-execution-result-dto';
 
 export interface ExecuteTestRequestDto {
   testSuiteId: string;
@@ -38,16 +40,20 @@ export class ExecuteTest
 
   readonly #handleQualTestExecutionResult: HandleQualTestExecutionResult;
 
+  readonly #handleCustomTestExecutionResult: HandleCustomTestExecutionResult;
+
   readonly #testExecutionApiRepo: ITestExecutionApiRepo;
 
   constructor(
     testExecutionApiRepo: ITestExecutionApiRepo,
     handleQuantTestExecutionResult: HandleQuantTestExecutionResult,
-    handleQualTestExecutionResult: HandleQualTestExecutionResult
+    handleQualTestExecutionResult: HandleQualTestExecutionResult,
+    handleCustomTestExecutionResult: HandleCustomTestExecutionResult,
   ) {
     this.#testExecutionApiRepo = testExecutionApiRepo;
     this.#handleQuantTestExecutionResult = handleQuantTestExecutionResult;
     this.#handleQualTestExecutionResult = handleQualTestExecutionResult;
+    this.#handleCustomTestExecutionResult = handleCustomTestExecutionResult;
   }
 
   async execute(props: {
@@ -72,6 +78,11 @@ export class ExecuteTest
 
       console.warn(testExecutionResult);
 
+      const instanceOfCustomTestExecutionResultDto = (
+        obj: unknown
+      ): obj is CustomTestExecutionResultDto =>
+        !!obj && typeof obj === 'object' && 'name' in obj;
+
       const instanceOfQuantTestExecutionResultDto = (
         obj: unknown
       ): obj is QuantTestExecutionResultDto =>
@@ -90,7 +101,21 @@ export class ExecuteTest
         }
       }
 
-      if (instanceOfQuantTestExecutionResultDto(testExecutionResult)) {
+      if (instanceOfCustomTestExecutionResultDto(testExecutionResult)) {
+        if (
+          testExecutionResult.testData &&
+          testExecutionResult.testData.anomaly &&
+          !ignoreAlert &&
+          !testExecutionResult.alertData
+        )
+          throw new Error('Custom test result obj structural mismatch');
+        
+        await this.#handleCustomTestExecutionResult.execute({
+          req: testExecutionResult,
+          auth,
+          dbConnection: db.mongoConn,
+        });
+      } else if (instanceOfQuantTestExecutionResultDto(testExecutionResult)) {
         if (
           testExecutionResult.testData &&
           testExecutionResult.testData.anomaly &&
