@@ -9,10 +9,7 @@ import { ReadTestSuite } from '../domain/test-suite/read-test-suite';
 import { UpdateTestSuites } from '../domain/test-suite/update-test-suites';
 import TestExecutionRepo from './persistence/test-execution-api-repo';
 import IntegrationApiRepo from './persistence/integration-api-repo';
-import { CreateQuantTestResult } from '../domain/quant-test-result/create-quant-test-result';
-import { CreateQualTestResult } from '../domain/qual-test-result/create-qual-test-result';
 import { ExecuteTest } from '../domain/test-execution-api/execute-test';
-import QuantTestResultRepo from './persistence/quant-test-result-repo';
 import { SendQuantTestSlackAlert } from '../domain/integration-api/slack/send-quant-test-alert';
 import { SendQualTestSlackAlert } from '../domain/integration-api/slack/send-qual-test-alert';
 import { PostAnomalyFeedback } from '../domain/snowflake-api/post-anomaly-feedback';
@@ -21,7 +18,6 @@ import { ReadCustomTestSuite } from '../domain/custom-test-suite/read-custom-tes
 import { ReadCustomTestSuites } from '../domain/custom-test-suite/read-custom-test-suites';
 import { UpdateCustomTestSuite } from '../domain/custom-test-suite/update-custom-test-suite';
 import { TriggerCustomTestSuiteExecution } from '../domain/custom-test-suite/trigger-custom-test-suite-execution';
-import QualTestResultRepo from './persistence/schema-change-test-result-repo';
 import { CreateQualTestSuites } from '../domain/qual-test-suite/create-qual-test-suites';
 import { ReadQualTestSuite } from '../domain/qual-test-suite/read-qual-test-suite';
 import { ReadQualTestSuites } from '../domain/qual-test-suite/read-qual-test-suites';
@@ -50,8 +46,6 @@ import GenerateChartRepo from './persistence/generate-chart-repo';
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
 iocRegister.register({
-  createQuantTestResult: asClass(CreateQuantTestResult),
-  createQualTestResult: asClass(CreateQualTestResult),
 
   createTestSuites: asClass(CreateTestSuites),
   createCustomTestSuite: asClass(CreateCustomTestSuite),
@@ -91,8 +85,6 @@ iocRegister.register({
   sendQualTestSlackAlert: asClass(SendQualTestSlackAlert),
   generateChart: asClass(GenerateChart),
 
-  quantTestResultRepo: asClass(QuantTestResultRepo),
-  qualTestResultRepo: asClass(QualTestResultRepo),
   customTestSuiteRepo: asClass(CustomTestSuiteRepo),
   qualTestSuiteRepo: asClass(QualTestSuiteRepo),
   testSuiteRepo: asClass(TestSuiteRepo),

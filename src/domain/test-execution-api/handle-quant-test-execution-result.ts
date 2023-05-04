@@ -5,7 +5,6 @@ import { IDbConnection } from '../services/i-db';
 import { QuantTestAlertDto } from '../integration-api/slack/quant-test-alert-dto';
 import { SendQuantTestSlackAlert } from '../integration-api/slack/send-quant-test-alert';
 import { QuantTestExecutionResultDto } from './quant-test-execution-result-dto';
-import { CreateQuantTestResult } from '../quant-test-result/create-quant-test-result';
 import { GenerateChart } from '../integration-api/slack/chart/generate-chart';
 import { TestType } from '../entities/quant-test-suite';
 import { ThresholdType } from '../snowflake-api/post-anomaly-feedback';
@@ -31,19 +30,15 @@ export class HandleQuantTestExecutionResult
 {
   readonly #sendQuantTestSlackAlert: SendQuantTestSlackAlert;
 
-  readonly #createQuantTestResult: CreateQuantTestResult;
-
   readonly #generateChart: GenerateChart;
 
   #dbConnection?: IDbConnection;
 
   constructor(
     sendQuantTestSlackAlert: SendQuantTestSlackAlert,
-    createQuantTestResult: CreateQuantTestResult,
     generateChart: GenerateChart
   ) {
     this.#sendQuantTestSlackAlert = sendQuantTestSlackAlert;
-    this.#createQuantTestResult = createQuantTestResult;
     this.#generateChart = generateChart;
   }
 
@@ -202,34 +197,34 @@ export class HandleQuantTestExecutionResult
       );
   };
 
-  #createTestResult = async (
-    testExecutionResult: QuantTestExecutionResultDto,
-    dbConn: IDbConnection
-  ): Promise<void> => {
-    const { testData } = testExecutionResult;
+  // #createTestResult = async (
+  //   testExecutionResult: QuantTestExecutionResultDto,
+  //   dbConn: IDbConnection
+  // ): Promise<void> => {
+  //   const { testData } = testExecutionResult;
 
-    if (!testData && !testExecutionResult.isWarmup)
-      throw new Error('Test result data misalignment');
+  //   if (!testData && !testExecutionResult.isWarmup)
+  //     throw new Error('Test result data misalignment');
 
-    const createQuantTestResultResult =
-      await this.#createQuantTestResult.execute({
-        req: {
-          isWarmup: testExecutionResult.isWarmup,
-          executionId: testExecutionResult.executionId,
-          testData,
-          alertData: testExecutionResult.alertData
-            ? { alertId: testExecutionResult.alertData.alertId }
-            : undefined,
-          testSuiteId: testExecutionResult.testSuiteId,
-          targetResourceId: testExecutionResult.targetResourceId,
-          targetOrgId: testExecutionResult.organizationId,
-        },
-        dbConnection: dbConn,
-      });
+  //   const createQuantTestResultResult =
+  //     await this.#createQuantTestResult.execute({
+  //       req: {
+  //         isWarmup: testExecutionResult.isWarmup,
+  //         executionId: testExecutionResult.executionId,
+  //         testData,
+  //         alertData: testExecutionResult.alertData
+  //           ? { alertId: testExecutionResult.alertData.alertId }
+  //           : undefined,
+  //         testSuiteId: testExecutionResult.testSuiteId,
+  //         targetResourceId: testExecutionResult.targetResourceId,
+  //         targetOrgId: testExecutionResult.organizationId,
+  //       },
+  //       dbConnection: dbConn,
+  //     });
 
-    if (!createQuantTestResultResult.success)
-      throw new Error(createQuantTestResultResult.error);
-  };
+  //   if (!createQuantTestResultResult.success)
+  //     throw new Error(createQuantTestResultResult.error);
+  // };
 
   async execute(props: {
     req: HandleQuantTestExecutionResultRequestDto;
@@ -241,7 +236,7 @@ export class HandleQuantTestExecutionResult
     try {
       this.#dbConnection = dbConnection;
 
-      await this.#createTestResult(req, dbConnection);
+      // await this.#createTestResult(req, dbConnection);
 
       if (!req.testData || (!req.testData.anomaly && !req.alertData) || 
         (req.testData.anomaly && req.lastAlertSent && !req.alertData))

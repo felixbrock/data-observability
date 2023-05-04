@@ -145,7 +145,7 @@ export default class QualTestSuiteRepo
       filter.target_resource_id = { $in: queryDto.targetResourceIds };
     }
 
-    return { values: values, filter };
+    return { values, filter };
   };
 
   buildUpdateQuery = (id: string, updateDto: QualTestSuiteUpdateDto): Query => {

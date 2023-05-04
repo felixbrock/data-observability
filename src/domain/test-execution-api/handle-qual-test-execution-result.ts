@@ -5,7 +5,6 @@ import { IDbConnection } from '../services/i-db';
 import { QualTestAlertDto } from '../integration-api/slack/qual-test-alert-dto';
 import { SendQualTestSlackAlert } from '../integration-api/slack/send-qual-test-alert';
 import { QualTestExecutionResultDto } from './qual-test-execution-result-dto';
-import { CreateQualTestResult } from '../qual-test-result/create-qual-test-result';
 import { QualTestType } from '../entities/qual-test-suite';
 
 export type HandleQualTestExecutionResultRequestDto =
@@ -29,16 +28,12 @@ export class HandleQualTestExecutionResult
 {
   readonly #sendQualTestSlackAlert: SendQualTestSlackAlert;
 
-  readonly #createQualTestResult: CreateQualTestResult;
-
   #dbConnection?: IDbConnection;
 
   constructor(
     sendQualTestSlackAlert: SendQualTestSlackAlert,
-    createQualTestResult: CreateQualTestResult
   ) {
     this.#sendQualTestSlackAlert = sendQualTestSlackAlert;
-    this.#createQualTestResult = createQualTestResult;
   }
 
   #explain = (
@@ -93,32 +88,32 @@ export class HandleQualTestExecutionResult
       );
   };
 
-  #createTestResult = async (
-    testExecutionResult: QualTestExecutionResultDto
-  ): Promise<void> => {
-    if (!this.#dbConnection)
-      throw new Error('Missing db connection');
+  // #createTestResult = async (
+  //   testExecutionResult: QualTestExecutionResultDto
+  // ): Promise<void> => {
+  //   if (!this.#dbConnection)
+  //     throw new Error('Missing db connection');
 
-    const createQualTestResultResult = await this.#createQualTestResult.execute(
-      {
-        req: {
-          executionId: testExecutionResult.executionId,
-          testData: testExecutionResult.testData,
-          alertData: testExecutionResult.alertData
-            ? { alertId: testExecutionResult.alertData.alertId }
-            : undefined,
-          testSuiteId: testExecutionResult.testSuiteId,
-          testType: testExecutionResult.testType,
-          targetResourceId: testExecutionResult.targetResourceId,
-          targetOrgId: testExecutionResult.organizationId,
-        },
-        dbConnection: this.#dbConnection,
-      }
-    );
+  //   const createQualTestResultResult = await this.#createQualTestResult.execute(
+  //     {
+  //       req: {
+  //         executionId: testExecutionResult.executionId,
+  //         testData: testExecutionResult.testData,
+  //         alertData: testExecutionResult.alertData
+  //           ? { alertId: testExecutionResult.alertData.alertId }
+  //           : undefined,
+  //         testSuiteId: testExecutionResult.testSuiteId,
+  //         testType: testExecutionResult.testType,
+  //         targetResourceId: testExecutionResult.targetResourceId,
+  //         targetOrgId: testExecutionResult.organizationId,
+  //       },
+  //       dbConnection: this.#dbConnection,
+  //     }
+  //   );
 
-    if (!createQualTestResultResult.success)
-      throw new Error(createQualTestResultResult.error);
-  };
+  //   if (!createQualTestResultResult.success)
+  //     throw new Error(createQualTestResultResult.error);
+  // };
 
   async execute(props: {
     req: HandleQualTestExecutionResultRequestDto;
@@ -130,7 +125,7 @@ export class HandleQualTestExecutionResult
     try {
       this.#dbConnection = dbConnection;
 
-      await this.#createTestResult(req);
+      // await this.#createTestResult(req);
 
       if (!req.testData || (req.testData.isIdentical && !req.alertData) ||
         (!req.testData.isIdentical && req.lastAlertSent && !req.alertData))

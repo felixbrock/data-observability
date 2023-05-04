@@ -2,8 +2,7 @@ import { Blob } from 'node:buffer';
 import { Document } from 'mongodb';
 import { IServiceRepo } from '../../../domain/services/i-service-repo';
 import {
-  Bind,
-  Binds,
+  Binds
 } from '../../../domain/snowflake-api/i-snowflake-api-repo';
 import { QuerySnowflake } from '../../../domain/snowflake-api/query-snowflake';
 import {
@@ -283,9 +282,9 @@ export default abstract class BaseSfRepo<
     callerOrgId: string
   ): Promise<number> => {
     try {
-      const values = entities.map((column) => this.getValues(column));
+      const rows = entities.map((column) => this.getValues(column));
 
-      const documents = values.map((row) => {
+      const documents = rows.map((row) => {
 				const document: any = {};
 				this.colDefinitions.forEach((column, index) => {
 					const value = row[index];
