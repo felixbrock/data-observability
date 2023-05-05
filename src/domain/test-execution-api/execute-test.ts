@@ -24,7 +24,7 @@ export interface ExecuteTestAuthDto {
 }
 
 export type ExecuteTestResponseDto = Result<
-  QuantTestExecutionResultDto | QualTestExecutionResultDto
+  QuantTestExecutionResultDto | QualTestExecutionResultDto | CustomTestExecutionResultDto
 >;
 
 export class ExecuteTest
@@ -65,7 +65,7 @@ export class ExecuteTest
 
     try {
       // const testExecutionResult = JSON.parse(
-      //   '{"testSuiteId": "390fc511-e8a5-435e-a3e7-f000243ad976", "testType": "MaterializationSchemaChange", "executionId": "ed50a53f-992d-427a-9dc3-de5599e406a7", "organizationId": "631789bf27518f97cf1c82b7", "targetResourceId": "05fe3cc4-457e-4eff-aa92-774cce02998a", "testData": {"executedOn": "2023-05-05T10:50:47.050776", "deviations": [], "isIdentical": true}, "alertData": null, "lastAlertSent": null}'
+      //   '{"testSuiteId": "someCustomTestSuiteId", "testType": "Custom", "executionId": "da93c863-9c04-4dd6-b743-243716dae7af", "organizationId": "631789bf27518f97cf1c82b7", "name": "CustomColumnDistribution", "targetResourceIds": ["randomTRId"], "isWarmup": false, "testData": {"executedOn": "2023-05-05T13:51:08.733361", "detectedValue": 567, "expectedUpperBound": 500.7, "expectedLowerBound": 400.4, "modifiedZScore": null, "deviation": 0.0, "anomaly": {"importance": 0.6610169491525424}}, "alertData": {"alertId": "d490fa81-ecb6-479a-a4f2-781d90cb20e4", "message": "<__base_url__?metric=MEDIAN>", "expectedValue": 567.0}, "lastAlertSent": null}'
       // );
 
       const testExecutionResult = await this.#testExecutionApiRepo.executeTest(
