@@ -77,8 +77,6 @@ export default class CustomTestSuiteRepo
       last_alert_sent: lastAlertSent,
     } = document;
 
-    const targetResourceIdsArray = JSON.parse(targetResourceIds);
-
     const deletedAtDate = deletedAt ? new Date(deletedAt) : undefined;
 
     const lastAlertSentDate = lastAlertSent ? new Date(lastAlertSent) : undefined;
@@ -92,15 +90,17 @@ export default class CustomTestSuiteRepo
       typeof name !== 'string' ||
       !CustomTestSuiteRepo.isOptionalOfType<string>(description, 'string') ||
       typeof sqlLogic !== 'string' ||
-      !CustomTestSuiteRepo.isStringArray(targetResourceIdsArray) ||
+      !CustomTestSuiteRepo.isStringArray(targetResourceIds) ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
       !isOptionalDateField(deletedAtDate) ||
-      typeof customUpperThreshold !== 'number' ||
-      typeof customLowerThreshold !== 'number' ||
-      typeof feedbackUpperThreshold !== 'number' ||
-      typeof feedbackLowerThreshold !== 'number' ||
-      !isOptionalDateField(lastAlertSent)
+      !CustomTestSuiteRepo.isOptionalOfType<number>(customUpperThreshold, 'number') ||
+      !CustomTestSuiteRepo.isOptionalOfType<number>(customLowerThreshold, 'number') ||
+      typeof customUpperThresholdMode !== 'string' ||
+      typeof customLowerThresholdMode !== 'string' ||
+      !CustomTestSuiteRepo.isOptionalOfType<number>(feedbackUpperThreshold, 'number') ||
+      !CustomTestSuiteRepo.isOptionalOfType<number>(feedbackLowerThreshold, 'number') ||
+      !isOptionalDateField(lastAlertSentDate)
     )
       throw new Error(
         'Retrieved unexpected custom test suite field types from persistence'
@@ -112,7 +112,7 @@ export default class CustomTestSuiteRepo
       name,
       description,
       sqlLogic,
-      targetResourceIds: targetResourceIdsArray,
+      targetResourceIds,
       cron,
       executionType: parseExecutionType(executionType),
       deletedAt: deletedAtDate ? deletedAtDate.toISOString() : undefined,

@@ -3,7 +3,6 @@ import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { IDbConnection } from '../services/i-db';
 import { CustomTestExecutionResultDto } from './custom-test-execution-result-dto';
-import { CreateCustomTestResult } from '../custom-test-result/create-custom-test-result';
 import { GenerateChart } from '../integration-api/slack/chart/generate-chart';
 import { ThresholdType } from '../snowflake-api/post-anomaly-feedback';
 import { CustomTestAlertDto } from '../integration-api/slack/custom-test-alert-dto';
@@ -30,19 +29,15 @@ export class HandleCustomTestExecutionResult
 {
   readonly #sendCustomTestSlackAlert: SendCustomTestSlackAlert;
 
-  readonly #createCustomTestResult: CreateCustomTestResult;
-
   readonly #generateChart: GenerateChart;
 
   #dbConnection?: IDbConnection;
 
   constructor(
     sendCustomTestSlackAlert: SendCustomTestSlackAlert,
-    createCustomTestResult: CreateCustomTestResult,
     generateChart: GenerateChart
   ) {
     this.#sendCustomTestSlackAlert = sendCustomTestSlackAlert;
-    this.#createCustomTestResult = createCustomTestResult;
     this.#generateChart = generateChart;
   }
 
@@ -145,34 +140,6 @@ export class HandleCustomTestExecutionResult
       );
   };
 
-  #createTestResult = async (
-    testExecutionResult: CustomTestExecutionResultDto,
-    dbConn: IDbConnection
-  ): Promise<void> => {
-    const { testData } = testExecutionResult;
-
-    if (!testData && !testExecutionResult.isWarmup)
-      throw new Error('Test result data misalignment');
-
-    const createQuantTestResultResult =
-      await this.#createCustomTestResult.execute({
-        req: {
-          isWarmup: testExecutionResult.isWarmup,
-          executionId: testExecutionResult.executionId,
-          testData,
-          alertData: testExecutionResult.alertData
-            ? { alertId: testExecutionResult.alertData.alertId }
-            : undefined,
-          testSuiteId: testExecutionResult.testSuiteId,
-          targetOrgId: testExecutionResult.organizationId,
-        },
-        dbConnection: dbConn,
-      });
-
-    if (!createQuantTestResultResult.success)
-      throw new Error(createQuantTestResultResult.error);
-  };
-
   async execute(props: {
     req: HandleCustomTestExecutionResultRequestDto;
     auth: HandleCustomTestExecutionResultAuthDto;
@@ -182,8 +149,6 @@ export class HandleCustomTestExecutionResult
 
     try {
       this.#dbConnection = dbConnection;
-
-      await this.#createTestResult(req, dbConnection);
 
       if (!req.testData || (!req.testData.anomaly && !req.alertData) || 
         (req.testData.anomaly && req.lastAlertSent && !req.alertData))

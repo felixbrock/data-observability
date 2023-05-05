@@ -1,5 +1,5 @@
 import Result from '../value-types/transient-types/result';
-import { CustomTestSuiteDto } from '../entities/custom-test-suite';
+import { CustomTestSuite } from '../entities/custom-test-suite';
 import IUseCase from '../services/use-case';
 import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
 import CustomTestSuiteRepo from '../../infrastructure/persistence/custom-test-suite-repo';
@@ -13,7 +13,7 @@ export type ReadCustomTestSuiteAuthDto = {
   callerOrgId: string;
 };
 
-export type ReadCustomTestSuiteResponseDto = Result<CustomTestSuiteDto | null>;
+export type ReadCustomTestSuiteResponseDto = Result<CustomTestSuite | null>;
 
 export class ReadCustomTestSuite
   implements

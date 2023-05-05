@@ -28,7 +28,7 @@ export interface CustomTestExecutionResultDto {
   isWarmup: boolean;
   testData?: CustomTestTestData;
   alertData?: CustomTestAlertData;
-  targetResourceIds: string;
+  targetResourceIds?: string[];
   organizationId: string;
   lastAlertSent?: string;
 }

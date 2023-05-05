@@ -65,7 +65,7 @@ export class ExecuteTest
 
     try {
       // const testExecutionResult = JSON.parse(
-      // '{"lastAlertSent": "2023-04-23T11:12:14.0585", "testSuiteId": "f540b96d-2cd0-4424-b3d1-7d62e301acfc", "testType": "ColumnDistribution", "executionId": "be69fc7c-c876-453b-994f-bb02df9cbaa4", "targetResourceId": "dbd1a1de-4eec-423b-8554-45d472585651", "organizationId": "someCustId", "isWarmup": false, "testData": {"executedOn": "2023-04-25T11:11:54.621388", "detectedValue": 5005000, "expectedUpperBound": 466.378624, "expectedLowerBound": 400.62137600000005, "deviation": 0, "anomaly": {"importance": 1.5301944509599927}}, "alertData": {"alertId": "0a291746-3ace-428b-a2e6-80520174bd35", "message": "<__base_url__?targetResourceId=dbd1a1de-4eec-423b-8554-45d472585651&ampisColumn=True|TEST_DB.test_S.TEST_T.SOMENUMBER>", "databaseName": "TEST_DB", "schemaName": "test_S", "materializationName": "TEST_T", "materializationType": "Table", "expectedValue": 567, "columnName": "SOMENUMBER"}}'
+      //   '{"testSuiteId": "390fc511-e8a5-435e-a3e7-f000243ad976", "testType": "MaterializationSchemaChange", "executionId": "ed50a53f-992d-427a-9dc3-de5599e406a7", "organizationId": "631789bf27518f97cf1c82b7", "targetResourceId": "05fe3cc4-457e-4eff-aa92-774cce02998a", "testData": {"executedOn": "2023-05-05T10:50:47.050776", "deviations": [], "isIdentical": true}, "alertData": null, "lastAlertSent": null}'
       // );
 
       const testExecutionResult = await this.#testExecutionApiRepo.executeTest(
@@ -74,6 +74,7 @@ export class ExecuteTest
         auth.jwt,
         req.targetOrgId
       );
+
       console.log(`Successfuly executed test ${req.testSuiteId}`);
 
       console.warn(testExecutionResult);
