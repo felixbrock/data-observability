@@ -41,7 +41,7 @@ export default class CreateCustomTestSuiteController extends BaseController {
       name: httpRequest.body.name,
       description: httpRequest.body.description,
       sqlLogic: httpRequest.body.sqlLogic,
-      targetResourceIds: httpRequest.body.targetResourceIds,
+      targetResourceIds: JSON.parse(httpRequest.body.targetResourceIds),
       cron: httpRequest.body.cron,
       executionType: httpRequest.body.executionType,
     },
