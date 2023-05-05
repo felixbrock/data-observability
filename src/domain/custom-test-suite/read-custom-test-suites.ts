@@ -47,7 +47,8 @@ export class ReadCustomTestSuites
           deleted: false,
         },
         dbConnection, auth.callerOrgId ? auth.callerOrgId : '',
-      );
+        true
+      ) as CustomTestSuiteDto[];
 
       return Result.ok(testSuites);
     } catch (error: unknown) {

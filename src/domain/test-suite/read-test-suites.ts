@@ -47,7 +47,8 @@ export class ReadTestSuites
         },
         dbConnection,
         auth.callerOrgId ? auth.callerOrgId : '',
-      );
+        true
+      ) as TestSuite[];
 
       return Result.ok(testSuites);
     } catch (error: unknown) {

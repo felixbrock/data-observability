@@ -27,7 +27,7 @@ export default abstract class BaseTriggerTestSuiteExecution {
       { $sort: { 'executed_on': -1} }
     ]).toArray().then((res) => res[0]);
 
-    if (!result) throw new Error(`"Get last executed on" query failed`);
+    if (!result) return undefined;
 
     const isDate = (obj: unknown): obj is Date =>
       !!obj && typeof obj === 'object' && obj.constructor.name === 'Date';

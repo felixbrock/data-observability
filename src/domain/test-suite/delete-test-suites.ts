@@ -72,7 +72,7 @@ export class DeleteTestSuites
             targetResourceIds: req.targetResourceIds,
             deleted: false,
           },
-          dbConnection, auth.callerOrgId
+          dbConnection, auth.callerOrgId, true
         )
       ).map((el) => el.id);
 

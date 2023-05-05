@@ -3,7 +3,7 @@ import {
   ReadTestHistory,
   ReadTestHistoryRequestDto,
   ReadTestHistoryResponseDto
-} from '../../../domain/front-end-api/read-test-history';
+} from '../../../domain/front-end-data-structure/read-test-history';
 
 import {
   BaseController,
@@ -41,7 +41,7 @@ export default class ReadTestHistoryController extends BaseController {
     const idsArray = JSON.parse(ids);
 
     return {
-      ids: typeof idsArray === 'string' ? [idsArray] : idsArray,
+      testSuiteIds: typeof idsArray === 'string' ? [idsArray] : idsArray,
     };
   };
 
@@ -91,7 +91,7 @@ export default class ReadTestHistoryController extends BaseController {
       else if (error) console.trace(error);
       return ReadTestHistoryController.fail(
         res,
-        'read test suite - Unknown error occurred'
+        'read test history - Unknown error occurred'
       );
     }
   }

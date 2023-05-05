@@ -2,10 +2,9 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Canvas, createCanvas } from 'canvas';
 import { EChartsOption, init, YAXisComponentOption } from 'echarts';
-import { Db } from 'mongodb';
 import { appConfig } from '../../../../config';
 import IUseCase from '../../../services/use-case';
-import { QuerySnowflake } from '../../../snowflake-api/query-snowflake';
+import GenerateChartRepo from '../../../../infrastructure/persistence/generate-chart-repo';
 import Result from '../../../value-types/transient-types/result';
 import { IDbConnection } from '../../../services/i-db';
 
@@ -59,10 +58,10 @@ export class GenerateChart
     max: `${maxBase + (maxBase - minBase) * 0.5}`,
   });
 
-  readonly #querySnowflake: QuerySnowflake;
+  readonly #repo: GenerateChartRepo;
 
-  constructor(querySnowflake: QuerySnowflake) {
-    this.#querySnowflake = querySnowflake;
+  constructor(generateChartRepo: GenerateChartRepo) {
+    this.#repo = generateChartRepo;
   }
 
   #getHistoryMinMax = (
@@ -224,32 +223,26 @@ export class GenerateChart
         | 'function'
     ): val is T => val === null || typeof val === targetType;
 
-    const valueLowerBoundNum = valueLowerBound ? Number(valueLowerBound) : null;
-
-    const valueUpperBoundNum = valueUpperBound ? Number(valueUpperBound) : null;
-
-    const isAnomalyValue = typeof isAnomaly === 'string' ? JSON.parse(isAnomaly) : null;
-
     const isTimestamp = (obj: unknown): obj is Date =>
       !!obj && typeof obj === 'object' && obj.constructor.name === 'Date';
     if (
       typeof value !== 'number' ||
       typeof testSuiteId !== 'string' ||
       !(typeof executedOn === 'string' || isTimestamp(executedOn)) ||
-      typeof isAnomalyValue !== 'boolean' ||
+      typeof isAnomaly !== 'boolean' ||
       typeof userFeedbackIsAnomaly !== 'number' ||
-      !isOptionalOfType<number>(valueLowerBoundNum, 'number') ||
-      !isOptionalOfType<number>(valueUpperBoundNum, 'number')
+      !isOptionalOfType<number>(valueLowerBound, 'number') ||
+      !isOptionalOfType<number>(valueUpperBound, 'number')
     )
       throw new Error('Received unexpected type');
 
     const datapoint = {
-      isAnomaly: isAnomalyValue,
+      isAnomaly,
       userFeedbackIsAnomaly,
       timestamp:
         typeof executedOn === 'string' ? executedOn : executedOn.toISOString(),
-      valueLowerBound: valueLowerBoundNum,
-      valueUpperBound: valueUpperBoundNum,
+      valueLowerBound,
+      valueUpperBound,
       value,
     };
 
@@ -262,62 +255,7 @@ export class GenerateChart
     callerOrgId: string
   ): Promise<TestHistoryDataPoint[]> => {
 
-    const queryResult = await dbConnection
-    .collection(`test_history_${callerOrgId}`)
-    .aggregate([
-      {
-        $lookup: {
-          from: `test_executions_${callerOrgId}`,
-          localField: 'execution_id',
-          foreignField: 'id',
-          as: 'test_executions'
-        }
-      },
-      {
-        $unwind: {
-          path: '$test_executions',
-          preserveNullAndEmptyArrays: false
-        }
-      },
-      {
-        $lookup: {
-          from: `test_results_${callerOrgId}`,
-          localField: 'execution_id',
-          foreignField: 'execution_id',
-          as: 'test_results'
-        }
-      },
-      {
-        $unwind: {
-          path: '$test_results',
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $match: {
-          test_suite_id: testSuiteId
-        }
-      },
-      {
-        $project: {
-          test_suite_id: 1,
-          value: 1,
-          executed_on: '$test_executions.executed_on',
-          value_upper_bound: '$test_results.expected_value_upper_bound',
-          value_lower_bound: '$test_results.expected_value_lower_bound',
-          is_anomaly: 1,
-          user_feedback_is_anomaly: 1
-        }
-      },
-      {
-        $sort: {
-          'execution_id': -1
-        }
-      },
-      {
-        $limit: 200
-      }
-    ]).toArray();
+    const queryResult = await this.#repo.readTestHistory(testSuiteId, dbConnection, callerOrgId);
 
     if (!queryResult)
       throw new Error('Missing history data point query value');
@@ -373,7 +311,7 @@ export class GenerateChart
 
   async execute(props: {
     req: GenerateChartRequestDto;
-    dbConnection: Db,
+    dbConnection: IDbConnection,
     callerOrgId: string
   }): Promise<GenerateChartResponseDto> {
     const { req, dbConnection, callerOrgId } = props;

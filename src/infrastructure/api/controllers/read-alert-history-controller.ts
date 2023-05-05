@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import {
-  ReadTestAlerts,
-  ReadTestAlertsRequestDto,
-  ReadTestAlertsResponseDto,
-} from '../../../domain/front-end-api/read-test-alerts';
+  ReadAlertHistory,
+  ReadAlertHistoryRequestDto,
+  ReadAlertHistoryResponseDto,
+} from '../../../domain/front-end-data-structure/read-alert-history';
 
 import {
   BaseController,
@@ -15,23 +15,23 @@ import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import Dbo from '../../persistence/db/mongo-db';
 
-export default class ReadTestAlertsController extends BaseController {
-  readonly #readTestAlerts: ReadTestAlerts;
+export default class ReadAlertHistoryController extends BaseController {
+  readonly #readAlertHistory: ReadAlertHistory;
 
   readonly #dbo: Dbo;
 
   constructor(
-    readTestAlerts: ReadTestAlerts,
+    readAlertHistory: ReadAlertHistory,
     getAccounts: GetAccounts,
     getSnowflakeProfile: GetSnowflakeProfile,
     dbo: Dbo
   ) {
     super(getAccounts, getSnowflakeProfile);
-    this.#readTestAlerts = readTestAlerts;
+    this.#readAlertHistory = readAlertHistory;
     this.#dbo = dbo;
   }
 
-  #buildRequestDto = (httpRequest: Request): ReadTestAlertsRequestDto => {
+  #buildRequestDto = (httpRequest: Request): ReadAlertHistoryRequestDto => {
     const { ids } = httpRequest.query;
 
     if (ids === undefined || typeof ids !== 'string') {
@@ -41,7 +41,7 @@ export default class ReadTestAlertsController extends BaseController {
     const idsArray = JSON.parse(ids);
 
     return {
-      ids: typeof idsArray === 'string' ? [idsArray] : idsArray,
+      testSuiteIds: typeof idsArray === 'string' ? [idsArray] : idsArray,
     };
   };
 
@@ -50,7 +50,7 @@ export default class ReadTestAlertsController extends BaseController {
       const authHeader = req.headers.authorization;
 
       if (!authHeader)
-        return ReadTestAlertsController.unauthorized(res, 'Unauthorized');
+        return ReadAlertHistoryController.unauthorized(res, 'Unauthorized');
 
       const jwt = authHeader.split(' ')[1];
 
@@ -58,7 +58,7 @@ export default class ReadTestAlertsController extends BaseController {
         await this.getUserAccountInfo(jwt);
 
       if (!getUserAccountInfoResult.success)
-        return ReadTestAlertsController.unauthorized(
+        return ReadAlertHistoryController.unauthorized(
           res,
           getUserAccountInfoResult.error
         );
@@ -68,11 +68,11 @@ export default class ReadTestAlertsController extends BaseController {
       if (!getUserAccountInfoResult.value.callerOrgId)
         throw new ReferenceError('Unauthorized - Caller organization id missing');
 
-      const requestDto: ReadTestAlertsRequestDto = this.#buildRequestDto(req);
+      const requestDto: ReadAlertHistoryRequestDto = this.#buildRequestDto(req);
 
 
-      const useCaseResult: ReadTestAlertsResponseDto =
-        await this.#readTestAlerts.execute({
+      const useCaseResult: ReadAlertHistoryResponseDto =
+        await this.#readAlertHistory.execute({
           req: requestDto,
           auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
           dbConnection: this.#dbo.dbConnection,
@@ -81,18 +81,18 @@ export default class ReadTestAlertsController extends BaseController {
       
 
       if (!useCaseResult.success) {
-        return ReadTestAlertsController.badRequest(res);
+        return ReadAlertHistoryController.badRequest(res);
       }
 
       const resultValue = useCaseResult.value;
 
-      return ReadTestAlertsController.ok(res, resultValue, CodeHttp.OK);
+      return ReadAlertHistoryController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
-      return ReadTestAlertsController.fail(
+      return ReadAlertHistoryController.fail(
         res,
-        'read test suite - Unknown error occurred'
+        'read alert history - Unknown error occurred'
       );
     }
   }

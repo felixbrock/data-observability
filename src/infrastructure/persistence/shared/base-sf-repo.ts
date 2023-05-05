@@ -2,8 +2,7 @@ import { Blob } from 'node:buffer';
 import { Document } from 'mongodb';
 import { IServiceRepo } from '../../../domain/services/i-service-repo';
 import {
-  Bind,
-  Binds,
+  Binds
 } from '../../../domain/snowflake-api/i-snowflake-api-repo';
 import { QuerySnowflake } from '../../../domain/snowflake-api/query-snowflake';
 import {
@@ -13,7 +12,7 @@ import { IDbConnection } from '../../../domain/services/i-db';
 
 export interface Query {
   text?: string;
-  binds: Bind[];
+  values: (string | number | boolean)[];
   colDefinitions?: ColumnDefinition[];
   filter?: any
 }
@@ -60,8 +59,9 @@ export default abstract class BaseSfRepo<
   findBy = async (
     queryDto: QueryDto,
     dbConnection: IDbConnection,
-    callerOrgId: string
-  ): Promise<Entity[]> => {
+    callerOrgId: string,
+    returnEntity: boolean
+  ): Promise<Entity[] | Document[]> => {
     try {
       if (!queryDto || !Object.keys(queryDto).length)
         return await this.all(dbConnection, callerOrgId);
@@ -74,7 +74,7 @@ export default abstract class BaseSfRepo<
 
       if (!result) return [];
 
-      return result.map((el) => this.toEntity(this.buildEntityProps(el)));
+      return returnEntity ? result.map((el) => this.toEntity(this.buildEntityProps(el))) : result;
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
@@ -119,7 +119,7 @@ export default abstract class BaseSfRepo<
     }
   };
 
-  protected abstract getBinds(entity: Entity): (string | number)[];
+  protected abstract getValues(entity: Entity): (string | number | boolean)[];
 
   insertOne = async (
     entity: Entity,
@@ -127,7 +127,7 @@ export default abstract class BaseSfRepo<
     callerOrgId: string
   ): Promise<string> => {
     try {
-			const row = this.getBinds(entity);
+			const row = this.getValues(entity);
 
 			const document: any = {};
 			this.colDefinitions.forEach((column, index) => {
@@ -188,7 +188,7 @@ export default abstract class BaseSfRepo<
     callerOrgId: string
   ): Promise<string[]> => {
     try {
-      const rows = entities.map((entity) => this.getBinds(entity));
+      const rows = entities.map((entity) => this.getValues(entity));
 
 			const documents = rows.map(row => {
 				const document: any = {};
@@ -249,7 +249,7 @@ export default abstract class BaseSfRepo<
 			
 			const document: any = {};
 			query.colDefinitions.forEach((column, index) => {
-				const value = query.binds[index];
+				const value = query.values[index];
 				document[column.name] = column.nullable && value === 'null' ? null : value;
 			});
 
@@ -282,12 +282,12 @@ export default abstract class BaseSfRepo<
     callerOrgId: string
   ): Promise<number> => {
     try {
-      const binds = entities.map((column) => this.getBinds(column));
+      const rows = entities.map((column) => this.getValues(column));
 
-      const documents = binds.map((bind) => {
+      const documents = rows.map((row) => {
 				const document: any = {};
 				this.colDefinitions.forEach((column, index) => {
-					const value = bind[index];
+					const value = row[index];
 					document[column.name] = column.nullable && value === 'null' ? null : value; 
 				});
 				return document;

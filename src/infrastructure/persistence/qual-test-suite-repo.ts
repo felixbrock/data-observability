@@ -8,9 +8,6 @@ import {
   ColumnDefinition,
 } from './shared/query';
 import { QuerySnowflake } from '../../domain/snowflake-api/query-snowflake';
-import {
-  Binds,
-} from '../../domain/snowflake-api/i-snowflake-api-repo';
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
 import {
@@ -69,9 +66,6 @@ export default class QualTestSuiteRepo
       last_alert_sent: lastAlertSent,
     } = document;
 
-    let columnNameValue = columnName;
-    if (!columnName) columnNameValue = null;
-    
     const deletedAtDate = deletedAt ? new Date(deletedAt) : undefined;
 
     const lastAlertSentDate = lastAlertSent ? new Date(lastAlertSent) : undefined;
@@ -87,7 +81,7 @@ export default class QualTestSuiteRepo
       typeof schemaName !== 'string' ||
       typeof materializationName !== 'string' ||
       typeof materializationType !== 'string' ||
-      !QualTestSuiteRepo.isOptionalOfType<string>(columnNameValue, 'string') ||
+      !QualTestSuiteRepo.isOptionalOfType<string>(columnName, 'string') ||
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
@@ -107,7 +101,7 @@ export default class QualTestSuiteRepo
         materializationType: parseMaterializationType(materializationType),
         schemaName,
         targetResourceId,
-        columnName: columnNameValue,
+        columnName,
       },
       type: parseQualTestType(type),
       cron,
@@ -117,10 +111,10 @@ export default class QualTestSuiteRepo
     };
   };
 
-  getBinds = (entity: QualTestSuite): (string | number)[] => [
+  getValues = (entity: QualTestSuite): (string | number | boolean)[] => [
     entity.id,
     entity.type,
-    entity.activated.toString(),
+    entity.activated,
     entity.target.databaseName,
     entity.target.schemaName,
     entity.target.materializationName,
@@ -134,48 +128,48 @@ export default class QualTestSuiteRepo
   ];
 
   buildFindByQuery = (queryDto: QualTestSuiteQueryDto): Query => {
-    const binds: (string | number)[] = [];
+    const values: (string | number | boolean)[] = [];
     const filter: any = {};
     filter.deleted_at = { deleted_at: queryDto.deleted ? { $ne: null } : null};
 
     if (queryDto.activated !== undefined) {
-      binds.push(queryDto.activated.toString());
+      values.push(queryDto.activated);
       filter.activated = queryDto.activated;
     }
     if (queryDto.ids && queryDto.ids.length) {
-      binds.push(...queryDto.ids);
+      values.push(...queryDto.ids);
       filter.id = { $in: queryDto.ids };
     }
     if (queryDto.targetResourceIds && queryDto.targetResourceIds.length) {
-      binds.push(...queryDto.targetResourceIds);
+      values.push(...queryDto.targetResourceIds);
       filter.target_resource_id = { $in: queryDto.targetResourceIds };
     }
 
-    return { binds, filter };
+    return { values, filter };
   };
 
   buildUpdateQuery = (id: string, updateDto: QualTestSuiteUpdateDto): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
-    const binds: Binds = [id];
+    const values: (string | number | boolean)[] = [id];
 
 		if (updateDto.activated !== undefined) {
 			colDefinitions.push(this.getDefinition('activated'));
-			binds.push(updateDto.activated.toString());
+			values.push(updateDto.activated.toString());
 		}
 		if (updateDto.cron) {
 			colDefinitions.push(this.getDefinition('cron'));
-			binds.push(updateDto.cron);
+			values.push(updateDto.cron);
 		}
 		if (updateDto.executionType) {
 			colDefinitions.push(this.getDefinition('execution_type'));
-			binds.push(updateDto.executionType);
+			values.push(updateDto.executionType);
 		}
 		if (updateDto.lastAlertSent) {
 			colDefinitions.push(this.getDefinition('last_alert_sent'));
-			binds.push(updateDto.lastAlertSent);
+			values.push(updateDto.lastAlertSent);
 		}
 
-		return { binds, colDefinitions };
+		return { values, colDefinitions };
   };
 
   toEntity = (qualtestsuiteProperties: QualTestSuiteProps): QualTestSuite =>
