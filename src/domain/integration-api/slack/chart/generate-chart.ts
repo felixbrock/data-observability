@@ -221,7 +221,7 @@ export class GenerateChart
         | 'undefined'
         | 'object'
         | 'function'
-    ): val is T => val === null || typeof val === targetType;
+    ): val is T => val === undefined || typeof val === targetType;
 
     const isTimestamp = (obj: unknown): obj is Date =>
       !!obj && typeof obj === 'object' && obj.constructor.name === 'Date';
