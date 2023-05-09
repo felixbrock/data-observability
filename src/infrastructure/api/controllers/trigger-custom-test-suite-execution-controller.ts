@@ -102,6 +102,7 @@ export default class TriggerCustomTestSuiteExecutionController extends BaseContr
 
       await connPool.drain();
       await connPool.clear();
+      
 
       if (!useCaseResult.success) {
         return TriggerCustomTestSuiteExecutionController.badRequest(res);

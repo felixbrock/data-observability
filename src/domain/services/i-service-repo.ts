@@ -1,19 +1,20 @@
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
+import { Document } from "mongodb";
+import { IDbConnection } from "./i-db";
 
 export interface IServiceRepo<Entity, QueryDto, UpdateDto> {
-  findOne(id: string, connPool: IConnectionPool): Promise<Entity | null>;
-  findBy(queryDto: QueryDto, connPool: IConnectionPool): Promise<Entity[]>;
-  all(connPool: IConnectionPool): Promise<Entity[]>;
-  insertOne(entity: Entity, connPool: IConnectionPool): Promise<string>;
-  insertMany(entities: Entity[], connPool: IConnectionPool): Promise<string[]>;
+  findOne(id: string, dbConnection: IDbConnection, callerOrgId: string): Promise<Entity | null>;
+  findBy(queryDto: QueryDto, dbConnection: IDbConnection, callerOrgId: string, returnEntity: boolean): Promise<Entity[] | Document[]>;
+  all(dbConnection: IDbConnection, callerOrgId: string): Promise<Entity[]>;
+  insertOne(entity: Entity, dbConnection: IDbConnection, callerOrgId: string): Promise<string>;
+  insertMany(entities: Entity[], dbConnection: IDbConnection, callerOrgId: string): Promise<string[]>;
   updateOne(
     id: string,
     updateDto: UpdateDto,
-    connPool: IConnectionPool
+    dbConnection: IDbConnection, callerOrgId: string
   ): Promise<string>;
-  replaceMany(entities: Entity[], connPool: IConnectionPool): Promise<number>;
+  replaceMany(entities: Entity[], dbConnection: IDbConnection, callerOrgId: string): Promise<number>;
   softDeleteMany(
     where: { targetResourceIds: string[]; testSuiteIds: string[] },
-    connPool: IConnectionPool
+    dbConnection: IDbConnection, callerOrgId: string
   ): Promise<void>;
 }

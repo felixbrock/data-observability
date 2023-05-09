@@ -2,8 +2,9 @@ import IUseCase from '../services/use-case';
 import Result from '../value-types/transient-types/result';
 import { TestType } from '../entities/quant-test-suite';
 import { QuerySnowflake } from './query-snowflake';
-import { Binds, IConnectionPool } from './i-snowflake-api-repo';
+import { IConnectionPool } from './i-snowflake-api-repo';
 import BaseAuth from '../services/base-auth';
+import { IDbConnection } from '../services/i-db';
 
 export type ThresholdType = 'lower' | 'upper';
 
@@ -67,31 +68,24 @@ export class PostAnomalyFeedback
     detectedValue: number,
     thresholdType: ThresholdType,
     testSuiteId: string,
-    connPool: IConnectionPool
+    dbConnection: IDbConnection,
+    callerOrgId: string
   ): Promise<void> => {
     console.log(
       `Updating anomaly feedback threshold for test suite ${testSuiteId}`
     );
 
-    const binds: Binds = [detectedValue, testSuiteId];
-
-    const queryText = `
-  update cito.observability.test_suites
-  set feedback_${thresholdType}_threshold = ?
-  where id = ?;
-  `;
-
     try {
-      const querySnowflakeResult = await this.#querySnowflake.execute({
-        req: { queryText, binds },
-        connPool,
-      });
+      const result = await dbConnection
+      .collection(`test_suites_${callerOrgId}`)
+      .updateOne(
+        { id: testSuiteId },
+        { $set: { [`feedback_${thresholdType}_threshold`]: detectedValue } }
+      );
 
-      if (!querySnowflakeResult.success)
-        throw new Error(querySnowflakeResult.error);
-
-      const result = querySnowflakeResult.value;
-      if (!result) throw new Error(`"Update Test History" query failed`);
+      if (result.matchedCount === 0) {
+        throw new Error(`"Update Test History" query failed`);
+      }
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
@@ -101,29 +95,22 @@ export class PostAnomalyFeedback
   #updateTestHistory = async (
     userFeedbackIsAnomaly: number,
     alertId: string,
-    connPool: IConnectionPool
+    dbConnection: IDbConnection,
+    callerOrgId: string
   ): Promise<void> => {
     console.log(`Updating test history based on alert ${alertId}`);
-
-    const binds: Binds = [userFeedbackIsAnomaly, alertId];
-
-    const queryText = `
-  update cito.observability.test_history
-  set user_feedback_is_anomaly = ?
-  where alert_id = ?;
-  `;
-
+    
     try {
-      const querySnowflakeResult = await this.#querySnowflake.execute({
-        req: { queryText, binds },
-        connPool,
-      });
+      const result = await dbConnection
+      .collection(`test_history_${callerOrgId}`)
+      .updateOne(
+        { alert_id: alertId },
+        { $set: { user_feedback_is_anomaly: userFeedbackIsAnomaly } }
+      );
 
-      if (!querySnowflakeResult.success)
-        throw new Error(querySnowflakeResult.error);
-
-      const result = querySnowflakeResult.value;
-      if (!result) throw new Error(`"Update Test History" query failed`);
+      if (result.matchedCount === 0) {
+        throw new Error(`"Update Test History" query failed`);
+      }
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
@@ -133,10 +120,10 @@ export class PostAnomalyFeedback
   async execute(props: {
     req: PostAnomalyFeedbackRequestDto;
     auth: PostAnomalyFeedbackAuthDto;
-    connPool: IConnectionPool;
+    dbConnection: IDbConnection;
   }): Promise<PostAnomalyFeedbackResponseDto> {
     try {
-      const { req, connPool } = props;
+      const { req, auth, dbConnection } = props;
 
       if (
         req.userFeedbackIsAnomaly === 0 &&
@@ -149,7 +136,8 @@ export class PostAnomalyFeedback
       await this.#updateTestHistory(
         req.userFeedbackIsAnomaly,
         req.alertId,
-        connPool
+        dbConnection,
+        auth.callerOrgId
       );
 
       if (
@@ -162,7 +150,8 @@ export class PostAnomalyFeedback
           req.detectedValue,
           req.thresholdType,
           req.testSuiteId,
-          connPool
+          dbConnection,
+          auth.callerOrgId
         );
 
       return Result.ok(req.alertId);

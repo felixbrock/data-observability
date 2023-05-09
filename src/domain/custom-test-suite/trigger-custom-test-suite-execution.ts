@@ -62,10 +62,19 @@ export class TriggerCustomTestSuiteExecution
       );
 
     try {
+      let organizationId = '';
+
+      if (auth.callerOrgId) {
+        organizationId = auth.callerOrgId;
+      } else if (req.targetOrgId) {
+          organizationId = req.targetOrgId;
+      }
+
       const readCustomTestSuiteResult = await this.#readCustomTestSuite.execute(
         {
           req: { id: req.id },
-          connPool: db.sfConnPool,
+          auth: { callerOrgId: organizationId },
+          dbConnection: db.mongoConn
         }
       );
 

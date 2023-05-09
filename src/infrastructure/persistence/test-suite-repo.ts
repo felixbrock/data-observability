@@ -1,3 +1,4 @@
+import { Document } from 'mongodb';
 import {
   parseTestType,
   TestSuite,
@@ -5,14 +6,8 @@ import {
 } from '../../domain/entities/quant-test-suite';
 import {
   ColumnDefinition,
-  getUpdateQueryText,
-  relationPath,
 } from './shared/query';
 import { QuerySnowflake } from '../../domain/snowflake-api/query-snowflake';
-import {
-  Binds,
-  SnowflakeEntity,
-} from '../../domain/snowflake-api/i-snowflake-api-repo';
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
 import {
@@ -67,28 +62,32 @@ export default class TestSuiteRepo
     super(querySnowflake);
   }
 
-  buildEntityProps = (sfEntity: SnowflakeEntity): TestSuiteProps => {
+  buildEntityProps = (document: Document): TestSuiteProps => {
     const {
-      ID: id,
-      TEST_TYPE: type,
-      ACTIVATED: activated,
-      DATABASE_NAME: databaseName,
-      SCHEMA_NAME: schemaName,
-      MATERIALIZATION_NAME: materializationName,
-      MATERIALIZATION_TYPE: materializationType,
-      COLUMN_NAME: columnName,
-      TARGET_RESOURCE_ID: targetResourceId,
-      CRON: cron,
-      EXECUTION_TYPE: executionType,
-      DELETED_AT: deletedAt,
-      CUSTOM_LOWER_THRESHOLD: customLowerThreshold,
-      CUSTOM_LOWER_THRESHOLD_MODE: customLowerThresholdMode,
-      CUSTOM_UPPER_THRESHOLD: customUpperThreshold,
-      CUSTOM_UPPER_THRESHOLD_MODE: customUpperThresholdMode,
-      FEEDBACK_LOWER_THRESHOLD: feedbackLowerThreshold,
-      FEEDBACK_UPPER_THRESHOLD: feedbackUpperThreshold,
-      LAST_ALERT_SENT: lastAlertSent,
-    } = sfEntity;
+      id,
+      test_type: type,
+      activated,
+      database_name: databaseName,
+      schema_name: schemaName,
+      materialization_name: materializationName,
+      materialization_type: materializationType,
+      column_name: columnName,
+      target_resource_id: targetResourceId,
+      cron,
+      execution_type: executionType,
+      deleted_at: deletedAt,
+      custom_lower_threshold: customLowerThreshold,
+      custom_lower_threshold_mode: customLowerThresholdMode,
+      custom_upper_threshold: customUpperThreshold,
+      custom_upper_threshold_mode: customUpperThresholdMode,
+      feedback_lower_threshold: feedbackLowerThreshold,
+      feedback_upper_threshold: feedbackUpperThreshold,
+      last_alert_sent: lastAlertSent,
+    } = document;
+
+    const deletedAtDate = deletedAt ? new Date(deletedAt) : undefined;
+
+    const lastAlertSentDate = lastAlertSent ? new Date(lastAlertSent) : undefined;
 
     const isOptionalDateField = (obj: unknown): obj is Date | undefined =>
       !obj || obj instanceof Date;
@@ -105,7 +104,7 @@ export default class TestSuiteRepo
       typeof targetResourceId !== 'string' ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
-      !isOptionalDateField(deletedAt) ||
+      !isOptionalDateField(deletedAtDate) ||
       !TestSuiteRepo.isOptionalOfType<number>(customUpperThreshold, 'number') ||
       !TestSuiteRepo.isOptionalOfType<number>(customLowerThreshold, 'number') ||
       !TestSuiteRepo.isOptionalOfType<number>(
@@ -113,7 +112,7 @@ export default class TestSuiteRepo
         'number'
       ) ||
       !TestSuiteRepo.isOptionalOfType<number>(feedbackLowerThreshold, 'number') ||
-      !isOptionalDateField(lastAlertSent)
+      !isOptionalDateField(lastAlertSentDate)
     )
       throw new Error(
         'Retrieved unexpected test suite field types from persistence'
@@ -133,7 +132,7 @@ export default class TestSuiteRepo
       type: parseTestType(type),
       cron,
       executionType: parseExecutionType(executionType),
-      deletedAt: deletedAt ? deletedAt.toISOString() : undefined,
+      deletedAt: deletedAtDate? deletedAtDate.toISOString(): undefined,
       customLowerThreshold,
       customLowerThresholdMode: parseCustomThresholdMode(
         customLowerThresholdMode
@@ -144,14 +143,14 @@ export default class TestSuiteRepo
       ),
       feedbackLowerThreshold,
       feedbackUpperThreshold,
-      lastAlertSent: lastAlertSent ? lastAlertSent.toISOString() : undefined,
+      lastAlertSent: lastAlertSentDate? lastAlertSentDate.toISOString() : undefined,
     };
   };
 
-  getBinds = (entity: TestSuite): (string | number)[] => [
+  getValues = (entity: TestSuite): (string | number | boolean)[] => [
     entity.id,
     entity.type,
-    entity.activated.toString(),
+    entity.activated,
     entity.target.databaseName,
     entity.target.schemaName,
     entity.target.materializationName,
@@ -171,84 +170,70 @@ export default class TestSuiteRepo
   ];
 
   buildFindByQuery = (queryDto: TestSuiteQueryDto): Query => {
-    const binds: (string | number)[] = [];
-    let whereClause = `deleted_at is ${queryDto.deleted ? 'not' : ''} null`;
+    const filter: any = {};
+    const values: (string | number | boolean)[] = [];
+    filter.deleted_at = queryDto.deleted ? { $ne: null } : null;
 
     if (queryDto.activated !== undefined) {
-      binds.push(queryDto.activated.toString());
-      const whereCondition = 'activated = ?';
-      whereClause += ` and ${whereCondition}`;
+      filter.activated = queryDto.activated;
+      values.push(queryDto.activated);
     }
+
     if (queryDto.ids && queryDto.ids.length) {
-      binds.push(...queryDto.ids);
-      const whereCondition = `array_contains(id::variant, array_construct(${queryDto.ids
-        .map(() => '?')
-        .join(',')}))`;
-      whereClause += ` and ${whereCondition}`;
+      filter.id = { $in: queryDto.ids };
+      values.push(...queryDto.ids);
     }
+
     if (queryDto.targetResourceIds && queryDto.targetResourceIds.length) {
-      binds.push(...queryDto.targetResourceIds);
-      const whereCondition = `array_contains(target_resource_id::variant, array_construct(${queryDto.targetResourceIds
-        .map(() => '?')
-        .join(',')}))`;
-      whereClause += ` and ${whereCondition}`;
+      filter.target_resource_id = { $in: queryDto.targetResourceIds };
+      values.push(...queryDto.targetResourceIds);
     }
 
-    const text = `select * from ${relationPath}.${this.matName} where ${whereClause};`;
-
-    return { text, binds };
+    return { values, filter };
   };
 
   buildUpdateQuery = (id: string, updateDto: TestSuiteUpdateDto): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
-    const binds: Binds = [id];
+    const values: (string | number | boolean)[] = [id];
 
-    if (updateDto.activated !== undefined) {
-      colDefinitions.push(this.getDefinition('activated'));
-      binds.push(updateDto.activated.toString());
-    }
-    if (updateDto.cron) {
-      colDefinitions.push(this.getDefinition('cron'));
-      binds.push(updateDto.cron);
-    }
-    if (updateDto.executionType) {
-      colDefinitions.push(this.getDefinition('execution_type'));
-      binds.push(updateDto.executionType);
-    }
-    if (updateDto.executionType) {
-      colDefinitions.push(this.getDefinition('execution_type'));
-      binds.push(updateDto.executionType);
-    }
+		if (updateDto.activated !== undefined) {
+			colDefinitions.push(this.getDefinition('activated'));
+			values.push(updateDto.activated.toString());
+		}
+		if (updateDto.cron) {
+			colDefinitions.push(this.getDefinition('cron'));
+			values.push(updateDto.cron);
+		}
+		if (updateDto.executionType) {
+			colDefinitions.push(this.getDefinition('execution_type'));
+			values.push(updateDto.executionType);
+		}
     if (updateDto.customLowerThreshold) {
-      colDefinitions.push(this.getDefinition('custom_lower_threshold'));
-      binds.push(updateDto.customLowerThreshold.value);
-      colDefinitions.push(this.getDefinition('custom_lower_threshold_mode'));
-      binds.push(updateDto.customLowerThreshold.mode);
+    	colDefinitions.push(this.getDefinition('custom_lower_threshold'));
+    	values.push(updateDto.customLowerThreshold.value);
+    	colDefinitions.push(this.getDefinition('custom_lower_threshold_mode'));
+    	values.push(updateDto.customLowerThreshold.mode);
     }
     if (updateDto.customUpperThreshold) {
-      colDefinitions.push(this.getDefinition('custom_upper_threshold'));
-      binds.push(updateDto.customUpperThreshold.value);
-      colDefinitions.push(this.getDefinition('custom_upper_threshold_mode'));
-      binds.push(updateDto.customUpperThreshold.mode);
+      	colDefinitions.push(this.getDefinition('custom_upper_threshold'));
+      	values.push(updateDto.customUpperThreshold.value);
+      	colDefinitions.push(this.getDefinition('custom_upper_threshold_mode'));
+      	values.push(updateDto.customUpperThreshold.mode);
     }
     if (updateDto.feedbackLowerThreshold) {
-      colDefinitions.push(this.getDefinition('feedback_lower_threshold'));
-      binds.push(updateDto.feedbackLowerThreshold);
+      	colDefinitions.push(this.getDefinition('feedback_lower_threshold'));
+      	values.push(updateDto.feedbackLowerThreshold);
     }
     if (updateDto.feedbackUpperThreshold) {
-      colDefinitions.push(this.getDefinition('feedback_upper_threshold'));
-      binds.push(updateDto.feedbackUpperThreshold);
+      	colDefinitions.push(this.getDefinition('feedback_upper_threshold'));
+      	values.push(updateDto.feedbackUpperThreshold);
     }
-    if (updateDto.lastAlertSent) {
-      colDefinitions.push(this.getDefinition('last_alert_sent'));
-      binds.push(updateDto.lastAlertSent);
-    }
+		if (updateDto.lastAlertSent) {
+			colDefinitions.push(this.getDefinition('last_alert_sent'));
+			values.push(updateDto.lastAlertSent);
+		}
 
-    const text = getUpdateQueryText(this.matName, colDefinitions, [
-      `(${binds.map(() => '?').join(', ')})`,
-    ]);
-
-    return { text, binds, colDefinitions };
+		return { values, colDefinitions };
   };
 
   toEntity = (testsuiteProperties: TestSuiteProps): TestSuite =>

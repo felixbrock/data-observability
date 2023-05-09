@@ -1,17 +1,22 @@
+import { Document } from 'mongodb';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { TestSuite } from '../entities/quant-test-suite';
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { ITestSuiteRepo } from './i-test-suite-repo';
 import TestSuiteRepo from '../../infrastructure/persistence/test-suite-repo';
+import { IDbConnection } from '../services/i-db';
 
 export interface ReadTestSuiteRequestDto {
-  id: string;
+  id?: string;
+  targetResourceId?: string;
+  activated?: boolean;
 }
 
-export type ReadTestSuiteAuthDto = null;
+export type ReadTestSuiteAuthDto = {
+  callerOrgId: string;
+};
 
-export type ReadTestSuiteResponseDto = Result<TestSuite | null>;
+export type ReadTestSuiteResponseDto = Result<TestSuite | Document[] | null>;
 
 export class ReadTestSuite
   implements
@@ -19,7 +24,7 @@ export class ReadTestSuite
       ReadTestSuiteRequestDto,
       ReadTestSuiteResponseDto,
       ReadTestSuiteAuthDto,
-      IConnectionPool
+      IDbConnection
     >
 {
   readonly #repo: ITestSuiteRepo;
@@ -30,14 +35,30 @@ export class ReadTestSuite
 
   async execute(props: {
     req: ReadTestSuiteRequestDto;
-    connPool: IConnectionPool;
+    auth: ReadTestSuiteAuthDto;
+    dbConnection: IDbConnection;
   }): Promise<ReadTestSuiteResponseDto> {
-    const { req, connPool } = props;
+    const { req, auth, dbConnection } = props;
 
     try {
-      const testSuite = await this.#repo.findOne(req.id, connPool);
+      if (req.id) {
+        const testSuite = await this.#repo.findOne(req.id, dbConnection, auth.callerOrgId);
+        return Result.ok(testSuite);
+      }
 
-      return Result.ok(testSuite);
+      if (!req.targetResourceId || !req.activated) {
+        throw new Error('Missing target resource ids or activated');
+      }
+
+      const query = {
+        targetResourceIds: [req.targetResourceId],
+        activated: req.activated,
+        deleted: false
+      };
+
+      const results = await this.#repo.findBy(query, dbConnection, auth.callerOrgId, false);
+      return Result.ok(results);
+
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);

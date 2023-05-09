@@ -101,6 +101,7 @@ export default class TriggerTestSuiteExecutionController extends BaseController 
 
       await connPool.drain();
       await connPool.clear();
+      
 
       if (!useCaseResult.success) {
         return TriggerTestSuiteExecutionController.badRequest(res);

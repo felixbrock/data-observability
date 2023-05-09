@@ -6,10 +6,14 @@ const testDataRoutes = Router();
 
 const getAccounts = app.resolve('getAccounts');
 
+const dbo = app.resolve('dbo');
+
 const postAnomalyFeedbackController = new PostAnomalyFeedback(
   app.resolve('postAnomalyFeedback'),
   getAccounts,
-  app.resolve('getSnowflakeProfile')
+  app.resolve('getSnowflakeProfile'),
+  dbo
+
 );
 
 testDataRoutes.post('/feedback', (req, res) => {

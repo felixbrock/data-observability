@@ -41,7 +41,7 @@ export default class ExpressApp {
 
       return this.#expressApp;
     } catch (error: unknown) {
-      if (error instanceof Error ) throw new Error(error.message);
+      if (error instanceof Error) throw new Error(error.message);
       if (!(error instanceof Error) && error) throw error;
       throw new Error('starting express app - unknown error');
     }
@@ -52,7 +52,7 @@ export default class ExpressApp {
     this.#expressApp.use(express.urlencoded({ extended: true }));
     this.#expressApp.use(cors());
     this.#expressApp.use(compression());
-    this.#expressApp.use(morgan("combined"));
+    this.#expressApp.use(morgan('combined'));
     this.#expressApp.use(helmet());
     this.#expressApp.use(v1Router);
   }

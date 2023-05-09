@@ -2,11 +2,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { QualTestSuite, QualTestType } from '../entities/qual-test-suite';
 import { createSchedules } from '../services/schedule';
 import IUseCase from '../services/use-case';
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { ExecutionType } from '../value-types/execution-type';
 import { MaterializationType } from '../value-types/materialization-type';
 import Result from '../value-types/transient-types/result';
 import { IQualTestSuiteRepo } from './i-qual-test-suite-repo';
+import { IDbConnection } from '../services/i-db';
 
 interface CreateObject {
   activated: boolean;
@@ -37,7 +37,7 @@ export class CreateQualTestSuites
       CreateQualTestSuitesRequestDto,
       CreateQualTestSuitesResponseDto,
       CreateQualTestSuitesAuthDto,
-      IConnectionPool
+      IDbConnection
     >
 {
   readonly #repo: IQualTestSuiteRepo;
@@ -49,9 +49,9 @@ export class CreateQualTestSuites
   async execute(props: {
     req: CreateQualTestSuitesRequestDto;
     auth: CreateQualTestSuitesAuthDto;
-    connPool: IConnectionPool;
+    dbConnection: IDbConnection;
   }): Promise<CreateQualTestSuitesResponseDto> {
-    const { req, auth, connPool } = props;
+    const { req, auth, dbConnection } = props;
 
     try {
       const testSuites = req.createObjects.map((createObject) =>
@@ -73,7 +73,7 @@ export class CreateQualTestSuites
         })
       );
 
-      await this.#repo.insertMany(testSuites, connPool);
+      await this.#repo.insertMany(testSuites, dbConnection, auth.callerOrgId);
 
       await createSchedules(
         auth.callerOrgId,

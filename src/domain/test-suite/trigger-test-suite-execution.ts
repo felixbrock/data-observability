@@ -8,6 +8,7 @@ import { IDb } from '../services/i-db';
 import { ExecutionType } from '../value-types/execution-type';
 import { QuerySnowflake } from '../snowflake-api/query-snowflake';
 import BaseTriggerTestSuiteExecution from '../services/base-trigger-test-suite-execution';
+import { TestSuite } from '../entities/quant-test-suite';
 
 export interface TriggerTestSuiteExecutionRequestDto {
   id: string;
@@ -66,14 +67,23 @@ export class TriggerTestSuiteExecution
       );
 
     try {
+      let organizationId = '';
+
+      if (auth.callerOrgId) {
+        organizationId = auth.callerOrgId;
+      } else if (req.targetOrgId) {
+          organizationId = req.targetOrgId;
+      }
+
       const readTestSuiteResult = await this.#readTestSuite.execute({
         req: { id: req.id },
-        connPool: db.sfConnPool,
+        auth: { callerOrgId: organizationId },
+        dbConnection: db.mongoConn,
       });
 
       if (!readTestSuiteResult.success)
         throw new Error(readTestSuiteResult.error);
-      if (!readTestSuiteResult.value)
+      if (!readTestSuiteResult.value || !(readTestSuiteResult.value instanceof TestSuite))
         throw new Error('Reading test suite failed');
 
       const testSuite = readTestSuiteResult.value;
@@ -88,6 +98,8 @@ export class TriggerTestSuiteExecution
           cron: testSuite.cron,
         },
         db.sfConnPool,
+        db.mongoConn,
+        organizationId,
         req.executionType === 'automatic' ? 5 : undefined
       );
 

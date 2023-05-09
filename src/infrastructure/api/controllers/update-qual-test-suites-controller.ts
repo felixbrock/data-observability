@@ -1,6 +1,5 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
-import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateQualTestSuites,
@@ -15,17 +14,22 @@ import {
   UserAccountInfo,
 } from './shared/base-controller';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
+import Dbo from '../../persistence/db/mongo-db';
 
 export default class UpdateQualTestSuitesController extends BaseController {
   readonly #updateQualTestSuites: UpdateQualTestSuites;
 
+  readonly #dbo: Dbo;
+
   constructor(
     updateQualTestSuites: UpdateQualTestSuites,
     getAccounts: GetAccounts,
-    getSnowflakeProfile: GetSnowflakeProfile
+    getSnowflakeProfile: GetSnowflakeProfile,
+    dbo: Dbo
   ) {
     super(getAccounts, getSnowflakeProfile);
     this.#updateQualTestSuites = updateQualTestSuites;
+    this.#dbo = dbo;
   }
 
   #buildRequestDto = (
@@ -60,17 +64,15 @@ export default class UpdateQualTestSuitesController extends BaseController {
       const requestDto: UpdateQualTestSuitesRequestDto =
         this.#buildRequestDto(req);
 
-      const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: UpdateQualTestSuitesResponseDto =
         await this.#updateQualTestSuites.execute({
           auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
           req: requestDto,
-          connPool,
+          dbConnection: this.#dbo.dbConnection
         });
 
-      await connPool.drain();
-      await connPool.clear();
+      
 
       if (!useCaseResult.success) {
         return UpdateQualTestSuitesController.badRequest(

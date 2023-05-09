@@ -2,9 +2,9 @@ import QualTestSuiteRepo from '../../infrastructure/persistence/qual-test-suite-
 import { QualTestSuite } from '../entities/qual-test-suite';
 import BaseAuth from '../services/base-auth';
 import IUseCase from '../services/use-case';
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import Result from '../value-types/transient-types/result';
 import { IQualTestSuiteRepo } from './i-qual-test-suite-repo';
+import { IDbConnection } from '../services/i-db';
 
 export interface ReadQualTestSuitesRequestDto {
   activated?: boolean;
@@ -20,7 +20,7 @@ export class ReadQualTestSuites
       ReadQualTestSuitesRequestDto,
       ReadQualTestSuitesResponseDto,
       ReadQualTestSuitesAuthDto,
-      IConnectionPool
+      IDbConnection
     >
 {
   readonly #repo: IQualTestSuiteRepo;
@@ -32,9 +32,9 @@ export class ReadQualTestSuites
   async execute(props: {
     req: ReadQualTestSuitesRequestDto;
     auth: ReadQualTestSuitesAuthDto;
-    connPool: IConnectionPool;
+    dbConnection: IDbConnection;
   }): Promise<ReadQualTestSuitesResponseDto> {
-    const { req, auth, connPool } = props;
+    const { req, auth, dbConnection } = props;
 
     if (!auth.isSystemInternal && !auth.callerOrgId)
       throw new Error('Not authorized to perform operation');
@@ -45,8 +45,9 @@ export class ReadQualTestSuites
           activated: req.activated,
           deleted: false,
         },
-        connPool
-      );
+        dbConnection, auth.callerOrgId ? auth.callerOrgId : '',
+        true
+      ) as QualTestSuite[];
 
       return Result.ok(testSuites);
     } catch (error: unknown) {

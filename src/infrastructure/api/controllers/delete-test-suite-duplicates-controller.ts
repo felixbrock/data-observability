@@ -1,6 +1,5 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
-import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 
@@ -16,18 +15,23 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from './shared/base-controller';
+import Dbo from '../../persistence/db/mongo-db';
 
 export default class DeleteTestSuiteDuplicatesController extends BaseController {
   readonly #deleteTestSuiteDuplicates: DeleteTestSuiteDuplicates;
 
+  readonly #dbo: Dbo;
+
   constructor(
     deleteTestSuiteDuplicates: DeleteTestSuiteDuplicates,
     getAccounts: GetAccounts,
-    getSnowflakeProfile: GetSnowflakeProfile
+    getSnowflakeProfile: GetSnowflakeProfile,
+    dbo: Dbo
   ) {
     super(getAccounts, getSnowflakeProfile);
 
     this.#deleteTestSuiteDuplicates = deleteTestSuiteDuplicates;
+    this.#dbo = dbo;
   }
 
   #buildRequestDto = (
@@ -81,20 +85,14 @@ export default class DeleteTestSuiteDuplicatesController extends BaseController 
       const requestDto: DeleteTestSuiteDuplicatesRequestDto =
         this.#buildRequestDto(req);
 
-      const connPool = await this.createConnectionPool(
-        jwt,
-        createPool,
-        requestDto.targetOrgId
-      );
 
       const useCaseResult: DeleteTestSuiteDuplicatesResponseDto =
         await this.#deleteTestSuiteDuplicates.execute({
           req: requestDto,
-          connPool,
+          dbConnection: this.#dbo.dbConnection
         });
 
-      await connPool.drain();
-      await connPool.clear();
+      
 
       if (!useCaseResult.success) {
         // return DeleteTestSuiteDuplicatesController.badRequest(res);

@@ -1,3 +1,4 @@
+import { Document } from 'mongodb';
 import {
   CustomTestSuiteUpdateDto,
   CustomTestSuiteQueryDto,
@@ -9,14 +10,8 @@ import {
 } from '../../domain/entities/custom-test-suite';
 import {
   ColumnDefinition,
-  getUpdateQueryText,
-  relationPath,
 } from './shared/query';
 import { QuerySnowflake } from '../../domain/snowflake-api/query-snowflake';
-import {
-  Binds,
-  SnowflakeEntity,
-} from '../../domain/snowflake-api/i-snowflake-api-repo';
 import BaseSfRepo, { Query } from './shared/base-sf-repo';
 import { parseExecutionType } from '../../domain/value-types/execution-type';
 import { parseCustomThresholdMode } from '../../domain/value-types/custom-threshold-mode';
@@ -62,25 +57,31 @@ export default class CustomTestSuiteRepo
     super(querySnowflake);
   }
 
-  buildEntityProps = (sfEntity: SnowflakeEntity): CustomTestSuiteProps => {
+  buildEntityProps = (document: Document): CustomTestSuiteProps => {
     const {
-      ID: id,
-      ACTIVATED: activated,
-      NAME: name,
-      DESCRIPTION: description,
-      SQL_LOGIC: sqlLogic,
-      TARGET_RESOURCE_IDS: targetResourceIds,
-      CRON: cron,
-      EXECUTION_TYPE: executionType,
-      DELETED_AT: deletedAt,
-      CUSTOM_LOWER_THRESHOLD: customLowerThreshold,
-      CUSTOM_LOWER_THRESHOLD_MODE: customLowerThresholdMode,
-      CUSTOM_UPPER_THRESHOLD: customUpperThreshold,
-      CUSTOM_UPPER_THRESHOLD_MODE: customUpperThresholdMode,
-      FEEDBACK_LOWER_THRESHOLD: feedbackLowerThreshold,
-      FEEDBACK_UPPER_THRESHOLD: feedbackUpperThreshold,
-      LAST_ALERT_SENT: lastAlertSent,
-    } = sfEntity;
+      id,
+      activated,
+      name,
+      description,
+      sql_logic: sqlLogic,
+      target_resource_ids: targetResourceIds,
+      cron,
+      execution_type: executionType,
+      deleted_at: deletedAt,
+      custom_lower_threshold: customLowerThreshold,
+      custom_lower_threshold_mode: customLowerThresholdMode,
+      custom_upper_threshold: customUpperThreshold,
+      custom_upper_threshold_mode: customUpperThresholdMode,
+      feedback_lower_threshold: feedbackLowerThreshold,
+      feedback_upper_threshold: feedbackUpperThreshold,
+      last_alert_sent: lastAlertSent,
+    } = document;
+
+    const targetResourceIdsArray = JSON.parse(targetResourceIds);
+
+    const deletedAtDate = deletedAt ? new Date(deletedAt) : undefined;
+
+    const lastAlertSentDate = lastAlertSent ? new Date(lastAlertSent) : undefined;
 
     const isOptionalDateField = (obj: unknown): obj is Date | undefined =>
       !obj || obj instanceof Date;
@@ -91,10 +92,10 @@ export default class CustomTestSuiteRepo
       typeof name !== 'string' ||
       !CustomTestSuiteRepo.isOptionalOfType<string>(description, 'string') ||
       typeof sqlLogic !== 'string' ||
-      !CustomTestSuiteRepo.isStringArray(targetResourceIds) ||
+      !CustomTestSuiteRepo.isStringArray(targetResourceIdsArray) ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
-      !isOptionalDateField(deletedAt) ||
+      !isOptionalDateField(deletedAtDate) ||
       typeof customUpperThreshold !== 'number' ||
       typeof customLowerThreshold !== 'number' ||
       typeof feedbackUpperThreshold !== 'number' ||
@@ -111,10 +112,10 @@ export default class CustomTestSuiteRepo
       name,
       description,
       sqlLogic,
-      targetResourceIds,
+      targetResourceIds: targetResourceIdsArray,
       cron,
       executionType: parseExecutionType(executionType),
-      deletedAt: deletedAt ? deletedAt.toISOString() : undefined,
+      deletedAt: deletedAtDate ? deletedAtDate.toISOString() : undefined,
       customLowerThreshold,
       customLowerThresholdMode: parseCustomThresholdMode(
         customLowerThresholdMode
@@ -125,29 +126,26 @@ export default class CustomTestSuiteRepo
       ),
       feedbackLowerThreshold,
       feedbackUpperThreshold,
-      lastAlertSent: lastAlertSent ? lastAlertSent.toISOString() : undefined, 
+      lastAlertSent: lastAlertSentDate ? lastAlertSentDate.toISOString() : undefined, 
     };
   };
 
   buildFindByQuery = (queryDto: CustomTestSuiteQueryDto): Query => {
-    const binds: (string | number)[] = [];
-    let whereClause = `deleted_at is ${queryDto.deleted ? 'not' : ''} null`;
+    const values: (string | number | boolean)[] = [];
+    const filter: any = {};
+    filter.deleted_at = queryDto.deleted ? { $ne: null } : null;
 
     if (queryDto.activated !== undefined) {
-      binds.push(queryDto.activated.toString());
-      const whereCondition = 'activated = ?';
-      whereClause += ` and ${whereCondition} `;
+      values.push(queryDto.activated);
+      filter.activated = queryDto.activated;
     }
 
-    const text = `select * from ${relationPath}.${this.matName}
-    where ${whereClause};`;
-
-    return { text, binds };
+    return { values, filter };
   };
 
-  getBinds = (entity: CustomTestSuite): (string | number)[] => [
+  getValues = (entity: CustomTestSuite): (string | number | boolean)[] => [
     entity.id,
-    entity.activated.toString(),
+    entity.activated,
     entity.name,
     entity.description,
     entity.sqlLogic,
@@ -169,66 +167,62 @@ export default class CustomTestSuiteRepo
     updateDto: CustomTestSuiteUpdateDto
   ): Query => {
     const colDefinitions: ColumnDefinition[] = [this.getDefinition('id')];
-    const binds: Binds = [id];
+    const values: (string | number | boolean)[] = [id];
 
     if (updateDto.activated !== undefined) {
       colDefinitions.push(this.getDefinition('activated'));
-      binds.push(updateDto.activated.toString());
+      values.push(updateDto.activated);
     }
     if (updateDto.name) {
       colDefinitions.push(this.getDefinition('name'));
-      binds.push(updateDto.name);
+      values.push(updateDto.name);
     }
     if (updateDto.description) {
       colDefinitions.push(this.getDefinition('description'));
-      binds.push(updateDto.description);
+      values.push(updateDto.description);
     }
     if (updateDto.sqlLogic) {
       colDefinitions.push(this.getDefinition('sql_logic'));
-      binds.push(updateDto.sqlLogic);
+      values.push(updateDto.sqlLogic);
     }
     if (updateDto.targetResourceIds) {
       colDefinitions.push(this.getDefinition('target_resource_ids'));
-      binds.push(JSON.stringify(updateDto.targetResourceIds));
+      values.push(JSON.stringify(updateDto.targetResourceIds));
     }
     if (updateDto.cron) {
       colDefinitions.push(this.getDefinition('cron'));
-      binds.push(updateDto.cron);
+      values.push(updateDto.cron);
     }
     if (updateDto.executionType) {
       colDefinitions.push(this.getDefinition('execution_type'));
-      binds.push(updateDto.executionType);
+      values.push(updateDto.executionType);
     }
     if (updateDto.customLowerThreshold) {
       colDefinitions.push(this.getDefinition('custom_lower_threshold'));
-      binds.push(updateDto.customLowerThreshold.value);
+      values.push(updateDto.customLowerThreshold.value);
       colDefinitions.push(this.getDefinition('custom_lower_threshold_mode'));
-      binds.push(updateDto.customLowerThreshold.mode);
+      values.push(updateDto.customLowerThreshold.mode);
     }
     if (updateDto.customUpperThreshold) {
       colDefinitions.push(this.getDefinition('custom_upper_threshold'));
-      binds.push(updateDto.customUpperThreshold.value);
+      values.push(updateDto.customUpperThreshold.value);
       colDefinitions.push(this.getDefinition('custom_upper_threshold_mode'));
-      binds.push(updateDto.customUpperThreshold.mode);
+      values.push(updateDto.customUpperThreshold.mode);
     }
     if (updateDto.feedbackLowerThreshold) {
       colDefinitions.push(this.getDefinition('feedback_lower_threshold'));
-      binds.push(updateDto.feedbackLowerThreshold);
+      values.push(updateDto.feedbackLowerThreshold);
     }
     if (updateDto.feedbackUpperThreshold) {
       colDefinitions.push(this.getDefinition('feedback_upper_threshold'));
-      binds.push(updateDto.feedbackUpperThreshold);
+      values.push(updateDto.feedbackUpperThreshold);
     }
     if (updateDto.lastAlertSent) {
       colDefinitions.push(this.getDefinition('last_alert_sent'));
-      binds.push(updateDto.lastAlertSent);
+      values.push(updateDto.lastAlertSent);
     }
 
-    const text = getUpdateQueryText(this.matName, colDefinitions, [
-      `(${binds.map(() => '?').join(', ')})`,
-    ]);
-
-    return { text, binds, colDefinitions };
+    return { values, colDefinitions };
   };
 
   toEntity = (

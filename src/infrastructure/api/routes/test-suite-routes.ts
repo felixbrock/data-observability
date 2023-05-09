@@ -13,7 +13,8 @@ const dbo = app.resolve('dbo');
 const readTestSuiteController = new ReadTestSuiteController(
   app.resolve('readTestSuite'),
   getAccounts,
-  getSnowflakeProfile
+  getSnowflakeProfile,
+  dbo
 );
 
 const triggerTestSuiteExecutionController =

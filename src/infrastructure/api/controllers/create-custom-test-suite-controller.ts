@@ -1,6 +1,5 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
-import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   CreateCustomTestSuite,
@@ -16,17 +15,22 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from './shared/base-controller';
+import Dbo from '../../persistence/db/mongo-db';
 
 export default class CreateCustomTestSuiteController extends BaseController {
   readonly #createCustomTestSuite: CreateCustomTestSuite;
 
+  readonly #dbo: Dbo;
+
   constructor(
     createCustomTestSuite: CreateCustomTestSuite,
     getAccounts: GetAccounts,
-    getSnowflakeProfile: GetSnowflakeProfile
+    getSnowflakeProfile: GetSnowflakeProfile,
+    dbo: Dbo
   ) {
     super(getAccounts, getSnowflakeProfile);
     this.#createCustomTestSuite = createCustomTestSuite;
+    this.#dbo = dbo;
   }
 
   #buildRequestDto = (
@@ -79,17 +83,15 @@ export default class CreateCustomTestSuiteController extends BaseController {
 
       const auth = this.#buildAuthDto(getUserAccountInfoResult.value);
 
-      const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: CreateCustomTestSuiteResponseDto =
         await this.#createCustomTestSuite.execute({
           auth,
           req: requestDto,
-          connPool,
+          dbConnection: this.#dbo.dbConnection,
         });
 
-      await connPool.drain();
-      await connPool.clear();
+
 
       if (!useCaseResult.success) {
         return CreateCustomTestSuiteController.badRequest(res);

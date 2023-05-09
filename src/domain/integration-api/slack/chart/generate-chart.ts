@@ -4,12 +4,9 @@ import { Canvas, createCanvas } from 'canvas';
 import { EChartsOption, init, YAXisComponentOption } from 'echarts';
 import { appConfig } from '../../../../config';
 import IUseCase from '../../../services/use-case';
-import {
-  Binds,
-  IConnectionPool,
-} from '../../../snowflake-api/i-snowflake-api-repo';
-import { QuerySnowflake } from '../../../snowflake-api/query-snowflake';
+import GenerateChartRepo from '../../../../infrastructure/persistence/generate-chart-repo';
 import Result from '../../../value-types/transient-types/result';
+import { IDbConnection } from '../../../services/i-db';
 
 export interface ChartRepresentation {
   url: string;
@@ -48,7 +45,7 @@ export class GenerateChart
       GenerateChartRequestDto,
       GenerateChartResponseDto,
       null,
-      IConnectionPool
+      IDbConnection
     >
 {
   #getDefaultYAxis = (
@@ -61,10 +58,10 @@ export class GenerateChart
     max: `${maxBase + (maxBase - minBase) * 0.5}`,
   });
 
-  readonly #querySnowflake: QuerySnowflake;
+  readonly #repo: GenerateChartRepo;
 
-  constructor(querySnowflake: QuerySnowflake) {
-    this.#querySnowflake = querySnowflake;
+  constructor(generateChartRepo: GenerateChartRepo) {
+    this.#repo = generateChartRepo;
   }
 
   #getHistoryMinMax = (
@@ -204,13 +201,13 @@ export class GenerateChart
     [key: string]: unknown;
   }): TestHistoryDataPoint => {
     const {
-      VALUE: value,
-      TEST_SUITE_ID: testSuiteId,
-      EXECUTED_ON: executedOn,
-      VALUE_UPPER_BOUND: valueUpperBound,
-      VALUE_LOWER_BOUND: valueLowerBound,
-      IS_ANOMALY: isAnomaly,
-      USER_FEEDBACK_IS_ANOMALY: userFeedbackIsAnomaly,
+      value,
+      test_suite_id: testSuiteId,
+      executed_on: executedOn,
+      value_upper_bound: valueUpperBound,
+      value_lower_bound: valueLowerBound,
+      is_anomaly: isAnomaly,
+      user_feedback_is_anomaly: userFeedbackIsAnomaly,
     } = queryResultEntry;
 
     const isOptionalOfType = <T>(
@@ -224,7 +221,7 @@ export class GenerateChart
         | 'undefined'
         | 'object'
         | 'function'
-    ): val is T => val === null || typeof val === targetType;
+    ): val is T => val === undefined || typeof val === targetType;
 
     const isTimestamp = (obj: unknown): obj is Date =>
       !!obj && typeof obj === 'object' && obj.constructor.name === 'Date';
@@ -254,38 +251,16 @@ export class GenerateChart
 
   #queryTestHistory = async (
     testSuiteId: string,
-    connPool: IConnectionPool
+    dbConnection: IDbConnection,
+    callerOrgId: string
   ): Promise<TestHistoryDataPoint[]> => {
-    const binds: Binds = [testSuiteId];
 
-    const whereCondition = `test_history.test_suite_id = ?`;
+    const queryResult = await this.#repo.readTestHistory(testSuiteId, dbConnection, callerOrgId);
 
-    const queryText = `select 
-        test_history.test_suite_id as test_suite_id,
-        test_history.value as value,
-        test_executions.executed_on as executed_on,
-        test_results.expected_value_upper_bound as value_upper_bound,
-        test_results.expected_value_lower_bound as value_lower_bound,
-        test_history.is_anomaly as is_anomaly,
-        test_history.user_feedback_is_anomaly as user_feedback_is_anomaly 
-      from cito.observability.test_history as test_history
-      inner join cito.observability.test_executions as test_executions
-        on test_history.execution_id = test_executions.id
-      left join cito.observability.test_results as test_results
-        on test_history.execution_id = test_results.execution_id
-      where ${whereCondition}
-      order by test_executions.executed_on desc limit 200;`;
-
-    const queryResult = await this.#querySnowflake.execute({
-      req: { queryText, binds },
-      connPool,
-    });
-
-    if (!queryResult.success) throw new Error(queryResult.error);
-    if (!queryResult.value)
+    if (!queryResult)
       throw new Error('Missing history data point query value');
 
-    const historyDataPoints = queryResult.value
+    const historyDataPoints = queryResult
       .reverse()
       .map(
         (el: { [key: string]: unknown }): TestHistoryDataPoint =>
@@ -336,14 +311,16 @@ export class GenerateChart
 
   async execute(props: {
     req: GenerateChartRequestDto;
-    connPool: IConnectionPool;
+    dbConnection: IDbConnection,
+    callerOrgId: string
   }): Promise<GenerateChartResponseDto> {
-    const { req, connPool } = props;
+    const { req, dbConnection, callerOrgId } = props;
 
     try {
       const historyDataPoints = await this.#queryTestHistory(
         req.testSuiteId,
-        connPool
+        dbConnection,
+        callerOrgId
       );
 
       const chart = this.#buildChart(historyDataPoints);

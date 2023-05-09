@@ -98,6 +98,7 @@ export default class TriggerQualTestSuiteExecutionController extends BaseControl
 
       await connPool.drain();
       await connPool.clear();
+      
 
       if (!useCaseResult.success) {
         return TriggerQualTestSuiteExecutionController.badRequest(res);

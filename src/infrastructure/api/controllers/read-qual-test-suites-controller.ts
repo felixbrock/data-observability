@@ -1,6 +1,5 @@
 // TODO: Violation of control flow. DI for express instead
 import { Request, Response } from 'express';
-import { createPool } from 'snowflake-sdk';
 import {
   ReadQualTestSuites,
   ReadQualTestSuitesAuthDto,
@@ -16,17 +15,22 @@ import {
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import Result from '../../../domain/value-types/transient-types/result';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
+import Dbo from '../../persistence/db/mongo-db';
 
 export default class ReadQualTestSuitesController extends BaseController {
   readonly #readQualTestSuites: ReadQualTestSuites;
 
+  readonly #dbo: Dbo;
+
   constructor(
     readQualTestSuites: ReadQualTestSuites,
     getAccounts: GetAccounts,
-    getSnowflakeProfile: GetSnowflakeProfile
+    getSnowflakeProfile: GetSnowflakeProfile,
+    dbo: Dbo
   ) {
     super(getAccounts, getSnowflakeProfile);
     this.#readQualTestSuites = readQualTestSuites;
+    this.#dbo = dbo;
   }
 
   #buildRequestDto = (httpRequest: Request): ReadQualTestSuitesRequestDto => {
@@ -79,20 +83,18 @@ export default class ReadQualTestSuitesController extends BaseController {
         this.#buildRequestDto(req);
       const authDto: ReadQualTestSuitesAuthDto = this.#buildAuthDto(
         jwt,
-        getUserAccountInfoResult.value
+        getUserAccountInfoResult.value,
       );
 
-      const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: ReadQualTestSuitesResponseDto =
         await this.#readQualTestSuites.execute({
           req: requestDto,
           auth: authDto,
-          connPool,
+          dbConnection: this.#dbo.dbConnection,
         });
 
-      await connPool.drain();
-      await connPool.clear();
+      
 
       if (!useCaseResult.success) {
         return ReadQualTestSuitesController.badRequest(res);

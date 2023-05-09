@@ -3,10 +3,10 @@ import Result from '../value-types/transient-types/result';
 import { ExecutionType } from '../value-types/execution-type';
 import { ITestSuiteRepo } from './i-test-suite-repo';
 import TestSuiteRepo from '../../infrastructure/persistence/test-suite-repo';
-import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 import { TestSuite } from '../entities/quant-test-suite';
 import { updateSchedules } from '../services/schedule';
 import { CustomThresholdMode } from '../value-types/custom-threshold-mode';
+import { IDbConnection } from '../services/i-db';
 
 interface UpdateObject {
   id: string;
@@ -36,7 +36,7 @@ export class UpdateTestSuites
       UpdateTestSuitesRequestDto,
       UpdateTestSuitesResponseDto,
       UpdateTestSuitesAuthDto,
-      IConnectionPool
+      IDbConnection
     >
 {
   readonly #repo: ITestSuiteRepo;
@@ -84,18 +84,18 @@ export class UpdateTestSuites
 
   async execute(props: {
     req: UpdateTestSuitesRequestDto;
-    connPool: IConnectionPool;
     auth: UpdateTestSuitesAuthDto;
+    dbConnection: IDbConnection
   }): Promise<UpdateTestSuitesResponseDto> {
-    const { req, connPool, auth } = props;
+    const { req, auth, dbConnection } = props;
 
     try {
       if (req.updateObjects.every((el) => !el.props)) return Result.ok();
 
       const testSuites = await this.#repo.findBy(
         { ids: req.updateObjects.map((el) => el.id), deleted: false },
-        connPool
-      );
+        dbConnection, auth.callerOrgId, true
+      ) as TestSuite[];
 
       if (req.updateObjects.length !== testSuites.length)
         throw new Error('Not all requested (to be updated) test suites found');
@@ -112,7 +112,7 @@ export class UpdateTestSuites
 
       const replaceResult = await this.#repo.replaceMany(
         replacements,
-        connPool
+        dbConnection, auth.callerOrgId
       );
 
       await updateSchedules(

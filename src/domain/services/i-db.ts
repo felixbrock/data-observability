@@ -1,6 +1,7 @@
+import { Db } from 'mongodb';
 import { IConnectionPool } from '../snowflake-api/i-snowflake-api-repo';
 
-export type IDbConnection = unknown;
+export type IDbConnection = Db;
 
 export interface IDb {
   sfConnPool: IConnectionPool;

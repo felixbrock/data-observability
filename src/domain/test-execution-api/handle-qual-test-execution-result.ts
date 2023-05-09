@@ -1,11 +1,10 @@
 // todo - clean architecture violation
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
-import { IDb, IDbConnection } from '../services/i-db';
+import { IDbConnection } from '../services/i-db';
 import { QualTestAlertDto } from '../integration-api/slack/qual-test-alert-dto';
 import { SendQualTestSlackAlert } from '../integration-api/slack/send-qual-test-alert';
 import { QualTestExecutionResultDto } from './qual-test-execution-result-dto';
-import { CreateQualTestResult } from '../qual-test-result/create-qual-test-result';
 import { QualTestType } from '../entities/qual-test-suite';
 
 export type HandleQualTestExecutionResultRequestDto =
@@ -24,21 +23,17 @@ export class HandleQualTestExecutionResult
       HandleQualTestExecutionResultRequestDto,
       HandleQualTestExecutionResultResponseDto,
       HandleQualTestExecutionResultAuthDto,
-      IDb
+      IDbConnection
     >
 {
   readonly #sendQualTestSlackAlert: SendQualTestSlackAlert;
 
-  readonly #createQualTestResult: CreateQualTestResult;
-
-  #dbConnection: IDbConnection;
+  #dbConnection?: IDbConnection;
 
   constructor(
     sendQualTestSlackAlert: SendQualTestSlackAlert,
-    createQualTestResult: CreateQualTestResult
   ) {
     this.#sendQualTestSlackAlert = sendQualTestSlackAlert;
-    this.#createQualTestResult = createQualTestResult;
   }
 
   #explain = (
@@ -93,29 +88,32 @@ export class HandleQualTestExecutionResult
       );
   };
 
-  #createTestResult = async (
-    testExecutionResult: QualTestExecutionResultDto
-  ): Promise<void> => {
-    const createQualTestResultResult = await this.#createQualTestResult.execute(
-      {
-        req: {
-          executionId: testExecutionResult.executionId,
-          testData: testExecutionResult.testData,
-          alertData: testExecutionResult.alertData
-            ? { alertId: testExecutionResult.alertData.alertId }
-            : undefined,
-          testSuiteId: testExecutionResult.testSuiteId,
-          testType: testExecutionResult.testType,
-          targetResourceId: testExecutionResult.targetResourceId,
-          targetOrgId: testExecutionResult.organizationId,
-        },
-        dbConnection: this.#dbConnection,
-      }
-    );
+  // #createTestResult = async (
+  //   testExecutionResult: QualTestExecutionResultDto
+  // ): Promise<void> => {
+  //   if (!this.#dbConnection)
+  //     throw new Error('Missing db connection');
 
-    if (!createQualTestResultResult.success)
-      throw new Error(createQualTestResultResult.error);
-  };
+  //   const createQualTestResultResult = await this.#createQualTestResult.execute(
+  //     {
+  //       req: {
+  //         executionId: testExecutionResult.executionId,
+  //         testData: testExecutionResult.testData,
+  //         alertData: testExecutionResult.alertData
+  //           ? { alertId: testExecutionResult.alertData.alertId }
+  //           : undefined,
+  //         testSuiteId: testExecutionResult.testSuiteId,
+  //         testType: testExecutionResult.testType,
+  //         targetResourceId: testExecutionResult.targetResourceId,
+  //         targetOrgId: testExecutionResult.organizationId,
+  //       },
+  //       dbConnection: this.#dbConnection,
+  //     }
+  //   );
+
+  //   if (!createQualTestResultResult.success)
+  //     throw new Error(createQualTestResultResult.error);
+  // };
 
   #sleepModeActive = (lastAlertSent: string): boolean => {
     const lastAlertTimestamp = new Date(lastAlertSent);
@@ -129,14 +127,14 @@ export class HandleQualTestExecutionResult
   async execute(props: {
     req: HandleQualTestExecutionResultRequestDto;
     auth: HandleQualTestExecutionResultAuthDto;
-    db: IDb;
+    dbConnection: IDbConnection;
   }): Promise<HandleQualTestExecutionResultResponseDto> {
-    const { req, auth, db } = props;
+    const { req, auth, dbConnection } = props;
 
     try {
-      this.#dbConnection = db.mongoConn;
+      this.#dbConnection = dbConnection;
 
-      await this.#createTestResult(req);
+      // await this.#createTestResult(req);
 
       if (req.lastAlertSent && this.#sleepModeActive(req.lastAlertSent)) {
         console.log(

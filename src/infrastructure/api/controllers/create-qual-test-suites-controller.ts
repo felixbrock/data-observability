@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
 import {
@@ -14,17 +13,22 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from './shared/base-controller';
+import Dbo from '../../persistence/db/mongo-db';
 
 export default class CreateQualTestSuitesController extends BaseController {
   readonly #createQualTestSuites: CreateQualTestSuites;
 
+  readonly #dbo: Dbo;
+
   constructor(
     createQualTestSuites: CreateQualTestSuites,
     getAccounts: GetAccounts,
-    getSnowflakeProfile: GetSnowflakeProfile
+    getSnowflakeProfile: GetSnowflakeProfile,
+    dbo: Dbo
   ) {
     super(getAccounts, getSnowflakeProfile);
     this.#createQualTestSuites = createQualTestSuites;
+    this.#dbo = dbo;
   }
 
   #buildRequestDto = (
@@ -62,17 +66,15 @@ export default class CreateQualTestSuitesController extends BaseController {
       const requestDto: CreateQualTestSuitesRequestDto =
         this.#buildRequestDto(req);
 
-      const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: CreateQualTestSuitesResponseDto =
         await this.#createQualTestSuites.execute({
           req: requestDto,
           auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
-          connPool,
+          dbConnection: this.#dbo.dbConnection,
         });
 
-      await connPool.drain();
-      await connPool.clear();
+      
 
       if (!useCaseResult.success) {
         return CreateQualTestSuitesController.badRequest(res);

@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { createPool } from 'snowflake-sdk';
 import { GetAccounts } from '../../../domain/account-api/get-accounts';
 import {
   UpdateCustomTestSuite,
@@ -15,17 +14,22 @@ import {
   CodeHttp,
   UserAccountInfo,
 } from './shared/base-controller';
+import Dbo from '../../persistence/db/mongo-db';
 
 export default class UpdateCustomTestSuiteController extends BaseController {
   readonly #updateCustomTestSuite: UpdateCustomTestSuite;
 
+  readonly #dbo: Dbo;
+
   constructor(
     updateCustomTestSuite: UpdateCustomTestSuite,
     getAccounts: GetAccounts,
-    getSnowflakeProfile: GetSnowflakeProfile
+    getSnowflakeProfile: GetSnowflakeProfile,
+    dbo: Dbo
   ) {
     super(getAccounts, getSnowflakeProfile);
     this.#updateCustomTestSuite = updateCustomTestSuite;
+    this.#dbo = dbo;
   }
 
   #buildRequestDto = (
@@ -89,17 +93,15 @@ export default class UpdateCustomTestSuiteController extends BaseController {
       if (!requestDto.props)
         return UpdateCustomTestSuiteController.ok(res, null, CodeHttp.OK);
 
-      const connPool = await this.createConnectionPool(jwt, createPool);
 
       const useCaseResult: UpdateCustomTestSuiteResponseDto =
         await this.#updateCustomTestSuite.execute({
           auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
           req: requestDto,
-          connPool,
+          dbConnection: this.#dbo.dbConnection,
         });
 
-      await connPool.drain();
-      await connPool.clear();
+      
 
       if (!useCaseResult.success) {
         return UpdateCustomTestSuiteController.badRequest(res);
