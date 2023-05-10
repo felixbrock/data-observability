@@ -65,7 +65,7 @@ export class ExecuteTest
 
     try {
       // const testExecutionResult = JSON.parse(
-      //   '{"testSuiteId": "someCustomTestSuiteId", "testType": "Custom", "executionId": "da93c863-9c04-4dd6-b743-243716dae7af", "organizationId": "631789bf27518f97cf1c82b7", "name": "CustomColumnDistribution", "targetResourceIds": ["randomTRId"], "isWarmup": false, "testData": {"executedOn": "2023-05-05T13:51:08.733361", "detectedValue": 567, "expectedUpperBound": 500.7, "expectedLowerBound": 400.4, "modifiedZScore": null, "deviation": 0.0, "anomaly": {"importance": 0.6610169491525424}}, "alertData": {"alertId": "d490fa81-ecb6-479a-a4f2-781d90cb20e4", "message": "<__base_url__?metric=MEDIAN>", "expectedValue": 567.0}, "lastAlertSent": null}'
+      //   '{"testSuiteId": "someCustomTestSuiteId", "testType": "Custom", "executionId": "da93c863-9c04-4dd6-b743-243716dae7af", "organizationId": "631789bf27518f97cf1c82b7", "name": "CustomColumnDistribution", "targetResourceIds": ["randomTRId"], "isWarmup": false, "testData": {"executedOn": "2023-05-05T13:51:08.733361", "detectedValue": 567, "expectedUpperBound": 500.7, "expectedLowerBound": 400.4, "modifiedZScore": null, "deviation": 0.0, "anomaly": {"importance": 0.6610169491525424}}, "alertData": {"alertId": "d490fa81-ecb6-479a-a4f2-781d90cb20e4", "message": "<__base_url__?metric=MEDIAN>", "expectedValue": 567.0}, "lastAlertSent": "2023-05-10T11:51:08.733361"}'
       // );
 
       const testExecutionResult = await this.#testExecutionApiRepo.executeTest(
@@ -89,24 +89,10 @@ export class ExecuteTest
       ): obj is QuantTestExecutionResultDto =>
         !!obj && typeof obj === 'object' && 'isWarmup' in obj;
 
-      let ignoreAlert = false;
-      if (testExecutionResult.lastAlertSent) {
-        const lastAlertTimestamp = new Date(testExecutionResult.lastAlertSent);
-        const now = new Date();
-        const timeElapsedMillis = now.getTime() - lastAlertTimestamp.getTime();
-        const timeElapsedHrs = timeElapsedMillis / (1000 * 60 * 60);
-
-        if (timeElapsedHrs < 24) {
-          testExecutionResult.alertData = undefined;
-          ignoreAlert = true;
-        }
-      }
-
       if (instanceOfCustomTestExecutionResultDto(testExecutionResult)) {
         if (
           testExecutionResult.testData &&
           testExecutionResult.testData.anomaly &&
-          !ignoreAlert &&
           !testExecutionResult.alertData
         )
           throw new Error('Custom test result obj structural mismatch');
@@ -120,7 +106,6 @@ export class ExecuteTest
         if (
           testExecutionResult.testData &&
           testExecutionResult.testData.anomaly &&
-          !ignoreAlert &&
           !testExecutionResult.alertData
         )
           throw new Error('Quant test result obj structural mismatch');
@@ -133,7 +118,6 @@ export class ExecuteTest
         if (
           testExecutionResult.testData &&
           !testExecutionResult.testData.isIdentical &&
-          !ignoreAlert &&
           !testExecutionResult.alertData
         )
           throw new Error('Qual test result obj structural mismatch');

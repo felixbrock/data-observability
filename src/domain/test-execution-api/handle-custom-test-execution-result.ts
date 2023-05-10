@@ -140,6 +140,15 @@ export class HandleCustomTestExecutionResult
       );
   };
 
+  #sleepModeActive = (lastAlertSent: string): boolean => {
+    const lastAlertTimestamp = new Date(lastAlertSent);
+    const now = new Date();
+    const timeElapsedMillis = now.getTime() - lastAlertTimestamp.getTime();
+    const timeElapsedHrs = timeElapsedMillis / (1000 * 60 * 60);
+
+    return timeElapsedHrs < 24;
+  };
+
   async execute(props: {
     req: HandleCustomTestExecutionResultRequestDto;
     auth: HandleCustomTestExecutionResultAuthDto;
@@ -150,8 +159,15 @@ export class HandleCustomTestExecutionResult
     try {
       this.#dbConnection = dbConnection;
 
+      if (req.lastAlertSent && this.#sleepModeActive(req.lastAlertSent)) {
+        console.log(
+          `Sleep mode active. Not sending alert for ${req.executionId}`
+        );
+        return Result.ok();
+      }
+
       if (!req.testData || (!req.testData.anomaly && !req.alertData) || 
-        (req.testData.anomaly && req.lastAlertSent && !req.alertData))
+        (req.testData.anomaly && !req.alertData))
         
         return Result.ok();
 
