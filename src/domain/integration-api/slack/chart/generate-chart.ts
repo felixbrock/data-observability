@@ -254,18 +254,18 @@ export class GenerateChart
     dbConnection: IDbConnection,
     callerOrgId: string
   ): Promise<TestHistoryDataPoint[]> => {
+    const queryResult = await this.#repo.readTestHistory(
+      testSuiteId,
+      dbConnection,
+      callerOrgId
+    );
 
-    const queryResult = await this.#repo.readTestHistory(testSuiteId, dbConnection, callerOrgId);
+    if (!queryResult) throw new Error('Missing history data point query value');
 
-    if (!queryResult)
-      throw new Error('Missing history data point query value');
-
-    const historyDataPoints = queryResult
-      .reverse()
-      .map(
-        (el: { [key: string]: unknown }): TestHistoryDataPoint =>
-          this.#toTestHistoryDataPoint(el)
-      );
+    const historyDataPoints = queryResult.map(
+      (el: { [key: string]: unknown }): TestHistoryDataPoint =>
+        this.#toTestHistoryDataPoint(el)
+    );
 
     return historyDataPoints;
   };
@@ -311,8 +311,8 @@ export class GenerateChart
 
   async execute(props: {
     req: GenerateChartRequestDto;
-    dbConnection: IDbConnection,
-    callerOrgId: string
+    dbConnection: IDbConnection;
+    callerOrgId: string;
   }): Promise<GenerateChartResponseDto> {
     const { req, dbConnection, callerOrgId } = props;
 
