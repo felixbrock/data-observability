@@ -4,9 +4,10 @@ import { Canvas, createCanvas } from 'canvas';
 import { EChartsOption, init, YAXisComponentOption } from 'echarts';
 import { appConfig } from '../../../../config';
 import IUseCase from '../../../services/use-case';
-import GenerateChartRepo from '../../../../infrastructure/persistence/generate-chart-repo';
 import Result from '../../../value-types/transient-types/result';
 import { IDbConnection } from '../../../services/i-db';
+import CustomQueryRepo from '../../../../infrastructure/persistence/custom-query-repo';
+import { ICustomQueryRepo } from '../../../custom-query/i-custom-query-repo';
 
 export interface ChartRepresentation {
   url: string;
@@ -58,10 +59,10 @@ export class GenerateChart
     max: `${maxBase + (maxBase - minBase) * 0.5}`,
   });
 
-  readonly #repo: GenerateChartRepo;
+  readonly #repo: ICustomQueryRepo;
 
-  constructor(generateChartRepo: GenerateChartRepo) {
-    this.#repo = generateChartRepo;
+  constructor(customQueryRepo: CustomQueryRepo) {
+    this.#repo = customQueryRepo;
   }
 
   #getHistoryMinMax = (
@@ -254,10 +255,65 @@ export class GenerateChart
     dbConnection: IDbConnection,
     callerOrgId: string
   ): Promise<TestHistoryDataPoint[]> => {
+    const pipeline = [
+      {
+        $lookup: {
+          from: `test_executions_${callerOrgId}`,
+          localField: 'execution_id',
+          foreignField: 'id',
+          as: 'test_executions',
+        },
+      },
+      {
+        $unwind: {
+          path: '$test_executions',
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $lookup: {
+          from: `test_results_${callerOrgId}`,
+          localField: 'execution_id',
+          foreignField: 'execution_id',
+          as: 'test_results',
+        },
+      },
+      {
+        $unwind: {
+          path: '$test_results',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $match: {
+          test_suite_id: testSuiteId,
+        },
+      },
+      {
+        $project: {
+          test_suite_id: 1,
+          value: 1,
+          executed_on: '$test_executions.executed_on',
+          value_upper_bound: '$test_results.expected_value_upper_bound',
+          value_lower_bound: '$test_results.expected_value_lower_bound',
+          is_anomaly: 1,
+          user_feedback_is_anomaly: 1,
+        },
+      },
+      {
+        $sort: {
+          executed_on: -1,
+        },
+      },
+      {
+        $limit: 200,
+      },
+    ];
+
     const queryResult = await this.#repo.readTestHistory(
-      testSuiteId,
-      dbConnection,
-      callerOrgId
+      pipeline,
+      callerOrgId,
+      dbConnection
     );
 
     if (!queryResult) throw new Error('Missing history data point query value');
