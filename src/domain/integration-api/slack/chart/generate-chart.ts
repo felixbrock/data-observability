@@ -318,10 +318,12 @@ export class GenerateChart
 
     if (!queryResult) throw new Error('Missing history data point query value');
 
-    const historyDataPoints = queryResult.map(
-      (el: { [key: string]: unknown }): TestHistoryDataPoint =>
-        this.#toTestHistoryDataPoint(el)
-    );
+    const historyDataPoints = queryResult
+      .reverse()
+      .map(
+        (el: { [key: string]: unknown }): TestHistoryDataPoint =>
+          this.#toTestHistoryDataPoint(el)
+      );
 
     return historyDataPoints;
   };
