@@ -130,7 +130,7 @@ export default class QualTestSuiteRepo
   buildFindByQuery = (queryDto: QualTestSuiteQueryDto): Query => {
     const values: (string | number | boolean)[] = [];
     const filter: any = {};
-    filter.deleted_at = queryDto.deleted ? { $ne: null } : null;
+    filter.deleted_at = { deleted_at: queryDto.deleted ? { $ne: null } : null};
 
     if (queryDto.activated !== undefined) {
       values.push(queryDto.activated);
