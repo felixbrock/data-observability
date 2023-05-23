@@ -2,10 +2,11 @@ import { Document } from 'mongodb';
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { IDbConnection } from '../services/i-db';
-import AlertHistoryRepo from '../../infrastructure/persistence/alert-history-repo';
+import CustomQueryRepo from '../../infrastructure/persistence/custom-query-repo';
+import { ICustomQueryRepo } from './i-custom-query-repo';
 
 export interface ReadAlertHistoryRequestDto {
-    testSuiteIds: string[]
+  testSuiteIds: string[];
 }
 
 export type ReadAlertHistoryAuthDto = {
@@ -23,13 +24,10 @@ export class ReadAlertHistory
       IDbConnection
     >
 {
+  readonly #repo: ICustomQueryRepo;
 
-  readonly #repo: AlertHistoryRepo;
-
-  constructor(
-    alertHistoryRepo: AlertHistoryRepo
-  ) {
-    this.#repo = alertHistoryRepo;
+  constructor(customQueryRepo: CustomQueryRepo) {
+    this.#repo = customQueryRepo;
   }
 
   async execute(props: {
@@ -40,7 +38,11 @@ export class ReadAlertHistory
     const { req, auth, dbConnection } = props;
 
     try {
-      const results = await this.#repo.readAlertHistory(req.testSuiteIds, dbConnection, auth.callerOrgId);
+      const results = await this.#repo.readAlertHistory(
+        req.testSuiteIds,
+        dbConnection,
+        auth.callerOrgId
+      );
 
       return Result.ok(results);
     } catch (error: unknown) {

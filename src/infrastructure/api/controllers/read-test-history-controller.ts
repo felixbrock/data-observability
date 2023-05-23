@@ -2,8 +2,8 @@ import { Request, Response } from 'express';
 import {
   ReadTestHistory,
   ReadTestHistoryRequestDto,
-  ReadTestHistoryResponseDto
-} from '../../../domain/front-end-data-structure/read-test-history';
+  ReadTestHistoryResponseDto,
+} from '../../../domain/custom-query/read-test-history';
 
 import {
   BaseController,
@@ -35,8 +35,8 @@ export default class ReadTestHistoryController extends BaseController {
     const { ids } = httpRequest.query;
 
     if (ids === undefined || typeof ids !== 'string') {
-        throw new Error("Missing ids list");
-    };
+      throw new Error('Missing ids list');
+    }
 
     const idsArray = JSON.parse(ids);
 
@@ -66,7 +66,9 @@ export default class ReadTestHistoryController extends BaseController {
         throw new ReferenceError('Authorization failed');
 
       if (!getUserAccountInfoResult.value.callerOrgId)
-        throw new ReferenceError('Unauthorized - Caller organization id missing');
+        throw new ReferenceError(
+          'Unauthorized - Caller organization id missing'
+        );
 
       const requestDto: ReadTestHistoryRequestDto = this.#buildRequestDto(req);
 
@@ -76,8 +78,6 @@ export default class ReadTestHistoryController extends BaseController {
           auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
           dbConnection: this.#dbo.dbConnection,
         });
-
-      
 
       if (!useCaseResult.success) {
         return ReadTestHistoryController.badRequest(res);

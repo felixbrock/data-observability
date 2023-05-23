@@ -3,7 +3,7 @@ import {
   ReadAlertHistory,
   ReadAlertHistoryRequestDto,
   ReadAlertHistoryResponseDto,
-} from '../../../domain/front-end-data-structure/read-alert-history';
+} from '../../../domain/custom-query/read-alert-history';
 
 import {
   BaseController,
@@ -35,8 +35,8 @@ export default class ReadAlertHistoryController extends BaseController {
     const { ids } = httpRequest.query;
 
     if (ids === undefined || typeof ids !== 'string') {
-        throw new Error("Missing ids list");
-    };
+      throw new Error('Missing ids list');
+    }
 
     const idsArray = JSON.parse(ids);
 
@@ -66,10 +66,11 @@ export default class ReadAlertHistoryController extends BaseController {
         throw new ReferenceError('Authorization failed');
 
       if (!getUserAccountInfoResult.value.callerOrgId)
-        throw new ReferenceError('Unauthorized - Caller organization id missing');
+        throw new ReferenceError(
+          'Unauthorized - Caller organization id missing'
+        );
 
       const requestDto: ReadAlertHistoryRequestDto = this.#buildRequestDto(req);
-
 
       const useCaseResult: ReadAlertHistoryResponseDto =
         await this.#readAlertHistory.execute({
@@ -77,8 +78,6 @@ export default class ReadAlertHistoryController extends BaseController {
           auth: { callerOrgId: getUserAccountInfoResult.value.callerOrgId },
           dbConnection: this.#dbo.dbConnection,
         });
-
-      
 
       if (!useCaseResult.success) {
         return ReadAlertHistoryController.badRequest(res);

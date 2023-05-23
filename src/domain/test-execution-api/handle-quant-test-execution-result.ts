@@ -116,8 +116,8 @@ export class HandleQuantTestExecutionResult
   #sendAlert = async (
     testExecutionResult: QuantTestExecutionResultDto,
     jwt: string,
-    dbConnection: IDbConnection,
-    ): Promise<void> => {
+    dbConnection: IDbConnection
+  ): Promise<void> => {
     if (!testExecutionResult.testData)
       throw new Error('Missing test data. Previous checks indicated test data');
     if (!testExecutionResult.testData.anomaly)
@@ -130,7 +130,7 @@ export class HandleQuantTestExecutionResult
     const generateChartRes = await this.#generateChart.execute({
       req: { testSuiteId: testExecutionResult.testSuiteId },
       dbConnection,
-      callerOrgId: testExecutionResult.organizationId
+      callerOrgId: testExecutionResult.organizationId,
     });
 
     if (!generateChartRes.success) throw new Error(generateChartRes.error);
@@ -197,35 +197,6 @@ export class HandleQuantTestExecutionResult
       );
   };
 
-  // #createTestResult = async (
-  //   testExecutionResult: QuantTestExecutionResultDto,
-  //   dbConn: IDbConnection
-  // ): Promise<void> => {
-  //   const { testData } = testExecutionResult;
-
-  //   if (!testData && !testExecutionResult.isWarmup)
-  //     throw new Error('Test result data misalignment');
-
-  //   const createQuantTestResultResult =
-  //     await this.#createQuantTestResult.execute({
-  //       req: {
-  //         isWarmup: testExecutionResult.isWarmup,
-  //         executionId: testExecutionResult.executionId,
-  //         testData,
-  //         alertData: testExecutionResult.alertData
-  //           ? { alertId: testExecutionResult.alertData.alertId }
-  //           : undefined,
-  //         testSuiteId: testExecutionResult.testSuiteId,
-  //         targetResourceId: testExecutionResult.targetResourceId,
-  //         targetOrgId: testExecutionResult.organizationId,
-  //       },
-  //       dbConnection: dbConn,
-  //     });
-
-  //   if (!createQuantTestResultResult.success)
-  //     throw new Error(createQuantTestResultResult.error);
-  // };
-
   #sleepModeActive = (lastAlertSent: string): boolean => {
     const lastAlertTimestamp = new Date(lastAlertSent);
     const now = new Date();
@@ -244,8 +215,6 @@ export class HandleQuantTestExecutionResult
 
     try {
       this.#dbConnection = dbConnection;
-
-      // await this.#createTestResult(req, dbConnection);
 
       if (req.lastAlertSent && this.#sleepModeActive(req.lastAlertSent)) {
         console.log(
