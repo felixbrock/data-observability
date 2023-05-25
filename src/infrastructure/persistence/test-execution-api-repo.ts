@@ -22,6 +22,7 @@ export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
 
       const config: AxiosRequestConfig = {
         headers: { Authorization: `Bearer ${jwt}` },
+        timeout: 1000 * 240,
       };
 
       const response = await axios.post(
