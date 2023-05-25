@@ -58,7 +58,7 @@ export class HandleQuantTestExecutionResult
     const targetIdentifier = `${target.type} ${target.templateUrl}`;
     const explanationPrefix = `in ${targetIdentifier} detected`;
     const buildAnomalyExplanation = (characteristic: string): string =>
-      `That's unusually ${characteristic}, with a deviation of ${fixedDeviation}% based on an expected average value of ${fixedExpectedValue}`;
+      `That's unusually ${characteristic}, with a deviation of ${fixedDeviation}% based on an expected average median value of ${fixedExpectedValue}`;
 
     switch (testType) {
       case 'MaterializationRowCount':
@@ -73,11 +73,11 @@ export class HandleQuantTestExecutionResult
         return `${
           targetIdentifier[0].toUpperCase() + targetIdentifier.slice(1)
         } was modified ${fixedValue} minutes ago. ${buildAnomalyExplanation(
-          deviation >= 0 ? 'early' : 'late'
+          deviation >= 0 ? 'long ago' : 'recent'
         )}.`;
       case 'ColumnFreshness':
         return `The most recent timestamp in ${targetIdentifier} is representing an event that occurred ${fixedValue} min ago. ${buildAnomalyExplanation(
-          deviation >= 0 ? 'early' : 'late'
+          deviation >= 0 ? 'long ago' : 'recent'
         )}.`;
       case 'ColumnCardinality':
         return `${fixedValue} unique values ${explanationPrefix}. ${buildAnomalyExplanation(
@@ -100,7 +100,7 @@ export class HandleQuantTestExecutionResult
           deviation >= 0 ? 'high' : 'low'
         )}`;
       case 'ColumnDistribution':
-        return `An average value of ${fixedValue} was detected for ${targetIdentifier}. ${buildAnomalyExplanation(
+        return `An average median value of ${fixedValue} was detected for ${targetIdentifier}. ${buildAnomalyExplanation(
           deviation >= 0 ? 'high' : 'low'
         )}.`;
       default:
@@ -116,8 +116,8 @@ export class HandleQuantTestExecutionResult
   #sendAlert = async (
     testExecutionResult: QuantTestExecutionResultDto,
     jwt: string,
-    dbConnection: IDbConnection,
-    ): Promise<void> => {
+    dbConnection: IDbConnection
+  ): Promise<void> => {
     if (!testExecutionResult.testData)
       throw new Error('Missing test data. Previous checks indicated test data');
     if (!testExecutionResult.testData.anomaly)
@@ -130,7 +130,7 @@ export class HandleQuantTestExecutionResult
     const generateChartRes = await this.#generateChart.execute({
       req: { testSuiteId: testExecutionResult.testSuiteId },
       dbConnection,
-      callerOrgId: testExecutionResult.organizationId
+      callerOrgId: testExecutionResult.organizationId,
     });
 
     if (!generateChartRes.success) throw new Error(generateChartRes.error);
@@ -197,35 +197,6 @@ export class HandleQuantTestExecutionResult
       );
   };
 
-  // #createTestResult = async (
-  //   testExecutionResult: QuantTestExecutionResultDto,
-  //   dbConn: IDbConnection
-  // ): Promise<void> => {
-  //   const { testData } = testExecutionResult;
-
-  //   if (!testData && !testExecutionResult.isWarmup)
-  //     throw new Error('Test result data misalignment');
-
-  //   const createQuantTestResultResult =
-  //     await this.#createQuantTestResult.execute({
-  //       req: {
-  //         isWarmup: testExecutionResult.isWarmup,
-  //         executionId: testExecutionResult.executionId,
-  //         testData,
-  //         alertData: testExecutionResult.alertData
-  //           ? { alertId: testExecutionResult.alertData.alertId }
-  //           : undefined,
-  //         testSuiteId: testExecutionResult.testSuiteId,
-  //         targetResourceId: testExecutionResult.targetResourceId,
-  //         targetOrgId: testExecutionResult.organizationId,
-  //       },
-  //       dbConnection: dbConn,
-  //     });
-
-  //   if (!createQuantTestResultResult.success)
-  //     throw new Error(createQuantTestResultResult.error);
-  // };
-
   #sleepModeActive = (lastAlertSent: string): boolean => {
     const lastAlertTimestamp = new Date(lastAlertSent);
     const now = new Date();
@@ -234,7 +205,7 @@ export class HandleQuantTestExecutionResult
 
     return timeElapsedHrs < 24;
   };
-
+  
   async execute(props: {
     req: HandleQuantTestExecutionResultRequestDto;
     auth: HandleQuantTestExecutionResultAuthDto;
@@ -245,8 +216,6 @@ export class HandleQuantTestExecutionResult
     try {
       this.#dbConnection = dbConnection;
 
-      // await this.#createTestResult(req, dbConnection);
-
       if (req.lastAlertSent && this.#sleepModeActive(req.lastAlertSent)) {
         console.log(
           `Sleep mode active. Not sending alert for ${req.executionId}`
@@ -254,9 +223,11 @@ export class HandleQuantTestExecutionResult
         return Result.ok();
       }
 
-      if (!req.testData || (!req.testData.anomaly && !req.alertData) || 
-        (req.testData.anomaly && !req.alertData))
-        
+      if (
+        !req.testData ||
+        (!req.testData.anomaly && !req.alertData) ||
+        (req.testData.anomaly && !req.alertData)
+      )
         return Result.ok();
 
       console.log('Anomaly detected, sending alert');

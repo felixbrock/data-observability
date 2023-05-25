@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import v1Router from './routes/v1';
 import iocRegister from '../ioc-register';
 import Dbo from '../persistence/db/mongo-db';
+import { isApiErrorResponse, isRichApiErrorResponse } from '../../util/log';
 
 interface AppConfig {
   port: number;
@@ -41,9 +42,11 @@ export default class ExpressApp {
 
       return this.#expressApp;
     } catch (error: unknown) {
-      if (error instanceof Error ) throw new Error(error.message);
-      // eslint-disable-next-line @typescript-eslint/no-throw-literal
-      if (!(error instanceof Error) && error) throw error;
+      if (isApiErrorResponse(error)) {
+        if (isRichApiErrorResponse(error))
+          console.error(error.response.data.error.message);
+        console.error(error.stack);
+      } else if (error) console.trace(error);
       throw new Error('starting express app - unknown error');
     }
   }
@@ -53,7 +56,7 @@ export default class ExpressApp {
     this.#expressApp.use(express.urlencoded({ extended: true }));
     this.#expressApp.use(cors());
     this.#expressApp.use(compression());
-    this.#expressApp.use(morgan("combined"));
+    this.#expressApp.use(morgan('combined'));
     this.#expressApp.use(helmet());
     this.#expressApp.use(v1Router);
   }

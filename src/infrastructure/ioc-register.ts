@@ -37,18 +37,15 @@ import { DeleteTestSuites } from '../domain/test-suite/delete-test-suites';
 import { DeleteQualTestSuites } from '../domain/qual-test-suite/delete-qual-test-suites';
 import { DeleteCustomTestSuites } from '../domain/custom-test-suite/delete-custom-test-suites';
 import { DeleteTestSuiteDuplicates } from '../domain/test-suite/delete-test-suite-duplicates';
-import { ReadTestHistory } from '../domain/front-end-data-structure/read-test-history';
-import { ReadAlertHistory } from '../domain/front-end-data-structure/read-alert-history';
-import TestHistoryRepo from './persistence/test-history-repo';
-import AlertHistoryRepo from './persistence/alert-history-repo';
-import GenerateChartRepo from './persistence/generate-chart-repo';
-import { SendCustomTestSlackAlert } from '../domain/integration-api/slack/send-custom-test-alert';
+import { ReadTestHistory } from '../domain/custom-query/read-test-history';
+import { ReadAlertHistory } from '../domain/custom-query/read-alert-history';
+import CustomQueryRepo from './persistence/custom-query-repo';
 import { HandleCustomTestExecutionResult } from '../domain/test-execution-api/handle-custom-test-execution-result';
+import { SendCustomTestSlackAlert } from '../domain/integration-api/slack/send-custom-test-alert';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
 iocRegister.register({
-
   createTestSuites: asClass(CreateTestSuites),
   createCustomTestSuite: asClass(CreateCustomTestSuite),
   createQualTestSuites: asClass(CreateQualTestSuites),
@@ -101,11 +98,9 @@ iocRegister.register({
   readTestHistory: asClass(ReadTestHistory),
   readAlertHistory: asClass(ReadAlertHistory),
 
-  testHistoryRepo: asClass(TestHistoryRepo),
-  alertHistoryRepo: asClass(AlertHistoryRepo),
-  generateChartRepo: asClass(GenerateChartRepo),
+  customQueryRepo: asClass(CustomQueryRepo),
 
-  
+
 
   dbo: asClass(Dbo).singleton(),
 });

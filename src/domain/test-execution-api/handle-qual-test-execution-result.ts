@@ -143,8 +143,11 @@ export class HandleQualTestExecutionResult
         return Result.ok();
       }
 
-      if (!req.testData || (req.testData.isIdentical && !req.alertData) ||
-        (!req.testData.isIdentical && !req.alertData))
+      if (
+        !req.testData ||
+        (req.testData.isIdentical && !req.alertData) ||
+        (!req.testData.isIdentical && !req.alertData)
+      )
         return Result.ok();
 
       await this.#sendAlert(req, auth.jwt);

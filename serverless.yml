@@ -6,7 +6,7 @@ provider:
   runtime: nodejs16.x
   stage: production
   region: eu-central-1
-  timeout: 130
+  timeout: 250
   memorySize: 256
   architecture: x86_64
   ecr:
@@ -17,22 +17,22 @@ provider:
     role:
       statements:
         - Effect: Allow
-          Action: 
-            - "scheduler:ListSchedules"
-            - "scheduler:GetSchedule"
-            - "scheduler:CreateSchedule"
-            - "scheduler:UpdateSchedule"
-            - "scheduler:DeleteSchedule"
-            - "scheduler:ListScheduleGroups"
-            - "scheduler:GetScheduleGroup"
-            - "scheduler:CreateScheduleGroup"
-            - "scheduler:DeleteScheduleGroup"
-            - "scheduler:ListTagsForResource"
-            - "scheduler:TagResource"
-            - "scheduler:UntagResource"
-            - "s3:PutObject"
-            - "s3:PutObjectAcl"
-            - "iam:PassRole"
+          Action:
+            - 'scheduler:ListSchedules'
+            - 'scheduler:GetSchedule'
+            - 'scheduler:CreateSchedule'
+            - 'scheduler:UpdateSchedule'
+            - 'scheduler:DeleteSchedule'
+            - 'scheduler:ListScheduleGroups'
+            - 'scheduler:GetScheduleGroup'
+            - 'scheduler:CreateScheduleGroup'
+            - 'scheduler:DeleteScheduleGroup'
+            - 'scheduler:ListTagsForResource'
+            - 'scheduler:TagResource'
+            - 'scheduler:UntagResource'
+            - 's3:PutObject'
+            - 's3:PutObjectAcl'
+            - 'iam:PassRole'
           Resource: '*'
 functions:
   app:
