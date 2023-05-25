@@ -18,7 +18,7 @@ export const parseCustomTestType = (testType: unknown): CustomTestType => {
 
 export interface CustomTestSuiteProps extends BaseQuantTestSuite {
   name: string;
-  description: string;
+  description?: string;
   sqlLogic: string;
   targetResourceIds: string[];
   // template?: TestTemplate
@@ -45,7 +45,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
 
   #name: string;
 
-  #description: string;
+  #description?: string;
 
   #sqlLogic: string;
 
@@ -95,7 +95,7 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     return this.#name;
   }
 
-  get description(): string {
+  get description(): string | undefined {
     return this.#description;
   }
 

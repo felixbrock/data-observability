@@ -77,6 +77,8 @@ export default class CustomTestSuiteRepo
       last_alert_sent: lastAlertSent,
     } = document;
 
+    const targetResourceIdsArray = JSON.parse(targetResourceIds);
+
     const deletedAtDate = deletedAt ? new Date(deletedAt) : undefined;
 
     const lastAlertSentDate = lastAlertSent ? new Date(lastAlertSent) : undefined;
@@ -90,7 +92,7 @@ export default class CustomTestSuiteRepo
       typeof name !== 'string' ||
       !CustomTestSuiteRepo.isOptionalOfType<string>(description, 'string') ||
       typeof sqlLogic !== 'string' ||
-      !CustomTestSuiteRepo.isStringArray(targetResourceIds) ||
+      !CustomTestSuiteRepo.isStringArray(targetResourceIdsArray) ||
       typeof cron !== 'string' ||
       typeof executionType !== 'string' ||
       !isOptionalDateField(deletedAtDate) ||
@@ -112,7 +114,7 @@ export default class CustomTestSuiteRepo
       name,
       description,
       sqlLogic,
-      targetResourceIds,
+      targetResourceIds: targetResourceIdsArray,
       cron,
       executionType: parseExecutionType(executionType),
       deletedAt: deletedAtDate ? deletedAtDate.toISOString() : undefined,
@@ -147,7 +149,7 @@ export default class CustomTestSuiteRepo
     entity.id,
     entity.activated,
     entity.name,
-    entity.description,
+    entity.description || 'null',
     entity.sqlLogic,
     JSON.stringify(entity.targetResourceIds),
     entity.cron || 'null',
