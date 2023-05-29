@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import axios, { AxiosRequestConfig } from 'axios';
 import { appConfig } from '../../config';
 import { ITestExecutionApiRepo } from '../../domain/test-execution-api/i-test-execution-api-repo';
 import { QualTestExecutionResultDto } from '../../domain/test-execution-api/qual-test-execution-result-dto';
@@ -20,43 +20,21 @@ export default class TestExecutionApiRepo implements ITestExecutionApiRepo {
         testType,
       };
 
-      const timeoutDuration = 1000 * 240;
-
-      const requestOptions = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorisation: `Bearer ${jwt}`,
-        },
-        body: JSON.stringify(payload),
+      const config: AxiosRequestConfig = {
+        headers: { Authorization: `Bearer ${jwt}` },
+        timeout: 1000 * 240,
       };
 
-      const controller = new AbortController();
-      const { signal } = controller;
+      const response = await axios.post(
+        `${this.#baseUrl}/tests/${testSuiteId}/execute`,
+        payload,
+        config
+      );
 
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-      }, timeoutDuration);
-
-      const url = `${this.#baseUrl}/tests/${testSuiteId}/execute`;
-
-      const response = await fetch(url, {
-        ...requestOptions,
-        signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      const jsonResponse: any = await response.json();
+      const jsonResponse = response.data;
       if (response.status === 201) return jsonResponse;
       throw new Error(jsonResponse.message);
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          console.error('Error: Test Execution Request timed out');
-        }
-      }
-  
       if (isApiErrorResponse(error)) {
         if (isRichApiErrorResponse(error))
           console.error(error.response.data.error.message);
