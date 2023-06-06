@@ -138,7 +138,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     this.#executionType = props.executionType;
     this.#feedbackLowerThreshold = props.feedbackLowerThreshold;
     this.#feedbackUpperThreshold = props.feedbackUpperThreshold;
-
     this.#deletedAt = props.deletedAt;
     this.#lastAlertSent = props.lastAlertSent;
   }
@@ -147,8 +146,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     if (!props.id) throw new TypeError('CustomTestSuite must have id');
     if (!props.name) throw new TypeError('CustomTestSuite must have name');
     if (!props.cron) throw new TypeError('CustomTestSuite must have cron job');
-    if (!props.description)
-      throw new TypeError('CustomTestSuite must have description');
     if (!props.sqlLogic)
       throw new TypeError('CustomTestSuite must have sqlLogic');
     if (!props.executionType)
@@ -172,7 +169,6 @@ export class CustomTestSuite implements CustomTestSuiteDto {
     executionType: this.#executionType,
     feedbackLowerThreshold: this.#feedbackLowerThreshold,
     feedbackUpperThreshold: this.#feedbackUpperThreshold,
-
     deletedAt: this.#deletedAt,
     lastAlertSent: this.#lastAlertSent,
   });

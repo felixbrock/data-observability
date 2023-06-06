@@ -152,7 +152,7 @@ export default class CustomTestSuiteRepo
     entity.description || 'null',
     entity.sqlLogic,
     JSON.stringify(entity.targetResourceIds),
-    entity.cron || 'null',
+    entity.cron,
     entity.executionType,
     entity.deletedAt || 'null',
     entity.customLowerThreshold || 'null',
