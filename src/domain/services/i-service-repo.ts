@@ -13,6 +13,7 @@ export interface IServiceRepo<Entity, QueryDto, UpdateDto> {
     dbConnection: IDbConnection, callerOrgId: string
   ): Promise<string>;
   replaceMany(entities: Entity[], dbConnection: IDbConnection, callerOrgId: string): Promise<number>;
+  softDeleteOne(id: string, dbConnection: IDbConnection, callerOrgId: string): Promise<void>;
   softDeleteMany(
     where: { targetResourceIds: string[]; testSuiteIds: string[] },
     dbConnection: IDbConnection, callerOrgId: string

@@ -247,21 +247,17 @@ export default abstract class BaseSfRepo<
 			if (!query.colDefinitions)
         throw new Error('No column definitions found. Cannot perform update operation');
 			
-			const document: any = {};
-			query.colDefinitions.forEach((column, index) => {
-				const value = query.values[index];
-				document[column.name] = column.nullable && value === 'null' ? null : value;
-			});
+      const updateObj: any = {};
+      query.colDefinitions.forEach((column, index) => {
+        const value = query.values[index];
+        updateObj[column.name] = value;
+      });
 
-      const fields = this.colDefinitions.map((el) => el.name).slice(1);
-
-			const [docId, ...values] = Object.values(document);
-      const updatedFields = this.#joinFieldsAndValues(fields, values);
 			const result = await dbConnection
       .collection(`${this.matName}_${callerOrgId}`)
 			.updateOne(
-				{ id: docId },
-				{ $set: updatedFields }
+				{ id },
+				{ $set: updateObj }
 			);
 
       if (result.matchedCount !== 1) {
@@ -317,6 +313,27 @@ export default abstract class BaseSfRepo<
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);
       return Promise.reject(new Error());
+    }
+  };
+
+  softDeleteOne = async (
+    id: string,
+    dbConnection: IDbConnection,
+    callerOrgId: string
+  ): Promise<void> => {
+    try {
+      const query = { id };
+
+      const result = await dbConnection
+      .collection(`${this.matName}_${callerOrgId}`)
+      .updateOne(query, { $set: { activated: false, deleted_at: new Date().toISOString() } });
+
+      if (result.matchedCount === 0) {
+        throw new Error('No documents were deleted');
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) console.error(error.stack);
+      else if (error) console.trace(error);
     }
   };
 

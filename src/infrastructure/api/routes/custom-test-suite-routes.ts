@@ -2,6 +2,7 @@ import { Router } from 'express';
 import app from '../../ioc-register';
 import CreateCustomTestSuiteController from '../controllers/create-custom-test-suite-controller';
 import DeleteCustomTestSuitesController from '../controllers/delete-custom-test-suites-controller';
+import DeleteCustomTestSuiteController from '../controllers/delete-custom-test-suite-controller';
 import ReadCustomTestSuiteController from '../controllers/read-custom-test-suite-controller';
 import TriggerCustomTestSuiteExecutionController from '../controllers/trigger-custom-test-suite-execution-controller';
 import UpdateCustomTestSuiteController from '../controllers/update-custom-test-suite-controller';
@@ -41,6 +42,13 @@ const triggerCustomTestSuiteExecutionController =
     dbo
   );
 
+const deleteCustomTestSuiteController = new DeleteCustomTestSuiteController(
+    app.resolve('deleteCustomTestSuite'),
+    getAccounts,
+    getSnowflakeProfile,
+    dbo
+  );
+
 const deleteCustomTestSuitesController = new DeleteCustomTestSuitesController(
   app.resolve('deleteCustomTestSuites'),
   getAccounts,
@@ -62,6 +70,10 @@ customTestSuiteRoutes.patch('/:id', (req, res) => {
 
 customTestSuiteRoutes.post('/:id/execute', (req, res) => {
   triggerCustomTestSuiteExecutionController.execute(req, res);
+});
+
+customTestSuiteRoutes.delete('/:id', (req, res) => {
+  deleteCustomTestSuiteController.execute(req, res);
 });
 
 customTestSuiteRoutes.delete('/', (req, res) => {

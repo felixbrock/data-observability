@@ -36,6 +36,7 @@ import { GenerateChart } from '../domain/integration-api/slack/chart/generate-ch
 import { DeleteTestSuites } from '../domain/test-suite/delete-test-suites';
 import { DeleteQualTestSuites } from '../domain/qual-test-suite/delete-qual-test-suites';
 import { DeleteCustomTestSuites } from '../domain/custom-test-suite/delete-custom-test-suites';
+import { DeleteCustomTestSuite } from '../domain/custom-test-suite/delete-custom-test-suite';
 import { DeleteTestSuiteDuplicates } from '../domain/test-suite/delete-test-suite-duplicates';
 import { ReadTestHistory } from '../domain/custom-query/read-test-history';
 import { ReadAlertHistory } from '../domain/custom-query/read-alert-history';
@@ -66,6 +67,7 @@ iocRegister.register({
   deleteTestSuiteDuplicates: asClass(DeleteTestSuiteDuplicates),
   deleteQualTestSuites: asClass(DeleteQualTestSuites),
   deleteCustomTestSuites: asClass(DeleteCustomTestSuites),
+  deleteCustomTestSuite: asClass(DeleteCustomTestSuite),
 
   triggerTestSuiteExecution: asClass(TriggerTestSuiteExecution),
   triggerQualTestSuiteExecution: asClass(TriggerQualTestSuiteExecution),
