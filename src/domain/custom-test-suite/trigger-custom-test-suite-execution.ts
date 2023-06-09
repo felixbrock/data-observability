@@ -92,7 +92,7 @@ export class TriggerCustomTestSuiteExecution
       await this.#executeTest.execute({
         req: {
           testSuiteId: customTestSuite.id,
-          testType: 'Custom',
+          testType: customTestSuite.name,
           targetOrgId: req.targetOrgId,
         },
         auth: { jwt: auth.jwt, isSystemInternal: auth.isSystemInternal },
