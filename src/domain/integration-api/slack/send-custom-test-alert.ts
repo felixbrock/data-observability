@@ -37,25 +37,25 @@ export class SendCustomTestSlackAlert
     `${testName} Alert: ${deviation}% Deviation`;
 
   static #buildAlertMessageConfig = (
-    quantAlertDto: CustomTestAlertDto
+    customAlertDto: CustomTestAlertDto
   ): QuantAlertMsgConfig => ({
-    alertId: quantAlertDto.alertId,
-    testType: quantAlertDto.testType,
-    occurredOn: `${quantAlertDto.detectedOn} (UTC)`,
+    alertId: customAlertDto.alertId,
+    testType: customAlertDto.testType,
+    occurredOn: `${customAlertDto.detectedOn} (UTC)`,
     anomalyMessagePart: this.#buildHeader(
-      quantAlertDto.testType,
-      quantAlertDto.deviation
+      customAlertDto.testType,
+      customAlertDto.deviation
     ),
-    detectedValuePart: `*Detected Value:*\n${quantAlertDto.detectedValue} (${quantAlertDto.deviation}% deviation)`,
-    expectedRangePart: `*Expected Range:*\n${quantAlertDto.expectedLowerBound} : ${quantAlertDto.expectedUpperBound}`,
-    summaryPart: quantAlertDto.message.replace(
+    detectedValuePart: `*Detected Value:*\n${customAlertDto.detectedValue} (${customAlertDto.deviation}% deviation)`,
+    expectedRangePart: `*Expected Range:*\n${customAlertDto.expectedLowerBound} : ${customAlertDto.expectedUpperBound}`,
+    summaryPart: customAlertDto.message.replace(
       '__base_url__',
       appConfig.slack.callbackRoot
     ),
-    imageUrl: quantAlertDto.chartUrl,
-    detectedValue: quantAlertDto.detectedValue,
-    thresholdType: quantAlertDto.thresholdType,
-    testSuiteId: quantAlertDto.testSuiteId,
+    imageUrl: customAlertDto.chartUrl,
+    detectedValue: customAlertDto.detectedValue,
+    thresholdType: customAlertDto.thresholdType,
+    testSuiteId: customAlertDto.testSuiteId,
   });
 
   async execute(props: {
