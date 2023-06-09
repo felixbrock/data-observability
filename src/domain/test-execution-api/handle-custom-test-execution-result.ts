@@ -2,110 +2,63 @@
 import Result from '../value-types/transient-types/result';
 import IUseCase from '../services/use-case';
 import { IDbConnection } from '../services/i-db';
-import { QuantTestAlertDto } from '../integration-api/slack/quant-test-alert-dto';
-import { SendQuantTestSlackAlert } from '../integration-api/slack/send-quant-test-alert';
-import { QuantTestExecutionResultDto } from './quant-test-execution-result-dto';
+import { CustomTestExecutionResultDto } from './custom-test-execution-result-dto';
 import { GenerateChart } from '../integration-api/slack/chart/generate-chart';
-import { TestType } from '../entities/quant-test-suite';
 import { ThresholdType } from '../snowflake-api/post-anomaly-feedback';
+import { CustomTestAlertDto } from '../integration-api/slack/custom-test-alert-dto';
+import { SendCustomTestSlackAlert } from '../integration-api/slack/send-custom-test-alert';
 
-export type HandleQuantTestExecutionResultRequestDto =
-  QuantTestExecutionResultDto;
+export type HandleCustomTestExecutionResultRequestDto =
+  CustomTestExecutionResultDto;
 
-export interface HandleQuantTestExecutionResultAuthDto {
+export interface HandleCustomTestExecutionResultAuthDto {
   isSystemInternal: boolean;
   jwt: string;
 }
 
-export type HandleQuantTestExecutionResultResponseDto = Result<null>;
+export type HandleCustomTestExecutionResultResponseDto = Result<null>;
 
-export class HandleQuantTestExecutionResult
+export class HandleCustomTestExecutionResult
   implements
     IUseCase<
-      HandleQuantTestExecutionResultRequestDto,
-      HandleQuantTestExecutionResultResponseDto,
-      HandleQuantTestExecutionResultAuthDto,
+      HandleCustomTestExecutionResultRequestDto,
+      HandleCustomTestExecutionResultResponseDto,
+      HandleCustomTestExecutionResultAuthDto,
       IDbConnection
     >
 {
-  readonly #sendQuantTestSlackAlert: SendQuantTestSlackAlert;
+  readonly #sendCustomTestSlackAlert: SendCustomTestSlackAlert;
 
   readonly #generateChart: GenerateChart;
 
   #dbConnection?: IDbConnection;
 
   constructor(
-    sendQuantTestSlackAlert: SendQuantTestSlackAlert,
+    sendCustomTestSlackAlert: SendCustomTestSlackAlert,
     generateChart: GenerateChart
   ) {
-    this.#sendQuantTestSlackAlert = sendQuantTestSlackAlert;
+    this.#sendCustomTestSlackAlert = sendCustomTestSlackAlert;
     this.#generateChart = generateChart;
   }
 
   #explain = (
-    testType: TestType,
+    name: string,
     value: number,
     deviation: number,
     expectedValue: number,
-    target: { type: 'materialization' | 'column'; templateUrl: string }
   ): string => {
     const fixedValue = value % 1 !== 0 ? value.toFixed(4) : value;
     const fixedDeviation =
       deviation % 1 !== 0 ? (deviation * 100).toFixed(2) : deviation * 100;
     const fixedExpectedValue =
       expectedValue % 1 !== 0 ? expectedValue.toFixed(4) : expectedValue;
-
-    const targetIdentifier = `${target.type} ${target.templateUrl}`;
-    const explanationPrefix = `in ${targetIdentifier} detected`;
+    
     const buildAnomalyExplanation = (characteristic: string): string =>
-      `That's unusually ${characteristic}, with a deviation of ${fixedDeviation}% based on an expected average median value of ${fixedExpectedValue}`;
+      `That's unusually ${characteristic}, with a deviation of ${fixedDeviation}% based on an expected average value of ${fixedExpectedValue}`;
 
-    switch (testType) {
-      case 'MaterializationRowCount':
-        return `${fixedExpectedValue} rows ${explanationPrefix}. ${buildAnomalyExplanation(
-          deviation >= 0 ? 'high' : 'low'
-        )}.`;
-      case 'MaterializationColumnCount':
-        return `${fixedValue} columns ${explanationPrefix}. ${buildAnomalyExplanation(
-          deviation >= 0 ? 'high' : 'low'
-        )}.`;
-      case 'MaterializationFreshness':
-        return `${
-          targetIdentifier[0].toUpperCase() + targetIdentifier.slice(1)
-        } was modified ${fixedValue} minutes ago. ${buildAnomalyExplanation(
-          deviation >= 0 ? 'long ago' : 'recent'
-        )}.`;
-      case 'ColumnFreshness':
-        return `The most recent timestamp in ${targetIdentifier} is representing an event that occurred ${fixedValue} min ago. ${buildAnomalyExplanation(
-          deviation >= 0 ? 'long ago' : 'recent'
-        )}.`;
-      case 'ColumnCardinality':
-        return `${fixedValue} unique values ${explanationPrefix}. ${buildAnomalyExplanation(
-          deviation >= 0 ? 'high' : 'low'
-        )}.`;
-      case 'ColumnUniqueness':
-        return `${
-          targetIdentifier[0].toUpperCase() + targetIdentifier.slice(1)
-        } holds ${
-          value % 1 !== 0 ? (value * 100).toFixed(2) : value * 100
-        }% unique values. ${buildAnomalyExplanation(
-          deviation >= 0 ? 'high' : 'low'
-        )}.`;
-      case 'ColumnNullness':
-        return `${
-          targetIdentifier[0].toUpperCase() + targetIdentifier.slice(1)
-        } holds ${
-          value % 1 !== 0 ? (value * 100).toFixed(2) : value * 100
-        }% null values. ${buildAnomalyExplanation(
-          deviation >= 0 ? 'high' : 'low'
-        )}`;
-      case 'ColumnDistribution':
-        return `An average median value of ${fixedValue} was detected for ${targetIdentifier}. ${buildAnomalyExplanation(
-          deviation >= 0 ? 'high' : 'low'
-        )}.`;
-      default:
-        throw new Error('Received unexpected quant test type');
-    }
+    return `A value of ${fixedValue} was detected for the test ${name}. ${buildAnomalyExplanation(
+        deviation >= 0 ? 'high' : 'low'
+    )}.`;
   };
 
   #buildDeviaton = (decimalDeviation: number): string =>
@@ -114,10 +67,10 @@ export class HandleQuantTestExecutionResult
       : (decimalDeviation * 100).toString();
 
   #sendAlert = async (
-    testExecutionResult: QuantTestExecutionResultDto,
+    testExecutionResult: CustomTestExecutionResultDto,
     jwt: string,
-    dbConnection: IDbConnection
-  ): Promise<void> => {
+    dbConnection: IDbConnection,
+    ): Promise<void> => {
     if (!testExecutionResult.testData)
       throw new Error('Missing test data. Previous checks indicated test data');
     if (!testExecutionResult.testData.anomaly)
@@ -130,7 +83,7 @@ export class HandleQuantTestExecutionResult
     const generateChartRes = await this.#generateChart.execute({
       req: { testSuiteId: testExecutionResult.testSuiteId },
       dbConnection,
-      callerOrgId: testExecutionResult.organizationId,
+      callerOrgId: testExecutionResult.organizationId
     });
 
     if (!generateChartRes.success) throw new Error(generateChartRes.error);
@@ -150,9 +103,10 @@ export class HandleQuantTestExecutionResult
       thresholdType = 'lower';
     else throw new Error('Invalid threshold type');
 
-    const alertDto: QuantTestAlertDto = {
+    const alertDto: CustomTestAlertDto = {
       alertId: testExecutionResult.alertData.alertId,
       testType: testExecutionResult.testType,
+      name: testExecutionResult.name,
       detectedOn: testExecutionResult.testData.executedOn,
       deviation: this.#buildDeviaton(testExecutionResult.testData.deviation),
       expectedLowerBound:
@@ -163,30 +117,19 @@ export class HandleQuantTestExecutionResult
         testExecutionResult.testData.expectedUpperBound % 1 !== 0
           ? testExecutionResult.testData.expectedUpperBound.toFixed(4)
           : testExecutionResult.testData.expectedUpperBound.toString(),
-      databaseName: testExecutionResult.alertData.databaseName,
-      schemaName: testExecutionResult.alertData.schemaName,
-      materializationName: testExecutionResult.alertData.materializationName,
-      columnName: testExecutionResult.alertData.columnName,
       message: this.#explain(
-        testExecutionResult.testType,
+        testExecutionResult.name,
         testExecutionResult.testData.detectedValue,
         testExecutionResult.testData.deviation,
         testExecutionResult.alertData.expectedValue,
-        {
-          type: testExecutionResult.alertData.columnName
-            ? 'column'
-            : 'materialization',
-          templateUrl: testExecutionResult.alertData.message,
-        }
       ),
       detectedValue: testExecutionResult.testData.detectedValue.toString(),
       thresholdType,
-      targetResourceId: testExecutionResult.targetResourceId,
       chartUrl: generateChartRes.value.url,
       testSuiteId: testExecutionResult.testSuiteId,
     };
 
-    const sendSlackAlertResult = await this.#sendQuantTestSlackAlert.execute({
+    const sendSlackAlertResult = await this.#sendCustomTestSlackAlert.execute({
       req: { alertDto, targetOrgId: testExecutionResult.organizationId },
       auth: { jwt },
     });
@@ -205,12 +148,12 @@ export class HandleQuantTestExecutionResult
 
     return timeElapsedHrs < 24;
   };
-  
+
   async execute(props: {
-    req: HandleQuantTestExecutionResultRequestDto;
-    auth: HandleQuantTestExecutionResultAuthDto;
+    req: HandleCustomTestExecutionResultRequestDto;
+    auth: HandleCustomTestExecutionResultAuthDto;
     dbConnection: IDbConnection;
-  }): Promise<HandleQuantTestExecutionResultResponseDto> {
+  }): Promise<HandleCustomTestExecutionResultResponseDto> {
     const { req, auth, dbConnection } = props;
 
     try {
@@ -223,11 +166,9 @@ export class HandleQuantTestExecutionResult
         return Result.ok();
       }
 
-      if (
-        !req.testData ||
-        (!req.testData.anomaly && !req.alertData) ||
-        (req.testData.anomaly && !req.alertData)
-      )
+      if (!req.testData || (!req.testData.anomaly && !req.alertData) || 
+        (req.testData.anomaly && !req.alertData))
+        
         return Result.ok();
 
       console.log('Anomaly detected, sending alert');

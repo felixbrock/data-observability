@@ -70,7 +70,8 @@ export class UpdateCustomTestSuite
           cron: req.props.cron || testSuite.cron,
           executionType: req.props.executionType || testSuite.executionType,
           testSuiteId: req.id,
-          toBeActivated: req.props.activated || testSuite.activated,
+          toBeActivated: req.props.activated !== undefined 
+            ? req.props.activated : testSuite.activated 
         },
       ]);
 

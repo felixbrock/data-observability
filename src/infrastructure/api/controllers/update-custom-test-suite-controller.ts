@@ -6,7 +6,6 @@ import {
   UpdateCustomTestSuiteResponseDto,
 } from '../../../domain/custom-test-suite/update-custom-test-suite';
 import { GetSnowflakeProfile } from '../../../domain/integration-api/get-snowflake-profile';
-import { parseExecutionType } from '../../../domain/value-types/execution-type';
 import Result from '../../../domain/value-types/transient-types/result';
 
 import {
@@ -15,6 +14,7 @@ import {
   UserAccountInfo,
 } from './shared/base-controller';
 import Dbo from '../../persistence/db/mongo-db';
+import { parseExecutionType } from '../../../domain/value-types/execution-type';
 
 export default class UpdateCustomTestSuiteController extends BaseController {
   readonly #updateCustomTestSuite: UpdateCustomTestSuite;
@@ -35,29 +35,13 @@ export default class UpdateCustomTestSuiteController extends BaseController {
   #buildRequestDto = (
     httpRequest: Request
   ): UpdateCustomTestSuiteRequestDto => {
-    const {
-      cron,
-      executionType: rawExecutionType,
-      ...remainingBody
-    } = httpRequest.body;
-    const executionType = parseExecutionType(rawExecutionType);
+    if (httpRequest.body.executionType) {
+      parseExecutionType(httpRequest.body.executionType);
+    }
 
     return {
       id: httpRequest.params.id,
-      props: {
-        activated: remainingBody.activated,
-        customLowerThreshold: remainingBody.customLowerThreshold,
-        customUpperThreshold: remainingBody.customUpperThreshold,
-        targetResourceIds: remainingBody.targetResourceIds,
-        name: remainingBody.name,
-        description: remainingBody.description,
-        sqlLogic: remainingBody.sqlLogic,
-        cron,
-        executionType,
-        feedbackLowerThreshold: remainingBody.feedbackLowerThreshold,
-        feedbackUpperThreshold: remainingBody.feedbackUpperThreshold,
-        lastAlertSent: remainingBody.lastAlertSent,
-      },
+      props: httpRequest.body
     };
   };
 

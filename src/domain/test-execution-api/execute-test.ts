@@ -9,6 +9,8 @@ import { CustomTestType } from '../entities/custom-test-suite';
 import { QuantTestExecutionResultDto } from './quant-test-execution-result-dto';
 import { HandleQuantTestExecutionResult } from './handle-quant-test-execution-result';
 import { HandleQualTestExecutionResult } from './handle-qual-test-execution-result';
+import { HandleCustomTestExecutionResult } from './handle-custom-test-execution-result';
+import { CustomTestExecutionResultDto } from './custom-test-execution-result-dto';
 
 export interface ExecuteTestRequestDto {
   testSuiteId: string;
@@ -22,7 +24,7 @@ export interface ExecuteTestAuthDto {
 }
 
 export type ExecuteTestResponseDto = Result<
-  QuantTestExecutionResultDto | QualTestExecutionResultDto
+  QuantTestExecutionResultDto | QualTestExecutionResultDto | CustomTestExecutionResultDto
 >;
 
 export class ExecuteTest
@@ -38,16 +40,20 @@ export class ExecuteTest
 
   readonly #handleQualTestExecutionResult: HandleQualTestExecutionResult;
 
+  readonly #handleCustomTestExecutionResult: HandleCustomTestExecutionResult;
+
   readonly #testExecutionApiRepo: ITestExecutionApiRepo;
 
   constructor(
     testExecutionApiRepo: ITestExecutionApiRepo,
     handleQuantTestExecutionResult: HandleQuantTestExecutionResult,
-    handleQualTestExecutionResult: HandleQualTestExecutionResult
+    handleQualTestExecutionResult: HandleQualTestExecutionResult,
+    handleCustomTestExecutionResult: HandleCustomTestExecutionResult,
   ) {
     this.#testExecutionApiRepo = testExecutionApiRepo;
     this.#handleQuantTestExecutionResult = handleQuantTestExecutionResult;
     this.#handleQualTestExecutionResult = handleQualTestExecutionResult;
+    this.#handleCustomTestExecutionResult = handleCustomTestExecutionResult;
   }
 
   async execute(props: {
@@ -59,7 +65,7 @@ export class ExecuteTest
 
     try {
       // const testExecutionResult = JSON.parse(
-      // '{"lastAlertSent": "2023-04-23T11:12:14.0585", "testSuiteId": "f540b96d-2cd0-4424-b3d1-7d62e301acfc", "testType": "ColumnDistribution", "executionId": "be69fc7c-c876-453b-994f-bb02df9cbaa4", "targetResourceId": "dbd1a1de-4eec-423b-8554-45d472585651", "organizationId": "someCustId", "isWarmup": false, "testData": {"executedOn": "2023-04-25T11:11:54.621388", "detectedValue": 5005000, "expectedUpperBound": 466.378624, "expectedLowerBound": 400.62137600000005, "deviation": 0, "anomaly": {"importance": 1.5301944509599927}}, "alertData": {"alertId": "0a291746-3ace-428b-a2e6-80520174bd35", "message": "<__base_url__?targetResourceId=dbd1a1de-4eec-423b-8554-45d472585651&ampisColumn=True|TEST_DB.test_S.TEST_T.SOMENUMBER>", "databaseName": "TEST_DB", "schemaName": "test_S", "materializationName": "TEST_T", "materializationType": "Table", "expectedValue": 567, "columnName": "SOMENUMBER"}}'
+      //   '{"testSuiteId": "someCustomTestSuiteId", "testType": "Custom", "executionId": "da93c863-9c04-4dd6-b743-243716dae7af", "organizationId": "631789bf27518f97cf1c82b7", "name": "CustomColumnDistribution", "targetResourceIds": ["randomTRId"], "isWarmup": false, "testData": {"executedOn": "2023-05-05T13:51:08.733361", "detectedValue": 567, "expectedUpperBound": 500.7, "expectedLowerBound": 400.4, "modifiedZScore": null, "deviation": 0.0, "anomaly": {"importance": 0.6610169491525424}}, "alertData": {"alertId": "d490fa81-ecb6-479a-a4f2-781d90cb20e4", "message": "<__base_url__?metric=MEDIAN>", "expectedValue": 567.0}, "lastAlertSent": "2023-05-10T11:51:08.733361"}'
       // );
 
       const testExecutionResult = await this.#testExecutionApiRepo.executeTest(
@@ -68,16 +74,35 @@ export class ExecuteTest
         auth.jwt,
         req.targetOrgId
       );
+
       console.log(`Successfuly executed test ${req.testSuiteId}`);
 
       console.warn(testExecutionResult);
+
+      const instanceOfCustomTestExecutionResultDto = (
+        obj: unknown
+      ): obj is CustomTestExecutionResultDto =>
+        !!obj && typeof obj === 'object' && 'name' in obj;
 
       const instanceOfQuantTestExecutionResultDto = (
         obj: unknown
       ): obj is QuantTestExecutionResultDto =>
         !!obj && typeof obj === 'object' && 'isWarmup' in obj;
 
-      if (instanceOfQuantTestExecutionResultDto(testExecutionResult)) {
+      if (instanceOfCustomTestExecutionResultDto(testExecutionResult)) {
+        if (
+          testExecutionResult.testData &&
+          testExecutionResult.testData.anomaly &&
+          !testExecutionResult.alertData
+        )
+          throw new Error('Custom test result obj structural mismatch');
+        
+        await this.#handleCustomTestExecutionResult.execute({
+          req: testExecutionResult,
+          auth,
+          dbConnection: db.mongoConn,
+        });
+      } else if (instanceOfQuantTestExecutionResultDto(testExecutionResult)) {
         if (
           testExecutionResult.testData &&
           testExecutionResult.testData.anomaly &&

@@ -80,14 +80,11 @@ export default class ReadCustomTestSuiteController extends BaseController {
         return ReadCustomTestSuiteController.badRequest(res);
       }
 
-      const result = useCaseResult.value;
-      if (!result)
-        return ReadCustomTestSuiteController.notFound(
-          res,
-          'Custom test suite not created. Internal error.'
-        );
+      const resultValue = useCaseResult.value
+        ? useCaseResult.value.toDto()
+        : useCaseResult.value;
 
-      return ReadCustomTestSuiteController.ok(res, result, CodeHttp.OK);
+      return ReadCustomTestSuiteController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);

@@ -1,4 +1,4 @@
-import { CustomTestSuiteDto } from '../entities/custom-test-suite';
+import { CustomTestSuite } from '../entities/custom-test-suite';
 import BaseAuth from '../services/base-auth';
 
 import Result from '../value-types/transient-types/result';
@@ -13,7 +13,7 @@ export interface ReadCustomTestSuitesRequestDto {
 
 export type ReadCustomTestSuitesAuthDto = BaseAuth;
 
-export type ReadCustomTestSuitesResponseDto = Result<CustomTestSuiteDto[]>;
+export type ReadCustomTestSuitesResponseDto = Result<CustomTestSuite[]>;
 
 export class ReadCustomTestSuites
   implements
@@ -48,7 +48,7 @@ export class ReadCustomTestSuites
         },
         dbConnection, auth.callerOrgId ? auth.callerOrgId : '',
         true
-      ) as CustomTestSuiteDto[];
+      ) as CustomTestSuite[];
 
       return Result.ok(testSuites);
     } catch (error: unknown) {

@@ -100,14 +100,11 @@ export default class ReadCustomTestSuitesController extends BaseController {
         return ReadCustomTestSuitesController.badRequest(res);
       }
 
-      const result = useCaseResult.value;
-      if (!result)
-        return ReadCustomTestSuitesController.fail(
-          res,
-          'Readin custom tests failed. Internal error.'
-        );
+      const resultValue = useCaseResult.value
+        ? useCaseResult.value.map((el) => el.toDto())
+        : useCaseResult.value;
 
-      return ReadCustomTestSuitesController.ok(res, result, CodeHttp.OK);
+      return ReadCustomTestSuitesController.ok(res, resultValue, CodeHttp.OK);
     } catch (error: unknown) {
       if (error instanceof Error) console.error(error.stack);
       else if (error) console.trace(error);

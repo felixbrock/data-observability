@@ -36,10 +36,13 @@ import { GenerateChart } from '../domain/integration-api/slack/chart/generate-ch
 import { DeleteTestSuites } from '../domain/test-suite/delete-test-suites';
 import { DeleteQualTestSuites } from '../domain/qual-test-suite/delete-qual-test-suites';
 import { DeleteCustomTestSuites } from '../domain/custom-test-suite/delete-custom-test-suites';
+import { DeleteCustomTestSuite } from '../domain/custom-test-suite/delete-custom-test-suite';
 import { DeleteTestSuiteDuplicates } from '../domain/test-suite/delete-test-suite-duplicates';
 import { ReadTestHistory } from '../domain/custom-query/read-test-history';
 import { ReadAlertHistory } from '../domain/custom-query/read-alert-history';
 import CustomQueryRepo from './persistence/custom-query-repo';
+import { HandleCustomTestExecutionResult } from '../domain/test-execution-api/handle-custom-test-execution-result';
+import { SendCustomTestSlackAlert } from '../domain/integration-api/slack/send-custom-test-alert';
 
 const iocRegister = createContainer({ injectionMode: InjectionMode.CLASSIC });
 
@@ -64,6 +67,7 @@ iocRegister.register({
   deleteTestSuiteDuplicates: asClass(DeleteTestSuiteDuplicates),
   deleteQualTestSuites: asClass(DeleteQualTestSuites),
   deleteCustomTestSuites: asClass(DeleteCustomTestSuites),
+  deleteCustomTestSuite: asClass(DeleteCustomTestSuite),
 
   triggerTestSuiteExecution: asClass(TriggerTestSuiteExecution),
   triggerQualTestSuiteExecution: asClass(TriggerQualTestSuiteExecution),
@@ -71,6 +75,7 @@ iocRegister.register({
 
   handleQuantTestExecutionResult: asClass(HandleQuantTestExecutionResult),
   handleQualTestExecutionResult: asClass(HandleQualTestExecutionResult),
+  handleCustomTestExecutionResult: asClass(HandleCustomTestExecutionResult),
 
   postAnomalyFeedback: asClass(PostAnomalyFeedback),
   executeTest: asClass(ExecuteTest),
@@ -80,6 +85,7 @@ iocRegister.register({
   getSnowflakeProfile: asClass(GetSnowflakeProfile),
   sendQuantTestSlackAlert: asClass(SendQuantTestSlackAlert),
   sendQualTestSlackAlert: asClass(SendQualTestSlackAlert),
+  sendCustomTestSlackAlert: asClass(SendCustomTestSlackAlert),
   generateChart: asClass(GenerateChart),
 
   customTestSuiteRepo: asClass(CustomTestSuiteRepo),
@@ -95,6 +101,8 @@ iocRegister.register({
   readAlertHistory: asClass(ReadAlertHistory),
 
   customQueryRepo: asClass(CustomQueryRepo),
+
+
 
   dbo: asClass(Dbo).singleton(),
 });

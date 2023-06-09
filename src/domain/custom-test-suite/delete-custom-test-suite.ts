@@ -1,8 +1,9 @@
 import Result from '../value-types/transient-types/result';
 import { ICustomTestSuiteRepo } from './i-custom-test-suite-repo';
 import IUseCase from '../services/use-case';
-import { deleteSchedules } from '../services/schedule';
+// import { deleteSchedules } from '../services/schedule';
 import { IDbConnection } from '../services/i-db';
+import { deleteSchedules } from '../services/schedule';
 
 export type Mode = 'soft' | 'hard';
 
@@ -19,23 +20,23 @@ export const parseMode = (obj: unknown): Mode => {
   }
 };
 
-export interface DeleteCustomTestSuitesRequestDto {
-  targetResourceIds: string[];
+export interface DeleteCustomTestSuiteRequestDto {
+  id: string;
   mode: Mode;
 }
 
-export type DeleteCustomTestSuitesAuthDto = {
+export type DeleteCustomTestSuiteAuthDto = {
   callerOrgId: string;
 };
 
-export type DeleteCustomTestSuitesResponseDto = Result<null>;
+export type DeleteCustomTestSuiteResponseDto = Result<null>;
 
-export class DeleteCustomTestSuites
+export class DeleteCustomTestSuite
   implements
     IUseCase<
-      DeleteCustomTestSuitesRequestDto,
-      DeleteCustomTestSuitesResponseDto,
-      DeleteCustomTestSuitesAuthDto,
+      DeleteCustomTestSuiteRequestDto,
+      DeleteCustomTestSuiteResponseDto,
+      DeleteCustomTestSuiteAuthDto,
       IDbConnection
     >
 {
@@ -46,18 +47,17 @@ export class DeleteCustomTestSuites
   }
 
   async execute(props: {
-    req: DeleteCustomTestSuitesRequestDto;
-    auth: DeleteCustomTestSuitesAuthDto;
+    req: DeleteCustomTestSuiteRequestDto;
+    auth: DeleteCustomTestSuiteAuthDto;
     dbConnection: IDbConnection;
-  }): Promise<DeleteCustomTestSuitesResponseDto> {
+  }): Promise<DeleteCustomTestSuiteResponseDto> {
     const { req, auth, dbConnection } = props;
 
     try {
       switch (req.mode) {
         case 'soft':
-          await this.#repo.softDeleteMany(
-            { targetResourceIds: req.targetResourceIds, testSuiteIds: [] },
-            dbConnection, auth.callerOrgId
+          await this.#repo.softDeleteOne(
+            req.id, dbConnection, auth.callerOrgId
           );
           break;
         case 'hard':
@@ -66,17 +66,7 @@ export class DeleteCustomTestSuites
           throw new Error('Received unknown test suite deletion mode');
       }
 
-      const testSuiteIds = (
-        await this.#repo.findBy(
-          {
-            targetResourceIds: req.targetResourceIds,
-            deleted: false,
-          },
-          dbConnection, auth.callerOrgId, true
-        )
-      ).map((el) => el.id);
-
-      await deleteSchedules(auth.callerOrgId, testSuiteIds);
+      await deleteSchedules(auth.callerOrgId, [req.id]);
 
       return Result.ok();
     } catch (error: unknown) {
