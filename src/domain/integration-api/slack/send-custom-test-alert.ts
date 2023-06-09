@@ -43,7 +43,7 @@ export class SendCustomTestSlackAlert
     testType: customAlertDto.testType,
     occurredOn: `${customAlertDto.detectedOn} (UTC)`,
     anomalyMessagePart: this.#buildHeader(
-      customAlertDto.testType,
+      customAlertDto.name,
       customAlertDto.deviation
     ),
     detectedValuePart: `*Detected Value:*\n${customAlertDto.detectedValue} (${customAlertDto.deviation}% deviation)`,
